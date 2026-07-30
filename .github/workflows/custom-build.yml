@@ -45,22 +45,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: 校验 Release 写权限
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          can_write="$(
-            gh api "repos/${GITHUB_REPOSITORY}" \
-              --jq '.permissions.push // false'
-          )"
-          if [[ "${can_write}" != "true" ]]; then
-            echo "当前 GITHUB_TOKEN 没有 contents: write 权限。" >&2
-            echo "请在仓库 Actions 设置中启用 Read and write permissions。" >&2
-            exit 1
-          fi
-
       - name: 读取私有 Mihomo 提交
         id: source
         shell: bash
