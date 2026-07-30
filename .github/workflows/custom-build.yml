@@ -398,33 +398,11 @@ jobs:
           ref: ${{ needs.inspect.outputs.upstream_sha }}
           fetch-depth: 1
 
-      - name: 检出对应的私有 Mihomo 源码
-        uses: actions/checkout@v6
-        with:
-          repository: ${{ env.CUSTOM_MIHOMO_REPOSITORY }}
-          ref: ${{ needs.inspect.outputs.custom_mihomo_commit }}
-          path: .custom-build/runtime/custom-mihomo
-          fetch-depth: 1
-          ssh-key: ${{ secrets.CUSTOM_MIHOMO_READ_KEY }}
-
       - name: 下载所有平台产物
         uses: actions/download-artifact@v8
         with:
           path: release-assets
           pattern: Bettbox-*
-
-      - name: 打包对应的自定义 Mihomo 源码
-        shell: bash
-        env:
-          KERNEL_SHA: ${{ needs.inspect.outputs.kernel_sha }}
-        run: |
-          set -euo pipefail
-          source_archive="release-assets/custom-mihomo-source-${KERNEL_SHA:0:12}.tar.gz"
-          tar \
-            --exclude='.git' \
-            -czf "${source_archive}" \
-            -C .custom-build/runtime/custom-mihomo \
-            .
 
       - name: 创建 Release
         shell: bash
@@ -433,12 +411,26 @@ jobs:
           RELEASE_TAG: ${{ needs.inspect.outputs.release_tag }}
           APP_VERSION: ${{ needs.inspect.outputs.app_version }}
           UPSTREAM_SHA: ${{ needs.inspect.outputs.upstream_sha }}
-          KERNEL_SHA: ${{ needs.inspect.outputs.kernel_sha }}
         run: |
           set -euo pipefail
-          mapfile -d '' assets < <(find release-assets -type f -print0)
+          mapfile -d '' assets < <(
+            find release-assets -type f \
+              \( -name '*.apk' -o -name '*.exe' -o -name '*.dmg' \) \
+              -print0
+          )
           if [[ "${#assets[@]}" -eq 0 ]]; then
             echo "错误：没有可发布的构建产物。" >&2
+            exit 1
+          fi
+
+          unexpected_assets="$(
+            find release-assets -type f \
+              ! \( -name '*.apk' -o -name '*.exe' -o -name '*.dmg' \) \
+              -print
+          )"
+          if [[ -n "${unexpected_assets}" ]]; then
+            echo "错误：检测到安装包以外的 Release 资产，拒绝发布：" >&2
+            printf '%s\n' "${unexpected_assets}" >&2
             exit 1
           fi
 
@@ -455,9 +447,8 @@ jobs:
           ## 构建信息
 
           Bettbox custom-build commit：${UPSTREAM_SHA}
-          自定义 Mihomo 源码树：${KERNEL_SHA}
 
-          Release 同时附带本次构建对应的自定义 Mihomo 完整源码归档及许可证。
+          Release 仅包含三端安装包，不包含私有自定义 Mihomo 源码。
 
           Windows 与 macOS 安装包未做商业代码签名；Android 未配置私有签名时使用项目 debug 签名。"
 
