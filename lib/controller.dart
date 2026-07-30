@@ -401,8 +401,12 @@ class AppController {
     final networkSpeedNotification =
         system.isAndroid &&
         _ref.read(vpnSettingProvider).networkSpeedNotification;
+    final enableTraySpeed =
+        system.isMacOS && _ref.read(vpnSettingProvider).enableTraySpeed;
 
-    if (!shouldUpdateDashboard && !networkSpeedNotification) {
+    if (!shouldUpdateDashboard &&
+        !networkSpeedNotification &&
+        !enableTraySpeed) {
       return;
     }
 
@@ -416,6 +420,10 @@ class AppController {
 
     if (shouldUpdateDashboard) {
       _ref.read(trafficsProvider.notifier).addTraffic(traffic);
+    }
+
+    if (enableTraySpeed) {
+      await tray.updateSpeed(traffic);
     }
 
     if (networkSpeedNotification) {
@@ -1415,9 +1423,8 @@ class AppController {
         ageSecretKey: ageSecretKey,
       ).update();
       if (globalState.navigatorKey.currentState?.canPop() ?? false) {
-        globalState.navigatorKey.currentState?.popUntil(
-          (route) => route.isFirst,
-        );
+        globalState.navigatorKey.currentState
+            ?.popUntil((route) => route.isFirst);
       }
       toProfiles();
       await addProfile(profile);
@@ -1477,8 +1484,9 @@ class AppController {
       }
 
       if (successCount > 0) {
-        globalState.navigatorKey.currentState
-            ?.popUntil((route) => route.isFirst);
+        globalState.navigatorKey.currentState?.popUntil(
+          (route) => route.isFirst,
+        );
         toProfiles();
       }
     } finally {
@@ -1811,6 +1819,14 @@ class AppController {
       focus: focus,
       silent: silent,
       force: force,
+    );
+  }
+
+  Future<void> showTrayMenu({bool includeHiddenItems = false}) async {
+    final trayState = _ref.read(trayStateProvider);
+    await tray.showContextMenu(
+      trayState: trayState,
+      includeHiddenItems: includeHiddenItems,
     );
   }
 

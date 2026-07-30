@@ -186,7 +186,13 @@ _VpnProps _$VpnPropsFromJson(Map<String, dynamic> json) => _VpnProps(
   disableQuic: json['disableQuic'] as bool? ?? false,
   networkSpeedNotification: json['networkSpeedNotification'] as bool? ?? false,
   excludeChina: json['excludeChina'] as bool? ?? false,
-  trayEnhancement: json['trayEnhancement'] as bool? ?? false,
+  enableTraySpeed: json['enableTraySpeed'] as bool? ?? false,
+  trayClickBehavior:
+      $enumDecodeNullable(
+        _$TrayClickBehaviorEnumMap,
+        json['trayClickBehavior'],
+      ) ??
+      TrayClickBehavior.showPanel,
   alwaysShowTitleBar: json['alwaysShowTitleBar'] as bool? ?? true,
   quickResponse: json['quickResponse'] as bool? ?? true,
   accessControl: json['accessControl'] == null
@@ -207,10 +213,16 @@ Map<String, dynamic> _$VpnPropsToJson(_VpnProps instance) => <String, dynamic>{
   'disableQuic': instance.disableQuic,
   'networkSpeedNotification': instance.networkSpeedNotification,
   'excludeChina': instance.excludeChina,
-  'trayEnhancement': instance.trayEnhancement,
+  'enableTraySpeed': instance.enableTraySpeed,
+  'trayClickBehavior': _$TrayClickBehaviorEnumMap[instance.trayClickBehavior]!,
   'alwaysShowTitleBar': instance.alwaysShowTitleBar,
   'quickResponse': instance.quickResponse,
   'accessControl': instance.accessControl,
+};
+
+const _$TrayClickBehaviorEnumMap = {
+  TrayClickBehavior.showPanel: 'showPanel',
+  TrayClickBehavior.showMenu: 'showMenu',
 };
 
 _NetworkProps _$NetworkPropsFromJson(Map<String, dynamic> json) =>
@@ -256,6 +268,7 @@ _ProxiesStyle _$ProxiesStyleFromJson(Map<String, dynamic> json) =>
             json['delayAnimation'],
           ) ??
           DelayAnimationType.none,
+      showHiddenItems: json['showHiddenItems'] as bool? ?? false,
       iconMap:
           (json['iconMap'] as Map<String, dynamic>?)?.map(
             (k, e) => MapEntry(k, e as String),
@@ -272,6 +285,7 @@ Map<String, dynamic> _$ProxiesStyleToJson(_ProxiesStyle instance) =>
       'iconStyle': _$ProxiesIconStyleEnumMap[instance.iconStyle]!,
       'cardType': _$ProxyCardTypeEnumMap[instance.cardType]!,
       'delayAnimation': _$DelayAnimationTypeEnumMap[instance.delayAnimation]!,
+      'showHiddenItems': instance.showHiddenItems,
       'iconMap': instance.iconMap,
       'concurrencyLimit': instance.concurrencyLimit,
     };

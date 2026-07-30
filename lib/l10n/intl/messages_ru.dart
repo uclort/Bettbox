@@ -399,6 +399,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "enableOverride": MessageLookupByLibrary.simpleMessage(
       "Включить переопределение",
     ),
+    "enableTraySpeed": MessageLookupByLibrary.simpleMessage(
+      "Показывать скорость в трее",
+    ),
+    "enableTraySpeedDesc": MessageLookupByLibrary.simpleMessage(
+      "Показывать скорость отдачи и загрузки рядом со значком в строке меню",
+    ),
     "endpointIndependentNat": MessageLookupByLibrary.simpleMessage(
       "Улучшенный NAT",
     ),
@@ -1012,6 +1018,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "serviceRunning": MessageLookupByLibrary.simpleMessage("Служба запущена"),
     "settings": MessageLookupByLibrary.simpleMessage("Настройки"),
     "show": MessageLookupByLibrary.simpleMessage("Показать"),
+    "showHiddenItems": MessageLookupByLibrary.simpleMessage(
+      "Показывать скрытые элементы",
+    ),
+    "showMenu": MessageLookupByLibrary.simpleMessage("Показать меню"),
+    "showPanel": MessageLookupByLibrary.simpleMessage("Показать панель"),
     "showStartSwitch": MessageLookupByLibrary.simpleMessage(
       "Связанный переключатель",
     ),
@@ -1112,6 +1123,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Разрешить параллельные TCP-соединения",
     ),
     "testUrl": MessageLookupByLibrary.simpleMessage("URL теста"),
+    "testing": MessageLookupByLibrary.simpleMessage("Тестирование"),
     "textScale": MessageLookupByLibrary.simpleMessage("Масштаб текста"),
     "theme": MessageLookupByLibrary.simpleMessage("Тема"),
     "themeColor": MessageLookupByLibrary.simpleMessage("Цвет темы"),
@@ -1138,15 +1150,18 @@ class MessageLookup extends MessageLookupByLibrary {
     "totalTraffic": MessageLookupByLibrary.simpleMessage("Общий трафик"),
     "tproxyPort": MessageLookupByLibrary.simpleMessage("Порт Tproxy"),
     "trafficUsage": MessageLookupByLibrary.simpleMessage("Трафик"),
-    "trayEnhancement": MessageLookupByLibrary.simpleMessage("Улучшение трея"),
-    "trayEnhancementDesc": MessageLookupByLibrary.simpleMessage(
-      "Управление группами прокси в контекстном меню трея",
+    "trayClickBehavior": MessageLookupByLibrary.simpleMessage(
+      "Действие левой и правой кнопок по трею",
     ),
     "trayIconInvert": MessageLookupByLibrary.simpleMessage(
       "Инвертировать значок трея",
     ),
     "trayIconInvertDesc": MessageLookupByLibrary.simpleMessage(
       "Инвертировать цвет текущего значка в трее",
+    ),
+    "traySettings": MessageLookupByLibrary.simpleMessage("Настройки трея"),
+    "traySettingsDesc": MessageLookupByLibrary.simpleMessage(
+      "Настройка меню трея, отображения скорости и поведения щелчка",
     ),
     "tryManualRefresh": MessageLookupByLibrary.simpleMessage(
       "Обновите вручную",

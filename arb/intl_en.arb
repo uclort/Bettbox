@@ -57,8 +57,14 @@
   "networkSpeedNotificationDesc": "Show current speed in the notification bar",
   "alwaysShowTitleBar": "Title Buttons",
   "alwaysShowTitleBarDesc": "Always show the title bar buttons in the top-right corner",
-  "trayEnhancement": "Tray Enhancement",
-  "trayEnhancementDesc": "Control proxy groups in the system tray context menu",
+  "enableTraySpeed": "Enable Tray Speed",
+  "enableTraySpeedDesc": "Show upload and download speeds next to the menu bar icon",
+  "traySettings": "Tray Settings",
+  "traySettingsDesc": "Configure the tray menu, speed display, and click behavior",
+  "trayClickBehavior": "Tray Click Behavior (Left and Right)",
+  "showPanel": "Show Panel",
+  "showMenu": "Show Menu",
+  "showHiddenItems": "Show Hidden Items",
   "excludeChina": "Exclude China",
   "excludeChinaDesc": "Allow China QUIC traffic instead of blocking all",
   "fcmOptimization": "FCM Optimization",
@@ -263,6 +269,7 @@
   "paste": "Paste",
   "testUrl": "Test URL",
   "startTest": "Start Test",
+  "testing": "Testing",
   "addProfile": "Add Profile",
   "customUrl": "Custom URL",
   "sync": "Sync",
@@ -657,4 +664,3 @@
   "agePrivateKeyRequired": "Please enter a correct Age private key first",
   "lineWrap": "Wrap Lines"
 }
-

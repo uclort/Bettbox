@@ -396,6 +396,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Upload crash logs when needed",
     ),
     "enableOverride": MessageLookupByLibrary.simpleMessage("Enable Override"),
+    "enableTraySpeed": MessageLookupByLibrary.simpleMessage(
+      "Enable Tray Speed",
+    ),
+    "enableTraySpeedDesc": MessageLookupByLibrary.simpleMessage(
+      "Show upload and download speeds next to the menu bar icon",
+    ),
     "endpointIndependentNat": MessageLookupByLibrary.simpleMessage(
       "NAT Enhancement",
     ),
@@ -997,6 +1003,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "serviceRunning": MessageLookupByLibrary.simpleMessage("Service Running"),
     "settings": MessageLookupByLibrary.simpleMessage("Settings"),
     "show": MessageLookupByLibrary.simpleMessage("Show"),
+    "showHiddenItems": MessageLookupByLibrary.simpleMessage(
+      "Show Hidden Items",
+    ),
+    "showMenu": MessageLookupByLibrary.simpleMessage("Show Menu"),
+    "showPanel": MessageLookupByLibrary.simpleMessage("Show Panel"),
     "showStartSwitch": MessageLookupByLibrary.simpleMessage("Linkage Switch"),
     "showStartSwitchDesc": MessageLookupByLibrary.simpleMessage(
       "Display independent switch button on the homepage",
@@ -1089,6 +1100,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Allow concurrent TCP connections",
     ),
     "testUrl": MessageLookupByLibrary.simpleMessage("Test URL"),
+    "testing": MessageLookupByLibrary.simpleMessage("Testing"),
     "textScale": MessageLookupByLibrary.simpleMessage("Text Scaling"),
     "theme": MessageLookupByLibrary.simpleMessage("Theme"),
     "themeColor": MessageLookupByLibrary.simpleMessage("Theme Color"),
@@ -1113,13 +1125,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "totalTraffic": MessageLookupByLibrary.simpleMessage("Total Traffic"),
     "tproxyPort": MessageLookupByLibrary.simpleMessage("Tproxy Port"),
     "trafficUsage": MessageLookupByLibrary.simpleMessage("Traffic Usage"),
-    "trayEnhancement": MessageLookupByLibrary.simpleMessage("Tray Enhancement"),
-    "trayEnhancementDesc": MessageLookupByLibrary.simpleMessage(
-      "Control proxy groups in the system tray context menu",
+    "trayClickBehavior": MessageLookupByLibrary.simpleMessage(
+      "Tray Click Behavior (Left and Right)",
     ),
     "trayIconInvert": MessageLookupByLibrary.simpleMessage("Invert Tray Icon"),
     "trayIconInvertDesc": MessageLookupByLibrary.simpleMessage(
       "Invert the current tray icon color",
+    ),
+    "traySettings": MessageLookupByLibrary.simpleMessage("Tray Settings"),
+    "traySettingsDesc": MessageLookupByLibrary.simpleMessage(
+      "Configure the tray menu, speed display, and click behavior",
     ),
     "tryManualRefresh": MessageLookupByLibrary.simpleMessage(
       "Please try manual refresh",

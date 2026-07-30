@@ -275,6 +275,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "必要时上传应用崩溃日志",
     ),
     "enableOverride": MessageLookupByLibrary.simpleMessage("启用覆写"),
+    "enableTraySpeed": MessageLookupByLibrary.simpleMessage("启用托盘速率"),
+    "enableTraySpeedDesc": MessageLookupByLibrary.simpleMessage(
+      "在菜单栏图标右侧显示上传和下载速率",
+    ),
     "endpointIndependentNat": MessageLookupByLibrary.simpleMessage("NAT增强"),
     "endpointIndependentNatConfirmDesc": MessageLookupByLibrary.simpleMessage(
       "启用 Endpoint-Independent NAT 功能，性能可能会略有下降，此功能仅建议您在必要且熟悉的情况下开启",
@@ -686,6 +690,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "serviceRunning": MessageLookupByLibrary.simpleMessage("服务正在运行中"),
     "settings": MessageLookupByLibrary.simpleMessage("设置"),
     "show": MessageLookupByLibrary.simpleMessage("显示"),
+    "showHiddenItems": MessageLookupByLibrary.simpleMessage("显示隐藏项"),
+    "showMenu": MessageLookupByLibrary.simpleMessage("显示菜单"),
+    "showPanel": MessageLookupByLibrary.simpleMessage("显示面板"),
     "showStartSwitch": MessageLookupByLibrary.simpleMessage("联动开关"),
     "showStartSwitchDesc": MessageLookupByLibrary.simpleMessage("首页显示独立的开关按钮"),
     "shrink": MessageLookupByLibrary.simpleMessage("紧凑"),
@@ -752,6 +759,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tcpConcurrent": MessageLookupByLibrary.simpleMessage("TCP并发"),
     "tcpConcurrentDesc": MessageLookupByLibrary.simpleMessage("开启后允许TCP并发连接"),
     "testUrl": MessageLookupByLibrary.simpleMessage("测试链接"),
+    "testing": MessageLookupByLibrary.simpleMessage("测试中"),
     "textScale": MessageLookupByLibrary.simpleMessage("文本缩放"),
     "theme": MessageLookupByLibrary.simpleMessage("主题"),
     "themeColor": MessageLookupByLibrary.simpleMessage("主题色彩"),
@@ -772,13 +780,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "totalTraffic": MessageLookupByLibrary.simpleMessage("传输总量"),
     "tproxyPort": MessageLookupByLibrary.simpleMessage("Tproxy端口"),
     "trafficUsage": MessageLookupByLibrary.simpleMessage("流量统计"),
-    "trayEnhancement": MessageLookupByLibrary.simpleMessage("托盘增强"),
-    "trayEnhancementDesc": MessageLookupByLibrary.simpleMessage(
-      "在托盘区右键菜单中控制代理组",
-    ),
+    "trayClickBehavior": MessageLookupByLibrary.simpleMessage("托盘点击行为（左键与右键）"),
     "trayIconInvert": MessageLookupByLibrary.simpleMessage("托盘反转"),
     "trayIconInvertDesc": MessageLookupByLibrary.simpleMessage(
       "针对当前托盘图标颜色取反设置",
+    ),
+    "traySettings": MessageLookupByLibrary.simpleMessage("托盘设置"),
+    "traySettingsDesc": MessageLookupByLibrary.simpleMessage(
+      "设置托盘菜单、速率显示和点击行为",
     ),
     "tryManualRefresh": MessageLookupByLibrary.simpleMessage("请尝试手动刷新"),
     "tun": MessageLookupByLibrary.simpleMessage("虚拟网卡"),

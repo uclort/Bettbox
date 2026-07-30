@@ -216,7 +216,8 @@ abstract class VpnProps with _$VpnProps {
     @Default(false) bool disableQuic,
     @Default(false) bool networkSpeedNotification,
     @Default(false) bool excludeChina,
-    @Default(false) bool trayEnhancement,
+    @Default(false) bool enableTraySpeed,
+    @Default(TrayClickBehavior.showPanel) TrayClickBehavior trayClickBehavior,
     @Default(true) bool alwaysShowTitleBar,
     @Default(true) bool quickResponse,
     @Default(defaultAccessControl) AccessControl accessControl,
@@ -231,6 +232,13 @@ abstract class VpnProps with _$VpnProps {
 
     if (safeProps.smartAutoStop && safeProps.quickResponse) {
       safeProps = safeProps.copyWith(quickResponse: false);
+    }
+
+    if (json?['trayEnhancement'] == false &&
+        safeProps.trayClickBehavior == TrayClickBehavior.showMenu) {
+      safeProps = safeProps.copyWith(
+        trayClickBehavior: TrayClickBehavior.showPanel,
+      );
     }
 
     return safeProps;
@@ -259,6 +267,7 @@ abstract class ProxiesStyle with _$ProxiesStyle {
     @Default(ProxiesIconStyle.none) ProxiesIconStyle iconStyle,
     @Default(ProxyCardType.shrink) ProxyCardType cardType,
     @Default(DelayAnimationType.none) DelayAnimationType delayAnimation,
+    @Default(false) bool showHiddenItems,
     @Default({}) Map<String, String> iconMap,
     @Default(250) int concurrencyLimit,
   }) = _ProxiesStyle;

@@ -509,21 +509,71 @@ class AppLocalizations {
     );
   }
 
-  /// `Tray Enhancement`
-  String get trayEnhancement {
+  /// `Enable Tray Speed`
+  String get enableTraySpeed {
     return Intl.message(
-      'Tray Enhancement',
-      name: 'trayEnhancement',
+      'Enable Tray Speed',
+      name: 'enableTraySpeed',
       desc: '',
       args: [],
     );
   }
 
-  /// `Control proxy groups in the system tray context menu`
-  String get trayEnhancementDesc {
+  /// `Show upload and download speeds next to the menu bar icon`
+  String get enableTraySpeedDesc {
     return Intl.message(
-      'Control proxy groups in the system tray context menu',
-      name: 'trayEnhancementDesc',
+      'Show upload and download speeds next to the menu bar icon',
+      name: 'enableTraySpeedDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Tray Settings`
+  String get traySettings {
+    return Intl.message(
+      'Tray Settings',
+      name: 'traySettings',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Configure the tray menu, speed display, and click behavior`
+  String get traySettingsDesc {
+    return Intl.message(
+      'Configure the tray menu, speed display, and click behavior',
+      name: 'traySettingsDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Tray Click Behavior (Left and Right)`
+  String get trayClickBehavior {
+    return Intl.message(
+      'Tray Click Behavior (Left and Right)',
+      name: 'trayClickBehavior',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show Panel`
+  String get showPanel {
+    return Intl.message('Show Panel', name: 'showPanel', desc: '', args: []);
+  }
+
+  /// `Show Menu`
+  String get showMenu {
+    return Intl.message('Show Menu', name: 'showMenu', desc: '', args: []);
+  }
+
+  /// `Show Hidden Items`
+  String get showHiddenItems {
+    return Intl.message(
+      'Show Hidden Items',
+      name: 'showHiddenItems',
       desc: '',
       args: [],
     );
@@ -2177,6 +2227,11 @@ class AppLocalizations {
   /// `Start Test`
   String get startTest {
     return Intl.message('Start Test', name: 'startTest', desc: '', args: []);
+  }
+
+  /// `Testing`
+  String get testing {
+    return Intl.message('Testing', name: 'testing', desc: '', args: []);
   }
 
   /// `Add Profile`

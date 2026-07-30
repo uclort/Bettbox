@@ -609,8 +609,8 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         ),
       ),
       _SearchItem(
-        title: appLocalizations.trayEnhancement,
-        subtitle: appLocalizations.trayEnhancementDesc,
+        title: appLocalizations.traySettings,
+        subtitle: appLocalizations.traySettingsDesc,
         category: otherSettingsCategory,
         onTap: (context, _) => _pushPage(
           context,

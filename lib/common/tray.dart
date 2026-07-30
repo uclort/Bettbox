@@ -28,11 +28,19 @@ class Tray {
 
   bool _isTesting = false;
   String? _testingGroupId;
+  bool _traySpeedEnabled = false;
+  bool _trayTrafficActive = false;
+  bool _isSpeedTitleVisible = false;
+  Traffic _lastTraffic = Traffic();
+  int? _lastDisplayedUpload;
+  int? _lastDisplayedDownload;
+  bool? _lastDisplayedActive;
 
   void dispose() {
     _debounceTimer?.cancel();
     _loadingTimer?.cancel();
   }
+
   Future _updateSystemTray({
     required Brightness? brightness,
     required bool isStart,
@@ -43,6 +51,10 @@ class Tray {
     }
     if (force) {
       await trayManager.destroy();
+      _isSpeedTitleVisible = false;
+      _lastDisplayedUpload = null;
+      _lastDisplayedDownload = null;
+      _lastDisplayedActive = null;
     }
     await trayManager.setIcon(
       utils.getTrayIconPath(
@@ -55,6 +67,9 @@ class Tray {
       ),
       isTemplate: system.isMacOS,
     );
+    if (system.isMacOS) {
+      await trayManager.setActive(isStart);
+    }
     if (!Platform.isLinux) {
       await trayManager.setToolTip(appName);
     }
@@ -96,57 +111,67 @@ class Tray {
     required TrayState trayState,
     bool focus = false,
     bool silent = false,
+    List<Group>? groupsOverride,
   }) async {
     if (_isUpdating) return;
     _isUpdating = true;
 
     try {
+      _traySpeedEnabled = trayState.enableTraySpeed;
+      _trayTrafficActive =
+          trayState.isStart && (trayState.systemProxy || trayState.tunEnable);
       if (!silent && !Platform.isLinux) {
         await _updateSystemTray(
           brightness: trayState.brightness,
-          isStart: trayState.isStart,
+          isStart: _trayTrafficActive,
           force: focus,
         );
       }
-    List<MenuItem> menuItems = [];
-    final showMenuItem = MenuItem(
-      label: appLocalizations.show,
-      onClick: (_) {
-        window?.show();
-      },
-    );
-    menuItems.add(showMenuItem);
-    final startMenuItem = MenuItem.checkbox(
-      label: trayState.isStart ? appLocalizations.stop : appLocalizations.start,
-      onClick: (_) async {
-        globalState.appController.updateStart();
-      },
-      checked: false,
-    );
-    menuItems.add(startMenuItem);
-    menuItems.add(MenuItem.separator());
-    for (final mode in Mode.values) {
-      menuItems.add(
-        MenuItem.checkbox(
-          label: Intl.message(mode.name),
-          onClick: (_) {
-            globalState.appController.changeMode(mode);
-          },
-          checked: mode == trayState.mode,
-        ),
+      if (system.isMacOS) {
+        await _syncSpeedTitle(isStart: trayState.isStart);
+      }
+      final menuGroups = groupsOverride ?? trayState.groups;
+      List<MenuItem> menuItems = [];
+      final showMenuItem = MenuItem(
+        label: appLocalizations.show,
+        onClick: (_) {
+          window?.show();
+        },
       );
-    }
-    menuItems.add(MenuItem.separator());
-    if (trayState.trayEnhancement) {
-      for (final group in trayState.groups) {
+      menuItems.add(showMenuItem);
+      final startMenuItem = MenuItem.checkbox(
+        label: trayState.isStart
+            ? appLocalizations.stop
+            : appLocalizations.start,
+        onClick: (_) async {
+          globalState.appController.updateStart();
+        },
+        checked: false,
+      );
+      menuItems.add(startMenuItem);
+      menuItems.add(MenuItem.separator());
+      for (final mode in Mode.values) {
+        menuItems.add(
+          MenuItem.checkbox(
+            label: Intl.message(mode.name),
+            onClick: (_) {
+              globalState.appController.changeMode(mode);
+            },
+            checked: mode == trayState.mode,
+          ),
+        );
+      }
+      menuItems.add(MenuItem.separator());
+      for (final group in menuGroups) {
         List<MenuItem> subMenuItems = [];
 
         final isTestingThisGroup = _isTesting && _testingGroupId == group.name;
 
         subMenuItems.add(
           MenuItem(
+            key: 'persistent-delay-test',
             label: isTestingThisGroup
-                ? '⚡ ${appLocalizations.startTest}...'
+                ? '${appLocalizations.testing}...'
                 : '⚡ ${appLocalizations.startTest}',
             disabled: _isTesting,
             onClick: (_) => _testGroupDelay(group),
@@ -170,7 +195,11 @@ class Tray {
             MenuItem.checkbox(
               label: proxy.name,
               sublabel: _formatProxySublabel(delay),
-              checked: group.getCurrentSelectedName(trayState.selectedMap[group.name] ?? '') == proxy.name,
+              checked:
+                  group.getCurrentSelectedName(
+                    trayState.selectedMap[group.name] ?? '',
+                  ) ==
+                  proxy.name,
               onClick: (_) {
                 final appController = globalState.appController;
                 appController.updateCurrentSelectedMap(group.name, proxy.name);
@@ -189,96 +218,95 @@ class Tray {
           ),
         );
       }
-      if (trayState.groups.isNotEmpty) {
+      if (menuGroups.isNotEmpty) {
         menuItems.add(MenuItem.separator());
       }
-    }
-    if (trayState.isStart) {
-      menuItems.add(
-        MenuItem.checkbox(
-          label: appLocalizations.tun,
-          onClick: (_) {
-            globalState.appController.updateTun();
-          },
-          checked: trayState.tunEnable,
-        ),
-      );
-      menuItems.add(
-        MenuItem.checkbox(
-          label: appLocalizations.systemProxy,
-          onClick: (_) {
-            globalState.appController.updateSystemProxy();
-          },
-          checked: trayState.systemProxy,
-        ),
-      );
-      menuItems.add(MenuItem.separator());
-    }
-    final restartMenuItem = MenuItem(
-      label: appLocalizations.restartApp,
-      onClick: (_) async {
-        await Restart.restartApp();
-      },
-    );
-    menuItems.add(restartMenuItem);
-
-    final List<MenuItem> moreMenuItems = [
-      MenuItem.checkbox(
-        label: appLocalizations.autoLaunch,
+      if (trayState.isStart) {
+        menuItems.add(
+          MenuItem.checkbox(
+            label: appLocalizations.tun,
+            onClick: (_) {
+              globalState.appController.updateTun();
+            },
+            checked: trayState.tunEnable,
+          ),
+        );
+        menuItems.add(
+          MenuItem.checkbox(
+            label: appLocalizations.systemProxy,
+            onClick: (_) {
+              globalState.appController.updateSystemProxy();
+            },
+            checked: trayState.systemProxy,
+          ),
+        );
+        menuItems.add(MenuItem.separator());
+      }
+      final restartMenuItem = MenuItem(
+        label: appLocalizations.restartApp,
         onClick: (_) async {
-          globalState.appController.updateAutoLaunch();
+          await Restart.restartApp();
         },
-        checked: trayState.autoLaunch,
-      ),
-      _buildCopyEnvSubmenu(trayState.port),
-      MenuItem(
-        label: appLocalizations.restartCoreTitle,
-        onClick: (_) async {
-          await globalState.appController.restartCore();
-        },
-      ),
-    ];
+      );
+      menuItems.add(restartMenuItem);
 
-    if (!system.isAndroid) {
-      moreMenuItems.add(
+      final List<MenuItem> moreMenuItems = [
         MenuItem.checkbox(
-          label: appLocalizations.wakelock,
+          label: appLocalizations.autoLaunch,
           onClick: (_) async {
-            await _toggleWakelock(trayState.wakelockEnabled);
+            globalState.appController.updateAutoLaunch();
           },
-          checked: trayState.wakelockEnabled,
+          checked: trayState.autoLaunch,
+        ),
+        _buildCopyEnvSubmenu(trayState.port),
+        MenuItem(
+          label: appLocalizations.restartCoreTitle,
+          onClick: (_) async {
+            await globalState.appController.restartCore();
+          },
+        ),
+      ];
+
+      if (!system.isAndroid) {
+        moreMenuItems.add(
+          MenuItem.checkbox(
+            label: appLocalizations.wakelock,
+            onClick: (_) async {
+              await _toggleWakelock(trayState.wakelockEnabled);
+            },
+            checked: trayState.wakelockEnabled,
+          ),
+        );
+      }
+
+      menuItems.add(
+        MenuItem.submenu(
+          label: appLocalizations.tools,
+          submenu: Menu(items: moreMenuItems),
         ),
       );
-    }
 
-    menuItems.add(
-      MenuItem.submenu(
-        label: appLocalizations.tools,
-        submenu: Menu(items: moreMenuItems),
-      ),
-    );
-
-    menuItems.add(MenuItem.separator());
-    final exitMenuItem = MenuItem(
-      label: appLocalizations.exit,
-      onClick: (_) async {
-        await globalState.appController.handleExit();
-      },
-    );
-    menuItems.add(exitMenuItem);
-    final menu = Menu(items: menuItems);
-    await trayManager.setContextMenu(
-      menu,
-      keepMenuOpen: silent,
-      brightness: trayState.brightness,
-    );
-    if (Platform.isLinux) {
-      await _updateSystemTray(
-        brightness: trayState.brightness,
-        isStart: trayState.isStart,
-        force: focus,
+      menuItems.add(MenuItem.separator());
+      final exitMenuItem = MenuItem(
+        label: appLocalizations.exit,
+        onClick: (_) async {
+          await globalState.appController.handleExit();
+        },
       );
-    }
+      menuItems.add(exitMenuItem);
+      final menu = Menu(items: menuItems);
+      await trayManager.setContextMenu(
+        menu,
+        keepMenuOpen: silent,
+        brightness: trayState.brightness,
+      );
+      if (Platform.isLinux) {
+        await _updateSystemTray(
+          brightness: trayState.brightness,
+          isStart: _trayTrafficActive,
+          force: focus,
+        );
+      }
     } finally {
       _isUpdating = false;
 
@@ -296,6 +324,70 @@ class Tray {
         );
       }
     }
+  }
+
+  Future<void> showContextMenu({
+    required TrayState trayState,
+    required bool includeHiddenItems,
+  }) async {
+    _debounceTimer?.cancel();
+    while (_isUpdating) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    await _doUpdate(
+      trayState: trayState,
+      groupsOverride: includeHiddenItems
+          ? trayState.allGroups
+          : trayState.groups,
+    );
+    await trayManager.popUpContextMenu();
+  }
+
+  Future<void> updateSpeed(Traffic traffic) async {
+    _lastTraffic = traffic;
+    if (!system.isMacOS || !_traySpeedEnabled) {
+      return;
+    }
+    await _setSpeedTitle(traffic);
+  }
+
+  Future<void> _syncSpeedTitle({required bool isStart}) async {
+    if (!_traySpeedEnabled) {
+      if (!_isSpeedTitleVisible) {
+        return;
+      }
+      await trayManager.clearSpeedTitle();
+      _isSpeedTitleVisible = false;
+      _lastDisplayedUpload = null;
+      _lastDisplayedDownload = null;
+      _lastDisplayedActive = null;
+      return;
+    }
+
+    if (!isStart) {
+      _lastTraffic = Traffic();
+    }
+    await _setSpeedTitle(_lastTraffic);
+  }
+
+  Future<void> _setSpeedTitle(Traffic traffic) async {
+    final upload = traffic.up.value;
+    final download = traffic.down.value;
+    if (_isSpeedTitleVisible &&
+        _lastDisplayedUpload == upload &&
+        _lastDisplayedDownload == download &&
+        _lastDisplayedActive == _trayTrafficActive) {
+      return;
+    }
+    await trayManager.setSpeedTitle(
+      upload: upload,
+      download: download,
+      active: _trayTrafficActive,
+    );
+    _isSpeedTitleVisible = true;
+    _lastDisplayedUpload = upload;
+    _lastDisplayedDownload = download;
+    _lastDisplayedActive = _trayTrafficActive;
   }
 
   MenuItem _buildCopyEnvSubmenu(int port) {
@@ -327,7 +419,8 @@ class Tray {
 
   Future<void> _copyEnvPowerShell(int port) async {
     final url = 'http://127.0.0.1:$port';
-    final cmd = '\$env:http_proxy="$url"\n'
+    final cmd =
+        '\$env:http_proxy="$url"\n'
         '\$env:https_proxy="$url"\n'
         '\$env:all_proxy="$url"';
     await Clipboard.setData(ClipboardData(text: cmd));
@@ -335,7 +428,8 @@ class Tray {
 
   Future<void> _copyEnvCmd(int port) async {
     final url = 'http://127.0.0.1:$port';
-    final cmd = 'set http_proxy=$url\n'
+    final cmd =
+        'set http_proxy=$url\n'
         'set https_proxy=$url\n'
         'set all_proxy=$url';
     await Clipboard.setData(ClipboardData(text: cmd));
@@ -343,7 +437,8 @@ class Tray {
 
   Future<void> _copyEnvBash(int port) async {
     final url = 'http://127.0.0.1:$port';
-    final cmd = 'export http_proxy=$url\n'
+    final cmd =
+        'export http_proxy=$url\n'
         'export https_proxy=$url\n'
         'export all_proxy=$url';
     await Clipboard.setData(ClipboardData(text: cmd));
@@ -351,7 +446,8 @@ class Tray {
 
   Future<void> _copyEnvFish(int port) async {
     final url = 'http://127.0.0.1:$port';
-    final cmd = 'set -gx http_proxy $url\n'
+    final cmd =
+        'set -gx http_proxy $url\n'
         'set -gx https_proxy $url\n'
         'set -gx all_proxy $url';
     await Clipboard.setData(ClipboardData(text: cmd));

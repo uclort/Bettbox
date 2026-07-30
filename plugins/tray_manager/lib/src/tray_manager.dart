@@ -42,6 +42,10 @@ class TrayManager {
 
   bool get isMenuOpen => _isMenuOpen;
 
+  bool _isOptionKeyPressed = false;
+
+  bool get isOptionKeyPressed => _isOptionKeyPressed;
+
   Map<String, dynamic> _menuToJson(Menu menu) {
     return {
       'items': menu.items?.map(_menuItemToJson).toList(),
@@ -72,6 +76,9 @@ class TrayManager {
       return;
     }
 
+    final arguments = call.arguments;
+    _isOptionKeyPressed =
+        arguments is Map && arguments['optionKeyPressed'] == true;
     for (final TrayListener listener in _listeners) {
       switch (call.method) {
         case kEventOnTrayIconMouseDown:
@@ -209,6 +216,30 @@ class TrayManager {
       'title': title,
     };
     await _channel.invokeMethod('setTitle', arguments);
+  }
+
+  /// 在 macOS 菜单栏图标右侧显示两行上传和下载速率。
+  Future<void> setSpeedTitle({
+    required int upload,
+    required int download,
+    bool active = true,
+  }) async {
+    final Map<String, dynamic> arguments = {
+      'upload': upload,
+      'download': download,
+      'active': active,
+    };
+    await _channel.invokeMethod('setSpeedTitle', arguments);
+  }
+
+  /// 设置 macOS 菜单栏图标是否处于正在接管系统流量的状态。
+  Future<void> setActive(bool active) async {
+    await _channel.invokeMethod('setActive', {'active': active});
+  }
+
+  /// 清除 macOS 菜单栏图标右侧的速率。
+  Future<void> clearSpeedTitle() async {
+    await _channel.invokeMethod('clearSpeedTitle');
   }
 
   /// Sets the context menu for this icon.

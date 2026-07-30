@@ -57,8 +57,14 @@
   "networkSpeedNotificationDesc": "在通知栏显示当前网速和订阅信息",
   "alwaysShowTitleBar": "标题按钮",
   "alwaysShowTitleBarDesc": "始终显示右上角的标题栏按钮",
-  "trayEnhancement": "托盘增强",
-  "trayEnhancementDesc": "在托盘区右键菜单中控制代理组",
+  "enableTraySpeed": "启用托盘速率",
+  "enableTraySpeedDesc": "在菜单栏图标右侧显示上传和下载速率",
+  "traySettings": "托盘设置",
+  "traySettingsDesc": "设置托盘菜单、速率显示和点击行为",
+  "trayClickBehavior": "托盘点击行为（左键与右键）",
+  "showPanel": "显示面板",
+  "showMenu": "显示菜单",
+  "showHiddenItems": "显示隐藏项",
   "excludeChina": "排除国内",
   "excludeChinaDesc": "放行中国QUIC流量而非全部禁用",
   "fcmOptimization": "FCM优化",
@@ -263,6 +269,7 @@
   "paste": "粘贴",
   "testUrl": "测试链接",
   "startTest": "延迟测试",
+  "testing": "测试中",
   "addProfile": "添加配置",
   "customUrl": "自定义URL",
   "sync": "同步",
@@ -658,4 +665,3 @@
   "agePrivateKeyRequired": "请先输入正确的Age 私钥",
   "lineWrap": "自动换行"
 }
-
