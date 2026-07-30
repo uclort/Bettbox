@@ -165,6 +165,32 @@ class AppController {
     return _coreLifecycleLock.synchronized(() => _updateStatus(isStart));
   }
 
+  Future<void> handleMacOSNetworkChange(MacOSNetworkState networkState) {
+    return _coreLifecycleLock.synchronized(() async {
+      final isStart = _ref.read(runTimeProvider.notifier).isStart;
+      final dnsState = _ref.read(autoSetSystemDnsStateProvider);
+      final shouldSetSystemDns = dnsState.a && dnsState.b;
+
+      if (isStart) {
+        await clashCore.closeConnections();
+      }
+
+      await macOS?.updateDns(
+        !shouldSetSystemDns,
+        serviceName: networkState.serviceName,
+      );
+
+      if (!isStart) return;
+
+      await clashCore.flushDnsCache();
+      await clashCore.flushFakeIP();
+
+      if (dnsState.a) {
+        await _updateClashConfig();
+      }
+    });
+  }
+
   Future<void> _updateStatus(bool isStart) async {
     if (isStart) {
       await _fastStart();
