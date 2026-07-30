@@ -299,8 +299,9 @@ jobs:
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
-          cache: ${{ matrix.platform != 'android' }}
-          cache-key: flutter-${{ matrix.platform }}-${{ matrix.arch }}-${{ hashFiles('pubspec.lock') }}
+          cache: true
+          pub-cache: ${{ matrix.platform != 'android' }}
+          cache-key: flutter-sdk-${{ runner.os }}-${{ env.FLUTTER_VERSION }}-${{ runner.arch }}
 
       - name: 获取 Flutter 依赖并生成代码
         shell: bash
