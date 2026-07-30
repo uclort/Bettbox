@@ -30,6 +30,28 @@ import 'common/flclash_database_extractor.dart';
 import 'models/models.dart';
 import 'views/profiles/override_profile.dart';
 
+@visibleForTesting
+Future<bool> runMacOSTunStartup({
+  required Future<Result<bool>> Function() requestAdmin,
+  required Future<void> Function() restartCore,
+  required Future<void> Function() applyTunConfig,
+  required Future<void> Function() startListener,
+}) async {
+  final result = await requestAdmin();
+  if (result.isError) {
+    return false;
+  }
+
+  if (result.needRestart) {
+    await restartCore();
+  } else {
+    await applyTunConfig();
+  }
+
+  await startListener();
+  return true;
+}
+
 class AppController {
   int? lastProfileModified;
 
@@ -230,34 +252,32 @@ class AppController {
     final isDesktop = system.isDesktop;
 
     if (isDesktop && patchConfig.tun.enable) {
-      await _quickSetupConfig(enableTun: false);
+      final setupResult = await _quickSetupConfig(enableTun: false);
+      if (setupResult != true) {
+        commonPrint.log('Fast start aborted: initial TUN setup failed');
+        return;
+      }
 
       if (system.isMacOS) {
         try {
-          final res = await _requestAdmin(true);
-          if (res.needRestart) {
-            await restartCore();
+          final started = await runMacOSTunStartup(
+            requestAdmin: () => _requestAdmin(true),
+            restartCore: restartCore,
+            applyTunConfig: _updateClashConfig,
+            startListener: () =>
+                globalState.handleStart([updateRunTime, updateTraffic]),
+          );
+          if (!started) {
+            commonPrint.log(
+              'Fast start aborted: macOS TUN authorization failed',
+            );
             return;
           }
-          await globalState.handleStart([updateRunTime, updateTraffic]);
-          await updateProviders();
-          if (!res.isError) {
-            Future.microtask(() async {
-              try {
-                await _updateClashConfig();
-              } catch (e) {
-                commonPrint.log('FastStart macOS TUN update failed: $e');
-              }
-              _backgroundLoad();
-            });
-          } else {
-            _backgroundLoad();
-          }
-        } catch (e) {
-          commonPrint.log('FastStart macOS auth error: $e');
-          await globalState.handleStart([updateRunTime, updateTraffic]);
           await updateProviders();
           _backgroundLoad();
+        } catch (e) {
+          commonPrint.log('FastStart macOS TUN startup failed: $e');
+          rethrow;
         }
         _scheduleCheckIpRefresh();
         return;
