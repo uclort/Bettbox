@@ -24,7 +24,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   FLUTTER_VERSION: 3.44.6
   GO_VERSION: 1.25.x
-  GRADLE_OPTS: -Dorg.gradle.vfs.watch=false
+  GRADLE_OPTS: -Dorg.gradle.vfs.watch=false -Dorg.gradle.daemon=false -Dorg.gradle.caching=false
   SENTRY_BACKEND: none
 
 jobs:
@@ -228,10 +228,30 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-          cache: gradle
-          cache-dependency-path: |
-            android/*.gradle*
-            android/**/gradle-wrapper.properties
+
+      - name: 隔离 Android 临时缓存并检查磁盘
+        if: matrix.platform == 'android'
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle_home="${RUNNER_TEMP}/bettbox-gradle"
+          pub_cache="${RUNNER_TEMP}/bettbox-pub-cache"
+          mkdir -p "${gradle_home}" "${pub_cache}"
+          {
+            echo "GRADLE_USER_HOME=${gradle_home}"
+            echo "PUB_CACHE=${pub_cache}"
+            echo "CARGO_INCREMENTAL=0"
+          } >> "${GITHUB_ENV}"
+
+          available_kb="$(
+            df -Pk "${GITHUB_WORKSPACE}" | awk 'NR == 2 { print $4 }'
+          )"
+          required_kb=$((10 * 1024 * 1024))
+          df -h "${GITHUB_WORKSPACE}"
+          if [[ "${available_kb}" -lt "${required_kb}" ]]; then
+            echo "Android 构建前可用空间不足 10 GiB，停止构建以避免缓存写满磁盘。" >&2
+            exit 1
+          fi
 
       - name: 安装 Android NDK
         if: matrix.platform == 'android'
@@ -331,6 +351,20 @@ jobs:
           if-no-files-found: error
           compression-level: 9
           retention-days: 30
+
+      - name: 清理 Android 临时构建数据
+        if: always() && matrix.platform == 'android'
+        shell: bash
+        run: |
+          set -euo pipefail
+          df -h "${GITHUB_WORKSPACE}"
+          rm -rf -- \
+            "${RUNNER_TEMP}/bettbox-gradle" \
+            "${RUNNER_TEMP}/bettbox-pub-cache" \
+            "${GITHUB_WORKSPACE}/build" \
+            "${GITHUB_WORKSPACE}/.dart_tool" \
+            "${GITHUB_WORKSPACE}/android/.gradle"
+          df -h "${GITHUB_WORKSPACE}"
 
   release:
     name: 发布三端安装包
