@@ -77,3 +77,10 @@ app.*.map.json
 # FVM Version Cache
 .fvm/
 .fvmrc
+
+# 自定义打包运行时会在此检出私有 Mihomo，不提交到公开仓库
+/.custom-build/runtime/
+
+# custom-build 分支需要提交自定义构建说明
+!/.custom-build/
+!/.custom-build/**/*.md

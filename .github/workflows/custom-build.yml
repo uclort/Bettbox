@@ -1,0 +1,428 @@
+name: 使用自定义 Mihomo 构建 Bettbox
+
+on:
+  push:
+    branches:
+      - custom-build
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 忽略已有 Release，强制重新构建
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: custom-mihomo-${{ github.sha }}
+  cancel-in-progress: false
+
+env:
+  CUSTOM_MIHOMO_REPOSITORY: uclort/custom-mihomo
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  FLUTTER_VERSION: 3.44.6
+  GO_VERSION: 1.25.x
+  GRADLE_OPTS: -Dorg.gradle.vfs.watch=false
+  SENTRY_BACKEND: none
+
+jobs:
+  inspect:
+    name: 检查源码版本
+    runs-on: ubuntu-24.04
+    outputs:
+      ready: ${{ steps.meta.outputs.ready }}
+      release_tag: ${{ steps.meta.outputs.release_tag }}
+      upstream_sha: ${{ steps.meta.outputs.upstream_sha }}
+      kernel_sha: ${{ steps.meta.outputs.kernel_sha }}
+      app_version: ${{ steps.meta.outputs.app_version }}
+      custom_mihomo_commit: ${{ steps.source.outputs.commit }}
+
+    steps:
+      - name: 检出 Bettbox 打包分支
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: 读取私有 Mihomo 提交
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          commit="$(tr -d '[:space:]' < .custom-build/metadata/custom-mihomo-commit)"
+          if [[ ! "${commit}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "私有 Mihomo commit 无效：${commit:-未配置}" >&2
+            exit 1
+          fi
+          echo "commit=${commit}" >> "${GITHUB_OUTPUT}"
+
+      - name: 检出私有自定义 Mihomo
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ env.CUSTOM_MIHOMO_REPOSITORY }}
+          ref: ${{ steps.source.outputs.commit }}
+          path: .custom-build/runtime/custom-mihomo
+          fetch-depth: 1
+          ssh-key: ${{ secrets.CUSTOM_MIHOMO_READ_KEY }}
+
+      - name: 校验自定义内核并生成版本
+        id: meta
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE_BUILD: ${{ github.event_name == 'workflow_dispatch' && inputs.force || false }}
+        run: |
+          set -euo pipefail
+
+          if [[ ! -f .custom-build/runtime/custom-mihomo/source/go.mod ]]; then
+            echo "ready=false" >> "${GITHUB_OUTPUT}"
+            {
+              echo "## 暂不构建"
+              echo
+              echo "私有仓库中尚未检测到 \`source/go.mod\`。"
+            } >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+
+          module_name="$(
+            awk '$1 == "module" { print $2; exit }' \
+              .custom-build/runtime/custom-mihomo/source/go.mod
+          )"
+          if [[ "${module_name}" != "github.com/metacubex/mihomo" ]]; then
+            echo "自定义内核模块名错误：${module_name:-未声明}" >&2
+            echo "必须为：github.com/metacubex/mihomo" >&2
+            exit 1
+          fi
+
+          upstream_sha="$(git rev-parse HEAD)"
+          kernel_sha="$(
+            git -C .custom-build/runtime/custom-mihomo rev-parse HEAD:source
+          )"
+          app_version="$(awk '$1 == "version:" { print $2; exit }' pubspec.yaml)"
+
+          if [[ -z "${upstream_sha}" || -z "${kernel_sha}" || -z "${app_version}" ]]; then
+            echo "无法读取构建版本信息。" >&2
+            exit 1
+          fi
+
+          release_tag="custom-v${app_version}-${upstream_sha:0:12}-${kernel_sha:0:12}"
+          if [[ "${FORCE_BUILD}" == "true" ]]; then
+            release_tag="${release_tag}-r${GITHUB_RUN_ID}"
+          elif gh release view "${release_tag}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            echo "ready=false" >> "${GITHUB_OUTPUT}"
+            {
+              echo "## 无需重复构建"
+              echo
+              echo "当前 Bettbox 与自定义内核组合已经发布：\`${release_tag}\`"
+            } >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+
+          {
+            echo "ready=true"
+            echo "release_tag=${release_tag}"
+            echo "upstream_sha=${upstream_sha}"
+            echo "kernel_sha=${kernel_sha}"
+            echo "app_version=${app_version}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: 显示构建摘要
+        if: steps.meta.outputs.ready == 'true'
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ steps.meta.outputs.release_tag }}
+          UPSTREAM_SHA: ${{ steps.meta.outputs.upstream_sha }}
+          KERNEL_SHA: ${{ steps.meta.outputs.kernel_sha }}
+        run: |
+          {
+            echo "## 准备并行构建"
+            echo
+            echo "- Release：\`${RELEASE_TAG}\`"
+            echo "- Bettbox custom-build：\`${UPSTREAM_SHA}\`"
+            echo "- 自定义 Mihomo 源码树：\`${KERNEL_SHA}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+  build:
+    name: ${{ matrix.name }}
+    needs: inspect
+    if: needs.inspect.outputs.ready == 'true'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Android Pixel 6a (arm64-v8a)
+            platform: android
+            arch: arm64
+            os: ubuntu-24.04
+            artifact: Bettbox-Android-arm64-v8a
+          - name: Windows x64
+            platform: windows
+            arch: amd64
+            os: windows-2022
+            artifact: Bettbox-Windows-x64
+          - name: macOS Apple Silicon
+            platform: macos
+            arch: arm64
+            os: macos-15
+            artifact: Bettbox-macOS-arm64
+          - name: macOS Intel
+            platform: macos
+            arch: amd64
+            os: macos-15
+            artifact: Bettbox-macOS-amd64
+
+    steps:
+      - name: 检出 Bettbox 打包分支提交
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.inspect.outputs.upstream_sha }}
+          fetch-depth: 1
+
+      - name: 检出私有自定义 Mihomo
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ env.CUSTOM_MIHOMO_REPOSITORY }}
+          ref: ${{ needs.inspect.outputs.custom_mihomo_commit }}
+          path: .custom-build/runtime/custom-mihomo
+          fetch-depth: 1
+          ssh-key: ${{ secrets.CUSTOM_MIHOMO_READ_KEY }}
+
+      - name: 强制替换为自定义 Mihomo
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x .custom-build/scripts/use-custom-mihomo.sh
+          .custom-build/scripts/use-custom-mihomo.sh \
+            . \
+            .custom-build/runtime/custom-mihomo/source
+
+      - name: 配置 Windows 长路径
+        if: matrix.platform == 'windows'
+        shell: bash
+        run: git config --global core.longpaths true
+
+      - name: 配置 Rust（Android）
+        if: matrix.platform == 'android'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android,i686-linux-android
+
+      - name: 配置 Rust（Windows）
+        if: matrix.platform == 'windows'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: 配置 Rust（macOS）
+        if: matrix.platform == 'macos'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.arch == 'amd64' && 'x86_64-apple-darwin' || 'aarch64-apple-darwin' }}
+
+      - name: 配置 Java
+        if: matrix.platform == 'android'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+          cache-dependency-path: |
+            android/*.gradle*
+            android/**/gradle-wrapper.properties
+
+      - name: 安装 Android NDK
+        if: matrix.platform == 'android'
+        shell: bash
+        run: |
+          set -euo pipefail
+          ndk_version="28.2.13676358"
+          set +o pipefail
+          yes | "${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager" \
+            --install "ndk;${ndk_version}" >/dev/null
+          sdk_status="${PIPESTATUS[1]}"
+          set -o pipefail
+          if [[ "${sdk_status}" -ne 0 ]]; then
+            echo "Android NDK 安装失败，sdkmanager 退出码：${sdk_status}" >&2
+            exit "${sdk_status}"
+          fi
+          echo "ANDROID_NDK=${ANDROID_SDK_ROOT}/ndk/${ndk_version}" >> "${GITHUB_ENV}"
+
+      - name: 配置 Android Rust 链接器
+        if: matrix.platform == 'android'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "${HOME}/.cargo"
+          {
+            echo '[target.aarch64-linux-android]'
+            echo "linker = \"${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android26-clang\""
+            echo '[target.armv7-linux-androideabi]'
+            echo "linker = \"${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi26-clang\""
+            echo '[target.x86_64-linux-android]'
+            echo "linker = \"${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android26-clang\""
+            echo '[target.i686-linux-android]'
+            echo "linker = \"${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android26-clang\""
+          } > "${HOME}/.cargo/config.toml"
+
+      - name: 配置 Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: ${{ matrix.platform != 'android' }}
+          cache-dependency-path: core/go.sum
+
+      - name: 配置 Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: ${{ matrix.platform != 'android' }}
+          cache-key: flutter-${{ matrix.platform }}-${{ matrix.arch }}-${{ hashFiles('pubspec.lock') }}
+
+      - name: 获取 Flutter 依赖并生成代码
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter pub get
+          dart run build_runner build -d
+
+      - name: 构建 Android arm64-v8a
+        if: matrix.platform == 'android'
+        shell: bash
+        run: dart setup.dart android --arch arm64 --env stable
+
+      - name: 构建 Windows x64
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          dart setup.dart windows --arch amd64 --out core-only
+          $coreHash = (Get-FileHash libclash/windows/BettboxCore.exe -Algorithm SHA256).Hash.ToLower()
+          dart setup.dart windows --arch amd64 --out helper --core-hash $coreHash
+          flutter build windows --release --verbose `
+            --dart-define=CORE_SHA256=$coreHash `
+            --dart-define=APP_ENV=stable `
+            --dart-define=APP_ASSET_SUFFIX=windows-amd64-setup.exe
+          dart windows/packaging/exe/package_windows.dart --arch amd64 --env stable
+
+      - name: 构建 macOS
+        if: matrix.platform == 'macos'
+        shell: bash
+        run: dart setup.dart macos --arch ${{ matrix.arch }} --env stable
+
+      - name: 检查构建产物
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -d dist ]] || [[ -z "$(find dist -type f -print -quit)" ]]; then
+            echo "错误：dist 目录中没有构建产物。" >&2
+            exit 1
+          fi
+          find dist -type f -maxdepth 2 -print
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/**
+          if-no-files-found: error
+          compression-level: 9
+          retention-days: 30
+
+  release:
+    name: 发布三端安装包
+    needs:
+      - inspect
+      - build
+    if: needs.inspect.outputs.ready == 'true'
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: 检出 Bettbox 打包分支提交
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.inspect.outputs.upstream_sha }}
+          fetch-depth: 1
+
+      - name: 检出对应的私有 Mihomo 源码
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ env.CUSTOM_MIHOMO_REPOSITORY }}
+          ref: ${{ needs.inspect.outputs.custom_mihomo_commit }}
+          path: .custom-build/runtime/custom-mihomo
+          fetch-depth: 1
+          ssh-key: ${{ secrets.CUSTOM_MIHOMO_READ_KEY }}
+
+      - name: 下载所有平台产物
+        uses: actions/download-artifact@v8
+        with:
+          path: release-assets
+          pattern: Bettbox-*
+
+      - name: 打包对应的自定义 Mihomo 源码
+        shell: bash
+        env:
+          KERNEL_SHA: ${{ needs.inspect.outputs.kernel_sha }}
+        run: |
+          set -euo pipefail
+          source_archive="release-assets/custom-mihomo-source-${KERNEL_SHA:0:12}.tar.gz"
+          tar \
+            --exclude='.git' \
+            -czf "${source_archive}" \
+            -C .custom-build/runtime/custom-mihomo \
+            .
+
+      - name: 创建 Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.inspect.outputs.release_tag }}
+          APP_VERSION: ${{ needs.inspect.outputs.app_version }}
+          UPSTREAM_SHA: ${{ needs.inspect.outputs.upstream_sha }}
+          KERNEL_SHA: ${{ needs.inspect.outputs.kernel_sha }}
+        run: |
+          set -euo pipefail
+          mapfile -d '' assets < <(find release-assets -type f -print0)
+          if [[ "${#assets[@]}" -eq 0 ]]; then
+            echo "错误：没有可发布的构建产物。" >&2
+            exit 1
+          fi
+
+          if [[ ! -f .custom-build/release-notes/CUSTOM_CHANGES.md ]]; then
+            echo "错误：缺少 Bettbox 自定义改动说明。" >&2
+            exit 1
+          fi
+          custom_changes="$(<.custom-build/release-notes/CUSTOM_CHANGES.md)"
+
+          notes="Bettbox ${APP_VERSION} 自定义 Mihomo 自动构建。
+
+          ${custom_changes}
+
+          ## 构建信息
+
+          Bettbox custom-build commit：${UPSTREAM_SHA}
+          自定义 Mihomo 源码树：${KERNEL_SHA}
+
+          Release 同时附带本次构建对应的自定义 Mihomo 完整源码归档及许可证。
+
+          Windows 与 macOS 安装包未做商业代码签名；Android 未配置私有签名时使用项目 debug 签名。"
+
+          gh release create "${RELEASE_TAG}" "${assets[@]}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --target "${UPSTREAM_SHA}" \
+            --title "Bettbox ${APP_VERSION} 自定义 Mihomo" \
+            --notes "${notes}"
+
+      - name: 写入发布摘要
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ needs.inspect.outputs.release_tag }}
+        run: |
+          {
+            echo "## 三端构建已发布"
+            echo
+            echo "Release：\`${RELEASE_TAG}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
