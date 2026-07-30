@@ -170,23 +170,35 @@ class AppController {
       final isStart = _ref.read(runTimeProvider.notifier).isStart;
       final dnsState = _ref.read(autoSetSystemDnsStateProvider);
       final shouldSetSystemDns = dnsState.a && dnsState.b;
+      final shouldRestartTunListener = isStart && dnsState.a;
 
-      if (isStart) {
-        await clashCore.closeConnections();
-      }
+      try {
+        if (shouldRestartTunListener) {
+          commonPrint.log('Rebuilding macOS TUN after network change');
+          await clashCore.stopListener();
+        }
 
-      await macOS?.updateDns(
-        !shouldSetSystemDns,
-        serviceName: networkState.serviceName,
-      );
+        if (isStart) {
+          await clashCore.closeConnections();
+        }
 
-      if (!isStart) return;
+        await macOS?.updateDns(
+          !shouldSetSystemDns,
+          serviceName: networkState.serviceName,
+        );
 
-      await clashCore.flushDnsCache();
-      await clashCore.flushFakeIP();
+        if (!isStart) return;
 
-      if (dnsState.a) {
-        await _updateClashConfig();
+        await clashCore.flushDnsCache();
+        await clashCore.flushFakeIP();
+
+        if (dnsState.a) {
+          await _updateClashConfig();
+        }
+      } finally {
+        if (shouldRestartTunListener) {
+          await clashCore.startListener();
+        }
       }
     });
   }
@@ -407,7 +419,8 @@ class AppController {
 
   Future<bool> _shouldUpdateDashboardTick() async {
     final lifecycleState = WidgetsBinding.instance.lifecycleState;
-    final isPinned = system.isDesktop &&
+    final isPinned =
+        system.isDesktop &&
         _ref.read(windowSettingProvider.select((s) => s.isPinned));
     if (!isPinned && lifecycleState != AppLifecycleState.resumed) return false;
 
@@ -1503,8 +1516,9 @@ class AppController {
       }
 
       if (successCount > 0) {
-        globalState.navigatorKey.currentState
-            ?.popUntil((route) => route.isFirst);
+        globalState.navigatorKey.currentState?.popUntil(
+          (route) => route.isFirst,
+        );
         toProfiles();
       }
     } finally {
@@ -2316,8 +2330,6 @@ class AppController {
     // Ensure current profile exists
     _ensureCurrentProfile(profiles);
   }
-
-
 
   Future<T?> safeRun<T>(
     FutureOr<T> Function() futureFunction, {
