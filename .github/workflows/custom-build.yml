@@ -45,6 +45,22 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: 校验 Release 写权限
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          can_write="$(
+            gh api "repos/${GITHUB_REPOSITORY}" \
+              --jq '.permissions.push // false'
+          )"
+          if [[ "${can_write}" != "true" ]]; then
+            echo "当前 GITHUB_TOKEN 没有 contents: write 权限。" >&2
+            echo "请在仓库 Actions 设置中启用 Read and write permissions。" >&2
+            exit 1
+          fi
+
       - name: 读取私有 Mihomo 提交
         id: source
         shell: bash
@@ -445,9 +461,15 @@ jobs:
 
           Windows 与 macOS 安装包未做商业代码签名；Android 未配置私有签名时使用项目 debug 签名。"
 
+          if ! git ls-remote --exit-code --tags origin \
+            "refs/tags/${RELEASE_TAG}" >/dev/null 2>&1; then
+            git tag "${RELEASE_TAG}" "${UPSTREAM_SHA}"
+            git push origin "refs/tags/${RELEASE_TAG}"
+          fi
+
           gh release create "${RELEASE_TAG}" "${assets[@]}" \
             --repo "${GITHUB_REPOSITORY}" \
-            --target "${UPSTREAM_SHA}" \
+            --verify-tag \
             --title "Bettbox ${APP_VERSION} 自定义 Mihomo" \
             --notes "${notes}"
 
