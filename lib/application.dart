@@ -30,6 +30,9 @@ class ApplicationState extends ConsumerState<Application>
     with WidgetsBindingObserver {
   Timer? _autoUpdateGroupTaskTimer;
   Timer? _autoUpdateProfilesTaskTimer;
+  Timer? _networkChangeDebounceTimer;
+  int _networkChangeGeneration = 0;
+  String? _lastMacOSNetworkFingerprint;
 
   final _pageTransitionsTheme = const PageTransitionsTheme(
     builders: <TargetPlatform, PageTransitionsBuilder>{
@@ -133,6 +136,50 @@ class ApplicationState extends ConsumerState<Application>
     );
   }
 
+  void _handleConnectivityChanged(List<ConnectivityResult> results) {
+    if (!system.isMacOS) {
+      if (!results.contains(ConnectivityResult.vpn)) {
+        unawaited(clashCore.closeConnections());
+      }
+      globalState.appController.updateLocalIp();
+      globalState.appController.addCheckIpNumDebounce();
+      return;
+    }
+
+    final generation = ++_networkChangeGeneration;
+    _networkChangeDebounceTimer?.cancel();
+    _networkChangeDebounceTimer = Timer(
+      const Duration(milliseconds: 500),
+      () => unawaited(_handleMacOSNetworkChange(generation)),
+    );
+  }
+
+  Future<void> _handleMacOSNetworkChange(int generation) async {
+    final networkState = await macOS?.waitForStableDefaultNetwork(
+      isCancelled: () => !mounted || generation != _networkChangeGeneration,
+    );
+    if (!mounted ||
+        generation != _networkChangeGeneration ||
+        networkState == null) {
+      return;
+    }
+
+    if (_lastMacOSNetworkFingerprint == networkState.fingerprint) {
+      return;
+    }
+    _lastMacOSNetworkFingerprint = networkState.fingerprint;
+
+    try {
+      await globalState.appController.handleMacOSNetworkChange(networkState);
+    } catch (e) {
+      commonPrint.log('Failed to reconcile macOS network change: $e');
+    }
+    if (!mounted || generation != _networkChangeGeneration) return;
+
+    globalState.appController.updateLocalIp();
+    globalState.appController.addCheckIpNumDebounce();
+  }
+
   Widget _buildPlatformState(Widget child) {
     if (system.isDesktop) {
       return WindowManager(
@@ -152,21 +199,7 @@ class ApplicationState extends ConsumerState<Application>
     return AppStateManager(
       child: ClashManager(
         child: ConnectivityManager(
-          onConnectivityChanged: (results) async {
-            if (!results.contains(ConnectivityResult.vpn)) {
-              clashCore.closeConnections();
-            }
-            if (system.isMacOS) {
-              // Wait for DHCP and the default route to settle before moving the
-              // managed DNS from the previous network to the new one.
-              await Future.delayed(const Duration(seconds: 1));
-              if (!mounted) return;
-              final dnsState = ref.read(autoSetSystemDnsStateProvider);
-              await macOS?.updateDns(!(dnsState.a && dnsState.b));
-            }
-            globalState.appController.updateLocalIp();
-            globalState.appController.addCheckIpNumDebounce();
-          },
+          onConnectivityChanged: _handleConnectivityChanged,
           child: child,
         ),
       ),
@@ -262,6 +295,8 @@ class ApplicationState extends ConsumerState<Application>
     linkManager.destroy();
     _autoUpdateGroupTaskTimer?.cancel();
     _autoUpdateProfilesTaskTimer?.cancel();
+    _networkChangeDebounceTimer?.cancel();
+    _networkChangeGeneration++;
     ExternalControl.stop();
     if (!system.isAndroid && !globalState.isExiting) {
       unawaited(globalState.appController.handleExit());
