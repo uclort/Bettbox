@@ -287,12 +287,19 @@ class GlobalState {
     UpdateTasks? tasks,
     bool includeVpnService = true,
   ]) async {
-    startTime ??= DateTime.now();
     if (system.isAndroid && isService) {
       await clashLibHandler?.startListener();
     } else {
       await clashCore.startListener();
     }
+    await handleStartWithActiveListener(tasks, includeVpnService);
+  }
+
+  Future<void> handleStartWithActiveListener([
+    UpdateTasks? tasks,
+    bool includeVpnService = true,
+  ]) async {
+    startTime ??= DateTime.now();
     if (includeVpnService) {
       await service?.startVpn();
     }
