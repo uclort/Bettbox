@@ -36,6 +36,7 @@ Future<bool> runMacOSTunStartup({
   required Future<void> Function() restartCore,
   required Future<void> Function() applyTunConfig,
   required Future<void> Function() startListener,
+  required Future<void> Function() stopListener,
 }) async {
   final result = await requestAdmin();
   if (result.isError) {
@@ -44,12 +45,50 @@ Future<bool> runMacOSTunStartup({
 
   if (result.needRestart) {
     await restartCore();
-  } else {
-    await applyTunConfig();
   }
 
   await startListener();
+  try {
+    await applyTunConfig();
+  } catch (error, stackTrace) {
+    try {
+      await stopListener();
+    } catch (_) {}
+    Error.throwWithStackTrace(error, stackTrace);
+  }
+
   return true;
+}
+
+@visibleForTesting
+Future<void> rebuildMacOSTunListener({
+  required Future<void> Function() disableTun,
+  required Future<void> Function() stopListener,
+  required Future<void> Function() repairNetwork,
+  required Future<void> Function() startListener,
+  required Future<void> Function() enableTun,
+}) async {
+  var tunTemporarilyDisabled = false;
+  var listenerStopped = false;
+  try {
+    await disableTun();
+    tunTemporarilyDisabled = true;
+    await stopListener();
+    listenerStopped = true;
+    await repairNetwork();
+  } finally {
+    if (listenerStopped) {
+      try {
+        await startListener();
+      } finally {
+        if (tunTemporarilyDisabled) {
+          await enableTun();
+        }
+      }
+    } else if (tunTemporarilyDisabled) {
+      await enableTun();
+    }
+  }
 }
 
 class AppController {
@@ -194,12 +233,7 @@ class AppController {
       final shouldSetSystemDns = dnsState.a && dnsState.b;
       final shouldRestartTunListener = isStart && dnsState.a;
 
-      try {
-        if (shouldRestartTunListener) {
-          commonPrint.log('Rebuilding macOS TUN after network change');
-          await clashCore.stopListener();
-        }
-
+      Future<void> repairNetwork() async {
         if (isStart) {
           await clashCore.closeConnections();
         }
@@ -213,15 +247,21 @@ class AppController {
 
         await clashCore.flushDnsCache();
         await clashCore.flushFakeIP();
-
-        if (dnsState.a) {
-          await _updateClashConfig();
-        }
-      } finally {
-        if (shouldRestartTunListener) {
-          await clashCore.startListener();
-        }
       }
+
+      if (!shouldRestartTunListener) {
+        await repairNetwork();
+        return;
+      }
+
+      commonPrint.log('Rebuilding macOS TUN after network change');
+      await rebuildMacOSTunListener(
+        disableTun: () => _applyCoreTunConfig(false, persist: false),
+        stopListener: clashCore.stopListener,
+        repairNetwork: repairNetwork,
+        startListener: clashCore.startListener,
+        enableTun: _updateClashConfig,
+      );
     });
   }
 
@@ -261,8 +301,8 @@ class AppController {
             requestAdmin: () => _requestAdmin(true),
             restartCore: restartCore,
             applyTunConfig: _updateClashConfig,
-            startListener: () =>
-                globalState.handleStart([updateRunTime, updateTraffic]),
+            startListener: clashCore.startListener,
+            stopListener: clashCore.stopListener,
           );
           if (!started) {
             commonPrint.log(
@@ -270,6 +310,10 @@ class AppController {
             );
             return;
           }
+          await globalState.handleStartWithActiveListener([
+            updateRunTime,
+            updateTraffic,
+          ]);
           await updateProviders();
           _backgroundLoad();
         } catch (e) {
@@ -639,14 +683,19 @@ class AppController {
       return;
     }
 
+    await _applyCoreTunConfig(realTunEnable);
+  }
+
+  Future<void> _applyCoreTunConfig(bool enable, {bool persist = true}) async {
+    final updateParams = _ref.read(updateParamsProvider);
     final message = await clashCore.updateConfig(
-      updateParams.copyWith.tun(enable: realTunEnable),
+      updateParams.copyWith.tun(enable: enable),
     );
     if (message.isNotEmpty) throw message;
 
-    if (system.isDesktop) {
+    if (persist && system.isDesktop) {
       final prefs = await preferences.sharedPreferencesCompleter.future;
-      await prefs?.setBool('is_tun_running', realTunEnable);
+      await prefs?.setBool('is_tun_running', enable);
     }
   }
 
