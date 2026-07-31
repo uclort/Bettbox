@@ -450,12 +450,15 @@ jobs:
             "${apksigner_path}" verify \
               --verbose \
               --print-certs \
-              "${signed_apk}"
+              "${signed_apk}" 2>&1
           )"
+          printf '%s\n' "${signer_report}"
           actual_cert_sha="$(
-            awk -F': ' \
-              '/Signer #1 certificate SHA-256 digest:/ { print $2; exit }' \
+            sed -nE \
+              's/^.*certificate SHA-256 digest:[[:space:]]*([0-9A-Fa-f:]+).*$/\1/p' \
               <<< "${signer_report}" |
+              head -n 1 |
+              tr -d ':' |
               tr '[:upper:]' '[:lower:]'
           )"
           expected_cert_sha="$(
