@@ -261,6 +261,41 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: 配置 Android Release 签名
+        if: matrix.platform == 'android'
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.KEYSTORE }}
+          ANDROID_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for secret_name in \
+            ANDROID_KEYSTORE_BASE64 \
+            ANDROID_KEY_ALIAS \
+            ANDROID_STORE_PASSWORD \
+            ANDROID_KEY_PASSWORD; do
+            if [[ -z "${!secret_name}" ]]; then
+              echo "缺少 Android Release 签名 Secret：${secret_name}" >&2
+              exit 1
+            fi
+          done
+
+          printf '%s' "${ANDROID_KEYSTORE_BASE64}" |
+            base64 --decode > android/app/keystore.jks
+          chmod 600 android/app/keystore.jks
+          {
+            printf 'keyAlias=%s\n' "${ANDROID_KEY_ALIAS}"
+            printf 'storePassword=%s\n' "${ANDROID_STORE_PASSWORD}"
+            printf 'keyPassword=%s\n' "${ANDROID_KEY_PASSWORD}"
+          } >> android/local.properties
+
+          keytool -list \
+            -keystore android/app/keystore.jks \
+            -storepass "${ANDROID_STORE_PASSWORD}" \
+            -alias "${ANDROID_KEY_ALIAS}" >/dev/null
+
       - name: 隔离 Android 临时缓存并检查磁盘
         if: matrix.platform == 'android'
         shell: bash
@@ -365,6 +400,71 @@ jobs:
         if: matrix.platform == 'macos'
         shell: bash
         run: dart setup.dart macos --arch ${{ matrix.arch }} --env stable
+
+      - name: 校验 Android APK Release 签名
+        if: matrix.platform == 'android'
+        shell: bash
+        env:
+          ANDROID_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          mapfile -d '' apk_paths < <(
+            find dist -type f -name '*.apk' -print0
+          )
+          if [[ "${#apk_paths[@]}" -ne 1 ]]; then
+            echo "预期生成 1 个 Android APK，实际为 ${#apk_paths[@]} 个。" >&2
+            exit 1
+          fi
+
+          apksigner_path="$(
+            find "${ANDROID_SDK_ROOT}/build-tools" \
+              -mindepth 2 \
+              -maxdepth 2 \
+              -type f \
+              -name apksigner \
+              -print |
+              sort -V |
+              tail -n 1
+          )"
+          if [[ -z "${apksigner_path}" ]]; then
+            echo "Android SDK 中未找到 apksigner。" >&2
+            exit 1
+          fi
+
+          signer_report="$(
+            "${apksigner_path}" verify \
+              --verbose \
+              --print-certs \
+              "${apk_paths[0]}"
+          )"
+          actual_cert_sha="$(
+            awk -F': ' \
+              '/Signer #1 certificate SHA-256 digest:/ { print $2; exit }' \
+              <<< "${signer_report}" |
+              tr '[:upper:]' '[:lower:]'
+          )"
+          expected_cert_sha="$(
+            keytool -exportcert \
+              -keystore android/app/keystore.jks \
+              -storepass "${ANDROID_STORE_PASSWORD}" \
+              -alias "${ANDROID_KEY_ALIAS}" |
+              sha256sum |
+              awk '{ print $1 }'
+          )"
+
+          if [[ -z "${actual_cert_sha}" ||
+                "${actual_cert_sha}" != "${expected_cert_sha}" ]]; then
+            echo "Android APK 签名证书与固定 Release 证书不一致。" >&2
+            exit 1
+          fi
+
+          {
+            echo "## Android Release 签名校验通过"
+            echo
+            echo "- APK：\`$(basename "${apk_paths[0]}")\`"
+            echo "- 证书 SHA-256：\`${actual_cert_sha}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: 检查构建产物
         shell: bash
@@ -549,7 +649,7 @@ jobs:
             echo
             echo "Release 仅包含三端安装包，不包含私有自定义 Mihomo 源码。"
             echo
-            echo "Windows 与 macOS 安装包未做商业代码签名；Android 未配置私有签名时使用项目 debug 签名。"
+            echo "Windows 与 macOS 安装包未做商业代码签名；Android 安装包使用 Bettbox 自定义版固定 Release 签名。"
           } > "${notes_file}"
 
           if ! git ls-remote --exit-code --tags origin \
