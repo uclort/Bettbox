@@ -247,6 +247,15 @@ class AppController {
 
         await clashCore.flushDnsCache();
         await clashCore.flushFakeIP();
+
+        if (shouldRestartTunListener) {
+          await _setupCoreConfig(
+            enableTun: false,
+            prepareTun: false,
+            persistTunState: false,
+            macOSNetworkState: networkState,
+          );
+        }
       }
 
       if (!shouldRestartTunListener) {
@@ -424,7 +433,12 @@ class AppController {
     return _checkIfNeedReapply();
   }
 
-  Future<bool> _setupCoreConfig({bool? enableTun}) async {
+  Future<bool> _setupCoreConfig({
+    bool? enableTun,
+    bool prepareTun = true,
+    bool persistTunState = true,
+    MacOSNetworkState? macOSNetworkState,
+  }) async {
     final currentProfile = _ref.read(currentProfileProvider);
     if (currentProfile == null) {
       return false;
@@ -433,19 +447,30 @@ class AppController {
     final patchConfig = _ref.read(patchClashConfigProvider);
     final targetTun = enableTun ?? patchConfig.tun.enable;
 
-    final realTunEnable = await _prepareTun(targetTun);
+    final realTunEnable = prepareTun ? await _prepareTun(targetTun) : targetTun;
     if (realTunEnable == null) return false;
 
     final realPatchConfig = patchConfig.copyWith.tun(enable: realTunEnable);
-    final params = await globalState.getSetupParams(
-      pathConfig: realPatchConfig,
-    );
+    var params = await globalState.getSetupParams(pathConfig: realPatchConfig);
+    if (system.isMacOS) {
+      final networkState =
+          macOSNetworkState ?? await macOS?.defaultNetworkState;
+      if (networkState != null && networkState.dhcpDnsServers.isNotEmpty) {
+        params = params.copyWith(
+          config: applyMacOSRuntimeDnsFallback(params.config, networkState),
+        );
+        commonPrint.log(
+          'Applied ${networkState.dhcpDnsServers.length} DHCP DNS '
+          'fallback(s) for ${networkState.device}',
+        );
+      }
+    }
     final message = await clashCore.setupConfig(params);
     if (message.isNotEmpty) {
       commonPrint.log('[Core] Setup config failed: $message');
       throw message;
     }
-    if (system.isDesktop) {
+    if (system.isDesktop && persistTunState) {
       final prefs = await preferences.sharedPreferencesCompleter.future;
       await prefs?.setBool('is_tun_running', realTunEnable);
     }
