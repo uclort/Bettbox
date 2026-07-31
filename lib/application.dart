@@ -19,6 +19,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'controller.dart';
 import 'pages/pages.dart';
 
+bool shouldReconcileMacOSNetworkState({
+  required String? previousFingerprint,
+  required String currentFingerprint,
+  bool force = false,
+}) {
+  return force || previousFingerprint != currentFingerprint;
+}
+
 class Application extends ConsumerStatefulWidget {
   const Application({super.key});
 
@@ -32,6 +40,7 @@ class ApplicationState extends ConsumerState<Application>
   Timer? _autoUpdateProfilesTaskTimer;
   Timer? _networkChangeDebounceTimer;
   int _networkChangeGeneration = 0;
+  bool _forceNextMacOSNetworkRecovery = false;
   String? _lastMacOSNetworkFingerprint;
 
   final _pageTransitionsTheme = const PageTransitionsTheme(
@@ -57,6 +66,9 @@ class ApplicationState extends ConsumerState<Application>
     globalState.backgroundMode.addListener(_syncAutoUpdateTasks);
     _syncAutoUpdateTasks();
     globalState.appController = AppController(context, ref);
+    if (system.isMacOS) {
+      app.onSystemWake = _handleMacOSSystemWake;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_initApp());
     });
@@ -146,6 +158,17 @@ class ApplicationState extends ConsumerState<Application>
       return;
     }
 
+    _scheduleMacOSNetworkRecovery();
+  }
+
+  void _handleMacOSSystemWake() {
+    if (!mounted || !system.isMacOS) return;
+    commonPrint.log('macOS system wake detected; forcing TUN and DNS recovery');
+    _scheduleMacOSNetworkRecovery(force: true);
+  }
+
+  void _scheduleMacOSNetworkRecovery({bool force = false}) {
+    _forceNextMacOSNetworkRecovery |= force;
     final generation = ++_networkChangeGeneration;
     _networkChangeDebounceTimer?.cancel();
     _networkChangeDebounceTimer = Timer(
@@ -164,7 +187,13 @@ class ApplicationState extends ConsumerState<Application>
       return;
     }
 
-    if (_lastMacOSNetworkFingerprint == networkState.fingerprint) {
+    final force = _forceNextMacOSNetworkRecovery;
+    _forceNextMacOSNetworkRecovery = false;
+    if (!shouldReconcileMacOSNetworkState(
+      previousFingerprint: _lastMacOSNetworkFingerprint,
+      currentFingerprint: networkState.fingerprint,
+      force: force,
+    )) {
       return;
     }
     _lastMacOSNetworkFingerprint = networkState.fingerprint;
@@ -290,6 +319,9 @@ class ApplicationState extends ConsumerState<Application>
 
   @override
   void dispose() {
+    if (system.isMacOS) {
+      app.onSystemWake = null;
+    }
     globalState.backgroundMode.removeListener(_syncAutoUpdateTasks);
     WidgetsBinding.instance.removeObserver(this);
     linkManager.destroy();
