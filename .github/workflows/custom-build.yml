@@ -37,6 +37,7 @@ jobs:
       upstream_sha: ${{ steps.meta.outputs.upstream_sha }}
       kernel_sha: ${{ steps.meta.outputs.kernel_sha }}
       app_version: ${{ steps.meta.outputs.app_version }}
+      bettbox_release: ${{ steps.meta.outputs.bettbox_release }}
       custom_mihomo_commit: ${{ steps.source.outputs.commit }}
 
     steps:
@@ -100,24 +101,43 @@ jobs:
             git -C .custom-build/runtime/custom-mihomo rev-parse HEAD:source
           )"
           app_version="$(awk '$1 == "version:" { print $2; exit }' pubspec.yaml)"
+          bettbox_release="$(
+            tr -d '[:space:]' < .custom-build/metadata/bettbox-release
+          )"
 
-          if [[ -z "${upstream_sha}" || -z "${kernel_sha}" || -z "${app_version}" ]]; then
+          if [[ -z "${upstream_sha}" ||
+                -z "${kernel_sha}" ||
+                -z "${app_version}" ||
+                -z "${bettbox_release}" ]]; then
             echo "无法读取构建版本信息。" >&2
             exit 1
           fi
 
-          release_tag="custom-v${app_version}-${upstream_sha:0:12}-${kernel_sha:0:12}"
-          if [[ "${FORCE_BUILD}" == "true" ]]; then
-            release_tag="${release_tag}-r${GITHUB_RUN_ID}"
-          elif gh release view "${release_tag}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+          release_identity="${upstream_sha:0:12}-${kernel_sha:0:12}"
+          existing_release=""
+          while IFS= read -r candidate; do
+            if [[ "${candidate}" == *"-${release_identity}" ]]; then
+              existing_release="${candidate}"
+              break
+            fi
+          done < <(
+            gh api \
+              --paginate \
+              "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
+              --jq '.[].tag_name'
+          )
+
+          if [[ "${FORCE_BUILD}" != "true" && -n "${existing_release}" ]]; then
             echo "ready=false" >> "${GITHUB_OUTPUT}"
             {
               echo "## 无需重复构建"
               echo
-              echo "当前 Bettbox 与自定义内核组合已经发布：\`${release_tag}\`"
+              echo "当前 Bettbox 与自定义内核组合已经发布：\`${existing_release}\`"
             } >> "${GITHUB_STEP_SUMMARY}"
             exit 0
           fi
+          build_id="$(date -u +%Y%m%d%H%M%S)"
+          release_tag="custom-v${app_version}-r${build_id}-${release_identity}"
 
           {
             echo "ready=true"
@@ -125,6 +145,7 @@ jobs:
             echo "upstream_sha=${upstream_sha}"
             echo "kernel_sha=${kernel_sha}"
             echo "app_version=${app_version}"
+            echo "bettbox_release=${bettbox_release}"
           } >> "${GITHUB_OUTPUT}"
 
       - name: 显示构建摘要
@@ -380,7 +401,8 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ needs.inspect.outputs.upstream_sha }}
-          fetch-depth: 1
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: 下载所有平台产物
         uses: actions/download-artifact@v8
@@ -394,6 +416,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ needs.inspect.outputs.release_tag }}
           APP_VERSION: ${{ needs.inspect.outputs.app_version }}
+          BETTBOX_RELEASE: ${{ needs.inspect.outputs.bettbox_release }}
           UPSTREAM_SHA: ${{ needs.inspect.outputs.upstream_sha }}
         run: |
           set -euo pipefail
@@ -422,19 +445,99 @@ jobs:
             echo "错误：缺少 Bettbox 自定义改动说明。" >&2
             exit 1
           fi
-          custom_changes="$(<.custom-build/release-notes/CUSTOM_CHANGES.md)"
+          if [[ ! -f .custom-build/release-notes/RELEASE_SUMMARY ]]; then
+            echo "错误：缺少 Bettbox 自定义 Release 精简说明。" >&2
+            exit 1
+          fi
 
-          notes="Bettbox ${APP_VERSION} 自定义 Mihomo 自动构建。
+          release_summary="$(
+            tr -d '\r\n' < .custom-build/release-notes/RELEASE_SUMMARY
+          )"
+          if [[ -z "${release_summary}" ]]; then
+            echo "错误：Bettbox 自定义 Release 精简说明为空。" >&2
+            exit 1
+          fi
 
-          ${custom_changes}
+          git fetch --force --tags origin
+          previous_release="$(
+            gh release list \
+              --repo "${GITHUB_REPOSITORY}" \
+              --limit 100 \
+              --json tagName,publishedAt \
+              --jq 'sort_by(.publishedAt) | reverse | .[0].tagName // ""'
+          )"
 
-          ## 构建信息
+          incremental_notes="${RUNNER_TEMP}/incremental-release-notes.md"
+          {
+            echo "## 本次变更（相较上一自定义 Release）"
+            echo
+            if [[ -n "${previous_release}" ]] &&
+               git rev-parse --verify "${previous_release}^{commit}" >/dev/null 2>&1; then
+              previous_upstream="$(
+                git show \
+                  "${previous_release}:.custom-build/metadata/bettbox-release" \
+                  2>/dev/null | tr -d '[:space:]' || true
+              )"
+              previous_kernel="$(
+                git show \
+                  "${previous_release}:.custom-build/metadata/custom-mihomo-commit" \
+                  2>/dev/null | tr -d '[:space:]' || true
+              )"
+              current_kernel="$(
+                tr -d '[:space:]' \
+                  < .custom-build/metadata/custom-mihomo-commit
+              )"
 
-          Bettbox custom-build commit：${UPSTREAM_SHA}
+              echo "- 对比范围：[\`${previous_release}\`](https://github.com/${GITHUB_REPOSITORY}/releases/tag/${previous_release}) → \`${RELEASE_TAG}\`"
+              if [[ -n "${previous_upstream}" &&
+                    "${previous_upstream}" != "${BETTBOX_RELEASE}" ]]; then
+                echo "- 上游基线：\`${previous_upstream}\` → \`${BETTBOX_RELEASE}\`"
+              fi
+              if [[ -n "${previous_kernel}" &&
+                    "${previous_kernel}" != "${current_kernel}" ]]; then
+                echo "- 自定义 Mihomo 源码：\`${previous_kernel:0:12}\` → \`${current_kernel:0:12}\`"
+              fi
 
-          Release 仅包含三端安装包，不包含私有自定义 Mihomo 源码。
+              mapfile -t changes < <(
+                git log \
+                  --no-merges \
+                  --format='%s' \
+                  "${previous_release}..${UPSTREAM_SHA}" \
+                  "^${BETTBOX_RELEASE}" |
+                  sed '/^chore: update custom build metadata$/d'
+              )
+              if [[ "${#changes[@]}" -gt 0 ]]; then
+                echo "- 自定义变更："
+                for change in "${changes[@]}"; do
+                  echo "  - ${change}"
+                done
+              elif [[ "${previous_upstream}" == "${BETTBOX_RELEASE}" &&
+                      "${previous_kernel}" == "${current_kernel}" ]]; then
+                echo "- 无新的应用或内核功能变更。"
+              fi
+            else
+              echo "- 首个自定义 Release。"
+            fi
+          } > "${incremental_notes}"
 
-          Windows 与 macOS 安装包未做商业代码签名；Android 未配置私有签名时使用项目 debug 签名。"
+          notes_file="${RUNNER_TEMP}/release-notes.md"
+          {
+            echo "基于上游 Bettbox \`${BETTBOX_RELEASE}\` 构建的自定义版本。"
+            echo
+            cat "${incremental_notes}"
+            echo
+            cat .custom-build/release-notes/CUSTOM_CHANGES.md
+            echo
+            echo "## 构建信息"
+            echo
+            echo "- 上游 Bettbox Release：\`${BETTBOX_RELEASE}\`"
+            echo "- Bettbox 应用版本：\`${APP_VERSION}\`"
+            echo "- Bettbox custom-build commit：\`${UPSTREAM_SHA}\`"
+            echo
+            echo "Release 仅包含三端安装包，不包含私有自定义 Mihomo 源码。"
+            echo
+            echo "Windows 与 macOS 安装包未做商业代码签名；Android 未配置私有签名时使用项目 debug 签名。"
+          } > "${notes_file}"
 
           if ! git ls-remote --exit-code --tags origin \
             "refs/tags/${RELEASE_TAG}" >/dev/null 2>&1; then
@@ -445,8 +548,9 @@ jobs:
           gh release create "${RELEASE_TAG}" "${assets[@]}" \
             --repo "${GITHUB_REPOSITORY}" \
             --verify-tag \
-            --title "Bettbox ${APP_VERSION} 自定义 Mihomo" \
-            --notes "${notes}"
+            --latest \
+            --title "Bettbox ${BETTBOX_RELEASE} 自定义版 · ${release_summary}" \
+            --notes-file "${notes_file}"
 
       - name: 写入发布摘要
         shell: bash

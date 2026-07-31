@@ -111,14 +111,20 @@ jobs:
           release_commit="$(git rev-list -n 1 "${RELEASE_TAG}")"
 
           git checkout -B "${MAIN_BRANCH}" "origin/${MAIN_BRANCH}"
-          main_before="$(git rev-parse HEAD)"
-          git reset --hard "upstream/${MAIN_BRANCH}"
-          main_after="$(git rev-parse HEAD)"
-          if [[ "${main_before}" != "${main_after}" ]]; then
+          main_before="$(git rev-parse "origin/${MAIN_BRANCH}")"
+          git read-tree --reset -u "upstream/${MAIN_BRANCH}"
+          git restore \
+            --source="origin/${MAIN_BRANCH}" \
+            --staged \
+            --worktree \
+            -- .github/workflows
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: sync upstream main source"
             git push \
               --force-with-lease="refs/heads/${MAIN_BRANCH}:${main_before}" \
               origin "HEAD:${MAIN_BRANCH}"
           fi
+          main_after="$(git rev-parse HEAD)"
 
           git checkout -B "${PACKAGE_BRANCH}" "origin/${PACKAGE_BRANCH}"
           package_before="$(git rev-parse HEAD)"
@@ -279,7 +285,7 @@ jobs:
         id: package
         shell: bash
         env:
-          BETTBOX_BASE_COMMIT: ${{ steps.branches.outputs.package_after }}
+          BETTBOX_BASE_COMMIT: ${{ steps.branches.outputs.release_commit }}
           BETTBOX_TAG: ${{ steps.versions.outputs.bettbox_tag }}
           CUSTOM_MIHOMO_COMMIT: ${{ steps.custom_source.outputs.commit }}
           MIHOMO_TAG: ${{ steps.versions.outputs.mihomo_tag }}
@@ -365,5 +371,5 @@ jobs:
             echo "- Mihomo：\`${MIHOMO_TAG:-未知}\`"
             echo "- 私有内核是否需要更新：\`${SOURCE_CHANGED:-未知}\`"
             echo "- 私有内核是否已推送：\`${SOURCE_PUSHED:-未知}\`"
-            echo "- 同步顺序：上游 main → fork main；最新 Release + 两个功能分支 → custom-build"
+            echo "- 同步顺序：上游 main 源码（保留 fork 工作流）→ fork main；最新 Release + 两个功能分支 → custom-build"
           } >> "${GITHUB_STEP_SUMMARY}"
