@@ -11,12 +11,16 @@ on:
         required: false
         default: false
         type: boolean
+      target_commit:
+        description: 指定需要构建的 custom-build 提交
+        required: false
+        type: string
 
 permissions:
   contents: write
 
 concurrency:
-  group: custom-mihomo-${{ github.sha }}
+  group: custom-mihomo-${{ inputs.target_commit || github.sha }}
   cancel-in-progress: false
 
 env:
@@ -44,6 +48,7 @@ jobs:
       - name: 检出 Bettbox 打包分支
         uses: actions/checkout@v6
         with:
+          ref: ${{ inputs.target_commit || github.sha }}
           fetch-depth: 1
 
       - name: 读取私有 Mihomo 提交
@@ -73,6 +78,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           FORCE_BUILD: ${{ github.event_name == 'workflow_dispatch' && inputs.force || false }}
+          EXPECTED_COMMIT: ${{ inputs.target_commit || '' }}
         run: |
           set -euo pipefail
 
@@ -97,6 +103,11 @@ jobs:
           fi
 
           upstream_sha="$(git rev-parse HEAD)"
+          if [[ -n "${EXPECTED_COMMIT}" &&
+                "${upstream_sha}" != "${EXPECTED_COMMIT}" ]]; then
+            echo "实际检出提交 ${upstream_sha} 与指定提交 ${EXPECTED_COMMIT} 不一致。" >&2
+            exit 1
+          fi
           kernel_sha="$(
             git -C .custom-build/runtime/custom-mihomo rev-parse HEAD:source
           )"

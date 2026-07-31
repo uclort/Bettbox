@@ -346,12 +346,31 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          PACKAGE_COMMIT: ${{ steps.package.outputs.commit }}
         run: |
           set -euo pipefail
+          remote_commit=""
+          for _ in {1..15}; do
+            remote_commit="$(
+              gh api \
+                "repos/${GITHUB_REPOSITORY}/git/ref/heads/${BETTBOX_PACKAGE_BRANCH}" \
+                --jq '.object.sha'
+            )"
+            if [[ "${remote_commit}" == "${PACKAGE_COMMIT}" ]]; then
+              break
+            fi
+            sleep 2
+          done
+          if [[ "${remote_commit}" != "${PACKAGE_COMMIT}" ]]; then
+            echo "远端打包分支尚未更新到 ${PACKAGE_COMMIT}，停止触发旧代码构建。" >&2
+            exit 1
+          fi
+          sleep 3
           gh workflow run custom-build.yml \
             --repo "${GITHUB_REPOSITORY}" \
             --ref "${BETTBOX_PACKAGE_BRANCH}" \
-            --field force=false
+            --field force=false \
+            --field target_commit="${PACKAGE_COMMIT}"
 
       - name: 写入同步摘要
         if: always()
