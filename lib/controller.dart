@@ -108,6 +108,7 @@ class AppController {
   Timer? _updateGroupsRetryTimer;
   int _coreGeneration = 0;
   int _setupGeneration = 0;
+  int _localIpUpdateGeneration = 0;
 
   AppController(this.context, WidgetRef ref) : _ref = ref;
 
@@ -589,9 +590,20 @@ class AppController {
   }
 
   Future<void> updateLocalIp() async {
-    _ref.read(localIpProvider.notifier).value = null;
-    await Future.delayed(commonDuration);
-    _ref.read(localIpProvider.notifier).value = await utils.getLocalIpAddress();
+    final generation = ++_localIpUpdateGeneration;
+    try {
+      final localIp = await utils.getLocalIpAddress().timeout(
+        const Duration(seconds: 3),
+      );
+      if (generation != _localIpUpdateGeneration) return;
+      _ref.read(localIpProvider.notifier).value = localIp ?? '';
+    } catch (e) {
+      if (generation != _localIpUpdateGeneration) return;
+      if (_ref.read(localIpProvider) == null) {
+        _ref.read(localIpProvider.notifier).value = '';
+      }
+      commonPrint.log('Failed to update local IP: $e');
+    }
   }
 
   Future<void> updateProfile(Profile profile, {bool validate = true}) async {
@@ -1292,6 +1304,7 @@ class AppController {
         commonPrint.log(details.stack.toString());
       }
     };
+    unawaited(updateLocalIp());
 
     vpn_service.service?.addNativeEventCallback((method, arguments) async {
       if (method == 'vpnStartFailed') {

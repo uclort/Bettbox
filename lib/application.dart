@@ -153,11 +153,12 @@ class ApplicationState extends ConsumerState<Application>
       if (!results.contains(ConnectivityResult.vpn)) {
         unawaited(clashCore.closeConnections());
       }
-      globalState.appController.updateLocalIp();
+      unawaited(globalState.appController.updateLocalIp());
       globalState.appController.addCheckIpNumDebounce();
       return;
     }
 
+    unawaited(globalState.appController.updateLocalIp());
     _scheduleMacOSNetworkRecovery();
   }
 
@@ -205,7 +206,7 @@ class ApplicationState extends ConsumerState<Application>
     }
     if (!mounted || generation != _networkChangeGeneration) return;
 
-    globalState.appController.updateLocalIp();
+    unawaited(globalState.appController.updateLocalIp());
     globalState.appController.addCheckIpNumDebounce();
   }
 
