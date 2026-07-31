@@ -504,7 +504,9 @@ jobs:
                   --format='%s' \
                   "${previous_release}..${UPSTREAM_SHA}" \
                   "^${BETTBOX_RELEASE}" |
-                  sed '/^chore: update custom build metadata$/d'
+                  sed \
+                    -e '/^chore: update custom build metadata$/d' \
+                    -e '/^chore: sync upstream release /d'
               )
               if [[ "${#changes[@]}" -gt 0 ]]; then
                 echo "- 自定义变更："
@@ -548,7 +550,6 @@ jobs:
           gh release create "${RELEASE_TAG}" "${assets[@]}" \
             --repo "${GITHUB_REPOSITORY}" \
             --verify-tag \
-            --latest \
             --title "Bettbox ${BETTBOX_RELEASE} 自定义版 · ${release_summary}" \
             --notes-file "${notes_file}"
 
