@@ -494,13 +494,56 @@ class Windows {
 final windows = system.isWindows ? Windows() : null;
 
 class MacOSNetworkState {
+  final String device;
   final String serviceName;
+  final List<String> dhcpDnsServers;
   final String fingerprint;
 
   const MacOSNetworkState({
+    required this.device,
     required this.serviceName,
+    required this.dhcpDnsServers,
     required this.fingerprint,
   });
+}
+
+List<String> parseMacOSDhcpDnsServers(String value) {
+  return value
+      .replaceAll(RegExp(r'[{}]'), '')
+      .split(RegExp(r'[,\s]+'))
+      .where((value) => InternetAddress.tryParse(value) != null)
+      .toList(growable: false);
+}
+
+Map<String, dynamic> applyMacOSRuntimeDnsFallback(
+  Map<String, dynamic> config,
+  MacOSNetworkState networkState,
+) {
+  if (networkState.dhcpDnsServers.isEmpty) return config;
+
+  final rawDns = config['dns'];
+  if (rawDns is! Map || rawDns['enable'] != true) return config;
+
+  final dns = Map<String, dynamic>.from(rawDns);
+  final fallbackServers = networkState.dhcpDnsServers
+      .map((server) => '$server#${networkState.device}')
+      .toList(growable: false);
+
+  List<String> prependFallbackServers(Object? value) {
+    final original = value is List
+        ? value.whereType<String>().toList(growable: false)
+        : const <String>[];
+    return {...fallbackServers, ...original}.toList(growable: false);
+  }
+
+  dns['default-nameserver'] = prependFallbackServers(dns['default-nameserver']);
+
+  final directNameserver = dns['direct-nameserver'];
+  if (directNameserver is List && directNameserver.isNotEmpty) {
+    dns['direct-nameserver'] = prependFallbackServers(directNameserver);
+  }
+
+  return {...config, 'dns': dns};
 }
 
 class MacOS {
@@ -612,6 +655,7 @@ class MacOS {
     final dhcpDns = summaryValue(
       RegExp(r'^\s*domain_name_server \(ip_mult\):\s*(.+)$', multiLine: true),
     );
+    final dhcpDnsServers = parseMacOSDhcpDnsServers(dhcpDns);
     final fingerprint = [
       route.device,
       route.gateway,
@@ -623,10 +667,15 @@ class MacOS {
     ].join('|');
 
     return MacOSNetworkState(
+      device: route.device,
       serviceName: serviceName,
+      dhcpDnsServers: dhcpDnsServers,
       fingerprint: fingerprint,
     );
   }
+
+  Future<MacOSNetworkState?> get defaultNetworkState =>
+      _getDefaultNetworkState();
 
   Future<MacOSNetworkState?> waitForStableDefaultNetwork({
     Duration initialDelay = const Duration(seconds: 1),
