@@ -581,6 +581,10 @@ jobs:
             echo "错误：缺少 Bettbox 自定义 Release 精简说明。" >&2
             exit 1
           fi
+          if [[ ! -f .custom-build/release-notes/LATEST_CHANGES.md ]]; then
+            echo "错误：缺少相较上一自定义 Release 的增量说明。" >&2
+            exit 1
+          fi
 
           release_summary="$(
             tr -d '\r\n' < .custom-build/release-notes/RELEASE_SUMMARY
@@ -630,24 +634,34 @@ jobs:
                 echo "- 自定义 Mihomo 源码：\`${previous_kernel:0:12}\` → \`${current_kernel:0:12}\`"
               fi
 
-              mapfile -t changes < <(
-                git log \
-                  --no-merges \
-                  --format='%s' \
-                  "${previous_release}..${UPSTREAM_SHA}" \
-                  "^${BETTBOX_RELEASE}" |
-                  sed \
-                    -e '/^chore: update custom build metadata$/d' \
-                    -e '/^chore: sync upstream release /d'
-              )
-              if [[ "${#changes[@]}" -gt 0 ]]; then
-                echo "- 自定义变更："
-                for change in "${changes[@]}"; do
-                  echo "  - ${change}"
-                done
-              elif [[ "${previous_upstream}" == "${BETTBOX_RELEASE}" &&
-                      "${previous_kernel}" == "${current_kernel}" ]]; then
-                echo "- 无新的应用或内核功能变更。"
+              latest_changes=".custom-build/release-notes/LATEST_CHANGES.md"
+              previous_changes="${RUNNER_TEMP}/previous-latest-changes.md"
+              git show "${previous_release}:${latest_changes}" \
+                > "${previous_changes}" 2>/dev/null || : > "${previous_changes}"
+
+              if ! cmp -s "${previous_changes}" "${latest_changes}"; then
+                echo
+                cat "${latest_changes}"
+              else
+                mapfile -t changes < <(
+                  git log \
+                    --no-merges \
+                    --format='%s' \
+                    "${previous_release}..${UPSTREAM_SHA}" \
+                    "^${BETTBOX_RELEASE}" |
+                    sed \
+                      -e '/^chore: update custom build metadata$/d' \
+                      -e '/^chore: sync upstream release /d'
+                )
+                if [[ "${#changes[@]}" -gt 0 ]]; then
+                  echo "- 自定义变更："
+                  for change in "${changes[@]}"; do
+                    echo "  - ${change}"
+                  done
+                elif [[ "${previous_upstream}" == "${BETTBOX_RELEASE}" &&
+                        "${previous_kernel}" == "${current_kernel}" ]]; then
+                  echo "- 无新的应用或内核功能变更。"
+                fi
               fi
             else
               echo "- 首个自定义 Release。"
