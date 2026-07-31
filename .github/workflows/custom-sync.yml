@@ -343,6 +343,9 @@ jobs:
           } >> "${GITHUB_OUTPUT}"
 
       - name: 触发自定义打包
+        if: >-
+          steps.package.outputs.pushed == 'true' ||
+          steps.custom_source.outputs.pushed == 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
