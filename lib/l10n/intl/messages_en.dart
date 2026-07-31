@@ -179,7 +179,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Backup & Restore",
     ),
     "backupAndRecoveryDesc": MessageLookupByLibrary.simpleMessage(
-      "Sync data via WebDAV or local files",
+      "Sync data via WebDAV or locally",
     ),
     "backupSuccess": MessageLookupByLibrary.simpleMessage("Backup Successful"),
     "basicConfig": MessageLookupByLibrary.simpleMessage("Core Configuration"),
@@ -278,6 +278,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "controlSecret": MessageLookupByLibrary.simpleMessage("Control Secret"),
     "controlSecretDesc": MessageLookupByLibrary.simpleMessage(
       "RESTful API access password",
+    ),
+    "copiedPackageName": MessageLookupByLibrary.simpleMessage(
+      "Copied package name",
     ),
     "copy": MessageLookupByLibrary.simpleMessage("Copy"),
     "copyEnvVar": MessageLookupByLibrary.simpleMessage(
@@ -436,6 +439,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "externalResources": MessageLookupByLibrary.simpleMessage(
       "External Resources",
     ),
+    "fa": MessageLookupByLibrary.simpleMessage("Persian"),
     "fadingCircle": MessageLookupByLibrary.simpleMessage("Fading Circle"),
     "fadingFour": MessageLookupByLibrary.simpleMessage("Fading Four"),
     "fakeIpFilterMode": MessageLookupByLibrary.simpleMessage(
@@ -596,6 +600,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "TCP keep-alive interval",
     ),
     "key": MessageLookupByLibrary.simpleMessage("Key"),
+    "ko": MessageLookupByLibrary.simpleMessage("Korean"),
     "language": MessageLookupByLibrary.simpleMessage("Language"),
     "layout": MessageLookupByLibrary.simpleMessage("Layout"),
     "light": MessageLookupByLibrary.simpleMessage("Light"),
@@ -746,7 +751,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "options": MessageLookupByLibrary.simpleMessage("Options"),
     "other": MessageLookupByLibrary.simpleMessage("Other"),
     "otherContributors": MessageLookupByLibrary.simpleMessage(
-      "Other Contributors",
+      "Other Contributors (Random Order)",
     ),
     "otherSettings": MessageLookupByLibrary.simpleMessage("Enhanced Tools"),
     "otherSettingsDesc": MessageLookupByLibrary.simpleMessage(

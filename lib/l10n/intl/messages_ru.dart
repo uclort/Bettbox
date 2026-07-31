@@ -280,6 +280,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "controlSecretDesc": MessageLookupByLibrary.simpleMessage(
       "Пароль для доступа к RESTful API",
     ),
+    "copiedPackageName": MessageLookupByLibrary.simpleMessage(
+      "Скопировано имя пакета",
+    ),
     "copy": MessageLookupByLibrary.simpleMessage("Копировать"),
     "copyEnvVar": MessageLookupByLibrary.simpleMessage(
       "Копировать переменные окружения",
@@ -439,6 +442,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "externalResources": MessageLookupByLibrary.simpleMessage(
       "Внешние ресурсы",
     ),
+    "fa": MessageLookupByLibrary.simpleMessage("Персидский"),
     "fadingCircle": MessageLookupByLibrary.simpleMessage("Затухающий круг"),
     "fadingFour": MessageLookupByLibrary.simpleMessage("Затухающие точки"),
     "fakeIpFilterMode": MessageLookupByLibrary.simpleMessage(
@@ -607,6 +611,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Интервал TCP keep-alive",
     ),
     "key": MessageLookupByLibrary.simpleMessage("Ключ"),
+    "ko": MessageLookupByLibrary.simpleMessage("Корейский"),
     "language": MessageLookupByLibrary.simpleMessage("Язык"),
     "layout": MessageLookupByLibrary.simpleMessage("Ширина"),
     "light": MessageLookupByLibrary.simpleMessage("Светлая"),
@@ -757,7 +762,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "options": MessageLookupByLibrary.simpleMessage("Опции"),
     "other": MessageLookupByLibrary.simpleMessage("Другое"),
     "otherContributors": MessageLookupByLibrary.simpleMessage(
-      "Другие участники",
+      "Другие участники (в случайном порядке)",
     ),
     "otherSettings": MessageLookupByLibrary.simpleMessage(
       "Расширенные инструменты",
