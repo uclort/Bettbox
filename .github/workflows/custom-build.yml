@@ -401,12 +401,13 @@ jobs:
         shell: bash
         run: dart setup.dart macos --arch ${{ matrix.arch }} --env stable
 
-      - name: 校验 Android APK Release 签名
+      - name: 签署并校验 Android APK
         if: matrix.platform == 'android'
         shell: bash
         env:
           ANDROID_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           ANDROID_STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           set -euo pipefail
           mapfile -d '' apk_paths < <(
@@ -432,11 +433,24 @@ jobs:
             exit 1
           fi
 
+          signed_apk="${RUNNER_TEMP}/$(basename "${apk_paths[0]}")"
+          "${apksigner_path}" sign \
+            --ks android/app/keystore.jks \
+            --ks-key-alias "${ANDROID_KEY_ALIAS}" \
+            --ks-pass env:ANDROID_STORE_PASSWORD \
+            --key-pass env:ANDROID_KEY_PASSWORD \
+            --v1-signing-enabled true \
+            --v2-signing-enabled true \
+            --v3-signing-enabled true \
+            --v4-signing-enabled false \
+            --out "${signed_apk}" \
+            "${apk_paths[0]}"
+
           signer_report="$(
             "${apksigner_path}" verify \
               --verbose \
               --print-certs \
-              "${apk_paths[0]}"
+              "${signed_apk}"
           )"
           actual_cert_sha="$(
             awk -F': ' \
@@ -456,11 +470,15 @@ jobs:
           if [[ -z "${actual_cert_sha}" ||
                 "${actual_cert_sha}" != "${expected_cert_sha}" ]]; then
             echo "Android APK 签名证书与固定 Release 证书不一致。" >&2
+            echo "实际证书 SHA-256：${actual_cert_sha:-无法读取}" >&2
+            echo "预期证书 SHA-256：${expected_cert_sha}" >&2
             exit 1
           fi
 
+          mv "${signed_apk}" "${apk_paths[0]}"
+
           {
-            echo "## Android Release 签名校验通过"
+            echo "## Android 固定签名与校验通过"
             echo
             echo "- APK：\`$(basename "${apk_paths[0]}")\`"
             echo "- 证书 SHA-256：\`${actual_cert_sha}\`"
