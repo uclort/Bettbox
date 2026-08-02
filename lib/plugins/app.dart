@@ -43,12 +43,10 @@ class App {
   }
 
   Future<List<Package>> getPackages({bool forceRefresh = false}) async {
-    final packagesRaw =
-        await methodChannel.invokeListMethod<Map<dynamic, dynamic>>(
-          'getPackages',
-          {'forceRefresh': forceRefresh},
-        ) ??
-        const [];
+    final packagesRaw = await methodChannel.invokeListMethod<Map<dynamic, dynamic>>(
+      'getPackages',
+      {'forceRefresh': forceRefresh},
+    ) ?? const [];
     return packagesRaw
         .map((e) => Package.fromJson(Map<String, Object?>.from(e)))
         .toList();
@@ -100,15 +98,20 @@ class App {
 
   Future<bool?> tip(String? message) async {
     if (message == null || message.isEmpty) return false;
-    return await methodChannel.invokeMethod<bool>('tip', {'message': message});
+    return await methodChannel.invokeMethod<bool>('tip', {
+      'message': message,
+    });
   }
 
   Future<bool?> initShortcuts() async {
-    return await methodChannel.invokeMethod<bool>('initShortcuts', {
-      'toggle': appLocalizations.toggle,
-      'start': appLocalizations.start,
-      'stop': appLocalizations.stop,
-    });
+    return await methodChannel.invokeMethod<bool>(
+      'initShortcuts',
+      {
+        'toggle': appLocalizations.toggle,
+        'start': appLocalizations.start,
+        'stop': appLocalizations.stop,
+      },
+    );
   }
 
   Future<bool?> updateExcludeFromRecents(bool value) async {

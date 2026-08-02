@@ -493,6 +493,14 @@ class Windows {
 
 final windows = system.isWindows ? Windows() : null;
 
+const macOSManagedDns = '223.5.5.5';
+
+List<String> sanitizeMacOSOriginalDnsServers(Iterable<String> servers) {
+  return servers
+      .where((server) => server != macOSManagedDns)
+      .toList(growable: false);
+}
+
 class MacOSNetworkState {
   final String device;
   final String serviceName;
@@ -549,7 +557,6 @@ Map<String, dynamic> applyMacOSRuntimeDnsFallback(
 class MacOS {
   static MacOS? _instance;
   static const _dnsBackupFileName = 'macos_system_dns_backup.json';
-  static const _hijackDns = '223.5.5.5';
   final Lock _dnsLock = Lock();
 
   MacOS._internal();
@@ -744,22 +751,20 @@ class MacOS {
   }
 
   Future<void> _setDns(String? targetServiceName) async {
-    // Restore a previous managed value first so repeated enable operations never
-    // overwrite the real system DNS backup with Bettbox's own hijack DNS.
+    // 先恢复上一次由 Bettbox 管理的网络服务，避免重复启用时用
+    // 223.5.5.5 覆盖真实的系统 DNS 备份。
     if (!await _restoreDns()) return;
 
     final serviceName = targetServiceName ?? await defaultServiceName;
     if (serviceName == null) return;
 
     final currentDns = await _getSystemDns(serviceName);
-    if (currentDns == null ||
-        (currentDns.length == 1 && currentDns.single == _hijackDns)) {
-      return;
-    }
+    if (currentDns == null) return;
+    final originalDns = sanitizeMacOSOriginalDnsServers(currentDns);
 
     final backup = jsonEncode({
       'serviceName': serviceName,
-      'servers': currentDns,
+      'servers': originalDns,
     });
     try {
       final backupFile = await _dnsBackupFile;
@@ -775,7 +780,7 @@ class MacOS {
     final result = await Process.run('networksetup', [
       '-setdnsservers',
       serviceName,
-      _hijackDns,
+      macOSManagedDns,
     ]);
     if (result.exitCode != 0) {
       commonPrint.log(
@@ -792,12 +797,13 @@ class MacOS {
       final rawBackup = await backupFile.readAsString();
       final backup = jsonDecode(rawBackup) as Map<String, dynamic>;
       final serviceName = backup['serviceName'] as String?;
-      final servers = (backup['servers'] as List?)
+      final rawServers = (backup['servers'] as List?)
           ?.whereType<String>()
           .toList();
-      if (serviceName == null || serviceName.isEmpty || servers == null) {
+      if (serviceName == null || serviceName.isEmpty || rawServers == null) {
         throw const FormatException('Invalid macOS system DNS backup');
       }
+      final servers = sanitizeMacOSOriginalDnsServers(rawServers);
 
       final result = await Process.run('networksetup', [
         '-setdnsservers',

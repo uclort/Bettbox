@@ -12,7 +12,7 @@ void main() {
           events.add('authorize');
           return Result.success(true);
         },
-        restartCore: () async => events.add('restart'),
+        restartCoreWithTunDisabled: () async => events.add('restart-disabled'),
         applyTunConfig: () async => events.add('apply'),
         startListener: () async => events.add('start'),
         stopListener: () async => events.add('stop'),
@@ -32,14 +32,16 @@ void main() {
             events.add('authorize');
             return Result.success(true, needRestart: true);
           },
-          restartCore: () async => events.add('restart'),
+          restartCoreWithTunDisabled: () async {
+            events.add('restart-disabled');
+          },
           applyTunConfig: () async => events.add('apply'),
           startListener: () async => events.add('start'),
           stopListener: () async => events.add('stop'),
         );
 
         expect(started, isTrue);
-        expect(events, ['authorize', 'restart', 'start', 'apply']);
+        expect(events, ['authorize', 'restart-disabled', 'start', 'apply']);
       },
     );
 
@@ -51,7 +53,7 @@ void main() {
           events.add('authorize');
           return Result<bool>.error('authorization failed');
         },
-        restartCore: () async => events.add('restart'),
+        restartCoreWithTunDisabled: () async => events.add('restart-disabled'),
         applyTunConfig: () async => events.add('apply'),
         startListener: () async => events.add('start'),
         stopListener: () async => events.add('stop'),
@@ -70,7 +72,9 @@ void main() {
             events.add('authorize');
             return Result.success(true);
           },
-          restartCore: () async => events.add('restart'),
+          restartCoreWithTunDisabled: () async {
+            events.add('restart-disabled');
+          },
           applyTunConfig: () async {
             events.add('apply');
             throw StateError('apply failed');
@@ -93,8 +97,8 @@ void main() {
             events.add('authorize');
             return Result.success(true, needRestart: true);
           },
-          restartCore: () async {
-            events.add('restart');
+          restartCoreWithTunDisabled: () async {
+            events.add('restart-disabled');
             throw StateError('restart failed');
           },
           applyTunConfig: () async => events.add('apply'),
@@ -104,7 +108,7 @@ void main() {
         throwsStateError,
       );
 
-      expect(events, ['authorize', 'restart']);
+      expect(events, ['authorize', 'restart-disabled']);
     });
   });
 

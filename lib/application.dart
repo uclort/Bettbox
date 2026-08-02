@@ -41,6 +41,7 @@ class ApplicationState extends ConsumerState<Application>
   Timer? _networkChangeDebounceTimer;
   int _networkChangeGeneration = 0;
   bool _forceNextMacOSNetworkRecovery = false;
+  bool _macOSNetworkRecoveryReady = false;
   String? _lastMacOSNetworkFingerprint;
 
   final _pageTransitionsTheme = const PageTransitionsTheme(
@@ -86,6 +87,12 @@ class ApplicationState extends ConsumerState<Application>
       globalState.appController = AppController(currentContext, ref);
     }
     await globalState.appController.init();
+    if (system.isMacOS) {
+      final networkState = await macOS?.defaultNetworkState;
+      if (!mounted) return;
+      _lastMacOSNetworkFingerprint = networkState?.fingerprint;
+      _macOSNetworkRecoveryReady = true;
+    }
     try {
       await ExternalControl.start();
     } catch (e) {
@@ -159,11 +166,14 @@ class ApplicationState extends ConsumerState<Application>
     }
 
     unawaited(globalState.appController.updateLocalIp());
+    if (!_macOSNetworkRecoveryReady) return;
     _scheduleMacOSNetworkRecovery();
   }
 
   void _handleMacOSSystemWake() {
-    if (!mounted || !system.isMacOS) return;
+    if (!mounted || !system.isMacOS || !_macOSNetworkRecoveryReady) {
+      return;
+    }
     commonPrint.log('macOS system wake detected; forcing TUN and DNS recovery');
     _scheduleMacOSNetworkRecovery(force: true);
   }
@@ -197,12 +207,14 @@ class ApplicationState extends ConsumerState<Application>
     )) {
       return;
     }
-    _lastMacOSNetworkFingerprint = networkState.fingerprint;
 
     try {
       await globalState.appController.handleMacOSNetworkChange(networkState);
+      _lastMacOSNetworkFingerprint = networkState.fingerprint;
     } catch (e) {
+      _forceNextMacOSNetworkRecovery |= force;
       commonPrint.log('Failed to reconcile macOS network change: $e');
+      return;
     }
     if (!mounted || generation != _networkChangeGeneration) return;
 

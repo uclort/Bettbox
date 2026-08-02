@@ -33,7 +33,7 @@ import 'views/profiles/override_profile.dart';
 @visibleForTesting
 Future<bool> runMacOSTunStartup({
   required Future<Result<bool>> Function() requestAdmin,
-  required Future<void> Function() restartCore,
+  required Future<void> Function() restartCoreWithTunDisabled,
   required Future<void> Function() applyTunConfig,
   required Future<void> Function() startListener,
   required Future<void> Function() stopListener,
@@ -44,7 +44,7 @@ Future<bool> runMacOSTunStartup({
   }
 
   if (result.needRestart) {
-    await restartCore();
+    await restartCoreWithTunDisabled();
   }
 
   await startListener();
@@ -312,7 +312,19 @@ class AppController {
         try {
           final started = await runMacOSTunStartup(
             requestAdmin: () => _requestAdmin(true),
-            restartCore: restartCore,
+            restartCoreWithTunDisabled: () async {
+              await _restartCore(setupConfig: false, refreshData: false);
+              final configured = await _setupCoreConfig(
+                enableTun: false,
+                prepareTun: false,
+                persistTunState: false,
+              );
+              if (!configured) {
+                throw StateError(
+                  'Failed to configure core before enabling macOS TUN',
+                );
+              }
+            },
             applyTunConfig: _updateClashConfig,
             startListener: clashCore.startListener,
             stopListener: clashCore.stopListener,
@@ -512,8 +524,7 @@ class AppController {
 
   Future<bool> _shouldUpdateDashboardTick() async {
     final lifecycleState = WidgetsBinding.instance.lifecycleState;
-    final isPinned =
-        system.isDesktop &&
+    final isPinned = system.isDesktop &&
         _ref.read(windowSettingProvider.select((s) => s.isPinned));
     if (!isPinned && lifecycleState != AppLifecycleState.resumed) return false;
 
@@ -603,9 +614,7 @@ class AppController {
   Future<void> updateLocalIp() async {
     final generation = ++_localIpUpdateGeneration;
     try {
-      final localIp = await utils.getLocalIpAddress().timeout(
-        const Duration(seconds: 3),
-      );
+      final localIp = await utils.getLocalIpAddress();
       if (generation != _localIpUpdateGeneration) return;
       _ref.read(localIpProvider.notifier).value = localIp ?? '';
     } catch (e) {
@@ -1633,9 +1642,8 @@ class AppController {
       }
 
       if (successCount > 0) {
-        globalState.navigatorKey.currentState?.popUntil(
-          (route) => route.isFirst,
-        );
+        globalState.navigatorKey.currentState
+            ?.popUntil((route) => route.isFirst);
         toProfiles();
       }
     } finally {
@@ -2455,6 +2463,8 @@ class AppController {
     // Ensure current profile exists
     _ensureCurrentProfile(profiles);
   }
+
+
 
   Future<T?> safeRun<T>(
     FutureOr<T> Function() futureFunction, {

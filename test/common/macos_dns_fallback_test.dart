@@ -10,6 +10,18 @@ void main() {
     expect(parseMacOSDhcpDnsServers('not-an-address'), isEmpty);
   });
 
+  test('removes only the DNS server managed by Bettbox', () {
+    expect(
+      sanitizeMacOSOriginalDnsServers([
+        '10.255.18.3',
+        macOSManagedDns,
+        '10.255.18.4',
+      ]),
+      ['10.255.18.3', '10.255.18.4'],
+    );
+    expect(sanitizeMacOSOriginalDnsServers([macOSManagedDns]), isEmpty);
+  });
+
   group('macOS runtime DNS fallback', () {
     const networkState = MacOSNetworkState(
       device: 'en0',
