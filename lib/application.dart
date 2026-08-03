@@ -27,6 +27,28 @@ bool shouldReconcileMacOSNetworkState({
   return force || previousFingerprint != currentFingerprint;
 }
 
+bool isMacOSNetworkRecoveryCurrent({
+  required bool mounted,
+  required int scheduledGeneration,
+  required int currentGeneration,
+}) {
+  return mounted && scheduledGeneration == currentGeneration;
+}
+
+Set<ConnectivityResult> macOSPhysicalConnectivityResults(
+  Iterable<ConnectivityResult> results,
+) {
+  return results.where((result) => result != ConnectivityResult.vpn).toSet();
+}
+
+bool didMacOSPhysicalConnectivityChange({
+  required Set<ConnectivityResult>? previous,
+  required Set<ConnectivityResult> current,
+}) {
+  if (previous == null || previous.length != current.length) return true;
+  return !previous.containsAll(current);
+}
+
 class Application extends ConsumerStatefulWidget {
   const Application({super.key});
 
@@ -43,6 +65,7 @@ class ApplicationState extends ConsumerState<Application>
   bool _forceNextMacOSNetworkRecovery = false;
   bool _macOSNetworkRecoveryReady = false;
   String? _lastMacOSNetworkFingerprint;
+  Set<ConnectivityResult>? _lastMacOSPhysicalConnectivity;
 
   final _pageTransitionsTheme = const PageTransitionsTheme(
     builders: <TargetPlatform, PageTransitionsBuilder>{
@@ -89,6 +112,13 @@ class ApplicationState extends ConsumerState<Application>
     await globalState.appController.init();
     if (system.isMacOS) {
       final networkState = await macOS?.defaultNetworkState;
+      try {
+        _lastMacOSPhysicalConnectivity = macOSPhysicalConnectivityResults(
+          await Connectivity().checkConnectivity(),
+        );
+      } catch (e) {
+        commonPrint.log('Failed to read initial macOS connectivity: $e');
+      }
       if (!mounted) return;
       _lastMacOSNetworkFingerprint = networkState?.fingerprint;
       _macOSNetworkRecoveryReady = true;
@@ -166,8 +196,14 @@ class ApplicationState extends ConsumerState<Application>
     }
 
     unawaited(globalState.appController.updateLocalIp());
+    final physicalConnectivity = macOSPhysicalConnectivityResults(results);
+    final physicalConnectivityChanged = didMacOSPhysicalConnectivityChange(
+      previous: _lastMacOSPhysicalConnectivity,
+      current: physicalConnectivity,
+    );
+    _lastMacOSPhysicalConnectivity = physicalConnectivity;
     if (!_macOSNetworkRecoveryReady) return;
-    _scheduleMacOSNetworkRecovery();
+    _scheduleMacOSNetworkRecovery(force: physicalConnectivityChanged);
   }
 
   void _handleMacOSSystemWake() {
@@ -190,11 +226,18 @@ class ApplicationState extends ConsumerState<Application>
 
   Future<void> _handleMacOSNetworkChange(int generation) async {
     final networkState = await macOS?.waitForStableDefaultNetwork(
-      isCancelled: () => !mounted || generation != _networkChangeGeneration,
+      isCancelled: () => !isMacOSNetworkRecoveryCurrent(
+        mounted: mounted,
+        scheduledGeneration: generation,
+        currentGeneration: _networkChangeGeneration,
+      ),
     );
-    if (!mounted ||
-        generation != _networkChangeGeneration ||
-        networkState == null) {
+    if (networkState == null ||
+        !isMacOSNetworkRecoveryCurrent(
+          mounted: mounted,
+          scheduledGeneration: generation,
+          currentGeneration: _networkChangeGeneration,
+        )) {
       return;
     }
 
@@ -209,15 +252,29 @@ class ApplicationState extends ConsumerState<Application>
     }
 
     try {
-      await globalState.appController.handleMacOSNetworkChange(networkState);
+      final recovered = await globalState.appController
+          .handleMacOSNetworkChange(
+            networkState,
+            isCancelled: () => !isMacOSNetworkRecoveryCurrent(
+              mounted: mounted,
+              scheduledGeneration: generation,
+              currentGeneration: _networkChangeGeneration,
+            ),
+          );
+      if (!recovered ||
+          !isMacOSNetworkRecoveryCurrent(
+            mounted: mounted,
+            scheduledGeneration: generation,
+            currentGeneration: _networkChangeGeneration,
+          )) {
+        return;
+      }
       _lastMacOSNetworkFingerprint = networkState.fingerprint;
     } catch (e) {
       _forceNextMacOSNetworkRecovery |= force;
       commonPrint.log('Failed to reconcile macOS network change: $e');
       return;
     }
-    if (!mounted || generation != _networkChangeGeneration) return;
-
     unawaited(globalState.appController.updateLocalIp());
     globalState.appController.addCheckIpNumDebounce();
   }

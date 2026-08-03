@@ -169,5 +169,27 @@ void main() {
 
       expect(events, ['disable', 'stop', 'enable']);
     });
+
+    test(
+      'does not restart the listener when manual stop takes priority',
+      () async {
+        final events = <String>[];
+        var shouldResume = true;
+
+        await rebuildMacOSTunListener(
+          disableTun: () async => events.add('disable'),
+          stopListener: () async {
+            events.add('stop');
+            shouldResume = false;
+          },
+          repairNetwork: () async => events.add('repair'),
+          startListener: () async => events.add('start'),
+          enableTun: () async => events.add('enable'),
+          shouldResume: () => shouldResume,
+        );
+
+        expect(events, ['disable', 'stop', 'repair']);
+      },
+    );
   });
 }
