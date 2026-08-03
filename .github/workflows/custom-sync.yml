@@ -128,14 +128,34 @@ jobs:
 
           git checkout -B "${PACKAGE_BRANCH}" "origin/${PACKAGE_BRANCH}"
           package_before="$(git rev-parse HEAD)"
-          git merge --squash "${release_commit}"
-          git restore \
-            --source="${package_before}" \
-            --staged \
-            --worktree \
-            -- .github/workflows
-          if ! git diff --cached --quiet; then
-            git commit -m "chore: sync upstream release ${RELEASE_TAG}"
+          if ! git merge-base --is-ancestor "${release_commit}" HEAD; then
+            merge_status=0
+            git merge --no-commit --no-ff "${release_commit}" || merge_status=$?
+
+            if [[ "${merge_status}" -ne 0 ]]; then
+              has_source_conflict=false
+              mapfile -t conflicts < <(git diff --name-only --diff-filter=U)
+              for conflict in "${conflicts[@]}"; do
+                case "${conflict}" in
+                  .github/workflows/*) ;;
+                  *)
+                    has_source_conflict=true
+                    echo "上游 Release 与打包分支存在源码冲突：${conflict}" >&2
+                    ;;
+                esac
+              done
+              if [[ "${has_source_conflict}" == true ]]; then
+                exit 1
+              fi
+            fi
+
+            git restore \
+              --source="${package_before}" \
+              --staged \
+              --worktree \
+              -- .github/workflows
+            git add .github/workflows
+            git commit -m "chore: merge upstream release ${RELEASE_TAG}"
           fi
           for feature_branch in ${FEATURE_BRANCHES}; do
             git merge --no-edit "origin/${feature_branch}"
