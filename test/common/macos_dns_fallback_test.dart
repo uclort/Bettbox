@@ -71,6 +71,52 @@ void main() {
     expect(after, isNot(before));
   });
 
+  test('finds only explicitly referenced interface names in config', () {
+    final referenced = parseMacOSReferencedInterfaceNames({
+      'interface-name': '',
+      'proxies': [
+        {'name': 'intranet', 'interface-name': 'en5'},
+        {'name': 'regular'},
+      ],
+      'proxy-providers': {
+        'office': {
+          'override': {'interface-name': 'en7'},
+        },
+      },
+    });
+
+    expect(referenced, {'en5', 'en7'});
+  });
+
+  test('monitors the default and explicitly referenced interfaces only', () {
+    const referenced = {'en5'};
+
+    expect(
+      shouldMonitorMacOSNetworkInterface(
+        device: 'en0',
+        defaultDevice: 'en0',
+        referencedDevices: referenced,
+      ),
+      isTrue,
+    );
+    expect(
+      shouldMonitorMacOSNetworkInterface(
+        device: 'en5',
+        defaultDevice: 'en0',
+        referencedDevices: referenced,
+      ),
+      isTrue,
+    );
+    expect(
+      shouldMonitorMacOSNetworkInterface(
+        device: 'en7',
+        defaultDevice: 'en0',
+        referencedDevices: referenced,
+      ),
+      isFalse,
+    );
+  });
+
   test('removes only the DNS server managed by Bettbox', () {
     expect(
       sanitizeMacOSOriginalDnsServers([

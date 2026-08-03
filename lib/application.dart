@@ -111,7 +111,10 @@ class ApplicationState extends ConsumerState<Application>
     }
     await globalState.appController.init();
     if (system.isMacOS) {
-      final networkState = await macOS?.defaultNetworkState;
+      final networkState = await macOS?.defaultNetworkState(
+        referencedDevices:
+            globalState.appController.macOSReferencedNetworkInterfaces,
+      );
       try {
         _lastMacOSPhysicalConnectivity = macOSPhysicalConnectivityResults(
           await Connectivity().checkConnectivity(),
@@ -226,6 +229,8 @@ class ApplicationState extends ConsumerState<Application>
 
   Future<void> _handleMacOSNetworkChange(int generation) async {
     final networkState = await macOS?.waitForStableDefaultNetwork(
+      referencedDevices:
+          globalState.appController.macOSReferencedNetworkInterfaces,
       isCancelled: () => !isMacOSNetworkRecoveryCurrent(
         mounted: mounted,
         scheduledGeneration: generation,

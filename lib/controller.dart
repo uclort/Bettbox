@@ -113,6 +113,10 @@ class AppController {
   int _setupGeneration = 0;
   int _localIpUpdateGeneration = 0;
   int _macOSNetworkRecoveryGeneration = 0;
+  Set<String> _macOSReferencedNetworkInterfaces = const {};
+
+  Set<String> get macOSReferencedNetworkInterfaces =>
+      Set.unmodifiable(_macOSReferencedNetworkInterfaces);
 
   AppController(this.context, WidgetRef ref) : _ref = ref;
 
@@ -491,9 +495,15 @@ class AppController {
 
     final realPatchConfig = patchConfig.copyWith.tun(enable: realTunEnable);
     var params = await globalState.getSetupParams(pathConfig: realPatchConfig);
+    final referencedNetworkInterfaces = system.isMacOS
+        ? parseMacOSReferencedInterfaceNames(params.config)
+        : const <String>{};
     if (system.isMacOS) {
       final networkState =
-          macOSNetworkState ?? await macOS?.defaultNetworkState;
+          macOSNetworkState ??
+          await macOS?.defaultNetworkState(
+            referencedDevices: referencedNetworkInterfaces,
+          );
       if (networkState != null && networkState.dhcpDnsServers.isNotEmpty) {
         params = params.copyWith(
           config: applyMacOSRuntimeDnsFallback(params.config, networkState),
@@ -508,6 +518,9 @@ class AppController {
     if (message.isNotEmpty) {
       commonPrint.log('[Core] Setup config failed: $message');
       throw message;
+    }
+    if (system.isMacOS) {
+      _macOSReferencedNetworkInterfaces = referencedNetworkInterfaces;
     }
     if (system.isDesktop && persistTunState) {
       final prefs = await preferences.sharedPreferencesCompleter.future;

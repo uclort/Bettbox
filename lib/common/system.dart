@@ -581,6 +581,39 @@ String buildMacOSNetworkFingerprint({
   ].join(';');
 }
 
+Set<String> parseMacOSReferencedInterfaceNames(Object? config) {
+  final interfaceNames = <String>{};
+
+  void visit(Object? value) {
+    if (value is Map) {
+      for (final entry in value.entries) {
+        if (entry.key == 'interface-name' && entry.value is String) {
+          final interfaceName = (entry.value as String).trim();
+          if (interfaceName.isNotEmpty) {
+            interfaceNames.add(interfaceName);
+          }
+        }
+        visit(entry.value);
+      }
+    } else if (value is Iterable) {
+      for (final item in value) {
+        visit(item);
+      }
+    }
+  }
+
+  visit(config);
+  return interfaceNames;
+}
+
+bool shouldMonitorMacOSNetworkInterface({
+  required String device,
+  required String defaultDevice,
+  required Set<String> referencedDevices,
+}) {
+  return device == defaultDevice || referencedDevices.contains(device);
+}
+
 List<String> parseMacOSDhcpDnsServers(String value) {
   return value
       .replaceAll(RegExp(r'[{}]'), '')
@@ -720,7 +753,9 @@ class MacOS {
     return _getServiceNameForDevice(route.device);
   }
 
-  Future<MacOSNetworkState?> _getDefaultNetworkState() async {
+  Future<MacOSNetworkState?> _getDefaultNetworkState({
+    Set<String> referencedDevices = const {},
+  }) async {
     final route = await _getDefaultRoute();
     if (route == null) return null;
 
@@ -730,6 +765,13 @@ class MacOS {
 
     final interfaceStates = <MacOSNetworkInterfaceState>[];
     for (final entry in services!.entries) {
+      if (!shouldMonitorMacOSNetworkInterface(
+        device: entry.key,
+        defaultDevice: route.device,
+        referencedDevices: referencedDevices,
+      )) {
+        continue;
+      }
       final addressResult = await _runNetworkCommand('ipconfig', [
         'getifaddr',
         entry.key,
@@ -801,14 +843,18 @@ class MacOS {
     );
   }
 
-  Future<MacOSNetworkState?> get defaultNetworkState =>
-      _getDefaultNetworkState();
+  Future<MacOSNetworkState?> defaultNetworkState({
+    Set<String> referencedDevices = const {},
+  }) {
+    return _getDefaultNetworkState(referencedDevices: referencedDevices);
+  }
 
   Future<MacOSNetworkState?> waitForStableDefaultNetwork({
     Duration initialDelay = const Duration(seconds: 1),
     Duration sampleInterval = const Duration(seconds: 1),
     int maxAttempts = 5,
     bool Function()? isCancelled,
+    Set<String> referencedDevices = const {},
   }) async {
     await Future.delayed(initialDelay);
     MacOSNetworkState? previous;
@@ -816,7 +862,9 @@ class MacOS {
     for (var attempt = 0; attempt < maxAttempts; attempt++) {
       if (isCancelled?.call() == true) return null;
 
-      final current = await _getDefaultNetworkState();
+      final current = await _getDefaultNetworkState(
+        referencedDevices: referencedDevices,
+      );
       if (current != null &&
           previous != null &&
           current.fingerprint == previous.fingerprint) {
