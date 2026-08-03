@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
@@ -515,6 +516,71 @@ class MacOSNetworkState {
   });
 }
 
+class MacOSNetworkInterfaceState {
+  final String device;
+  final String serviceName;
+  final String address;
+  final String gateway;
+  final String connectionId;
+  final String dhcpServer;
+  final String dhcpDns;
+
+  const MacOSNetworkInterfaceState({
+    required this.device,
+    required this.serviceName,
+    required this.address,
+    required this.gateway,
+    required this.connectionId,
+    required this.dhcpServer,
+    required this.dhcpDns,
+  });
+
+  String get fingerprint => [
+    device,
+    serviceName,
+    address,
+    gateway,
+    connectionId,
+    dhcpServer,
+    dhcpDns,
+  ].join('|');
+}
+
+Map<String, String> parseMacOSNetworkServices(String value) {
+  final services = <String, String>{};
+  for (final section in value.split(RegExp(r'\n\s*\n'))) {
+    final serviceMatch = RegExp(
+      r'^\(\d+\)\s+(.+)$',
+      multiLine: true,
+    ).firstMatch(section);
+    final deviceMatch = RegExp(r'Device:\s*([^\)]+)').firstMatch(section);
+    final serviceName = serviceMatch?.group(1)?.trim();
+    final device = deviceMatch?.group(1)?.trim();
+    if (serviceName == null ||
+        serviceName.isEmpty ||
+        device == null ||
+        device.isEmpty) {
+      continue;
+    }
+    services[device] = serviceName;
+  }
+  return services;
+}
+
+String buildMacOSNetworkFingerprint({
+  required String defaultDevice,
+  required String defaultGateway,
+  required Iterable<MacOSNetworkInterfaceState> interfaces,
+}) {
+  final interfaceFingerprints =
+      interfaces.map((state) => state.fingerprint).toList(growable: false)
+        ..sort();
+  return [
+    'default=$defaultDevice|$defaultGateway',
+    ...interfaceFingerprints,
+  ].join(';');
+}
+
 List<String> parseMacOSDhcpDnsServers(String value) {
   return value
       .replaceAll(RegExp(r'[{}]'), '')
@@ -557,6 +623,7 @@ Map<String, dynamic> applyMacOSRuntimeDnsFallback(
 class MacOS {
   static MacOS? _instance;
   static const _dnsBackupFileName = 'macos_system_dns_backup.json';
+  static const _networkCommandTimeout = Duration(seconds: 10);
   final Lock _dnsLock = Lock();
 
   MacOS._internal();
@@ -566,8 +633,50 @@ class MacOS {
     return _instance!;
   }
 
+  Future<ProcessResult> _runNetworkCommand(
+    String executable,
+    List<String> arguments,
+  ) async {
+    final process = await Process.start(executable, arguments);
+    final stdoutFuture = process.stdout.transform(utf8.decoder).join();
+    final stderrFuture = process.stderr.transform(utf8.decoder).join();
+
+    try {
+      final exitCode = await process.exitCode.timeout(_networkCommandTimeout);
+      return ProcessResult(
+        process.pid,
+        exitCode,
+        await stdoutFuture,
+        await stderrFuture,
+      );
+    } on TimeoutException {
+      process.kill(ProcessSignal.sigkill);
+      try {
+        await process.exitCode.timeout(const Duration(seconds: 1));
+      } catch (_) {}
+      final stdout = await stdoutFuture.timeout(
+        const Duration(seconds: 1),
+        onTimeout: () => '',
+      );
+      final stderr = await stderrFuture.timeout(
+        const Duration(seconds: 1),
+        onTimeout: () => '',
+      );
+      commonPrint.log(
+        'macOS network command timed out: $executable ${arguments.join(' ')}',
+      );
+      return ProcessResult(
+        process.pid,
+        124,
+        stdout,
+        '$stderr\nCommand timed out after '
+        '${_networkCommandTimeout.inSeconds} seconds',
+      );
+    }
+  }
+
   Future<({String device, String gateway})?> _getDefaultRoute() async {
-    final result = await Process.run('route', ['-n', 'get', 'default']);
+    final result = await _runNetworkCommand('route', ['-n', 'get', 'default']);
     if (result.exitCode != 0) return null;
 
     final output = result.stdout.toString();
@@ -592,31 +701,17 @@ class MacOS {
     return (device: device, gateway: gateway);
   }
 
-  Future<String?> _getServiceNameForDevice(String device) async {
-    final serviceResult = await Process.run('networksetup', [
+  Future<Map<String, String>?> _getNetworkServicesByDevice() async {
+    final serviceResult = await _runNetworkCommand('networksetup', [
       '-listnetworkserviceorder',
     ]);
     if (serviceResult.exitCode != 0) return null;
+    return parseMacOSNetworkServices(serviceResult.stdout.toString());
+  }
 
-    final serviceOutput = serviceResult.stdout.toString();
-    final currentService = serviceOutput
-        .split('\n\n')
-        .firstWhere(
-          (section) => section.contains('Device: $device)'),
-          orElse: () => '',
-        );
-    if (currentService.isEmpty) return null;
-
-    final serviceNameLine = currentService
-        .split('\n')
-        .firstWhere(
-          (line) => RegExp(r'^\(\d+\).*').hasMatch(line),
-          orElse: () => '',
-        );
-    final match = RegExp(
-      r'^\(\d+\)\s+(.+)$',
-    ).firstMatch(serviceNameLine.trim());
-    return match?.group(1)?.trim();
+  Future<String?> _getServiceNameForDevice(String device) async {
+    final services = await _getNetworkServicesByDevice();
+    return services?[device];
   }
 
   Future<String?> get defaultServiceName async {
@@ -629,49 +724,74 @@ class MacOS {
     final route = await _getDefaultRoute();
     if (route == null) return null;
 
-    final serviceName = await _getServiceNameForDevice(route.device);
+    final services = await _getNetworkServicesByDevice();
+    final serviceName = services?[route.device];
     if (serviceName == null) return null;
 
-    final addressResult = await Process.run('ipconfig', [
-      'getifaddr',
-      route.device,
-    ]);
-    final address = addressResult.exitCode == 0
-        ? addressResult.stdout.toString().trim()
-        : '';
-    if (address.isEmpty) return null;
+    final interfaceStates = <MacOSNetworkInterfaceState>[];
+    for (final entry in services!.entries) {
+      final addressResult = await _runNetworkCommand('ipconfig', [
+        'getifaddr',
+        entry.key,
+      ]);
+      final address = addressResult.exitCode == 0
+          ? addressResult.stdout.toString().trim()
+          : '';
+      if (address.isEmpty) continue;
 
-    final summaryResult = await Process.run('ipconfig', [
-      'getsummary',
-      route.device,
-    ]);
-    final summary = summaryResult.exitCode == 0
-        ? summaryResult.stdout.toString()
-        : '';
+      final summaryResult = await _runNetworkCommand('ipconfig', [
+        'getsummary',
+        entry.key,
+      ]);
+      final summary = summaryResult.exitCode == 0
+          ? summaryResult.stdout.toString()
+          : '';
 
-    String summaryValue(RegExp pattern) {
-      return pattern.firstMatch(summary)?.group(1)?.trim() ?? '';
+      String summaryValue(RegExp pattern) {
+        return pattern.firstMatch(summary)?.group(1)?.trim() ?? '';
+      }
+
+      final gateway = entry.key == route.device
+          ? route.gateway
+          : summaryValue(
+              RegExp(
+                r'^\s*router \(ip(?:_mult)?\):\s*\{?([^\s,\}]+)',
+                multiLine: true,
+              ),
+            );
+      interfaceStates.add(
+        MacOSNetworkInterfaceState(
+          device: entry.key,
+          serviceName: entry.value,
+          address: address,
+          gateway: gateway,
+          connectionId: summaryValue(
+            RegExp(r'^\s*ConnectionID\s*:\s*(.+)$', multiLine: true),
+          ),
+          dhcpServer: summaryValue(
+            RegExp(r'^\s*server_identifier \(ip\):\s*(.+)$', multiLine: true),
+          ),
+          dhcpDns: summaryValue(
+            RegExp(
+              r'^\s*domain_name_server \(ip_mult\):\s*(.+)$',
+              multiLine: true,
+            ),
+          ),
+        ),
+      );
     }
 
-    final connectionId = summaryValue(
-      RegExp(r'^\s*ConnectionID\s*:\s*(.+)$', multiLine: true),
+    final defaultInterface = interfaceStates
+        .where((state) => state.device == route.device)
+        .firstOrNull;
+    if (defaultInterface == null) return null;
+
+    final dhcpDnsServers = parseMacOSDhcpDnsServers(defaultInterface.dhcpDns);
+    final fingerprint = buildMacOSNetworkFingerprint(
+      defaultDevice: route.device,
+      defaultGateway: route.gateway,
+      interfaces: interfaceStates,
     );
-    final dhcpServer = summaryValue(
-      RegExp(r'^\s*server_identifier \(ip\):\s*(.+)$', multiLine: true),
-    );
-    final dhcpDns = summaryValue(
-      RegExp(r'^\s*domain_name_server \(ip_mult\):\s*(.+)$', multiLine: true),
-    );
-    final dhcpDnsServers = parseMacOSDhcpDnsServers(dhcpDns);
-    final fingerprint = [
-      route.device,
-      route.gateway,
-      serviceName,
-      address,
-      connectionId,
-      dhcpServer,
-      dhcpDns,
-    ].join('|');
 
     return MacOSNetworkState(
       device: route.device,
@@ -724,7 +844,7 @@ class MacOS {
   }
 
   Future<List<String>?> _getSystemDns(String serviceName) async {
-    final result = await Process.run('networksetup', [
+    final result = await _runNetworkCommand('networksetup', [
       '-getdnsservers',
       serviceName,
     ]);
@@ -777,7 +897,7 @@ class MacOS {
       return;
     }
 
-    final result = await Process.run('networksetup', [
+    final result = await _runNetworkCommand('networksetup', [
       '-setdnsservers',
       serviceName,
       macOSManagedDns,
@@ -805,7 +925,7 @@ class MacOS {
       }
       final servers = sanitizeMacOSOriginalDnsServers(rawServers);
 
-      final result = await Process.run('networksetup', [
+      final result = await _runNetworkCommand('networksetup', [
         '-setdnsservers',
         serviceName,
         if (servers.isNotEmpty) ...servers,

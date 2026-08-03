@@ -67,6 +67,7 @@ Future<void> rebuildMacOSTunListener({
   required Future<void> Function() repairNetwork,
   required Future<void> Function() startListener,
   required Future<void> Function() enableTun,
+  bool Function()? shouldResume,
 }) async {
   var tunTemporarilyDisabled = false;
   var listenerStopped = false;
@@ -77,16 +78,18 @@ Future<void> rebuildMacOSTunListener({
     listenerStopped = true;
     await repairNetwork();
   } finally {
-    if (listenerStopped) {
-      try {
-        await startListener();
-      } finally {
-        if (tunTemporarilyDisabled) {
-          await enableTun();
+    if (shouldResume?.call() ?? true) {
+      if (listenerStopped) {
+        try {
+          await startListener();
+        } finally {
+          if (tunTemporarilyDisabled) {
+            await enableTun();
+          }
         }
+      } else if (tunTemporarilyDisabled) {
+        await enableTun();
       }
-    } else if (tunTemporarilyDisabled) {
-      await enableTun();
     }
   }
 }
@@ -109,6 +112,7 @@ class AppController {
   int _coreGeneration = 0;
   int _setupGeneration = 0;
   int _localIpUpdateGeneration = 0;
+  int _macOSNetworkRecoveryGeneration = 0;
 
   AppController(this.context, WidgetRef ref) : _ref = ref;
 
@@ -224,30 +228,53 @@ class AppController {
   }
 
   Future<void> updateStatus(bool isStart) {
+    if (system.isMacOS && !isStart) {
+      _macOSNetworkRecoveryGeneration++;
+    }
     return _coreLifecycleLock.synchronized(() => _updateStatus(isStart));
   }
 
-  Future<void> handleMacOSNetworkChange(MacOSNetworkState networkState) {
+  Future<bool> handleMacOSNetworkChange(
+    MacOSNetworkState networkState, {
+    bool Function()? isCancelled,
+  }) {
+    final recoveryGeneration = _macOSNetworkRecoveryGeneration;
+
+    bool recoveryCancelled() {
+      return recoveryGeneration != _macOSNetworkRecoveryGeneration ||
+          isCancelled?.call() == true;
+    }
+
     return _coreLifecycleLock.synchronized(() async {
+      if (recoveryCancelled()) {
+        commonPrint.log('Skipping stale macOS network recovery');
+        return false;
+      }
+
       final isStart = _ref.read(runTimeProvider.notifier).isStart;
       final dnsState = _ref.read(autoSetSystemDnsStateProvider);
       final shouldSetSystemDns = dnsState.a && dnsState.b;
       final shouldRestartTunListener = isStart && dnsState.a;
 
       Future<void> repairNetwork() async {
+        if (recoveryCancelled()) return;
+
         if (isStart) {
           await clashCore.closeConnections();
         }
+        if (recoveryCancelled()) return;
 
         await macOS?.updateDns(
           !shouldSetSystemDns,
           serviceName: networkState.serviceName,
         );
 
-        if (!isStart) return;
+        if (!isStart || recoveryCancelled()) return;
 
         await clashCore.flushDnsCache();
+        if (recoveryCancelled()) return;
         await clashCore.flushFakeIP();
+        if (recoveryCancelled()) return;
 
         if (shouldRestartTunListener) {
           await _setupCoreConfig(
@@ -261,7 +288,7 @@ class AppController {
 
       if (!shouldRestartTunListener) {
         await repairNetwork();
-        return;
+        return !recoveryCancelled();
       }
 
       commonPrint.log('Rebuilding macOS TUN after network change');
@@ -271,7 +298,9 @@ class AppController {
         repairNetwork: repairNetwork,
         startListener: clashCore.startListener,
         enableTun: _updateClashConfig,
+        shouldResume: () => !recoveryCancelled(),
       );
+      return !recoveryCancelled();
     });
   }
 
@@ -1109,35 +1138,50 @@ class AppController {
     final exitLock = Completer<void>();
     _exitLock = exitLock;
     globalState.isExiting = true;
+    if (system.isMacOS) {
+      _macOSNetworkRecoveryGeneration++;
+    }
 
     try {
-      if (system.isDesktop) {
-        try {
-          await trayManager.destroy();
-        } catch (e) {
-          commonPrint.log('Failed to destroy tray icon on exit: $e');
+      Future<void> cleanup() async {
+        if (system.isDesktop) {
+          try {
+            await window?.hide();
+          } catch (e) {
+            commonPrint.log('Failed to hide window on exit: $e');
+          }
+          try {
+            await trayManager.destroy();
+          } catch (e) {
+            commonPrint.log('Failed to destroy tray icon on exit: $e');
+          }
+        }
+        stopWakelockAutoRecovery();
+        await globalState.handleBackground();
+        if (system.isDesktop) {
+          final prefs = await preferences.sharedPreferencesCompleter.future;
+          await prefs?.setBool('is_tun_running', false);
+        }
+        await savePreferences();
+        if (proxy != null) {
+          await proxy!.stopProxy();
+        }
+        await clashCore.shutdown();
+        if (clashService != null) {
+          await clashService!.destroy();
         }
       }
-      stopWakelockAutoRecovery();
-      await globalState.handleBackground();
-      if (system.isDesktop) {
-        final prefs = await preferences.sharedPreferencesCompleter.future;
-        await prefs?.setBool('is_tun_running', false);
-      }
-      await savePreferences();
-      if (proxy != null) {
-        await proxy!.stopProxy();
-      }
-      await clashCore.shutdown();
-      if (clashService != null) {
-        await clashService!.destroy();
-      }
+
+      final cleanupFuture = cleanup();
+      await (system.isMacOS
+          ? cleanupFuture.timeout(const Duration(seconds: 15))
+          : cleanupFuture);
     } catch (e) {
       commonPrint.log('handleExit error: $e');
     } finally {
       if (macOS != null) {
         try {
-          await macOS!.updateDns(true);
+          await macOS!.updateDns(true).timeout(const Duration(seconds: 12));
         } catch (e) {
           commonPrint.log('Failed to restore macOS system DNS on exit: $e');
         }
