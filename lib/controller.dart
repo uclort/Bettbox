@@ -171,6 +171,9 @@ class AppController {
   Future<void> _updateStatus(bool isStart) async {
     if (isStart) {
       await _fastStart();
+      if (globalState.isStart && !_ref.read(runTimeProvider.notifier).isStart) {
+        _ref.read(runTimeProvider.notifier).value = 0;
+      }
     } else {
       await globalState.handleStop();
       clashCore.resetTraffic();
@@ -384,7 +387,8 @@ class AppController {
 
   Future<bool> _shouldUpdateDashboardTick() async {
     final lifecycleState = WidgetsBinding.instance.lifecycleState;
-    final isPinned = system.isDesktop &&
+    final isPinned =
+        system.isDesktop &&
         _ref.read(windowSettingProvider.select((s) => s.isPinned));
     if (!isPinned && lifecycleState != AppLifecycleState.resumed) return false;
 
@@ -404,8 +408,12 @@ class AppController {
     final networkSpeedNotification =
         system.isAndroid &&
         _ref.read(vpnSettingProvider).networkSpeedNotification;
+    final enableTraySpeed =
+        system.isMacOS && _ref.read(vpnSettingProvider).enableTraySpeed;
 
-    if (!shouldUpdateDashboard && !networkSpeedNotification) {
+    if (!shouldUpdateDashboard &&
+        !networkSpeedNotification &&
+        !enableTraySpeed) {
       return;
     }
 
@@ -419,6 +427,10 @@ class AppController {
 
     if (shouldUpdateDashboard) {
       _ref.read(trafficsProvider.notifier).addTraffic(traffic);
+    }
+
+    if (enableTraySpeed) {
+      await tray.updateSpeed(traffic);
     }
 
     if (networkSpeedNotification) {
@@ -1489,8 +1501,9 @@ class AppController {
       }
 
       if (successCount > 0) {
-        globalState.navigatorKey.currentState
-            ?.popUntil((route) => route.isFirst);
+        globalState.navigatorKey.currentState?.popUntil(
+          (route) => route.isFirst,
+        );
         toProfiles();
       }
     } finally {
@@ -1824,6 +1837,18 @@ class AppController {
       silent: silent,
       force: force,
     );
+  }
+
+  Future<void> showTrayMenu({bool includeHiddenItems = false}) async {
+    final trayState = _ref.read(trayStateProvider);
+    final groups = includeHiddenItems
+        ? getVisibleGroups(
+            mode: trayState.mode,
+            groups: _ref.read(groupsProvider),
+            showHiddenItems: true,
+          )
+        : trayState.groups;
+    await tray.showContextMenu(trayState: trayState, groups: groups);
   }
 
   Future<void> _processRecoveryArchive(
@@ -2302,8 +2327,6 @@ class AppController {
     // Ensure current profile exists
     _ensureCurrentProfile(profiles);
   }
-
-
 
   Future<T?> safeRun<T>(
     FutureOr<T> Function() futureFunction, {

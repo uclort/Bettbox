@@ -509,24 +509,64 @@ class AppLocalizations {
     );
   }
 
-  /// `Tray Enhancement`
-  String get trayEnhancement {
+  /// `Enable Tray Speed`
+  String get enableTraySpeed {
     return Intl.message(
-      'Tray Enhancement',
-      name: 'trayEnhancement',
+      'Enable Tray Speed',
+      name: 'enableTraySpeed',
       desc: '',
       args: [],
     );
   }
 
-  /// `Control proxy groups in the system tray context menu`
-  String get trayEnhancementDesc {
+  /// `Show upload and download speeds next to the menu bar icon`
+  String get enableTraySpeedDesc {
     return Intl.message(
-      'Control proxy groups in the system tray context menu',
-      name: 'trayEnhancementDesc',
+      'Show upload and download speeds next to the menu bar icon',
+      name: 'enableTraySpeedDesc',
       desc: '',
       args: [],
     );
+  }
+
+  /// `Tray Click Behavior`
+  String get trayClickBehavior {
+    return Intl.message(
+      'Tray Click Behavior',
+      name: 'trayClickBehavior',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Left Click`
+  String get leftClickBehavior {
+    return Intl.message(
+      'Left Click',
+      name: 'leftClickBehavior',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Right Click`
+  String get rightClickBehavior {
+    return Intl.message(
+      'Right Click',
+      name: 'rightClickBehavior',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show Panel`
+  String get showPanel {
+    return Intl.message('Show Panel', name: 'showPanel', desc: '', args: []);
+  }
+
+  /// `Show Menu`
+  String get showMenu {
+    return Intl.message('Show Menu', name: 'showMenu', desc: '', args: []);
   }
 
   /// `Exclude China`
