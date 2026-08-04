@@ -1,0 +1,405 @@
+name: 同步 Bettbox 自定义打包分支
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+
+concurrency:
+  group: sync-bettbox-custom-build
+  cancel-in-progress: false
+
+env:
+  BETTBOX_REPOSITORY: uclort/Bettbox
+  BETTBOX_UPSTREAM_REPOSITORY: appshubcc/Bettbox
+  BETTBOX_MAIN_BRANCH: main
+  BETTBOX_PACKAGE_BRANCH: custom-build
+  BETTBOX_FEATURE_BRANCHES: >-
+    codex/fix-macos-dns-network-recovery
+    codex/package-macos-tray-features
+  BETTBOX_PATCH_BRANCHES: >-
+    codex/fix-macos-command-w-close
+  CUSTOM_MIHOMO_REPOSITORY: uclort/custom-mihomo
+  MIHOMO_REPOSITORY: MetaCubeX/mihomo
+  GO_VERSION: 1.25.x
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  sync:
+    name: 同步 main、功能分支与私有内核
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: 检出工作流分支
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: 检出私有自定义 Mihomo
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ env.CUSTOM_MIHOMO_REPOSITORY }}
+          ref: main
+          path: .custom-build/runtime/custom-mihomo
+          fetch-depth: 0
+          ssh-key: ${{ secrets.CUSTOM_MIHOMO_WRITE_KEY }}
+
+      - name: 检出 Bettbox fork
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ env.BETTBOX_REPOSITORY }}
+          ref: ${{ env.BETTBOX_PACKAGE_BRANCH }}
+          path: .bettbox-repository
+          fetch-depth: 0
+          token: ${{ github.token }}
+
+      - name: 读取 Mihomo 最新稳定版本
+        id: versions
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mihomo_tag="$(
+            gh api "repos/${MIHOMO_REPOSITORY}/releases/latest" --jq '.tag_name'
+          )"
+          if [[ -z "${mihomo_tag}" ]]; then
+            echo "无法读取 Mihomo 最新稳定 Release。" >&2
+            exit 1
+          fi
+          echo "mihomo_tag=${mihomo_tag}" >> "${GITHUB_OUTPUT}"
+
+      - name: 以 main 为基线同步功能分支
+        id: branches
+        shell: bash
+        working-directory: .bettbox-repository
+        env:
+          MAIN_BRANCH: ${{ env.BETTBOX_MAIN_BRANCH }}
+          PACKAGE_BRANCH: ${{ env.BETTBOX_PACKAGE_BRANCH }}
+          FEATURE_BRANCHES: ${{ env.BETTBOX_FEATURE_BRANCHES }}
+          PATCH_BRANCHES: ${{ env.BETTBOX_PATCH_BRANCHES }}
+          UPSTREAM_REPOSITORY: ${{ env.BETTBOX_UPSTREAM_REPOSITORY }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote remove upstream 2>/dev/null || true
+          git remote add upstream "https://github.com/${UPSTREAM_REPOSITORY}.git"
+          git fetch origin "${MAIN_BRANCH}" "${PACKAGE_BRANCH}"
+          for feature_branch in ${FEATURE_BRANCHES} ${PATCH_BRANCHES}; do
+            git fetch origin \
+              "+refs/heads/${feature_branch}:refs/remotes/origin/${feature_branch}"
+          done
+          git fetch --force upstream \
+            "+refs/heads/${MAIN_BRANCH}:refs/remotes/upstream/${MAIN_BRANCH}"
+
+          git checkout -B "${MAIN_BRANCH}" "origin/${MAIN_BRANCH}"
+          main_before="$(git rev-parse "origin/${MAIN_BRANCH}")"
+          git read-tree --reset -u "upstream/${MAIN_BRANCH}"
+          git restore \
+            --source="origin/${MAIN_BRANCH}" \
+            --staged \
+            --worktree \
+            -- .github/workflows
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: sync upstream main source"
+            git push \
+              --force-with-lease="refs/heads/${MAIN_BRANCH}:${main_before}" \
+              origin "HEAD:${MAIN_BRANCH}"
+          fi
+          main_after="$(git rev-parse HEAD)"
+
+          package_before="$(git rev-parse "origin/${PACKAGE_BRANCH}")"
+          git checkout -B "${PACKAGE_BRANCH}" "${main_after}"
+          git restore \
+            --source="${package_before}" \
+            --staged \
+            --worktree \
+            -- .github/workflows .custom-build
+          git add --all
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: prepare custom build on upstream main"
+          fi
+          for feature_branch in ${FEATURE_BRANCHES}; do
+            git merge --no-edit "origin/${feature_branch}"
+          done
+          for patch_branch in ${PATCH_BRANCHES}; do
+            if ! git cherry-pick "origin/${patch_branch}"; then
+              if git diff --cached --quiet && git diff --quiet; then
+                git cherry-pick --skip
+              else
+                echo "打包补丁分支应用失败：${patch_branch}" >&2
+                exit 1
+              fi
+            fi
+          done
+          package_after="$(git rev-parse HEAD)"
+
+          {
+            echo "main_before=${main_before}"
+            echo "main_after=${main_after}"
+            echo "package_before=${package_before}"
+            echo "package_after=${package_after}"
+            echo "base_commit=${main_after}"
+            echo "base_label=main@${main_after:0:12}"
+            echo "main_changed=$([[ "${main_before}" != "${main_after}" ]] && echo true || echo false)"
+            echo "package_changed=$([[ "${package_before}" != "${package_after}" ]] && echo true || echo false)"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: 检查内核源码与补丁变化
+        id: inspect
+        shell: bash
+        env:
+          BETTBOX_SOURCE: ${{ github.workspace }}/.bettbox-repository
+          CUSTOM_REPOSITORY: ${{ github.workspace }}/.custom-build/runtime/custom-mihomo
+          MIHOMO_TAG: ${{ steps.versions.outputs.mihomo_tag }}
+        run: |
+          set -euo pipefail
+          current_kernel="$(
+            tr -d '[:space:]' \
+              < "${CUSTOM_REPOSITORY}/source/.bettbox-kernel-tree" \
+              2>/dev/null || true
+          )"
+          current_mihomo="$(
+            tr -d '[:space:]' \
+              < "${CUSTOM_REPOSITORY}/source/.upstream-release" \
+              2>/dev/null || true
+          )"
+          current_patch="$(
+            tr -d '[:space:]' \
+              < "${CUSTOM_REPOSITORY}/source/.snell-v6-patch-sha256" \
+              2>/dev/null || true
+          )"
+          wanted_kernel="$(
+            git -C "${BETTBOX_SOURCE}" rev-parse HEAD:core/Clash.Meta
+          )"
+          wanted_patch="$(
+            sha256sum "${CUSTOM_REPOSITORY}/patches/opensnell-v6.patch" \
+              | awk '{print $1}'
+          )"
+
+          if [[ "${wanted_kernel}" == "${current_kernel}" &&
+                "${MIHOMO_TAG}" == "${current_mihomo}" &&
+                "${wanted_patch}" == "${current_patch}" ]]; then
+            changed=false
+          else
+            changed=true
+          fi
+
+          {
+            echo "changed=${changed}"
+            echo "kernel_tree=${wanted_kernel}"
+            echo "patch_sha256=${wanted_patch}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: 配置 Go
+        if: steps.inspect.outputs.changed == 'true'
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: false
+
+      - name: 生成 Bettbox 兼容的 Snell v6 Mihomo
+        if: steps.inspect.outputs.changed == 'true'
+        shell: bash
+        env:
+          BETTBOX_COMMIT: ${{ steps.branches.outputs.package_after }}
+          BETTBOX_BASE_LABEL: ${{ steps.branches.outputs.base_label }}
+          MIHOMO_TAG: ${{ steps.versions.outputs.mihomo_tag }}
+          KERNEL_TREE: ${{ steps.inspect.outputs.kernel_tree }}
+          PATCH_SHA256: ${{ steps.inspect.outputs.patch_sha256 }}
+        run: |
+          set -euo pipefail
+          bettbox_source="${GITHUB_WORKSPACE}/.bettbox-repository"
+          custom_repository="${GITHUB_WORKSPACE}/.custom-build/runtime/custom-mihomo"
+          generated_source="${RUNNER_TEMP}/custom-mihomo-source"
+
+          if [[ "$(git -C "${bettbox_source}" rev-parse HEAD)" != "${BETTBOX_COMMIT}" ]]; then
+            echo "Bettbox 打包分支提交在同步过程中发生变化。" >&2
+            exit 1
+          fi
+
+          bundled_version="$(
+            awk -F'"' '/^[[:space:]]*Version[[:space:]]*=/{print $2; exit}' \
+              "${bettbox_source}/core/Clash.Meta/constant/version.go"
+          )"
+          bundled_tag="v${bundled_version}"
+          if [[ "${bundled_tag}" != "${MIHOMO_TAG}" ]]; then
+            echo "Bettbox 内置 Mihomo 为 ${bundled_tag}，当前稳定版为 ${MIHOMO_TAG}。" >&2
+            echo "为避免破坏 Bettbox 专用接口，本次停止更新并保留可用源码。" >&2
+            exit 1
+          fi
+
+          rsync -a --delete \
+            "${bettbox_source}/core/Clash.Meta/" \
+            "${generated_source}/"
+
+          (
+            cd "${generated_source}"
+            git apply --check \
+              "${custom_repository}/patches/opensnell-v6.patch"
+            git apply \
+              "${custom_repository}/patches/opensnell-v6.patch"
+            go test ./transport/snell ./adapter/outbound
+          )
+
+          rsync -a --delete \
+            "${generated_source}/" \
+            "${custom_repository}/source/"
+          printf '%s\n' "${MIHOMO_TAG}" \
+            > "${custom_repository}/source/.upstream-release"
+          printf '%s\n' "${BETTBOX_BASE_LABEL}" \
+            > "${custom_repository}/source/.bettbox-release"
+          printf '%s\n' "${KERNEL_TREE}" \
+            > "${custom_repository}/source/.bettbox-kernel-tree"
+          printf '%s\n' "${PATCH_SHA256}" \
+            > "${custom_repository}/source/.snell-v6-patch-sha256"
+
+      - name: 提交私有 Mihomo 源码
+        id: custom_source
+        shell: bash
+        env:
+          BETTBOX_BASE_LABEL: ${{ steps.branches.outputs.base_label }}
+          MIHOMO_TAG: ${{ steps.versions.outputs.mihomo_tag }}
+        run: |
+          set -euo pipefail
+          custom_repository="${GITHUB_WORKSPACE}/.custom-build/runtime/custom-mihomo"
+          git -C "${custom_repository}" config user.name "github-actions[bot]"
+          git -C "${custom_repository}" config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C "${custom_repository}" add --all source
+
+          pushed=false
+          if ! git -C "${custom_repository}" diff --cached --quiet; then
+            git -C "${custom_repository}" commit \
+              -m "同步 Bettbox ${BETTBOX_BASE_LABEL} / Mihomo ${MIHOMO_TAG}"
+            git -C "${custom_repository}" pull --rebase origin main
+            git -C "${custom_repository}" push origin HEAD:main
+            pushed=true
+          fi
+
+          {
+            echo "commit=$(git -C "${custom_repository}" rev-parse HEAD)"
+            echo "pushed=${pushed}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: 提交并推送 custom-build
+        id: package
+        shell: bash
+        env:
+          BETTBOX_BASE_COMMIT: ${{ steps.branches.outputs.base_commit }}
+          BETTBOX_BASE_LABEL: ${{ steps.branches.outputs.base_label }}
+          CUSTOM_MIHOMO_COMMIT: ${{ steps.custom_source.outputs.commit }}
+          MIHOMO_TAG: ${{ steps.versions.outputs.mihomo_tag }}
+          PACKAGE_BRANCH: ${{ env.BETTBOX_PACKAGE_BRANCH }}
+        run: |
+          set -euo pipefail
+          bettbox_source="${GITHUB_WORKSPACE}/.bettbox-repository"
+          metadata="${bettbox_source}/.custom-build/metadata"
+          mkdir -p "${metadata}"
+          app_version="$(
+            awk '$1 == "version:" { print $2; exit }' \
+              "${bettbox_source}/pubspec.yaml"
+          )"
+
+          printf '%s\n' "${BETTBOX_BASE_COMMIT}" \
+            > "${metadata}/bettbox-base-commit"
+          printf '%s\n' "${BETTBOX_BASE_LABEL}" \
+            > "${metadata}/bettbox-release"
+          printf '%s\n' "${app_version}" \
+            > "${metadata}/app-version"
+          printf '%s\n' "${CUSTOM_MIHOMO_COMMIT}" \
+            > "${metadata}/custom-mihomo-commit"
+          printf '%s\n' "${MIHOMO_TAG}" \
+            > "${metadata}/mihomo-release"
+
+          git -C "${bettbox_source}" config user.name "github-actions[bot]"
+          git -C "${bettbox_source}" config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C "${bettbox_source}" add --all .custom-build/metadata
+          if ! git -C "${bettbox_source}" diff --cached --quiet; then
+            git -C "${bettbox_source}" commit \
+              -m "chore: update custom build metadata"
+          fi
+
+          final_commit="$(git -C "${bettbox_source}" rev-parse HEAD)"
+          remote_commit="$(
+            git -C "${bettbox_source}" rev-parse "origin/${PACKAGE_BRANCH}"
+          )"
+          pushed=false
+          if [[ "${final_commit}" != "${remote_commit}" ]]; then
+            git -C "${bettbox_source}" push \
+              --force-with-lease="refs/heads/${PACKAGE_BRANCH}:${remote_commit}" \
+              origin "HEAD:${PACKAGE_BRANCH}"
+            pushed=true
+          fi
+          {
+            echo "commit=${final_commit}"
+            echo "pushed=${pushed}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: 触发自定义打包
+        if: >-
+          steps.package.outputs.pushed == 'true' ||
+          steps.custom_source.outputs.pushed == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PACKAGE_COMMIT: ${{ steps.package.outputs.commit }}
+        run: |
+          set -euo pipefail
+          remote_commit=""
+          for _ in {1..15}; do
+            remote_commit="$(
+              gh api \
+                "repos/${GITHUB_REPOSITORY}/git/ref/heads/${BETTBOX_PACKAGE_BRANCH}" \
+                --jq '.object.sha'
+            )"
+            if [[ "${remote_commit}" == "${PACKAGE_COMMIT}" ]]; then
+              break
+            fi
+            sleep 2
+          done
+          if [[ "${remote_commit}" != "${PACKAGE_COMMIT}" ]]; then
+            echo "远端打包分支尚未更新到 ${PACKAGE_COMMIT}，停止触发旧代码构建。" >&2
+            exit 1
+          fi
+          sleep 3
+          gh workflow run custom-build.yml \
+            --repo "${GITHUB_REPOSITORY}" \
+            --ref "${BETTBOX_PACKAGE_BRANCH}" \
+            --field force=false \
+            --field target_commit="${PACKAGE_COMMIT}"
+
+      - name: 写入同步摘要
+        if: always()
+        shell: bash
+        env:
+          MAIN_BEFORE: ${{ steps.branches.outputs.main_before }}
+          MAIN_AFTER: ${{ steps.branches.outputs.main_after }}
+          PACKAGE_BEFORE: ${{ steps.branches.outputs.package_before }}
+          PACKAGE_AFTER: ${{ steps.package.outputs.commit }}
+          MAIN_CHANGED: ${{ steps.branches.outputs.main_changed }}
+          PACKAGE_CHANGED: ${{ steps.branches.outputs.package_changed }}
+          BETTBOX_BASE_LABEL: ${{ steps.branches.outputs.base_label }}
+          MIHOMO_TAG: ${{ steps.versions.outputs.mihomo_tag }}
+          SOURCE_CHANGED: ${{ steps.inspect.outputs.changed }}
+          SOURCE_PUSHED: ${{ steps.custom_source.outputs.pushed }}
+        run: |
+          {
+            echo "## Bettbox 自定义打包分支同步"
+            echo
+            echo "- 上游源码基线：\`${BETTBOX_BASE_LABEL:-未知}\`"
+            echo "- fork main：\`${MAIN_BEFORE:-未知}\` → \`${MAIN_AFTER:-未知}\`"
+            echo "- custom-build：\`${PACKAGE_BEFORE:-未知}\` → \`${PACKAGE_AFTER:-未知}\`"
+            echo "- main 是否更新：\`${MAIN_CHANGED:-未知}\`"
+            echo "- 功能分支是否合并：\`${PACKAGE_CHANGED:-未知}\`"
+            echo "- Mihomo：\`${MIHOMO_TAG:-未知}\`"
+            echo "- 私有内核是否需要更新：\`${SOURCE_CHANGED:-未知}\`"
+            echo "- 私有内核是否已推送：\`${SOURCE_PUSHED:-未知}\`"
+            echo "- 同步顺序：上游 main 源码（保留 fork 工作流）→ fork main；main + 独立功能分支 → custom-build"
+          } >> "${GITHUB_STEP_SUMMARY}"
