@@ -157,7 +157,9 @@ abstract class AppSettingProps with _$AppSettingProps {
         }
       }
     } else if (system.isAndroid) {
-      props = props.copyWith(mobileDashboardWidgets: defaultAndroidDashboardWidgets);
+      props = props.copyWith(
+        mobileDashboardWidgets: defaultAndroidDashboardWidgets,
+      );
     }
 
     return props.copyWith(minimizeOnExit: true, openLogs: true);
@@ -216,7 +218,11 @@ abstract class VpnProps with _$VpnProps {
     @Default(false) bool disableQuic,
     @Default(false) bool networkSpeedNotification,
     @Default(false) bool excludeChina,
-    @Default(false) bool trayEnhancement,
+    @Default(false) bool enableTraySpeed,
+    @Default(TrayClickBehavior.showPanel)
+    TrayClickBehavior trayLeftClickBehavior,
+    @Default(TrayClickBehavior.showMenu)
+    TrayClickBehavior trayRightClickBehavior,
     @Default(true) bool alwaysShowTitleBar,
     @Default(true) bool quickResponse,
     @Default(defaultAccessControl) AccessControl accessControl,

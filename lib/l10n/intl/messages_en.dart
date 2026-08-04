@@ -398,6 +398,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Upload crash logs when needed",
     ),
     "enableOverride": MessageLookupByLibrary.simpleMessage("Enable Override"),
+    "enableTraySpeed": MessageLookupByLibrary.simpleMessage(
+      "Enable Tray Speed",
+    ),
+    "enableTraySpeedDesc": MessageLookupByLibrary.simpleMessage(
+      "Show upload and download speeds next to the menu bar icon",
+    ),
     "endpointIndependentNat": MessageLookupByLibrary.simpleMessage(
       "NAT Enhancement",
     ),
@@ -599,6 +605,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "key": MessageLookupByLibrary.simpleMessage("Key"),
     "language": MessageLookupByLibrary.simpleMessage("Language"),
     "layout": MessageLookupByLibrary.simpleMessage("Layout"),
+    "leftClickBehavior": MessageLookupByLibrary.simpleMessage("Left Click"),
     "light": MessageLookupByLibrary.simpleMessage("Light"),
     "lightIcon": MessageLookupByLibrary.simpleMessage("Light Icon"),
     "lightIconDesc": MessageLookupByLibrary.simpleMessage(
@@ -969,6 +976,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Restart TUN for changes to take effect",
     ),
     "retry": MessageLookupByLibrary.simpleMessage("Retry"),
+    "rightClickBehavior": MessageLookupByLibrary.simpleMessage("Right Click"),
     "rotatingCircle": MessageLookupByLibrary.simpleMessage("Rotating Circle"),
     "rule": MessageLookupByLibrary.simpleMessage("Rule"),
     "ruleName": MessageLookupByLibrary.simpleMessage("Rule Name"),
@@ -1000,6 +1008,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "showHiddenItems": MessageLookupByLibrary.simpleMessage(
       "Show Hidden Items",
     ),
+    "showMenu": MessageLookupByLibrary.simpleMessage("Show Menu"),
+    "showPanel": MessageLookupByLibrary.simpleMessage("Show Panel"),
     "showStartSwitch": MessageLookupByLibrary.simpleMessage("Linkage Switch"),
     "showStartSwitchDesc": MessageLookupByLibrary.simpleMessage(
       "Display independent switch button on the homepage",
@@ -1092,6 +1102,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Allow concurrent TCP connections",
     ),
     "testUrl": MessageLookupByLibrary.simpleMessage("Test URL"),
+    "testingDelay": MessageLookupByLibrary.simpleMessage("Testing"),
     "textScale": MessageLookupByLibrary.simpleMessage("Text Scaling"),
     "theme": MessageLookupByLibrary.simpleMessage("Theme"),
     "themeColor": MessageLookupByLibrary.simpleMessage("Theme Color"),
@@ -1116,9 +1127,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "totalTraffic": MessageLookupByLibrary.simpleMessage("Total Traffic"),
     "tproxyPort": MessageLookupByLibrary.simpleMessage("Tproxy Port"),
     "trafficUsage": MessageLookupByLibrary.simpleMessage("Traffic Usage"),
-    "trayEnhancement": MessageLookupByLibrary.simpleMessage("Tray Enhancement"),
-    "trayEnhancementDesc": MessageLookupByLibrary.simpleMessage(
-      "Control proxy groups in the system tray context menu",
+    "trayClickBehavior": MessageLookupByLibrary.simpleMessage(
+      "Tray Click Behavior",
     ),
     "trayIconInvert": MessageLookupByLibrary.simpleMessage("Invert Tray Icon"),
     "trayIconInvertDesc": MessageLookupByLibrary.simpleMessage(
