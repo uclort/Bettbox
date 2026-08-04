@@ -119,6 +119,7 @@ class Tray {
     required TrayState trayState,
     bool focus = false,
     bool silent = false,
+    List<Group>? groupsOverride,
   }) async {
     if (_isUpdating) return;
     _isUpdating = true;
@@ -170,7 +171,8 @@ class Tray {
         );
       }
       menuItems.add(MenuItem.separator());
-      for (final group in trayState.groups) {
+      final menuGroups = groupsOverride ?? trayState.groups;
+      for (final group in menuGroups) {
         List<MenuItem> subMenuItems = [];
 
         final isTestingThisGroup = delayTestCoordinator.isTestingGroup(
@@ -229,7 +231,7 @@ class Tray {
           ),
         );
       }
-      if (trayState.groups.isNotEmpty) {
+      if (menuGroups.isNotEmpty) {
         menuItems.add(MenuItem.separator());
       }
       if (trayState.isStart) {
@@ -390,6 +392,18 @@ class Tray {
     _lastDisplayedUpload = upload;
     _lastDisplayedDownload = download;
     _lastDisplayedActive = _trayTrafficActive;
+  }
+
+  Future<void> showContextMenu({
+    required TrayState trayState,
+    required List<Group> groups,
+  }) async {
+    _debounceTimer?.cancel();
+    while (_isUpdating) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    await _doUpdate(trayState: trayState, groupsOverride: groups);
+    await trayManager.popUpContextMenu();
   }
 
   MenuItem _buildCopyEnvSubmenu(int port) {
