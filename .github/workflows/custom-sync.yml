@@ -21,6 +21,8 @@ env:
   BETTBOX_FEATURE_BRANCHES: >-
     codex/fix-tun-auto-system-dns
     codex/add-tray-traffic-rate
+  BETTBOX_PATCH_BRANCHES: >-
+    codex/fix-macos-command-w-close
   CUSTOM_MIHOMO_REPOSITORY: uclort/custom-mihomo
   MIHOMO_REPOSITORY: MetaCubeX/mihomo
   GO_VERSION: 1.25.x
@@ -92,6 +94,7 @@ jobs:
           MAIN_BRANCH: ${{ env.BETTBOX_MAIN_BRANCH }}
           PACKAGE_BRANCH: ${{ env.BETTBOX_PACKAGE_BRANCH }}
           FEATURE_BRANCHES: ${{ env.BETTBOX_FEATURE_BRANCHES }}
+          PATCH_BRANCHES: ${{ env.BETTBOX_PATCH_BRANCHES }}
           RELEASE_TAG: ${{ steps.versions.outputs.bettbox_tag }}
           UPSTREAM_REPOSITORY: ${{ env.BETTBOX_UPSTREAM_REPOSITORY }}
         run: |
@@ -101,7 +104,7 @@ jobs:
           git remote remove upstream 2>/dev/null || true
           git remote add upstream "https://github.com/${UPSTREAM_REPOSITORY}.git"
           git fetch origin "${MAIN_BRANCH}" "${PACKAGE_BRANCH}"
-          for feature_branch in ${FEATURE_BRANCHES}; do
+          for feature_branch in ${FEATURE_BRANCHES} ${PATCH_BRANCHES}; do
             git fetch origin \
               "+refs/heads/${feature_branch}:refs/remotes/origin/${feature_branch}"
           done
@@ -159,6 +162,16 @@ jobs:
           fi
           for feature_branch in ${FEATURE_BRANCHES}; do
             git merge --no-edit "origin/${feature_branch}"
+          done
+          for patch_branch in ${PATCH_BRANCHES}; do
+            if ! git cherry-pick "origin/${patch_branch}"; then
+              if git diff --cached --quiet && git diff --quiet; then
+                git cherry-pick --skip
+              else
+                echo "打包补丁分支应用失败：${patch_branch}" >&2
+                exit 1
+              fi
+            fi
           done
           package_after="$(git rev-parse HEAD)"
 
@@ -421,5 +434,5 @@ jobs:
             echo "- Mihomo：\`${MIHOMO_TAG:-未知}\`"
             echo "- 私有内核是否需要更新：\`${SOURCE_CHANGED:-未知}\`"
             echo "- 私有内核是否已推送：\`${SOURCE_PUSHED:-未知}\`"
-            echo "- 同步顺序：上游 main 源码（保留 fork 工作流）→ fork main；最新 Release + 两个功能分支 → custom-build"
+            echo "- 同步顺序：上游 main 源码（保留 fork 工作流）→ fork main；最新 Release + 三个功能分支 → custom-build"
           } >> "${GITHUB_STEP_SUMMARY}"
