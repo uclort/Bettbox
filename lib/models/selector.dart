@@ -75,7 +75,7 @@ abstract class TrayState with _$TrayState {
     required SelectedMap selectedMap,
     @Default(false) bool wakelockEnabled,
     @Default({}) Map<String, int?> delays,
-    @Default(true) bool trayEnhancement,
+    @Default(false) bool enableTraySpeed,
   }) = _TrayState;
 }
 
@@ -191,7 +191,8 @@ extension PackageListSelectorStateExt on PackageListSelectorState {
 }
 
 @freezed
-abstract class ProxiesListHeaderSelectorState with _$ProxiesListHeaderSelectorState {
+abstract class ProxiesListHeaderSelectorState
+    with _$ProxiesListHeaderSelectorState {
   const factory ProxiesListHeaderSelectorState({
     required double offset,
     required int currentIndex,

@@ -21,8 +21,7 @@ env:
   BETTBOX_FEATURE_BRANCHES: >-
     codex/fix-macos-dns-network-recovery
     codex/package-macos-tray-features
-  BETTBOX_PATCH_BRANCHES: >-
-    codex/fix-macos-command-w-close
+  BETTBOX_PATCH_BRANCHES: ''
   CUSTOM_MIHOMO_REPOSITORY: uclort/custom-mihomo
   MIHOMO_REPOSITORY: MetaCubeX/mihomo
   GO_VERSION: 1.25.x
@@ -137,6 +136,16 @@ jobs:
               fi
             fi
           done
+
+          # Merge commits receive a new committer timestamp on every run. If
+          # the reconstructed source tree is unchanged, keep the existing
+          # package commit so the scheduled sync does not trigger a duplicate
+          # build and Release every 15 minutes.
+          if git diff --quiet "origin/${PACKAGE_BRANCH}" HEAD --; then
+            git checkout --detach "origin/${PACKAGE_BRANCH}"
+            git branch --force "${PACKAGE_BRANCH}" HEAD
+            git checkout "${PACKAGE_BRANCH}"
+          fi
           package_after="$(git rev-parse HEAD)"
 
           {
