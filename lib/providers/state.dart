@@ -204,7 +204,6 @@ TrayState trayState(Ref ref) {
   final groups = ref.watch(currentGroupsStateProvider).value;
   final brightness = ref.watch(systemBrightnessProvider);
   final vpnProps = ref.watch(vpnSettingProvider);
-
   final selectedMap = ref.watch(selectedMapProvider);
 
   final wakelockEnabled = ref.watch(wakelockStateProvider);
@@ -221,7 +220,7 @@ TrayState trayState(Ref ref) {
     groups: groups,
     selectedMap: selectedMap,
     wakelockEnabled: wakelockEnabled,
-    trayEnhancement: vpnProps.trayEnhancement,
+    enableTraySpeed: vpnProps.enableTraySpeed,
   );
 }
 
