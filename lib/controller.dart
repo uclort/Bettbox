@@ -1273,12 +1273,26 @@ class AppController {
 
     if (!isAutoCheck && !forceCheck) return;
 
-    final res = await request.checkForUpdate();
-    if (res != null) {
-      checkUpdateResultHandle(data: res);
+    if (customAppUpdater.supportsNativeUpdater) {
+      await customAppUpdater.checkDesktopUpdate(manual: false);
+    } else {
+      final res = await request.checkForUpdate();
+      if (res != null) {
+        checkUpdateResultHandle(data: res);
+      }
     }
 
     await prefs?.setInt('last_check_update_time', now);
+  }
+
+  Future<void> checkForAppUpdate({required bool manual}) async {
+    if (customAppUpdater.supportsNativeUpdater) {
+      await customAppUpdater.checkDesktopUpdate(manual: manual);
+      return;
+    }
+
+    final data = await request.checkForUpdate();
+    await checkUpdateResultHandle(data: data, handleError: manual);
   }
 
   Future<void> checkUpdateResultHandle({
@@ -1304,20 +1318,30 @@ class AppController {
               TextSpan(text: '- $submit \n', style: textTheme.bodyMedium),
           ],
         ),
-        confirmText: appLocalizations.goDownload,
+        confirmText: isCustomUpdateBuild
+            ? appLocalizations.downloadAndInstall
+            : appLocalizations.goDownload,
       );
       if (res != true) {
         return;
       }
+
+      if (isCustomUpdateBuild && system.isAndroid) {
+        await customAppUpdater.installAndroidUpdate(data);
+        return;
+      }
+
       const String assetSuffix = String.fromEnvironment('APP_ASSET_SUFFIX');
-      String downloadUrl = 'https://github.com/$repository/releases/latest';
+      String downloadUrl =
+          data['html_url']?.toString() ??
+          'https://github.com/$updateRepository/releases/latest';
 
       if (assetSuffix.isNotEmpty) {
         final versionWithoutV = tagName.startsWith('v')
             ? tagName.substring(1)
             : tagName;
         downloadUrl =
-            'https://github.com/$repository/releases/download/$tagName/Bettbox-$versionWithoutV-$assetSuffix';
+            'https://github.com/$updateRepository/releases/download/$tagName/Bettbox-$versionWithoutV-$assetSuffix';
       }
 
       globalState.openUrl(downloadUrl);
@@ -1449,6 +1473,12 @@ class AppController {
     }
 
     await updateTray(true);
+
+    try {
+      await customAppUpdater.initialize();
+    } catch (e) {
+      commonPrint.log('Initialize custom app updater failed: $e');
+    }
 
     await _initCore();
     try {
@@ -1732,8 +1762,9 @@ class AppController {
       }
 
       if (successCount > 0) {
-        globalState.navigatorKey.currentState
-            ?.popUntil((route) => route.isFirst);
+        globalState.navigatorKey.currentState?.popUntil(
+          (route) => route.isFirst,
+        );
         toProfiles();
       }
     } finally {

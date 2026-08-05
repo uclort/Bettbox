@@ -479,6 +479,22 @@ class BuildCommand extends Command {
 
     final appDevArg = Build.isDev ? ' --build-dart-define=APP_DEV=true' : '';
 
+    final customBuildArgs = <String>[];
+    for (final name in [
+      'APP_UPDATE_REPOSITORY',
+      'APP_RELEASE_TAG',
+      'APP_UPDATE_FEED_URL',
+    ]) {
+      final value = Platform.environment[name] ?? '';
+      if (value.isNotEmpty) {
+        customBuildArgs.add(' --build-dart-define=$name=$value');
+      }
+    }
+    final buildNumber = Platform.environment['CUSTOM_BUILD_NUMBER'] ?? '';
+    final buildNumberArg = buildNumber.isNotEmpty
+        ? ' --build-number=$buildNumber'
+        : '';
+
     final environment = Map<String, String>.from(Platform.environment);
     if (compatible) {
       environment['BETTBOX_COMPATIBLE_BUILD'] = '1';
@@ -488,7 +504,7 @@ class BuildCommand extends Command {
     await Build.exec(
       name: name,
       Build.getExecutable(
-        'flutter_distributor package --skip-clean --platform ${target.name} --targets $targets --flutter-build-args=verbose$args$sentryArg$suffixArg --build-dart-define=APP_ENV=$env$appDevArg',
+        'flutter_distributor package --skip-clean --platform ${target.name} --targets $targets --flutter-build-args=verbose$args$sentryArg$suffixArg --build-dart-define=APP_ENV=$env$appDevArg${customBuildArgs.join()}$buildNumberArg',
       ),
       environment: environment,
     );

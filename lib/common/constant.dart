@@ -48,6 +48,13 @@ const customSidebarIconKey = 'custom_sidebar_icon';
 const customDashboardTitleKey = 'custom_dashboard_title';
 const double dialogCommonWidth = 300;
 const repository = 'appshubcc/Bettbox';
+const customUpdateRepository = String.fromEnvironment('APP_UPDATE_REPOSITORY');
+const currentCustomReleaseTag = String.fromEnvironment('APP_RELEASE_TAG');
+const customUpdateFeedUrl = String.fromEnvironment('APP_UPDATE_FEED_URL');
+const isCustomUpdateBuild = customUpdateRepository != '';
+const updateRepository = isCustomUpdateBuild
+    ? customUpdateRepository
+    : repository;
 const defaultExternalController = '127.0.0.1:9090';
 const maxMobileWidth = 600;
 const maxLaptopWidth = 840;
