@@ -60,8 +60,6 @@ class TrayManager {
   }
 
   Menu? _menu;
-  Menu? _pendingMenu;
-  Brightness? _pendingMenuBrightness;
 
   final TrayMenuOpenState _menuOpenState = TrayMenuOpenState();
 
@@ -98,15 +96,6 @@ class TrayManager {
       return;
     } else if (call.method == 'onMenuClose') {
       _menuOpenState.close();
-      if (!_menuOpenState.isOpen && _pendingMenu != null) {
-        final pendingMenu = _pendingMenu!;
-        final pendingBrightness = _pendingMenuBrightness;
-        _pendingMenu = null;
-        _pendingMenuBrightness = null;
-        unawaited(
-          setContextMenu(pendingMenu, brightness: pendingBrightness),
-        );
-      }
       return;
     }
 
@@ -166,8 +155,6 @@ class TrayManager {
   // Destroys the tray icon immediately.
   Future<void> destroy() async {
     _menuOpenState.reset();
-    _pendingMenu = null;
-    _pendingMenuBrightness = null;
     await _channel.invokeMethod('destroy');
   }
 
@@ -287,13 +274,8 @@ class TrayManager {
     Brightness? brightness,
   }) async {
     final bool willKeepOpen = keepMenuOpen && isMenuOpen;
-    if (willKeepOpen) {
-      _pendingMenu = menu;
-      _pendingMenuBrightness = brightness;
-    } else {
+    if (!willKeepOpen) {
       _menu = menu;
-      _pendingMenu = null;
-      _pendingMenuBrightness = null;
     }
     final Map<String, dynamic> arguments = {
       'menu': _menuToJson(menu),

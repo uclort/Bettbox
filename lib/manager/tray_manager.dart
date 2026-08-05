@@ -63,8 +63,7 @@ class _TrayContainerState extends ConsumerState<TrayManager> with TrayListener {
         ? vpnProps.trayRightClickBehavior
         : vpnProps.trayLeftClickBehavior;
     if (behavior == TrayClickBehavior.showMenu) {
-      // ignore: deprecated_member_use
-      await trayManager.popUpContextMenu(bringAppToFront: true);
+      await globalState.appController.showTrayMenu();
       return;
     }
     window?.show();

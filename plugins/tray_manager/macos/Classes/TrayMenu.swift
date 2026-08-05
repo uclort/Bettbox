@@ -246,6 +246,8 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
             case "separator":
                 break
             case "submenu":
+                menuItem.action = nil
+                menuItem.target = nil
                 if let submenuDict = itemDict["submenu"] as? NSDictionary {
                     let submenu = TrayMenu(submenuDict as! [String : Any])
                     submenu.onMenuItemClick = { [weak self] (menuItem: NSMenuItem) in
@@ -329,6 +331,8 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
             }
 
             if (type == "submenu") {
+                menuItem.action = nil
+                menuItem.target = nil
                 if let submenuDict = itemDict["submenu"] as? NSDictionary {
                     let submenu = menuItem.submenu as? TrayMenu
                     submenu?.update(submenuDict as! [String : Any])
