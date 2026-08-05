@@ -322,7 +322,7 @@ class Tray {
       menuItems.add(exitMenuItem);
       final menu = Menu(items: menuItems);
       final keepMenuOpen =
-          silent || (system.isMacOS && delayTestCoordinator.isTesting);
+          silent || (system.isMacOS && trayManager.isMenuOpen);
       await trayManager.setContextMenu(
         menu,
         keepMenuOpen: keepMenuOpen,
