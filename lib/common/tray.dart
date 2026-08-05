@@ -321,9 +321,11 @@ class Tray {
       );
       menuItems.add(exitMenuItem);
       final menu = Menu(items: menuItems);
+      final keepMenuOpen =
+          silent || (system.isMacOS && delayTestCoordinator.isTesting);
       await trayManager.setContextMenu(
         menu,
-        keepMenuOpen: silent,
+        keepMenuOpen: keepMenuOpen,
         brightness: trayState.brightness,
       );
       if (Platform.isLinux) {

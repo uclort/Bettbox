@@ -66,6 +66,10 @@ private final class PersistentTrayMenuItemView: NSView {
         fatalError("init(coder:) has not been implemented")
     }
 
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
+        true
+    }
+
     func update(label: String, disabled: Bool) {
         isDisabled = disabled
         if disabled {

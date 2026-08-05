@@ -19,8 +19,9 @@ env:
   BETTBOX_MAIN_BRANCH: main
   BETTBOX_PACKAGE_BRANCH: custom-build
   BETTBOX_FEATURE_BRANCHES: >-
-    codex/fix-macos-dns-network-recovery
+    codex/package-macos-dns-recovery
     codex/package-macos-tray-features
+    codex/support-inline-provider-content
   BETTBOX_PATCH_BRANCHES: ''
   CUSTOM_MIHOMO_REPOSITORY: uclort/custom-mihomo
   MIHOMO_REPOSITORY: MetaCubeX/mihomo
