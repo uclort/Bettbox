@@ -21,14 +21,10 @@ class AboutView extends StatelessWidget {
   Future<void> _checkUpdate(BuildContext context) async {
     final commonScaffoldState = context.commonScaffoldState;
     if (commonScaffoldState?.mounted != true) return;
-    final data = await globalState.appController.safeRun<Map<String, dynamic>?>(
-      request.checkForUpdate,
+    await globalState.appController.safeRun<void>(
+      () => globalState.appController.checkForAppUpdate(manual: true),
       title: appLocalizations.checkUpdate,
       needLoading: true,
-    );
-    globalState.appController.checkUpdateResultHandle(
-      data: data,
-      handleError: true,
     );
   }
 
@@ -41,7 +37,7 @@ class AboutView extends StatelessWidget {
             title: 'Github Releases',
             icon: Icons.star,
             onTap: () =>
-                globalState.openUrl('https://github.com/appshubcc/Bettbox'),
+                globalState.openUrl('https://github.com/$updateRepository'),
           ),
           right: _LinkGridTile(
             title: appLocalizations.checkUpdate,

@@ -652,5 +652,9 @@
   "ageKeyPairGeneratedSuccess": "X25519鍵ペアを生成しました。大切に保管してください",
   "agePrivateKeyRequired": "正しいAge秘密鍵を先に入力してください",
   "lineWrap": "折り返し",
-  "showHiddenItems": "非表示項目を表示"
+  "showHiddenItems": "非表示項目を表示",
+  "downloadAndInstall": "ダウンロードしてインストール",
+  "updateDownloading": "アップデートをダウンロード中：{progress}%",
+  "updateInstalling": "システムインストーラーを開いています...",
+  "updateFailed": "アップデートに失敗しました：{message}"
 }
