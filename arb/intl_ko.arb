@@ -256,6 +256,7 @@
   "paste": "붙여넣기",
   "testUrl": "테스트 URL",
   "startTest": "지연 시간 테스트",
+  "testingDelay": "테스트 중",
   "addProfile": "프로필 추가",
   "customUrl": "사용자 지정 URL",
   "sync": "동기화",

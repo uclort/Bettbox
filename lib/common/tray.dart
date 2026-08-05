@@ -139,9 +139,7 @@ class Tray {
       if (system.isMacOS) {
         await _syncSpeedTitle(isStart: trayState.isStart);
       }
-      if (system.isMacOS &&
-          !prepareContextMenu &&
-          !trayManager.isMenuOpen) {
+      if (system.isMacOS && !prepareContextMenu && !trayManager.isMenuOpen) {
         return;
       }
       List<MenuItem> menuItems = [];
@@ -190,7 +188,7 @@ class Tray {
             MenuItem(
               key: 'persistent-delay-test',
               label: isTestingThisGroup
-                  ? '⚡ ${appLocalizations.startTest}...'
+                  ? '⚡ ${appLocalizations.testingDelay}...'
                   : '⚡ ${appLocalizations.startTest}',
               disabled: delayTestCoordinator.isTesting,
               onClick: (_) => _testGroupDelay(group),
@@ -327,8 +325,7 @@ class Tray {
       );
       menuItems.add(exitMenuItem);
       final menu = Menu(items: menuItems);
-      final keepMenuOpen =
-          silent || (system.isMacOS && trayManager.isMenuOpen);
+      final keepMenuOpen = silent || (system.isMacOS && trayManager.isMenuOpen);
       await trayManager.setContextMenu(
         menu,
         keepMenuOpen: keepMenuOpen,

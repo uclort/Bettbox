@@ -263,6 +263,7 @@
   "paste": "貼上",
   "testUrl": "測試連結",
   "startTest": "延遲測試",
+  "testingDelay": "測速中",
   "addProfile": "新增配置",
   "customUrl": "自訂 URL",
   "sync": "同步",

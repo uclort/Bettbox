@@ -263,6 +263,7 @@
   "paste": "Вставить",
   "testUrl": "URL теста",
   "startTest": "Тест задержки",
+  "testingDelay": "Тестирование",
   "addProfile": "Добавить профиль",
   "customUrl": "Пользовательский URL",
   "sync": "Синхронизировать",

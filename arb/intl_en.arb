@@ -263,6 +263,7 @@
   "paste": "Paste",
   "testUrl": "Test URL",
   "startTest": "Start Test",
+  "testingDelay": "Testing",
   "addProfile": "Add Profile",
   "customUrl": "Custom URL",
   "sync": "Sync",

@@ -256,6 +256,7 @@
   "paste": "جایگذاری",
   "testUrl": "آدرس تست",
   "startTest": "تست تاخیر",
+  "testingDelay": "در حال آزمایش",
   "addProfile": "افزودن پروفایل",
   "customUrl": "آدرس URL سفارشی",
   "sync": "همگام‌سازی",
