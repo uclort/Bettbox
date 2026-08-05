@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+  <channel>
+    <title>Bettbox macos-amd64 自定义更新</title>
+    <link>https://github.com/uclort/Bettbox/releases</link>
+    <description>Bettbox 自定义版本更新源</description>
+    <language>zh-CN</language>
+    <item>
+      <title>Bettbox 1.18.9</title>
+      <pubDate>Wed, 05 Aug 2026 11:09:54 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.18.9+2026078818-r20260805105717-816f634ecee1-854b3d91778e</link>
+      <sparkle:releaseNotesLink>https://github.com/uclort/Bettbox/releases/tag/custom-v1.18.9+2026078818-r20260805105717-816f634ecee1-854b3d91778e</sparkle:releaseNotesLink>
+      <sparkle:version>2090000034</sparkle:version>
+      <sparkle:shortVersionString>1.18.9</sparkle:shortVersionString>
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.18.9+2026078818-r20260805105717-816f634ecee1-854b3d91778e/Bettbox-1.18.9-macos-amd64.dmg" length="68339838" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="er37zBmlZ9Loz+HENOT2AyysahgfCYWTHdBQvV+YmQKUI6t0X0NUD8jpESOHX1pztCt3Rfn208k1BYNmdhwwAQ==" />
+    </item>
+  </channel>
+</rss>
