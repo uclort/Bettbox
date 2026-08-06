@@ -47,9 +47,13 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m12(count) => "${count}개 선택됨";
 
-  static String m13(label) => "${label} 항목은 올바른 URL이어야 합니다";
+  static String m13(progress) => "업데이트 다운로드 중: ${progress}%";
 
-  static String m14(count) => "${Intl.plural(count, other: '#년')}";
+  static String m14(message) => "업데이트 실패: ${message}";
+
+  static String m15(label) => "${label} 항목은 올바른 URL이어야 합니다";
+
+  static String m16(count) => "${Intl.plural(count, other: '#년')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -317,6 +321,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "domain": MessageLookupByLibrary.simpleMessage("도메인"),
     "doubleBounce": MessageLookupByLibrary.simpleMessage("더블 바운스"),
     "download": MessageLookupByLibrary.simpleMessage("다운로드"),
+    "downloadAndInstall": MessageLookupByLibrary.simpleMessage("다운로드 및 설치"),
     "dozeSuspend": MessageLookupByLibrary.simpleMessage("절전 모드 연동"),
     "dozeSuspendDesc": MessageLookupByLibrary.simpleMessage(
       "시스템 Doze 절전 모드와 동기화",
@@ -942,10 +947,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "unknown": MessageLookupByLibrary.simpleMessage("알 수 없음"),
     "unnamed": MessageLookupByLibrary.simpleMessage("제목 없음"),
     "update": MessageLookupByLibrary.simpleMessage("업데이트"),
+    "updateDownloading": m13,
+    "updateFailed": m14,
+    "updateInstalling": MessageLookupByLibrary.simpleMessage(
+      "시스템 설치 프로그램을 여는 중...",
+    ),
     "upload": MessageLookupByLibrary.simpleMessage("업로드"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("URL 주소로 프로필 가져오기"),
-    "urlTip": m13,
+    "urlTip": m15,
     "useGlobalScriptOverride": MessageLookupByLibrary.simpleMessage(
       "글로벌 스크립트 오버라이드 사용",
     ),
@@ -975,6 +985,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "whitelistMode": MessageLookupByLibrary.simpleMessage("화이트리스트 모드"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("시스템 적용"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage("관리자 권한이 필요합니다"),
-    "years": m14,
+    "years": m16,
   };
 }

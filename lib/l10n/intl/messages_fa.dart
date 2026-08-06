@@ -48,9 +48,13 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m12(count) => "${count} مورد انتخاب شده";
 
-  static String m13(label) => "${label} باید یک URL معتبر باشد";
+  static String m13(progress) => "در حال دانلود به‌روزرسانی: ${progress}%";
 
-  static String m14(count) => "${Intl.plural(count, other: '# سال')}";
+  static String m14(message) => "به‌روزرسانی ناموفق بود: ${message}";
+
+  static String m15(label) => "${label} باید یک URL معتبر باشد";
+
+  static String m16(count) => "${Intl.plural(count, other: '# سال')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -378,6 +382,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "domain": MessageLookupByLibrary.simpleMessage("دامنه"),
     "doubleBounce": MessageLookupByLibrary.simpleMessage("جهش دوگانه"),
     "download": MessageLookupByLibrary.simpleMessage("دانلود"),
+    "downloadAndInstall": MessageLookupByLibrary.simpleMessage("دانلود و نصب"),
     "dozeSuspend": MessageLookupByLibrary.simpleMessage("پشتیبانی از Doze"),
     "dozeSuspendDesc": MessageLookupByLibrary.simpleMessage(
       "همگام‌سازی با حالت خواب سیستم (Doze)",
@@ -1195,12 +1200,17 @@ class MessageLookup extends MessageLookupByLibrary {
     "unknown": MessageLookupByLibrary.simpleMessage("نامشخص"),
     "unnamed": MessageLookupByLibrary.simpleMessage("بدون نام"),
     "update": MessageLookupByLibrary.simpleMessage("بروزرسانی"),
+    "updateDownloading": m13,
+    "updateFailed": m14,
+    "updateInstalling": MessageLookupByLibrary.simpleMessage(
+      "در حال باز کردن نصب‌کننده سیستم...",
+    ),
     "upload": MessageLookupByLibrary.simpleMessage("آپلود"),
     "url": MessageLookupByLibrary.simpleMessage("آدرس URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage(
       "دریافت پروفایل از طریق آدرس URL",
     ),
-    "urlTip": m13,
+    "urlTip": m15,
     "useGlobalScriptOverride": MessageLookupByLibrary.simpleMessage(
       "استفاده از اسکریپت اورراید سراسری",
     ),
@@ -1238,6 +1248,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "نیازمند دسترسی مدیریت (Admin)",
     ),
-    "years": m14,
+    "years": m16,
   };
 }
