@@ -61,39 +61,12 @@ Future<bool> runMacOSTunStartup({
 }
 
 @visibleForTesting
-Future<void> rebuildMacOSTunListener({
-  required Future<void> Function() disableTun,
-  required Future<void> Function() stopListener,
-  required Future<void> Function() repairNetwork,
-  required Future<void> Function() startListener,
-  required Future<void> Function() enableTun,
-  bool Function()? isLifecycleCancelled,
-}) async {
-  var tunTemporarilyDisabled = false;
-  var listenerStopped = false;
-  try {
-    await disableTun();
-    tunTemporarilyDisabled = true;
-    await stopListener();
-    listenerStopped = true;
-    await repairNetwork();
-  } finally {
-    // Once teardown has started, a newer network event must not leave the
-    // listener or TUN disabled. Only an explicit stop/exit may keep them off.
-    if (!(isLifecycleCancelled?.call() ?? false)) {
-      if (listenerStopped) {
-        try {
-          await startListener();
-        } finally {
-          if (tunTemporarilyDisabled) {
-            await enableTun();
-          }
-        }
-      } else if (tunTemporarilyDisabled) {
-        await enableTun();
-      }
-    }
-  }
+bool shouldUseManagedMacOSDns({
+  required bool isRunning,
+  required bool tunEnabled,
+  required bool autoSetSystemDns,
+}) {
+  return isRunning && tunEnabled && autoSetSystemDns;
 }
 
 class AppController {
@@ -177,17 +150,22 @@ class AppController {
   }
 
   Future<void> restartCore() {
-    return _coreLifecycleLock.synchronized(() async {
-      _ref.read(isRestartingCoreProvider.notifier).state = true;
-      try {
-        await _restartCore();
-      } catch (err) {
-        _reportCoreRestartFailure(err);
-        rethrow;
-      } finally {
-        _ref.read(isRestartingCoreProvider.notifier).state = false;
-      }
-    });
+    if (system.isMacOS) {
+      _macOSNetworkRecoveryGeneration++;
+    }
+    return _coreLifecycleLock.synchronized(_restartCoreWithStatus);
+  }
+
+  Future<void> _restartCoreWithStatus() async {
+    _ref.read(isRestartingCoreProvider.notifier).state = true;
+    try {
+      await _restartCore();
+    } catch (err) {
+      _reportCoreRestartFailure(err);
+      rethrow;
+    } finally {
+      _ref.read(isRestartingCoreProvider.notifier).state = false;
+    }
   }
 
   Future<void> _restartCore({
@@ -197,45 +175,81 @@ class AppController {
     commonPrint.log('restart core');
     _invalidateCoreReads();
 
-    final wasRunning = _ref.read(runTimeProvider.notifier).isStart;
+    // globalState is updated by the core lifecycle itself. The runtime
+    // provider is presentation state and can lag while the window is hidden.
+    final wasRunning = system.isMacOS
+        ? globalState.isStart
+        : _ref.read(runTimeProvider.notifier).isStart;
     final keepVpnService = system.isAndroid;
-    if (wasRunning) {
-      await globalState.handleStop(!keepVpnService);
-      _ref.read(runTimeProvider.notifier).value = null;
-    }
-    if (system.isAndroid) {
-      await clashCore.closeConnections();
-      await clashCore.flushFakeIP();
-      await clashCore.flushDnsCache();
-      await clashCore.requestGc(forceFreeOSMemory: true);
-    }
-    if (system.isDesktop) {
-      lastProfileModified = null;
-      await clashService!.reStart();
-    }
-    await _initCore();
+    try {
+      if (wasRunning) {
+        await globalState.handleStop(!keepVpnService);
+        _ref.read(runTimeProvider.notifier).value = null;
+      }
+      if (system.isAndroid) {
+        await clashCore.closeConnections();
+        await clashCore.flushFakeIP();
+        await clashCore.flushDnsCache();
+        await clashCore.requestGc(forceFreeOSMemory: true);
+      }
+      if (system.isDesktop) {
+        lastProfileModified = null;
+        await clashService!.reStart();
+      }
+      await _initCore();
 
-    final configured = setupConfig ? await _setupCoreConfig() : false;
-    if (refreshData && configured) {
-      await updateGroups();
-      await updateProviders();
-    }
+      final configured = setupConfig ? await _setupCoreConfig() : false;
+      if (refreshData && configured) {
+        await updateGroups();
+        await updateProviders();
+      }
 
-    if (wasRunning) {
-      await globalState.handleStart([
-        updateRunTime,
-        updateTraffic,
-      ], !keepVpnService);
-      _scheduleCheckIpRefresh();
-      _backgroundLoad();
+      if (wasRunning) {
+        await globalState.handleStart([
+          updateRunTime,
+          updateTraffic,
+        ], !keepVpnService);
+        _scheduleCheckIpRefresh();
+        _backgroundLoad();
+      }
+    } finally {
+      await _syncMacOSSystemDns();
     }
   }
 
   Future<void> updateStatus(bool isStart) {
-    if (system.isMacOS && !isStart) {
+    if (system.isMacOS) {
       _macOSNetworkRecoveryGeneration++;
     }
-    return _coreLifecycleLock.synchronized(() => _updateStatus(isStart));
+    return _coreLifecycleLock.synchronized(() async {
+      try {
+        await _updateStatus(isStart);
+      } finally {
+        await _syncMacOSSystemDns();
+      }
+    });
+  }
+
+  Future<void> syncMacOSSystemDns({String? serviceName}) {
+    if (!system.isMacOS) return Future.value();
+    return _coreLifecycleLock.synchronized(
+      () => _syncMacOSSystemDns(serviceName: serviceName),
+    );
+  }
+
+  Future<void> _syncMacOSSystemDns({String? serviceName}) async {
+    if (!system.isMacOS || macOS == null) return;
+
+    final shouldSet = shouldUseManagedMacOSDns(
+      isRunning: globalState.isStart,
+      tunEnabled: _ref.read(realTunEnableProvider),
+      autoSetSystemDns: _ref.read(networkSettingProvider).autoSetSystemDns,
+    );
+    try {
+      await macOS!.updateDns(!shouldSet, serviceName: serviceName);
+    } catch (e) {
+      commonPrint.log('Failed to synchronize macOS system DNS: $e');
+    }
   }
 
   Future<bool> handleMacOSNetworkChange(
@@ -257,45 +271,16 @@ class AppController {
     return _coreLifecycleLock.synchronized(() async {
       if (recoveryCancelled()) return false;
 
-      final isStart = _ref.read(runTimeProvider.notifier).isStart;
-      final dnsState = _ref.read(autoSetSystemDnsStateProvider);
-      final shouldSetSystemDns = dnsState.a && dnsState.b;
-      final shouldRestartTunListener = isStart && dnsState.a;
-
-      Future<void> repairNetwork() async {
-        if (recoveryCancelled()) return;
-
-        if (isStart) {
-          await clashCore.closeConnections();
-        }
-        if (recoveryCancelled()) return;
-
-        await macOS?.updateDns(
-          !shouldSetSystemDns,
-          serviceName: networkState.serviceName,
-        );
-
-        if (!isStart || recoveryCancelled()) return;
-
-        await clashCore.flushDnsCache();
-        if (recoveryCancelled()) return;
-        await clashCore.flushFakeIP();
-      }
-
-      if (!shouldRestartTunListener) {
-        await repairNetwork();
+      if (!globalState.isStart) {
+        await _syncMacOSSystemDns(serviceName: networkState.serviceName);
         return !recoveryCancelled();
       }
 
-      commonPrint.log('Rebuilding macOS TUN after network change');
-      await rebuildMacOSTunListener(
-        disableTun: () => _applyCoreTunConfig(false, persist: false),
-        stopListener: clashCore.stopListener,
-        repairNetwork: repairNetwork,
-        startListener: clashCore.startListener,
-        enableTun: _updateClashConfig,
-        isLifecycleCancelled: lifecycleCancelled,
+      commonPrint.log(
+        'Restarting the macOS core after a stable network change or wake',
       );
+      await _restartCoreWithStatus();
+      await _syncMacOSSystemDns(serviceName: networkState.serviceName);
       return !recoveryCancelled();
     });
   }
@@ -477,6 +462,7 @@ class AppController {
       commonPrint.log('[Core] Setup config failed: $message');
       throw message;
     }
+    _ref.read(realTunEnableProvider.notifier).value = realTunEnable;
     if (system.isDesktop) {
       final prefs = await preferences.sharedPreferencesCompleter.future;
       await prefs?.setBool('is_tun_running', realTunEnable);
@@ -706,18 +692,22 @@ class AppController {
   }
 
   Future<void> _updateClashConfig() async {
-    final updateParams = _ref.read(updateParamsProvider);
-    final tunResult = await _requestAdmin(updateParams.tun.enable);
-    if (tunResult.isError) return;
+    try {
+      final updateParams = _ref.read(updateParamsProvider);
+      final tunResult = await _requestAdmin(updateParams.tun.enable);
+      if (tunResult.isError) return;
 
-    final bool realTunEnable =
-        tunResult.data ?? _ref.read(realTunEnableProvider);
-    if (tunResult.needRestart) {
-      await _restartCore();
-      return;
+      final bool realTunEnable =
+          tunResult.data ?? _ref.read(realTunEnableProvider);
+      if (tunResult.needRestart) {
+        await _restartCore();
+        return;
+      }
+
+      await _applyCoreTunConfig(realTunEnable);
+    } finally {
+      await _syncMacOSSystemDns();
     }
-
-    await _applyCoreTunConfig(realTunEnable);
   }
 
   Future<void> _applyCoreTunConfig(bool enable, {bool persist = true}) async {
@@ -726,6 +716,8 @@ class AppController {
       updateParams.copyWith.tun(enable: enable),
     );
     if (message.isNotEmpty) throw message;
+
+    _ref.read(realTunEnableProvider.notifier).value = enable;
 
     if (persist && system.isDesktop) {
       final prefs = await preferences.sharedPreferencesCompleter.future;
@@ -739,7 +731,9 @@ class AppController {
       final code = await system.authorizeCore();
       switch (code) {
         case AuthorizeCode.success:
-          _ref.read(realTunEnableProvider.notifier).value = enableTun;
+          if (!system.isMacOS) {
+            _ref.read(realTunEnableProvider.notifier).value = enableTun;
+          }
           return Result.success(enableTun, needRestart: true);
         case AuthorizeCode.none:
           break;
@@ -751,7 +745,9 @@ class AppController {
           break;
       }
     }
-    _ref.read(realTunEnableProvider.notifier).value = enableTun;
+    if (!system.isMacOS) {
+      _ref.read(realTunEnableProvider.notifier).value = enableTun;
+    }
     return Result.success(enableTun);
   }
 
@@ -1569,9 +1565,8 @@ class AppController {
         ageSecretKey: ageSecretKey,
       ).update();
       if (globalState.navigatorKey.currentState?.canPop() ?? false) {
-        globalState.navigatorKey.currentState?.popUntil(
-          (route) => route.isFirst,
-        );
+        globalState.navigatorKey.currentState
+            ?.popUntil((route) => route.isFirst);
       }
       toProfiles();
       await addProfile(profile);

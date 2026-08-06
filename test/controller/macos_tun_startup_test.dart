@@ -108,104 +108,25 @@ void main() {
     });
   });
 
-  group('macOS TUN listener rebuild', () {
-    test(
-      'forces a disabled-to-enabled transition around network repair',
-      () async {
-        final events = <String>[];
-
-        await rebuildMacOSTunListener(
-          disableTun: () async => events.add('disable'),
-          stopListener: () async => events.add('stop'),
-          repairNetwork: () async => events.add('repair'),
-          startListener: () async => events.add('start'),
-          enableTun: () async => events.add('enable'),
-        );
-
-        expect(events, ['disable', 'stop', 'repair', 'start', 'enable']);
-      },
-    );
-
-    test('restores the listener and TUN when network repair fails', () async {
-      final events = <String>[];
-
-      await expectLater(
-        rebuildMacOSTunListener(
-          disableTun: () async => events.add('disable'),
-          stopListener: () async => events.add('stop'),
-          repairNetwork: () async {
-            events.add('repair');
-            throw StateError('repair failed');
-          },
-          startListener: () async => events.add('start'),
-          enableTun: () async => events.add('enable'),
-        ),
-        throwsStateError,
-      );
-
-      expect(events, ['disable', 'stop', 'repair', 'start', 'enable']);
-    });
-
-    test('reenables TUN when stopping the listener fails', () async {
-      final events = <String>[];
-
-      await expectLater(
-        rebuildMacOSTunListener(
-          disableTun: () async => events.add('disable'),
-          stopListener: () async {
-            events.add('stop');
-            throw StateError('stop failed');
-          },
-          repairNetwork: () async => events.add('repair'),
-          startListener: () async => events.add('start'),
-          enableTun: () async => events.add('enable'),
-        ),
-        throwsStateError,
-      );
-
-      expect(events, ['disable', 'stop', 'enable']);
-    });
-
-    test(
-      'restores listener and TUN when a newer network event supersedes repair',
-      () async {
-        final events = <String>[];
-        var networkRequestSuperseded = false;
-
-        await rebuildMacOSTunListener(
-          disableTun: () async => events.add('disable'),
-          stopListener: () async => events.add('stop'),
-          repairNetwork: () async {
-            events.add('repair');
-            networkRequestSuperseded = true;
-          },
-          startListener: () async => events.add('start'),
-          enableTun: () async => events.add('enable'),
-          isLifecycleCancelled: () => false,
-        );
-
-        expect(networkRequestSuperseded, isTrue);
-        expect(events, ['disable', 'stop', 'repair', 'start', 'enable']);
-      },
-    );
-
-    test('does not reenable TUN after a manual stop takes priority', () async {
-      final events = <String>[];
-      var lifecycleCancelled = false;
-
-      await rebuildMacOSTunListener(
-        disableTun: () async => events.add('disable'),
-        stopListener: () async {
-          events.add('stop');
-          lifecycleCancelled = true;
-        },
-        repairNetwork: () async => events.add('repair'),
-        startListener: () async => events.add('start'),
-        enableTun: () async => events.add('enable'),
-        isLifecycleCancelled: () => lifecycleCancelled,
-      );
-
-      expect(events, ['disable', 'stop', 'repair']);
+  group('managed macOS DNS state', () {
+    test('requires the master switch, TUN, and automatic DNS', () {
+      for (final isRunning in [false, true]) {
+        for (final tunEnabled in [false, true]) {
+          for (final autoSetSystemDns in [false, true]) {
+            expect(
+              shouldUseManagedMacOSDns(
+                isRunning: isRunning,
+                tunEnabled: tunEnabled,
+                autoSetSystemDns: autoSetSystemDns,
+              ),
+              isRunning && tunEnabled && autoSetSystemDns,
+              reason:
+                  'isRunning=$isRunning, tunEnabled=$tunEnabled, '
+                  'autoSetSystemDns=$autoSetSystemDns',
+            );
+          }
+        }
+      }
     });
   });
 }
