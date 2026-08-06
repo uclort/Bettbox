@@ -19,6 +19,56 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'controller.dart';
 import 'pages/pages.dart';
 
+bool shouldReconcileMacOSNetworkState({
+  required String? previousFingerprint,
+  required String currentFingerprint,
+  bool force = false,
+}) {
+  return force || previousFingerprint != currentFingerprint;
+}
+
+@visibleForTesting
+class MacOSNetworkRecoveryRequest {
+  final bool force;
+
+  const MacOSNetworkRecoveryRequest({required this.force});
+}
+
+@visibleForTesting
+class MacOSNetworkRecoveryCoordinator {
+  bool _isProcessing = false;
+  bool _hasPendingRequest = false;
+  bool _hasForcedRequest = false;
+
+  bool get isProcessing => _isProcessing;
+  bool get hasPendingRequest => _hasPendingRequest;
+
+  void schedule({bool force = false}) {
+    _hasPendingRequest = true;
+    _hasForcedRequest |= force;
+  }
+
+  MacOSNetworkRecoveryRequest? beginNext() {
+    if (_isProcessing || !_hasPendingRequest) return null;
+
+    _isProcessing = true;
+    _hasPendingRequest = false;
+    final request = MacOSNetworkRecoveryRequest(force: _hasForcedRequest);
+    // 强制恢复只属于当前请求，恢复期间的新网络事件不能继承该标记。
+    _hasForcedRequest = false;
+    return request;
+  }
+
+  void completeCurrent() {
+    _isProcessing = false;
+  }
+
+  void clearPending() {
+    _hasPendingRequest = false;
+    _hasForcedRequest = false;
+  }
+}
+
 class Application extends ConsumerStatefulWidget {
   const Application({super.key});
 
@@ -30,6 +80,10 @@ class ApplicationState extends ConsumerState<Application>
     with WidgetsBindingObserver {
   Timer? _autoUpdateGroupTaskTimer;
   Timer? _autoUpdateProfilesTaskTimer;
+  Timer? _networkChangeDebounceTimer;
+  final _macOSNetworkRecoveryCoordinator = MacOSNetworkRecoveryCoordinator();
+  bool _macOSNetworkRecoveryReady = false;
+  String? _lastMacOSNetworkFingerprint;
 
   final _pageTransitionsTheme = const PageTransitionsTheme(
     builders: <TargetPlatform, PageTransitionsBuilder>{
@@ -54,6 +108,9 @@ class ApplicationState extends ConsumerState<Application>
     globalState.backgroundMode.addListener(_syncAutoUpdateTasks);
     _syncAutoUpdateTasks();
     globalState.appController = AppController(context, ref);
+    if (system.isMacOS) {
+      app.onSystemWake = _handleMacOSSystemWake;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_initApp());
     });
@@ -71,6 +128,12 @@ class ApplicationState extends ConsumerState<Application>
       globalState.appController = AppController(currentContext, ref);
     }
     await globalState.appController.init();
+    if (system.isMacOS) {
+      final networkState = await macOS?.defaultNetworkState;
+      if (!mounted) return;
+      _lastMacOSNetworkFingerprint = networkState?.fingerprint;
+      _macOSNetworkRecoveryReady = true;
+    }
     try {
       await ExternalControl.start();
     } catch (e) {
@@ -133,6 +196,109 @@ class ApplicationState extends ConsumerState<Application>
     );
   }
 
+  void _handleConnectivityChanged(List<ConnectivityResult> results) {
+    if (!system.isMacOS) {
+      if (!results.contains(ConnectivityResult.vpn)) {
+        unawaited(clashCore.closeConnections());
+      }
+      globalState.appController.updateLocalIp();
+      globalState.appController.addCheckIpNumDebounce();
+      return;
+    }
+
+    unawaited(globalState.appController.updateLocalIp());
+    if (!_macOSNetworkRecoveryReady) return;
+    _scheduleMacOSNetworkRecovery(reason: '网络状态变化');
+  }
+
+  void _handleMacOSSystemWake() {
+    if (!mounted || !system.isMacOS || !_macOSNetworkRecoveryReady) return;
+    commonPrint.log('[APP] 检测到 macOS 系统唤醒，准备恢复 TUN 与 DNS');
+    _scheduleMacOSNetworkRecovery(force: true, reason: '系统唤醒');
+  }
+
+  void _scheduleMacOSNetworkRecovery({
+    bool force = false,
+    required String reason,
+  }) {
+    _macOSNetworkRecoveryCoordinator.schedule(force: force);
+    if (_macOSNetworkRecoveryCoordinator.isProcessing) {
+      commonPrint.log(
+        '[APP] macOS 网络恢复进行中，已合并后续请求：reason=$reason, force=$force',
+      );
+      return;
+    }
+
+    _networkChangeDebounceTimer?.cancel();
+    _networkChangeDebounceTimer = Timer(
+      const Duration(milliseconds: 500),
+      () => unawaited(_drainMacOSNetworkRecoveryQueue()),
+    );
+  }
+
+  Future<void> _drainMacOSNetworkRecoveryQueue() async {
+    _networkChangeDebounceTimer = null;
+    while (mounted) {
+      final request = _macOSNetworkRecoveryCoordinator.beginNext();
+      if (request == null) return;
+
+      try {
+        await _handleMacOSNetworkChange(request);
+      } catch (e, stackTrace) {
+        commonPrint.log('[APP] macOS 网络恢复协调器异常：$e\n$stackTrace');
+      } finally {
+        _macOSNetworkRecoveryCoordinator.completeCurrent();
+      }
+    }
+  }
+
+  Future<void> _handleMacOSNetworkChange(
+    MacOSNetworkRecoveryRequest request,
+  ) async {
+    final networkState = await macOS?.waitForStableDefaultNetwork(
+      isCancelled: () => !mounted,
+    );
+    if (networkState == null || !mounted) return;
+
+    if (!shouldReconcileMacOSNetworkState(
+      previousFingerprint: _lastMacOSNetworkFingerprint,
+      currentFingerprint: networkState.fingerprint,
+      force: request.force,
+    )) {
+      commonPrint.log('[APP] macOS 网络未变化，跳过重复恢复');
+      return;
+    }
+
+    try {
+      commonPrint.log(
+        '[APP] 开始 macOS TUN 与 DNS 恢复：service=${networkState.serviceName}, '
+        'force=${request.force}',
+      );
+      final recovered = await globalState.appController
+          .handleMacOSNetworkChange(networkState, isCancelled: () => !mounted);
+      if (!recovered || !mounted) {
+        commonPrint.log('[APP] macOS 网络恢复已被用户操作或应用退出取消');
+        return;
+      }
+
+      _lastMacOSNetworkFingerprint = networkState.fingerprint;
+      final latestNetworkState = await macOS?.defaultNetworkState;
+      if (latestNetworkState != null &&
+          latestNetworkState.fingerprint != networkState.fingerprint) {
+        commonPrint.log('[APP] 恢复期间默认网络再次变化，已排队复核');
+        _macOSNetworkRecoveryCoordinator.schedule();
+      } else {
+        commonPrint.log('[APP] macOS TUN 与 DNS 恢复完成');
+      }
+    } catch (e) {
+      commonPrint.log('[APP] macOS TUN 与 DNS 恢复失败：$e');
+      return;
+    }
+
+    unawaited(globalState.appController.updateLocalIp());
+    globalState.appController.addCheckIpNumDebounce();
+  }
+
   Widget _buildPlatformState(Widget child) {
     if (system.isDesktop) {
       return WindowManager(
@@ -152,21 +318,7 @@ class ApplicationState extends ConsumerState<Application>
     return AppStateManager(
       child: ClashManager(
         child: ConnectivityManager(
-          onConnectivityChanged: (results) async {
-            if (!results.contains(ConnectivityResult.vpn)) {
-              clashCore.closeConnections();
-            }
-            if (system.isMacOS) {
-              // Wait for DHCP and the default route to settle before moving the
-              // managed DNS from the previous network to the new one.
-              await Future.delayed(const Duration(seconds: 1));
-              if (!mounted) return;
-              final dnsState = ref.read(autoSetSystemDnsStateProvider);
-              await macOS?.updateDns(!(dnsState.a && dnsState.b));
-            }
-            globalState.appController.updateLocalIp();
-            globalState.appController.addCheckIpNumDebounce();
-          },
+          onConnectivityChanged: _handleConnectivityChanged,
           child: child,
         ),
       ),
@@ -257,11 +409,16 @@ class ApplicationState extends ConsumerState<Application>
 
   @override
   void dispose() {
+    if (system.isMacOS) {
+      app.onSystemWake = null;
+    }
     globalState.backgroundMode.removeListener(_syncAutoUpdateTasks);
     WidgetsBinding.instance.removeObserver(this);
     linkManager.destroy();
     _autoUpdateGroupTaskTimer?.cancel();
     _autoUpdateProfilesTaskTimer?.cancel();
+    _networkChangeDebounceTimer?.cancel();
+    _macOSNetworkRecoveryCoordinator.clearPending();
     ExternalControl.stop();
     if (!system.isAndroid && !globalState.isExiting) {
       unawaited(globalState.appController.handleExit());
