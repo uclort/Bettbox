@@ -10,6 +10,7 @@ class App {
   late MethodChannel methodChannel;
   Function()? onExit;
   FutureOr<void> Function()? onSystemWake;
+  Function()? onAppUpdateNotificationOpened;
 
   App._internal() {
     methodChannel = const MethodChannel('app');
@@ -22,6 +23,8 @@ class App {
         await onExit?.call();
       case 'systemDidWake':
         await onSystemWake?.call();
+      case 'appUpdateNotificationOpened':
+        await onAppUpdateNotificationOpened?.call();
       case 'getText':
         try {
           return Intl.message(call.arguments as String);
@@ -43,10 +46,12 @@ class App {
   }
 
   Future<List<Package>> getPackages({bool forceRefresh = false}) async {
-    final packagesRaw = await methodChannel.invokeListMethod<Map<dynamic, dynamic>>(
-      'getPackages',
-      {'forceRefresh': forceRefresh},
-    ) ?? const [];
+    final packagesRaw =
+        await methodChannel.invokeListMethod<Map<dynamic, dynamic>>(
+          'getPackages',
+          {'forceRefresh': forceRefresh},
+        ) ??
+        const [];
     return packagesRaw
         .map((e) => Package.fromJson(Map<String, Object?>.from(e)))
         .toList();
@@ -98,20 +103,15 @@ class App {
 
   Future<bool?> tip(String? message) async {
     if (message == null || message.isEmpty) return false;
-    return await methodChannel.invokeMethod<bool>('tip', {
-      'message': message,
-    });
+    return await methodChannel.invokeMethod<bool>('tip', {'message': message});
   }
 
   Future<bool?> initShortcuts() async {
-    return await methodChannel.invokeMethod<bool>(
-      'initShortcuts',
-      {
-        'toggle': appLocalizations.toggle,
-        'start': appLocalizations.start,
-        'stop': appLocalizations.stop,
-      },
-    );
+    return await methodChannel.invokeMethod<bool>('initShortcuts', {
+      'toggle': appLocalizations.toggle,
+      'start': appLocalizations.start,
+      'stop': appLocalizations.stop,
+    });
   }
 
   Future<bool?> updateExcludeFromRecents(bool value) async {
@@ -148,6 +148,56 @@ class App {
   Future<bool> isAndroidTV() async {
     final result = await methodChannel.invokeMethod<bool>('isAndroidTV');
     return result ?? false;
+  }
+
+  Future<void> requestNotificationPermission() async {
+    await methodChannel.invokeMethod<void>('requestNotificationPermission');
+  }
+
+  Future<bool> startAppUpdateDownload({
+    required String url,
+    required String fileName,
+    required String releaseTag,
+    String? checksum,
+  }) async {
+    return await methodChannel.invokeMethod<bool>('startAppUpdateDownload', {
+          'url': url,
+          'fileName': fileName,
+          'releaseTag': releaseTag,
+          'checksum': checksum,
+        }) ??
+        false;
+  }
+
+  Future<Map<String, dynamic>> getAppUpdateState() async {
+    final state = await methodChannel.invokeMapMethod<String, dynamic>(
+      'getAppUpdateState',
+    );
+    return state ?? const <String, dynamic>{};
+  }
+
+  Future<bool> retryAppUpdateDownload() async {
+    return await methodChannel.invokeMethod<bool>('retryAppUpdateDownload') ??
+        false;
+  }
+
+  Future<bool> installDownloadedAppUpdate(String releaseTag) async {
+    return await methodChannel.invokeMethod<bool>(
+          'installDownloadedAppUpdate',
+          {'releaseTag': releaseTag},
+        ) ??
+        false;
+  }
+
+  Future<void> showAppUpdateNotification() async {
+    await methodChannel.invokeMethod<void>('showAppUpdateNotification');
+  }
+
+  Future<bool> consumeAppUpdateOpenRequest() async {
+    return await methodChannel.invokeMethod<bool>(
+          'consumeAppUpdateOpenRequest',
+        ) ??
+        false;
   }
 }
 

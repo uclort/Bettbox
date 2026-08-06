@@ -26,6 +26,7 @@ import com.appshub.bettbox.R
 import com.appshub.bettbox.extensions.awaitResult
 import com.appshub.bettbox.extensions.getActionIntent
 import com.appshub.bettbox.models.Package
+import com.appshub.bettbox.services.AppUpdateDownloadService
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -44,6 +45,7 @@ import java.lang.ref.WeakReference
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 import android.content.res.Configuration
 import android.net.Uri
 import android.graphics.Bitmap
@@ -72,6 +74,16 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         private const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1002
         private const val CACHE_MAX_FILES = 500
         private const val PNG_MAGIC_SIZE = 8
+        private val activeChannels = CopyOnWriteArrayList<MethodChannel>()
+
+        fun handleAppUpdateIntent(intent: Intent?) {
+            if (intent?.getBooleanExtra(AppUpdateDownloadService.EXTRA_OPEN_UPDATE, false) != true) return
+            AppUpdateDownloadService.markOpenRequested(BettboxApplication.getAppContext())
+            activeChannels.forEach { channel ->
+                channel.invokeMethod("appUpdateNotificationOpened", null)
+            }
+            intent.removeExtra(AppUpdateDownloadService.EXTRA_OPEN_UPDATE)
+        }
 
         private val SKIP_PREFIX_LIST = listOf(
             "com.google", "com.android.chrome", "com.android.vending", "com.facebook",
@@ -130,6 +142,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, "app")
         channel.setMethodCallHandler(this)
+        activeChannels.add(channel)
         scope.launch(Dispatchers.IO) { cleanIconCache() }
     }
 
@@ -184,6 +197,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        activeChannels.remove(channel)
         channel.setMethodCallHandler(null)
         scope.cancel()
     }
@@ -266,6 +280,46 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
             }
             "isAndroidTV" -> {
                 result.success(isAndroidTV())
+            }
+            "requestNotificationPermission" -> {
+                requestNotificationsPermission()
+                result.success(true)
+            }
+            "startAppUpdateDownload" -> {
+                result.success(
+                    AppUpdateDownloadService.start(
+                        context = BettboxApplication.getAppContext(),
+                        url = call.argument<String>("url").orEmpty(),
+                        fileName = call.argument<String>("fileName").orEmpty(),
+                        releaseTag = call.argument<String>("releaseTag").orEmpty(),
+                        checksum = call.argument<String>("checksum"),
+                    )
+                )
+            }
+            "getAppUpdateState" -> {
+                result.success(AppUpdateDownloadService.getState(BettboxApplication.getAppContext()))
+            }
+            "retryAppUpdateDownload" -> {
+                result.success(AppUpdateDownloadService.retry(BettboxApplication.getAppContext()))
+            }
+            "installDownloadedAppUpdate" -> {
+                result.success(
+                    AppUpdateDownloadService.install(
+                        BettboxApplication.getAppContext(),
+                        call.argument<String>("releaseTag").orEmpty(),
+                    )
+                )
+            }
+            "showAppUpdateNotification" -> {
+                AppUpdateDownloadService.restoreNotification(BettboxApplication.getAppContext())
+                result.success(true)
+            }
+            "consumeAppUpdateOpenRequest" -> {
+                result.success(
+                    AppUpdateDownloadService.consumeOpenRequested(
+                        BettboxApplication.getAppContext(),
+                    )
+                )
             }
             else -> result.notImplemented()
         }
@@ -476,6 +530,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
         activityRef = WeakReference(binding.activity)
+        handleAppUpdateIntent(binding.activity.intent)
         if (!isActivityAttached) {
             isActivityAttached = true
             binding.addActivityResultListener(::onActivityResult)

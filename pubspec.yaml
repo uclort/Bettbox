@@ -72,7 +72,6 @@ dependencies:
   flutter_displaymode: ^0.7.0
   restart_app: ^1.8.3
   auto_updater: ^1.0.0
-  ota_update: ^7.1.0
 dependency_overrides:
   # Fix compile failure: https://github.com/leanflutter/hotkey_manager/pull/66
   hotkey_manager_linux:
