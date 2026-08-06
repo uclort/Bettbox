@@ -108,6 +108,143 @@ void main() {
     });
   });
 
+  group('macOS TUN 重建', () {
+    test('按关闭 TUN、停止监听、修复网络、启动监听、恢复 TUN 的顺序执行', () async {
+      final events = <String>[];
+
+      await rebuildMacOSTun(
+        disableTun: () async => events.add('disableTun'),
+        stopListener: () async => events.add('stopListener'),
+        repairNetwork: () async => events.add('repairNetwork'),
+        startListener: () async => events.add('startListener'),
+        restoreTun: () async => events.add('restoreTun'),
+      );
+
+      expect(events, [
+        'disableTun',
+        'stopListener',
+        'repairNetwork',
+        'startListener',
+        'restoreTun',
+      ]);
+    });
+
+    test('网络修复失败时仍恢复监听与 TUN', () async {
+      final events = <String>[];
+
+      await expectLater(
+        rebuildMacOSTun(
+          disableTun: () async => events.add('disableTun'),
+          stopListener: () async => events.add('stopListener'),
+          repairNetwork: () async {
+            events.add('repairNetwork');
+            throw StateError('repair failed');
+          },
+          startListener: () async => events.add('startListener'),
+          restoreTun: () async => events.add('restoreTun'),
+        ),
+        throwsStateError,
+      );
+
+      expect(events, [
+        'disableTun',
+        'stopListener',
+        'repairNetwork',
+        'startListener',
+        'restoreTun',
+      ]);
+    });
+
+    test('停止监听失败时重新恢复 TUN', () async {
+      final events = <String>[];
+
+      await expectLater(
+        rebuildMacOSTun(
+          disableTun: () async => events.add('disableTun'),
+          stopListener: () async {
+            events.add('stopListener');
+            throw StateError('stop failed');
+          },
+          repairNetwork: () async => events.add('repairNetwork'),
+          startListener: () async => events.add('startListener'),
+          restoreTun: () async => events.add('restoreTun'),
+        ),
+        throwsStateError,
+      );
+
+      expect(events, ['disableTun', 'stopListener', 'restoreTun']);
+    });
+
+    test('启动监听失败时仍尝试恢复 TUN', () async {
+      final events = <String>[];
+
+      await expectLater(
+        rebuildMacOSTun(
+          disableTun: () async => events.add('disableTun'),
+          stopListener: () async => events.add('stopListener'),
+          repairNetwork: () async => events.add('repairNetwork'),
+          startListener: () async {
+            events.add('startListener');
+            throw StateError('start failed');
+          },
+          restoreTun: () async => events.add('restoreTun'),
+        ),
+        throwsStateError,
+      );
+
+      expect(events, [
+        'disableTun',
+        'stopListener',
+        'repairNetwork',
+        'startListener',
+        'restoreTun',
+      ]);
+    });
+
+    test('用户主动停止或退出后不再恢复监听和 TUN', () async {
+      final events = <String>[];
+      var shouldRestore = true;
+
+      await rebuildMacOSTun(
+        disableTun: () async => events.add('disableTun'),
+        stopListener: () async => events.add('stopListener'),
+        repairNetwork: () async {
+          events.add('repairNetwork');
+          shouldRestore = false;
+        },
+        startListener: () async => events.add('startListener'),
+        restoreTun: () async => events.add('restoreTun'),
+        shouldRestore: () => shouldRestore,
+      );
+
+      expect(events, ['disableTun', 'stopListener', 'repairNetwork']);
+    });
+
+    test('启动监听期间用户主动停止时不再恢复 TUN', () async {
+      final events = <String>[];
+      var shouldRestore = true;
+
+      await rebuildMacOSTun(
+        disableTun: () async => events.add('disableTun'),
+        stopListener: () async => events.add('stopListener'),
+        repairNetwork: () async => events.add('repairNetwork'),
+        startListener: () async {
+          events.add('startListener');
+          shouldRestore = false;
+        },
+        restoreTun: () async => events.add('restoreTun'),
+        shouldRestore: () => shouldRestore,
+      );
+
+      expect(events, [
+        'disableTun',
+        'stopListener',
+        'repairNetwork',
+        'startListener',
+      ]);
+    });
+  });
+
   group('managed macOS DNS state', () {
     test('requires the master switch, TUN, and automatic DNS', () {
       for (final isRunning in [false, true]) {
