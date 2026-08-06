@@ -1,0 +1,990 @@
+name: 使用自定义 Mihomo 构建 Bettbox
+
+on:
+  push:
+    branches:
+      - custom-build
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 忽略已有 Release，强制重新构建
+        required: false
+        default: false
+        type: boolean
+      target_commit:
+        description: 指定需要构建的 custom-build 提交
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: custom-mihomo-${{ inputs.target_commit || github.sha }}
+  cancel-in-progress: false
+
+env:
+  CUSTOM_MIHOMO_REPOSITORY: uclort/custom-mihomo
+  BETTBOX_REQUIRED_FEATURE_BRANCHES: >-
+    codex/package-macos-dns-recovery
+    codex/package-macos-tray-rebuild
+    codex/support-inline-provider-content
+    codex/custom-in-app-updater
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  FLUTTER_VERSION: 3.44.6
+  GO_VERSION: 1.25.x
+  GRADLE_OPTS: -Dorg.gradle.vfs.watch=false -Dorg.gradle.daemon=false -Dorg.gradle.caching=false
+  SENTRY_BACKEND: none
+
+jobs:
+  inspect:
+    name: 检查源码版本
+    runs-on: ubuntu-24.04
+    outputs:
+      ready: ${{ steps.meta.outputs.ready }}
+      release_tag: ${{ steps.meta.outputs.release_tag }}
+      upstream_sha: ${{ steps.meta.outputs.upstream_sha }}
+      kernel_sha: ${{ steps.meta.outputs.kernel_sha }}
+      app_version: ${{ steps.meta.outputs.app_version }}
+      build_number: ${{ steps.meta.outputs.build_number }}
+      bettbox_release: ${{ steps.meta.outputs.bettbox_release }}
+      custom_mihomo_commit: ${{ steps.source.outputs.commit }}
+
+    steps:
+      - name: 检出 Bettbox 打包分支
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.target_commit || github.sha }}
+          fetch-depth: 0
+
+      - name: 校验自定义功能来源
+        shell: bash
+        env:
+          REQUIRED_FEATURE_BRANCHES: ${{ env.BETTBOX_REQUIRED_FEATURE_BRANCHES }}
+        run: |
+          set -euo pipefail
+          manifest=".custom-build/metadata/feature-branches"
+          if [[ ! -s "${manifest}" ]]; then
+            echo "缺少自定义功能来源清单：${manifest}" >&2
+            exit 1
+          fi
+
+          for branch in ${REQUIRED_FEATURE_BRANCHES}; do
+            expected="$(awk -F= -v branch="${branch}" '$1 == branch { print $2 }' "${manifest}")"
+            if [[ ! "${expected}" =~ ^[0-9a-f]{40}$ ]]; then
+              echo "功能分支 ${branch} 缺少有效提交记录。" >&2
+              exit 1
+            fi
+            git fetch --no-tags origin \
+              "+refs/heads/${branch}:refs/remotes/origin/${branch}"
+            actual="$(git rev-parse "refs/remotes/origin/${branch}")"
+            if [[ "${actual}" != "${expected}" ]]; then
+              echo "功能分支 ${branch} 已变化，必须先重新同步打包分支。" >&2
+              exit 1
+            fi
+            if ! git merge-base --is-ancestor "${expected}" HEAD; then
+              echo "当前打包提交缺少功能分支 ${branch}@${expected:0:12}。" >&2
+              exit 1
+            fi
+          done
+
+      - name: 读取私有 Mihomo 提交
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          commit="$(tr -d '[:space:]' < .custom-build/metadata/custom-mihomo-commit)"
+          if [[ ! "${commit}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "私有 Mihomo commit 无效：${commit:-未配置}" >&2
+            exit 1
+          fi
+          echo "commit=${commit}" >> "${GITHUB_OUTPUT}"
+
+      - name: 检出私有自定义 Mihomo
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ env.CUSTOM_MIHOMO_REPOSITORY }}
+          ref: ${{ steps.source.outputs.commit }}
+          path: .custom-build/runtime/custom-mihomo
+          fetch-depth: 1
+          ssh-key: ${{ secrets.CUSTOM_MIHOMO_READ_KEY }}
+
+      - name: 校验自定义内核并生成版本
+        id: meta
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE_BUILD: ${{ github.event_name == 'workflow_dispatch' && inputs.force || false }}
+          EXPECTED_COMMIT: ${{ inputs.target_commit || '' }}
+        run: |
+          set -euo pipefail
+
+          if [[ ! -f .custom-build/runtime/custom-mihomo/source/go.mod ]]; then
+            echo "ready=false" >> "${GITHUB_OUTPUT}"
+            {
+              echo "## 暂不构建"
+              echo
+              echo "私有仓库中尚未检测到 \`source/go.mod\`。"
+            } >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+
+          module_name="$(
+            awk '$1 == "module" { print $2; exit }' \
+              .custom-build/runtime/custom-mihomo/source/go.mod
+          )"
+          if [[ "${module_name}" != "github.com/metacubex/mihomo" ]]; then
+            echo "自定义内核模块名错误：${module_name:-未声明}" >&2
+            echo "必须为：github.com/metacubex/mihomo" >&2
+            exit 1
+          fi
+
+          upstream_sha="$(git rev-parse HEAD)"
+          if [[ -n "${EXPECTED_COMMIT}" &&
+                "${upstream_sha}" != "${EXPECTED_COMMIT}" ]]; then
+            echo "实际检出提交 ${upstream_sha} 与指定提交 ${EXPECTED_COMMIT} 不一致。" >&2
+            exit 1
+          fi
+          kernel_sha="$(
+            git -C .custom-build/runtime/custom-mihomo rev-parse HEAD:source
+          )"
+          app_version="$(awk '$1 == "version:" { print $2; exit }' pubspec.yaml)"
+          bettbox_release="$(
+            tr -d '[:space:]' < .custom-build/metadata/bettbox-release
+          )"
+
+          if [[ -z "${upstream_sha}" ||
+                -z "${kernel_sha}" ||
+                -z "${app_version}" ||
+                -z "${bettbox_release}" ]]; then
+            echo "无法读取构建版本信息。" >&2
+            exit 1
+          fi
+
+          release_identity="${upstream_sha:0:12}-${kernel_sha:0:12}"
+          existing_release=""
+          while IFS= read -r candidate; do
+            if [[ "${candidate}" == *"-${release_identity}" ]]; then
+              existing_release="${candidate}"
+              break
+            fi
+          done < <(
+            gh api \
+              --paginate \
+              "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
+              --jq '.[].tag_name'
+          )
+
+          if [[ "${FORCE_BUILD}" != "true" && -n "${existing_release}" ]]; then
+            echo "ready=false" >> "${GITHUB_OUTPUT}"
+            {
+              echo "## 无需重复构建"
+              echo
+              echo "当前 Bettbox 与自定义内核组合已经发布：\`${existing_release}\`"
+            } >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+          build_id="$(date -u +%Y%m%d%H%M%S)"
+          build_number="$((2090000000 + GITHUB_RUN_NUMBER))"
+          if [[ "${build_number}" -gt 2100000000 ]]; then
+            echo "自定义构建编号超过 Android versionCode 上限。" >&2
+            exit 1
+          fi
+          release_tag="custom-v${app_version}-r${build_id}-${release_identity}"
+
+          {
+            echo "ready=true"
+            echo "release_tag=${release_tag}"
+            echo "upstream_sha=${upstream_sha}"
+            echo "kernel_sha=${kernel_sha}"
+            echo "app_version=${app_version}"
+            echo "build_number=${build_number}"
+            echo "bettbox_release=${bettbox_release}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: 显示构建摘要
+        if: steps.meta.outputs.ready == 'true'
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ steps.meta.outputs.release_tag }}
+          UPSTREAM_SHA: ${{ steps.meta.outputs.upstream_sha }}
+          KERNEL_SHA: ${{ steps.meta.outputs.kernel_sha }}
+        run: |
+          {
+            echo "## 准备并行构建"
+            echo
+            echo "- Release：\`${RELEASE_TAG}\`"
+            echo "- Bettbox custom-build：\`${UPSTREAM_SHA}\`"
+            echo "- 自定义 Mihomo 源码树：\`${KERNEL_SHA}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+  build:
+    name: ${{ matrix.name }}
+    needs: inspect
+    if: needs.inspect.outputs.ready == 'true'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Android Pixel 6a (arm64-v8a)
+            platform: android
+            arch: arm64
+            os: ubuntu-24.04
+            artifact: Bettbox-Android-arm64-v8a
+          - name: Windows x64
+            platform: windows
+            arch: amd64
+            os: windows-2022
+            artifact: Bettbox-Windows-x64
+          - name: macOS Apple Silicon
+            platform: macos
+            arch: arm64
+            os: macos-15
+            artifact: Bettbox-macOS-arm64
+          - name: macOS Intel
+            platform: macos
+            arch: amd64
+            os: macos-15
+            artifact: Bettbox-macOS-amd64
+
+    env:
+      APP_UPDATE_REPOSITORY: uclort/Bettbox
+      APP_RELEASE_TAG: ${{ needs.inspect.outputs.release_tag }}
+      APP_UPDATE_FEED_URL: https://raw.githubusercontent.com/uclort/Bettbox/custom-update-feed/appcast-${{ matrix.platform }}-${{ matrix.arch }}.xml
+      CUSTOM_BUILD_NUMBER: ${{ needs.inspect.outputs.build_number }}
+
+    steps:
+      - name: 检出 Bettbox 打包分支提交
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.inspect.outputs.upstream_sha }}
+          fetch-depth: 1
+
+      - name: 检出私有自定义 Mihomo
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ env.CUSTOM_MIHOMO_REPOSITORY }}
+          ref: ${{ needs.inspect.outputs.custom_mihomo_commit }}
+          path: .custom-build/runtime/custom-mihomo
+          fetch-depth: 1
+          ssh-key: ${{ secrets.CUSTOM_MIHOMO_READ_KEY }}
+
+      - name: 强制替换为自定义 Mihomo
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x .custom-build/scripts/use-custom-mihomo.sh
+          .custom-build/scripts/use-custom-mihomo.sh \
+            . \
+            .custom-build/runtime/custom-mihomo/source
+
+      - name: 注入自定义构建编号
+        shell: bash
+        run: |
+          set -euo pipefail
+          app_version="$(awk '$1 == "version:" { print $2; exit }' pubspec.yaml)"
+          version_name="${app_version%%+*}"
+          temporary_pubspec="${RUNNER_TEMP}/bettbox-pubspec.yaml"
+          awk \
+            -v version="${version_name}+${CUSTOM_BUILD_NUMBER}" \
+            '$1 == "version:" { print "version: " version; next } { print }' \
+            pubspec.yaml > "${temporary_pubspec}"
+          mv "${temporary_pubspec}" pubspec.yaml
+          grep '^version:' pubspec.yaml
+
+      - name: 配置 Windows 长路径
+        if: matrix.platform == 'windows'
+        shell: bash
+        run: git config --global core.longpaths true
+
+      - name: 配置 Rust（Android）
+        if: matrix.platform == 'android'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android,i686-linux-android
+
+      - name: 配置 Rust（Windows）
+        if: matrix.platform == 'windows'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: 配置 Rust（macOS）
+        if: matrix.platform == 'macos'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.arch == 'amd64' && 'x86_64-apple-darwin' || 'aarch64-apple-darwin' }}
+
+      - name: 配置 Java
+        if: matrix.platform == 'android'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: 配置 Android Release 签名
+        if: matrix.platform == 'android'
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.KEYSTORE }}
+          ANDROID_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for secret_name in \
+            ANDROID_KEYSTORE_BASE64 \
+            ANDROID_KEY_ALIAS \
+            ANDROID_STORE_PASSWORD \
+            ANDROID_KEY_PASSWORD; do
+            if [[ -z "${!secret_name}" ]]; then
+              echo "缺少 Android Release 签名 Secret：${secret_name}" >&2
+              exit 1
+            fi
+          done
+
+          printf '%s' "${ANDROID_KEYSTORE_BASE64}" |
+            base64 --decode > android/app/keystore.jks
+          chmod 600 android/app/keystore.jks
+          {
+            printf 'keyAlias=%s\n' "${ANDROID_KEY_ALIAS}"
+            printf 'storePassword=%s\n' "${ANDROID_STORE_PASSWORD}"
+            printf 'keyPassword=%s\n' "${ANDROID_KEY_PASSWORD}"
+          } >> android/local.properties
+
+          keytool -list \
+            -keystore android/app/keystore.jks \
+            -storepass "${ANDROID_STORE_PASSWORD}" \
+            -alias "${ANDROID_KEY_ALIAS}" >/dev/null
+
+      - name: 隔离 Android 临时缓存并检查磁盘
+        if: matrix.platform == 'android'
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle_home="${RUNNER_TEMP}/bettbox-gradle"
+          pub_cache="${RUNNER_TEMP}/bettbox-pub-cache"
+          mkdir -p "${gradle_home}" "${pub_cache}"
+          {
+            echo "GRADLE_USER_HOME=${gradle_home}"
+            echo "PUB_CACHE=${pub_cache}"
+            echo "CARGO_INCREMENTAL=0"
+          } >> "${GITHUB_ENV}"
+
+          available_kb="$(
+            df -Pk "${GITHUB_WORKSPACE}" | awk 'NR == 2 { print $4 }'
+          )"
+          required_kb=$((10 * 1024 * 1024))
+          df -h "${GITHUB_WORKSPACE}"
+          if [[ "${available_kb}" -lt "${required_kb}" ]]; then
+            echo "Android 构建前可用空间不足 10 GiB，停止构建以避免缓存写满磁盘。" >&2
+            exit 1
+          fi
+
+      - name: 安装 Android NDK
+        if: matrix.platform == 'android'
+        shell: bash
+        run: |
+          set -euo pipefail
+          ndk_version="28.2.13676358"
+          set +o pipefail
+          yes | "${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager" \
+            --install "ndk;${ndk_version}" >/dev/null
+          sdk_status="${PIPESTATUS[1]}"
+          set -o pipefail
+          if [[ "${sdk_status}" -ne 0 ]]; then
+            echo "Android NDK 安装失败，sdkmanager 退出码：${sdk_status}" >&2
+            exit "${sdk_status}"
+          fi
+          echo "ANDROID_NDK=${ANDROID_SDK_ROOT}/ndk/${ndk_version}" >> "${GITHUB_ENV}"
+
+      - name: 配置 Android Rust 链接器
+        if: matrix.platform == 'android'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "${HOME}/.cargo"
+          {
+            echo '[target.aarch64-linux-android]'
+            echo "linker = \"${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android26-clang\""
+            echo '[target.armv7-linux-androideabi]'
+            echo "linker = \"${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi26-clang\""
+            echo '[target.x86_64-linux-android]'
+            echo "linker = \"${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android26-clang\""
+            echo '[target.i686-linux-android]'
+            echo "linker = \"${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android26-clang\""
+          } > "${HOME}/.cargo/config.toml"
+
+      - name: 配置 Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: ${{ matrix.platform != 'android' }}
+          cache-dependency-path: core/go.sum
+
+      - name: 配置 Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+          cache-key: flutter-sdk-${{ runner.os }}-${{ env.FLUTTER_VERSION }}-${{ runner.arch }}
+
+      - name: 获取 Flutter 依赖并生成代码
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter pub get
+          dart run build_runner build -d
+
+      - name: 构建 Android arm64-v8a
+        if: matrix.platform == 'android'
+        shell: bash
+        run: dart setup.dart android --arch arm64 --env stable
+
+      - name: 构建 Windows x64
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          dart setup.dart windows --arch amd64 --out core-only
+          $coreHash = (Get-FileHash libclash/windows/BettboxCore.exe -Algorithm SHA256).Hash.ToLower()
+          dart setup.dart windows --arch amd64 --out helper --core-hash $coreHash
+          flutter build windows --release --verbose `
+            --build-number=${{ needs.inspect.outputs.build_number }} `
+            --dart-define=CORE_SHA256=$coreHash `
+            --dart-define=APP_ENV=stable `
+            --dart-define=APP_ASSET_SUFFIX=windows-amd64-setup.exe `
+            --dart-define=APP_UPDATE_REPOSITORY=$env:APP_UPDATE_REPOSITORY `
+            --dart-define=APP_RELEASE_TAG=$env:APP_RELEASE_TAG `
+            --dart-define=APP_UPDATE_FEED_URL=$env:APP_UPDATE_FEED_URL
+          dart windows/packaging/exe/package_windows.dart --arch amd64 --env stable
+
+      - name: 构建 macOS
+        if: matrix.platform == 'macos'
+        shell: bash
+        run: dart setup.dart macos --arch ${{ matrix.arch }} --env stable
+
+      - name: 签署桌面更新包并生成更新元数据
+        if: matrix.platform == 'macos' || matrix.platform == 'windows'
+        shell: bash
+        env:
+          SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
+          WINSPARKLE_DSA_PRIVATE_KEY: ${{ secrets.WINSPARKLE_DSA_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+
+          metadata="${RUNNER_TEMP}/custom-update-${{ matrix.platform }}-${{ matrix.arch }}.env"
+          if [[ "${{ matrix.platform }}" == "macos" ]]; then
+            if [[ -z "${SPARKLE_ED_PRIVATE_KEY}" ]]; then
+              echo "缺少 macOS Sparkle 更新签名 Secret。" >&2
+              exit 1
+            fi
+            package_count="$(find dist -type f -name '*.dmg' | wc -l | tr -d '[:space:]')"
+            package="$(find dist -type f -name '*.dmg' -print -quit)"
+            if [[ "${package_count}" -ne 1 ]]; then
+              echo "预期生成 1 个 macOS DMG，实际为 ${package_count} 个。" >&2
+              exit 1
+            fi
+            signature_output="$(
+              printf '%s' "${SPARKLE_ED_PRIVATE_KEY}" |
+                macos/Pods/Sparkle/bin/sign_update \
+                  --account bettbox-custom \
+                  --ed-key-file - \
+                  "${package}"
+            )"
+            signature="$(
+              sed -nE 's/.*sparkle:edSignature="([^"]+)".*/\1/p' \
+                <<< "${signature_output}"
+            )"
+            length="$(
+              sed -nE 's/.*length="([0-9]+)".*/\1/p' \
+                <<< "${signature_output}"
+            )"
+            signature_type="ed"
+          else
+            if [[ -z "${WINSPARKLE_DSA_PRIVATE_KEY}" ]]; then
+              echo "缺少 Windows WinSparkle 更新签名 Secret。" >&2
+              exit 1
+            fi
+            package_count="$(find dist -type f -name '*setup.exe' | wc -l | tr -d '[:space:]')"
+            package="$(find dist -type f -name '*setup.exe' -print -quit)"
+            if [[ "${package_count}" -ne 1 ]]; then
+              echo "预期生成 1 个 Windows 安装包，实际为 ${package_count} 个。" >&2
+              exit 1
+            fi
+            private_key="${RUNNER_TEMP}/winsparkle-dsa-private.pem"
+            printf '%s' "${WINSPARKLE_DSA_PRIVATE_KEY}" > "${private_key}"
+            signature="$(
+              openssl dgst -sha1 -binary < "${package}" |
+                openssl dgst -sha1 -sign "${private_key}" |
+                openssl enc -base64 -A
+            )"
+            rm "${private_key}"
+            length="$(wc -c < "${package}" | tr -d '[:space:]')"
+            signature_type="dsa"
+          fi
+
+          if [[ -z "${signature}" || -z "${length}" ]]; then
+            echo "桌面更新包签名结果为空。" >&2
+            exit 1
+          fi
+          {
+            echo "platform=${{ matrix.platform }}"
+            echo "arch=${{ matrix.arch }}"
+            echo "asset=$(basename "${package}")"
+            echo "signature_type=${signature_type}"
+            echo "signature=${signature}"
+            echo "length=${length}"
+          } > "${metadata}"
+
+      - name: 上传桌面更新元数据
+        if: matrix.platform == 'macos' || matrix.platform == 'windows'
+        uses: actions/upload-artifact@v7
+        with:
+          name: Custom-Update-Metadata-${{ matrix.platform }}-${{ matrix.arch }}
+          path: ${{ runner.temp }}/custom-update-${{ matrix.platform }}-${{ matrix.arch }}.env
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: 签署并校验 Android APK
+        if: matrix.platform == 'android'
+        shell: bash
+        env:
+          ANDROID_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          mapfile -d '' apk_paths < <(
+            find dist -type f -name '*.apk' -print0
+          )
+          if [[ "${#apk_paths[@]}" -ne 1 ]]; then
+            echo "预期生成 1 个 Android APK，实际为 ${#apk_paths[@]} 个。" >&2
+            exit 1
+          fi
+
+          apksigner_path="$(
+            find "${ANDROID_SDK_ROOT}/build-tools" \
+              -mindepth 2 \
+              -maxdepth 2 \
+              -type f \
+              -name apksigner \
+              -print |
+              sort -V |
+              tail -n 1
+          )"
+          if [[ -z "${apksigner_path}" ]]; then
+            echo "Android SDK 中未找到 apksigner。" >&2
+            exit 1
+          fi
+
+          signed_apk="${RUNNER_TEMP}/$(basename "${apk_paths[0]}")"
+          "${apksigner_path}" sign \
+            --ks android/app/keystore.jks \
+            --ks-key-alias "${ANDROID_KEY_ALIAS}" \
+            --ks-pass env:ANDROID_STORE_PASSWORD \
+            --key-pass env:ANDROID_KEY_PASSWORD \
+            --v1-signing-enabled true \
+            --v2-signing-enabled true \
+            --v3-signing-enabled true \
+            --v4-signing-enabled false \
+            --out "${signed_apk}" \
+            "${apk_paths[0]}"
+
+          signer_report="$(
+            "${apksigner_path}" verify \
+              --verbose \
+              --print-certs \
+              "${signed_apk}" 2>&1
+          )"
+          printf '%s\n' "${signer_report}"
+          actual_cert_sha="$(
+            sed -nE \
+              's/^.*certificate SHA-256 digest:[[:space:]]*([0-9A-Fa-f:]+).*$/\1/p' \
+              <<< "${signer_report}" |
+              head -n 1 |
+              tr -d ':' |
+              tr '[:upper:]' '[:lower:]'
+          )"
+          expected_cert_sha="$(
+            keytool -exportcert \
+              -keystore android/app/keystore.jks \
+              -storepass "${ANDROID_STORE_PASSWORD}" \
+              -alias "${ANDROID_KEY_ALIAS}" |
+              sha256sum |
+              awk '{ print $1 }'
+          )"
+
+          if [[ -z "${actual_cert_sha}" ||
+                "${actual_cert_sha}" != "${expected_cert_sha}" ]]; then
+            echo "Android APK 签名证书与固定 Release 证书不一致。" >&2
+            echo "实际证书 SHA-256：${actual_cert_sha:-无法读取}" >&2
+            echo "预期证书 SHA-256：${expected_cert_sha}" >&2
+            exit 1
+          fi
+
+          mv "${signed_apk}" "${apk_paths[0]}"
+
+          {
+            echo "## Android 固定签名与校验通过"
+            echo
+            echo "- APK：\`$(basename "${apk_paths[0]}")\`"
+            echo "- 证书 SHA-256：\`${actual_cert_sha}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: 检查构建产物
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -d dist ]] || [[ -z "$(find dist -type f -print -quit)" ]]; then
+            echo "错误：dist 目录中没有构建产物。" >&2
+            exit 1
+          fi
+          find dist -type f -maxdepth 2 -print
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/**
+          if-no-files-found: error
+          compression-level: 9
+          retention-days: 30
+
+      - name: 清理 Android 临时构建数据
+        if: always() && matrix.platform == 'android'
+        shell: bash
+        run: |
+          set -euo pipefail
+          df -h "${GITHUB_WORKSPACE}"
+          rm -rf -- \
+            "${RUNNER_TEMP}/bettbox-gradle" \
+            "${RUNNER_TEMP}/bettbox-pub-cache" \
+            "${GITHUB_WORKSPACE}/build" \
+            "${GITHUB_WORKSPACE}/.dart_tool" \
+            "${GITHUB_WORKSPACE}/android/.gradle"
+          df -h "${GITHUB_WORKSPACE}"
+
+  release:
+    name: 发布三端安装包
+    needs:
+      - inspect
+      - build
+    if: needs.inspect.outputs.ready == 'true'
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: 检出 Bettbox 打包分支提交
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.inspect.outputs.upstream_sha }}
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: 下载所有平台产物
+        uses: actions/download-artifact@v8
+        with:
+          path: release-assets
+          pattern: Bettbox-*
+
+      - name: 下载桌面更新元数据
+        uses: actions/download-artifact@v8
+        with:
+          path: update-metadata
+          pattern: Custom-Update-Metadata-*
+
+      - name: 创建 Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.inspect.outputs.release_tag }}
+          APP_VERSION: ${{ needs.inspect.outputs.app_version }}
+          BETTBOX_RELEASE: ${{ needs.inspect.outputs.bettbox_release }}
+          UPSTREAM_SHA: ${{ needs.inspect.outputs.upstream_sha }}
+        run: |
+          set -euo pipefail
+          mapfile -d '' assets < <(
+            find release-assets -type f \
+              \( -name '*.apk' -o -name '*.exe' -o -name '*.dmg' \) \
+              -print0
+          )
+          if [[ "${#assets[@]}" -eq 0 ]]; then
+            echo "错误：没有可发布的构建产物。" >&2
+            exit 1
+          fi
+
+          unexpected_assets="$(
+            find release-assets -type f \
+              ! \( -name '*.apk' -o -name '*.exe' -o -name '*.dmg' \) \
+              -print
+          )"
+          if [[ -n "${unexpected_assets}" ]]; then
+            echo "错误：检测到安装包以外的 Release 资产，拒绝发布：" >&2
+            printf '%s\n' "${unexpected_assets}" >&2
+            exit 1
+          fi
+
+          if [[ ! -f .custom-build/release-notes/CUSTOM_CHANGES.md ]]; then
+            echo "错误：缺少 Bettbox 自定义改动说明。" >&2
+            exit 1
+          fi
+          if [[ ! -f .custom-build/release-notes/RELEASE_SUMMARY ]]; then
+            echo "错误：缺少 Bettbox 自定义 Release 精简说明。" >&2
+            exit 1
+          fi
+          if [[ ! -f .custom-build/release-notes/LATEST_CHANGES.md ]]; then
+            echo "错误：缺少相较上一自定义 Release 的增量说明。" >&2
+            exit 1
+          fi
+
+          release_summary="$(
+            tr -d '\r\n' < .custom-build/release-notes/RELEASE_SUMMARY
+          )"
+          if [[ -z "${release_summary}" ]]; then
+            echo "错误：Bettbox 自定义 Release 精简说明为空。" >&2
+            exit 1
+          fi
+
+          git fetch --force --tags origin
+          previous_release="$(
+            gh release list \
+              --repo "${GITHUB_REPOSITORY}" \
+              --limit 100 \
+              --json tagName,publishedAt \
+              --jq 'map(select(.tagName | startswith("custom-v"))) | sort_by(.publishedAt) | reverse | .[0].tagName // ""'
+          )"
+
+          incremental_notes="${RUNNER_TEMP}/incremental-release-notes.md"
+          {
+            echo "## 本次变更（相较上一自定义 Release）"
+            echo
+            if [[ -n "${previous_release}" ]] &&
+               git rev-parse --verify "${previous_release}^{commit}" >/dev/null 2>&1; then
+              previous_upstream="$(
+                git show \
+                  "${previous_release}:.custom-build/metadata/bettbox-release" \
+                  2>/dev/null | tr -d '[:space:]' || true
+              )"
+              previous_base="$(
+                git show \
+                  "${previous_release}:.custom-build/metadata/bettbox-base-commit" \
+                  2>/dev/null | tr -d '[:space:]' || true
+              )"
+              current_base="$(
+                tr -d '[:space:]' \
+                  < .custom-build/metadata/bettbox-base-commit
+              )"
+              previous_kernel="$(
+                git show \
+                  "${previous_release}:.custom-build/metadata/custom-mihomo-commit" \
+                  2>/dev/null | tr -d '[:space:]' || true
+              )"
+              current_kernel="$(
+                tr -d '[:space:]' \
+                  < .custom-build/metadata/custom-mihomo-commit
+              )"
+              latest_changes=".custom-build/release-notes/LATEST_CHANGES.md"
+              previous_changes="${RUNNER_TEMP}/previous-latest-changes.md"
+              git show "${previous_release}:${latest_changes}" \
+                > "${previous_changes}" 2>/dev/null || : > "${previous_changes}"
+
+              if [[ -n "${previous_base}" ]] &&
+                 git rev-parse --verify "${previous_base}^{commit}" >/dev/null 2>&1; then
+                previous_patch="$(
+                  git diff --binary "${previous_base}" "${previous_release}" -- \
+                    . \
+                    ':(exclude).custom-build/metadata/**' \
+                    ':(exclude).custom-build/release-notes/**' |
+                    git patch-id --stable | awk '{ print $1 }'
+                )"
+                current_patch="$(
+                  git diff --binary "${current_base}" "${UPSTREAM_SHA}" -- \
+                    . \
+                    ':(exclude).custom-build/metadata/**' \
+                    ':(exclude).custom-build/release-notes/**' |
+                    git patch-id --stable | awk '{ print $1 }'
+                )"
+                if [[ "${previous_patch}" != "${current_patch}" ]] &&
+                   cmp -s "${previous_changes}" "${latest_changes}"; then
+                  echo "错误：自定义应用代码已变化，但 LATEST_CHANGES.md 未更新。" >&2
+                  exit 1
+                fi
+              fi
+
+              echo "- 对比范围：[\`${previous_release}\`](https://github.com/${GITHUB_REPOSITORY}/releases/tag/${previous_release}) → \`${RELEASE_TAG}\`"
+              if [[ -n "${previous_upstream}" &&
+                    "${previous_upstream}" != "${BETTBOX_RELEASE}" ]]; then
+                echo "- 上游基线：\`${previous_upstream}\` → \`${BETTBOX_RELEASE}\`"
+                if [[ -n "${previous_base}" ]] &&
+                   git rev-parse --verify "${previous_base}^{commit}" >/dev/null 2>&1; then
+                  echo
+                  echo "### 上游同步"
+                  echo
+                  git log \
+                    --reverse \
+                    --no-merges \
+                    --format='- %s (`%h`)' \
+                    "${previous_base}..${current_base}"
+                fi
+              fi
+              if [[ -n "${previous_kernel}" &&
+                    "${previous_kernel}" != "${current_kernel}" ]]; then
+                echo "- 自定义 Mihomo 源码：\`${previous_kernel:0:12}\` → \`${current_kernel:0:12}\`"
+              fi
+
+              if ! cmp -s "${previous_changes}" "${latest_changes}"; then
+                echo
+                cat "${latest_changes}"
+              elif [[ "${previous_upstream}" == "${BETTBOX_RELEASE}" &&
+                      "${previous_kernel}" == "${current_kernel}" ]]; then
+                echo "- 无新的应用或内核功能变更。"
+              else
+                echo
+                echo "### 自定义应用"
+                echo
+                echo "- 本次无新的自定义应用功能变化。"
+              fi
+            else
+              echo "- 首个自定义 Release。"
+            fi
+          } > "${incremental_notes}"
+
+          notes_file="${RUNNER_TEMP}/release-notes.md"
+          {
+            echo "基于上游 Bettbox \`${BETTBOX_RELEASE}\` 构建的自定义版本。"
+            echo
+            cat "${incremental_notes}"
+            echo
+            cat .custom-build/release-notes/CUSTOM_CHANGES.md
+            echo
+            echo "## 构建信息"
+            echo
+            echo "- 上游 Bettbox Release：\`${BETTBOX_RELEASE}\`"
+            echo "- Bettbox 应用版本：\`${APP_VERSION}\`"
+            echo "- Bettbox custom-build commit：\`${UPSTREAM_SHA}\`"
+            echo
+            echo "Release 仅包含三端安装包，不包含私有自定义 Mihomo 源码。"
+            echo
+            echo "Windows 与 macOS 安装包未做商业代码签名；Android 安装包使用 Bettbox 自定义版固定 Release 签名。"
+          } > "${notes_file}"
+
+          if ! git ls-remote --exit-code --tags origin \
+            "refs/tags/${RELEASE_TAG}" >/dev/null 2>&1; then
+            git tag "${RELEASE_TAG}" "${UPSTREAM_SHA}"
+            git push origin "refs/tags/${RELEASE_TAG}"
+          fi
+
+          gh release create "${RELEASE_TAG}" "${assets[@]}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --verify-tag \
+            --title "Bettbox ${BETTBOX_RELEASE} 自定义版 · ${release_summary}" \
+            --notes-file "${notes_file}"
+
+      - name: 更新桌面应用内更新源
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ needs.inspect.outputs.release_tag }}
+          APP_VERSION: ${{ needs.inspect.outputs.app_version }}
+          BUILD_NUMBER: ${{ needs.inspect.outputs.build_number }}
+          UPSTREAM_SHA: ${{ needs.inspect.outputs.upstream_sha }}
+          FEED_BRANCH: custom-update-feed
+        run: |
+          set -euo pipefail
+
+          short_version="${APP_VERSION%%+*}"
+          release_url="https://github.com/${GITHUB_REPOSITORY}/releases/tag/${RELEASE_TAG}"
+          published_at="$(date -Ru)"
+          feed_source="${RUNNER_TEMP}/custom-update-feed"
+          mkdir -p "${feed_source}"
+
+          generate_feed() {
+            local platform="$1"
+            local arch="$2"
+            local metadata
+            metadata="$(
+              find update-metadata -type f \
+                -name "custom-update-${platform}-${arch}.env" \
+                -print -quit
+            )"
+            if [[ -z "${metadata}" ]]; then
+              echo "缺少 ${platform}-${arch} 更新元数据。" >&2
+              exit 1
+            fi
+
+            local asset signature signature_type length signature_attribute
+            asset="$(sed -n 's/^asset=//p' "${metadata}")"
+            signature="$(sed -n 's/^signature=//p' "${metadata}")"
+            signature_type="$(sed -n 's/^signature_type=//p' "${metadata}")"
+            length="$(sed -n 's/^length=//p' "${metadata}")"
+            if [[ -z "${asset}" || -z "${signature}" || -z "${length}" ]]; then
+              echo "${platform}-${arch} 更新元数据不完整。" >&2
+              exit 1
+            fi
+
+            if [[ "${signature_type}" == "ed" ]]; then
+              signature_attribute="sparkle:edSignature=\"${signature}\""
+            elif [[ "${signature_type}" == "dsa" ]]; then
+              signature_attribute="sparkle:dsaSignature=\"${signature}\""
+            else
+              echo "未知更新签名类型：${signature_type}" >&2
+              exit 1
+            fi
+
+            local asset_url feed_file
+            asset_url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/${asset}"
+            feed_file="${feed_source}/appcast-${platform}-${arch}.xml"
+            {
+              echo '<?xml version="1.0" encoding="utf-8"?>'
+              echo '<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">'
+              echo '  <channel>'
+              echo "    <title>Bettbox ${platform}-${arch} 自定义更新</title>"
+              echo "    <link>https://github.com/${GITHUB_REPOSITORY}/releases</link>"
+              echo '    <description>Bettbox 自定义版本更新源</description>'
+              echo '    <language>zh-CN</language>'
+              echo '    <item>'
+              echo "      <title>Bettbox ${short_version}</title>"
+              echo "      <pubDate>${published_at}</pubDate>"
+              echo "      <link>${release_url}</link>"
+              echo "      <sparkle:releaseNotesLink>${release_url}</sparkle:releaseNotesLink>"
+              echo "      <sparkle:version>${BUILD_NUMBER}</sparkle:version>"
+              echo "      <sparkle:shortVersionString>${short_version}</sparkle:shortVersionString>"
+              echo "      <enclosure url=\"${asset_url}\" length=\"${length}\" type=\"application/octet-stream\" sparkle:os=\"${platform}\" ${signature_attribute} />"
+              echo '    </item>'
+              echo '  </channel>'
+              echo '</rss>'
+            } > "${feed_file}"
+          }
+
+          generate_feed macos arm64
+          generate_feed macos amd64
+          generate_feed windows amd64
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin \
+            "refs/heads/${FEED_BRANCH}" >/dev/null 2>&1; then
+            git fetch origin "${FEED_BRANCH}"
+            git checkout -B "${FEED_BRANCH}" FETCH_HEAD
+          else
+            git checkout -b "${FEED_BRANCH}" "${UPSTREAM_SHA}"
+          fi
+          cp "${feed_source}"/*.xml .
+          git add appcast-*.xml
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: update appcast for ${RELEASE_TAG} [skip ci]"
+            git push origin "HEAD:${FEED_BRANCH}"
+          fi
+
+      - name: 写入发布摘要
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ needs.inspect.outputs.release_tag }}
+        run: |
+          {
+            echo "## 三端构建已发布"
+            echo
+            echo "Release：\`${RELEASE_TAG}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"

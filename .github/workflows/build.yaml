@@ -155,7 +155,7 @@ jobs:
           channel: ${{ contains(matrix.os, 'arm') && 'master' || 'stable' }}
           cache: true
           cache-key: flutter-${{ matrix.platform }}-${{ matrix.arch }}-${{ hashFiles('**/pubspec.lock') }}
-          flutter-version: ${{ contains(matrix.os, 'arm') && '' || '3.44.8' }}
+          flutter-version: ${{ contains(matrix.os, 'arm') && '' || '3.44.6' }}
 
 
       - name: Clean Gradle (Android)
@@ -180,6 +180,15 @@ jobs:
           FILE="${MOD_CACHE}/github.com/metacubex/sing-tun@${SING_TUN_VERSION}/tun_windows.go"
           echo "Patching ${FILE}"
           chmod +w "${FILE}"
+      - name: Refresh CocoaPods (macOS)
+        if: matrix.platform == 'macos'
+        shell: bash
+        run: |
+          flutter pub get
+          cd macos
+          rm -rf Pods Podfile.lock
+          pod install --repo-update
+
       - name: Build Bettbox (Non-Windows)
         if: matrix.platform != 'windows'
         shell: bash
@@ -208,23 +217,9 @@ jobs:
         if: matrix.platform == 'windows'
         shell: pwsh
         run: |
-          $isStable = '${{ env.IS_STABLE }}' -eq 'true'
-          $isPre = '${{ env.IS_PRERELEASE }}' -eq 'true'
-
-          if ($isStable) {
-            $exePolicy = "release-signing"
-            $installerPolicy = "release-signing"
-          } elseif ($isPre) {
-            $exePolicy = "test-signing"
-            $installerPolicy = "release-signing"
-          } else {
-            $exePolicy = "test-signing"
-            $installerPolicy = "test-signing"
-          }
-          Write-Host "Setting EXE_SIGNING_POLICY_SLUG to $exePolicy"
-          Write-Host "Setting INSTALLER_SIGNING_POLICY_SLUG to $installerPolicy"
-          "EXE_SIGNING_POLICY_SLUG=$exePolicy" | Out-File -FilePath $env:GITHUB_ENV -Append
-          "INSTALLER_SIGNING_POLICY_SLUG=$installerPolicy" | Out-File -FilePath $env:GITHUB_ENV -Append
+          $slug = "test-signing"
+          Write-Host "Setting SIGNING_POLICY_SLUG to $slug"
+          "SIGNING_POLICY_SLUG=$slug" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Build Core (Windows)
         if: matrix.platform == 'windows'
@@ -247,7 +242,6 @@ jobs:
       - name: Sign Core (Windows)
         if: matrix.platform == 'windows' && env.SIGNPATH_API_TOKEN != ''
         uses: signpath/github-action-submit-signing-request@v2
-        timeout-minutes: 60
         with:
           api-token: '${{ env.SIGNPATH_API_TOKEN }}'
           github-token: '${{ secrets.GITHUB_TOKEN }}'
@@ -279,7 +273,6 @@ jobs:
       - name: Sign HelperService (Windows)
         if: matrix.platform == 'windows' && env.SIGNPATH_API_TOKEN != ''
         uses: signpath/github-action-submit-signing-request@v2
-        timeout-minutes: 60
         with:
           api-token: '${{ env.SIGNPATH_API_TOKEN }}'
           github-token: '${{ secrets.GITHUB_TOKEN }}'
@@ -327,7 +320,6 @@ jobs:
       - name: Sign Bettbox (Windows)
         if: matrix.platform == 'windows' && env.SIGNPATH_API_TOKEN != ''
         uses: signpath/github-action-submit-signing-request@v2
-        timeout-minutes: 60
         with:
           api-token: '${{ env.SIGNPATH_API_TOKEN }}'
           github-token: '${{ secrets.GITHUB_TOKEN }}'
@@ -366,7 +358,6 @@ jobs:
       - name: Sign Installer (Windows)
         if: matrix.platform == 'windows' && env.SIGNPATH_API_TOKEN != ''
         uses: signpath/github-action-submit-signing-request@v2
-        timeout-minutes: 60
         with:
           api-token: '${{ env.SIGNPATH_API_TOKEN }}'
           github-token: '${{ secrets.GITHUB_TOKEN }}'
@@ -444,7 +435,7 @@ jobs:
 
       - name: Generate release.md
         run: |
-          printf '%s\n' "- Fixes and improvements" "- Recommended version update" > release.md
+          echo -e "- Fixes and improvements\n- 具体变更参考最新Commits" > release.md
 
       - name: Patch release.md
         run: |
