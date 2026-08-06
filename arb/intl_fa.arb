@@ -654,5 +654,9 @@
   "ageKeyPairGeneratedSuccess": "جفت کلید X25519 با موفقیت ساخته شد. لطفاً آن را ذخیره کنید",
   "agePrivateKeyRequired": "لطفا ابتدا کلید خصوصی Age صحیح را وارد کنید",
   "lineWrap": "شکستن خطوط",
-  "showHiddenItems": "نمایش موارد پنهان"
+  "showHiddenItems": "نمایش موارد پنهان",
+  "downloadAndInstall": "دانلود و نصب",
+  "updateDownloading": "در حال دانلود به‌روزرسانی: {progress}%",
+  "updateInstalling": "در حال باز کردن نصب‌کننده سیستم...",
+  "updateFailed": "به‌روزرسانی ناموفق بود: {message}"
 }

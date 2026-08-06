@@ -52,9 +52,13 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m12(count) => "Выбрано: ${count}";
 
-  static String m13(label) => "${label} должен быть URL";
+  static String m13(progress) => "Загрузка обновления: ${progress}%";
 
-  static String m14(count) =>
+  static String m14(message) => "Ошибка обновления: ${message}";
+
+  static String m15(label) => "${label} должен быть URL";
+
+  static String m16(count) =>
       "${Intl.plural(count, one: 'год', few: 'года', many: 'лет', other: 'лет')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -383,6 +387,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "domain": MessageLookupByLibrary.simpleMessage("Домен"),
     "doubleBounce": MessageLookupByLibrary.simpleMessage("Двойной отскок"),
     "download": MessageLookupByLibrary.simpleMessage("Загрузка"),
+    "downloadAndInstall": MessageLookupByLibrary.simpleMessage(
+      "Скачать и установить",
+    ),
     "dozeSuspend": MessageLookupByLibrary.simpleMessage("Поддержка Doze"),
     "dozeSuspendDesc": MessageLookupByLibrary.simpleMessage(
       "Синхронизация с режимом сна Android",
@@ -1205,10 +1212,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "unknown": MessageLookupByLibrary.simpleMessage("Неизвестно"),
     "unnamed": MessageLookupByLibrary.simpleMessage("Без имени"),
     "update": MessageLookupByLibrary.simpleMessage("Обновить"),
+    "updateDownloading": m13,
+    "updateFailed": m14,
+    "updateInstalling": MessageLookupByLibrary.simpleMessage(
+      "Открытие системного установщика...",
+    ),
     "upload": MessageLookupByLibrary.simpleMessage("Отправка"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("Получить профиль по URL"),
-    "urlTip": m13,
+    "urlTip": m15,
     "useGlobalScriptOverride": MessageLookupByLibrary.simpleMessage(
       "Глобальное переопределение",
     ),
@@ -1248,6 +1260,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "Требуются права администратора",
     ),
-    "years": m14,
+    "years": m16,
   };
 }
