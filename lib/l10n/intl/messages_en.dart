@@ -51,9 +51,13 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m12(count) => "${count} items selected";
 
-  static String m13(label) => "${label} must be a URL";
+  static String m13(progress) => "Downloading update: ${progress}%";
 
-  static String m14(count) =>
+  static String m14(message) => "Update failed: ${message}";
+
+  static String m15(label) => "${label} must be a URL";
+
+  static String m16(count) =>
       "${Intl.plural(count, one: 'year', other: 'years')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -384,6 +388,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "domain": MessageLookupByLibrary.simpleMessage("Domain"),
     "doubleBounce": MessageLookupByLibrary.simpleMessage("Double Bounce"),
     "download": MessageLookupByLibrary.simpleMessage("Download"),
+    "downloadAndInstall": MessageLookupByLibrary.simpleMessage(
+      "Download and Install",
+    ),
     "dozeSuspend": MessageLookupByLibrary.simpleMessage("Doze Support"),
     "dozeSuspendDesc": MessageLookupByLibrary.simpleMessage(
       "Sync with system Doze mode",
@@ -1173,10 +1180,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "unknown": MessageLookupByLibrary.simpleMessage("Unknown"),
     "unnamed": MessageLookupByLibrary.simpleMessage("Unnamed"),
     "update": MessageLookupByLibrary.simpleMessage("Update"),
+    "updateDownloading": m13,
+    "updateFailed": m14,
+    "updateInstalling": MessageLookupByLibrary.simpleMessage(
+      "Opening the system installer...",
+    ),
     "upload": MessageLookupByLibrary.simpleMessage("Upload"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("Get profile via URL"),
-    "urlTip": m13,
+    "urlTip": m15,
     "useGlobalScriptOverride": MessageLookupByLibrary.simpleMessage(
       "Use Global Script Override",
     ),
@@ -1212,6 +1224,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "Requires administrator privileges",
     ),
-    "years": m14,
+    "years": m16,
   };
 }

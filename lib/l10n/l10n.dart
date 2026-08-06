@@ -5398,6 +5398,46 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Download and Install`
+  String get downloadAndInstall {
+    return Intl.message(
+      'Download and Install',
+      name: 'downloadAndInstall',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Downloading update: {progress}%`
+  String updateDownloading(Object progress) {
+    return Intl.message(
+      'Downloading update: $progress%',
+      name: 'updateDownloading',
+      desc: '',
+      args: [progress],
+    );
+  }
+
+  /// `Opening the system installer...`
+  String get updateInstalling {
+    return Intl.message(
+      'Opening the system installer...',
+      name: 'updateInstalling',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Update failed: {message}`
+  String updateFailed(Object message) {
+    return Intl.message(
+      'Update failed: $message',
+      name: 'updateFailed',
+      desc: '',
+      args: [message],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -660,5 +660,9 @@
   "ageKeyPairGeneratedSuccess": "Пара ключей X25519 создана, сохраните её в надёжном месте",
   "agePrivateKeyRequired": "Пожалуйста, сначала введите корректный закрытый ключ Age",
   "lineWrap": "Перенос строк",
-  "showHiddenItems": "Показать скрытые"
+  "showHiddenItems": "Показать скрытые",
+  "downloadAndInstall": "Скачать и установить",
+  "updateDownloading": "Загрузка обновления: {progress}%",
+  "updateInstalling": "Открытие системного установщика...",
+  "updateFailed": "Ошибка обновления: {message}"
 }
