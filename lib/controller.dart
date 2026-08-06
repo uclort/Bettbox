@@ -69,13 +69,14 @@ Future<void> rebuildMacOSTun({
   required Future<void> Function() restoreTun,
   bool Function()? shouldRestore,
 }) async {
-  var tunTemporarilyDisabled = false;
+  var tunRestoreRequired = false;
   var listenerStopped = false;
   bool canRestore() => shouldRestore?.call() ?? true;
 
   try {
+    // updateConfig 失败时核心可能已经部分应用配置，因此从开始拆除起就保证回滚。
+    tunRestoreRequired = true;
     await disableTun();
-    tunTemporarilyDisabled = true;
     await stopListener();
     listenerStopped = true;
     await repairNetwork();
@@ -86,11 +87,11 @@ Future<void> rebuildMacOSTun({
         try {
           await startListener();
         } finally {
-          if (tunTemporarilyDisabled && canRestore()) {
+          if (tunRestoreRequired && canRestore()) {
             await restoreTun();
           }
         }
-      } else if (tunTemporarilyDisabled && canRestore()) {
+      } else if (tunRestoreRequired && canRestore()) {
         await restoreTun();
       }
     }
@@ -376,7 +377,14 @@ class AppController {
         },
         restoreTun: () async {
           commonPrint.log('[APP] macOS TUN 恢复步骤 5/5：恢复 TUN 与系统 DNS');
-          await _updateClashConfig();
+          // 核心及特权服务仍在运行，直接恢复当前配置即可。这里不能走
+          // _updateClashConfig，否则临时的 realTun=false 会被当成首次启用，
+          // 触发授权检查和不必要的完整核心重启。
+          final targetTunEnabled = _ref
+              .read(patchClashConfigProvider)
+              .tun
+              .enable;
+          await _applyCoreTunConfig(targetTunEnabled);
           await _syncMacOSSystemDns(serviceName: networkState.serviceName);
         },
         shouldRestore: () => !lifecycleCancelled(),

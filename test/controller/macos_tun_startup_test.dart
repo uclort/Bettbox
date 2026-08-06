@@ -155,6 +155,26 @@ void main() {
       ]);
     });
 
+    test('关闭 TUN 失败时仍尝试恢复原状态', () async {
+      final events = <String>[];
+
+      await expectLater(
+        rebuildMacOSTun(
+          disableTun: () async {
+            events.add('disableTun');
+            throw StateError('disable failed');
+          },
+          stopListener: () async => events.add('stopListener'),
+          repairNetwork: () async => events.add('repairNetwork'),
+          startListener: () async => events.add('startListener'),
+          restoreTun: () async => events.add('restoreTun'),
+        ),
+        throwsStateError,
+      );
+
+      expect(events, ['disableTun', 'restoreTun']);
+    });
+
     test('停止监听失败时重新恢复 TUN', () async {
       final events = <String>[];
 
