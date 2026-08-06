@@ -1124,6 +1124,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "اجازه به اتصال‌های همزمان TCP",
     ),
     "testUrl": MessageLookupByLibrary.simpleMessage("آدرس تست"),
+    "testingDelay": MessageLookupByLibrary.simpleMessage("در حال آزمایش"),
     "textScale": MessageLookupByLibrary.simpleMessage("مقیاس متن"),
     "theme": MessageLookupByLibrary.simpleMessage("پوسته"),
     "themeColor": MessageLookupByLibrary.simpleMessage("رنگ پوسته"),
@@ -1150,10 +1151,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "totalTraffic": MessageLookupByLibrary.simpleMessage("مجموع ترافیک"),
     "tproxyPort": MessageLookupByLibrary.simpleMessage("پورت Tproxy"),
     "trafficUsage": MessageLookupByLibrary.simpleMessage("مصرف ترافیک"),
-    "trayEnhancement": MessageLookupByLibrary.simpleMessage("ارتقای منوی سینی"),
-    "trayEnhancementDesc": MessageLookupByLibrary.simpleMessage(
-      "مدیریت گروه‌ها از منوی راست‌کلیک تسک‌بار",
-    ),
     "trayIconInvert": MessageLookupByLibrary.simpleMessage(
       "معکوس‌سازی آیکون تسک‌بار",
     ),

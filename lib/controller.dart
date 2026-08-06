@@ -618,7 +618,8 @@ class AppController {
 
   Future<bool> _shouldUpdateDashboardTick() async {
     final lifecycleState = WidgetsBinding.instance.lifecycleState;
-    final isPinned = system.isDesktop &&
+    final isPinned =
+        system.isDesktop &&
         _ref.read(windowSettingProvider.select((s) => s.isPinned));
     if (!isPinned && lifecycleState != AppLifecycleState.resumed) return false;
 
@@ -1682,8 +1683,9 @@ class AppController {
         ageSecretKey: ageSecretKey,
       ).update();
       if (globalState.navigatorKey.currentState?.canPop() ?? false) {
-        globalState.navigatorKey.currentState
-            ?.popUntil((route) => route.isFirst);
+        globalState.navigatorKey.currentState?.popUntil(
+          (route) => route.isFirst,
+        );
       }
       toProfiles();
       await addProfile(profile);
@@ -2082,6 +2084,18 @@ class AppController {
       silent: silent,
       force: force,
     );
+  }
+
+  Future<void> showTrayMenu({bool includeHiddenItems = false}) async {
+    final trayState = _ref.read(trayStateProvider);
+    final groups = includeHiddenItems
+        ? getVisibleGroups(
+            mode: trayState.mode,
+            groups: _ref.read(groupsProvider),
+            showHiddenItems: true,
+          )
+        : trayState.groups;
+    await tray.showContextMenu(trayState: trayState, groups: groups);
   }
 
   Future<void> _processRecoveryArchive(
@@ -2560,8 +2574,6 @@ class AppController {
     // Ensure current profile exists
     _ensureCurrentProfile(profiles);
   }
-
-
 
   Future<T?> safeRun<T>(
     FutureOr<T> Function() futureFunction, {
