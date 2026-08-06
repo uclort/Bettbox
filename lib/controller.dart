@@ -61,6 +61,43 @@ Future<bool> runMacOSTunStartup({
 }
 
 @visibleForTesting
+Future<void> rebuildMacOSTun({
+  required Future<void> Function() disableTun,
+  required Future<void> Function() stopListener,
+  required Future<void> Function() repairNetwork,
+  required Future<void> Function() startListener,
+  required Future<void> Function() restoreTun,
+  bool Function()? shouldRestore,
+}) async {
+  var tunTemporarilyDisabled = false;
+  var listenerStopped = false;
+  bool canRestore() => shouldRestore?.call() ?? true;
+
+  try {
+    await disableTun();
+    tunTemporarilyDisabled = true;
+    await stopListener();
+    listenerStopped = true;
+    await repairNetwork();
+  } finally {
+    // 一旦开始拆除 TUN，除非用户主动停止或退出，否则必须恢复完整链路。
+    if (canRestore()) {
+      if (listenerStopped) {
+        try {
+          await startListener();
+        } finally {
+          if (tunTemporarilyDisabled && canRestore()) {
+            await restoreTun();
+          }
+        }
+      } else if (tunTemporarilyDisabled && canRestore()) {
+        await restoreTun();
+      }
+    }
+  }
+}
+
+@visibleForTesting
 bool shouldUseManagedMacOSDns({
   required bool isRunning,
   required bool tunEnabled,
@@ -213,6 +250,9 @@ class AppController {
         _backgroundLoad();
       }
     } finally {
+      if (system.isMacOS) {
+        _syncDesktopRuntimePresentation();
+      }
       await _syncMacOSSystemDns();
     }
   }
@@ -225,9 +265,25 @@ class AppController {
       try {
         await _updateStatus(isStart);
       } finally {
+        if (system.isMacOS) {
+          _syncDesktopRuntimePresentation();
+        }
         await _syncMacOSSystemDns();
       }
     });
+  }
+
+  void _syncDesktopRuntimePresentation() {
+    if (!system.isDesktop) return;
+
+    final runTime = _ref.read(runTimeProvider);
+    if (globalState.isStart) {
+      if (runTime == null) {
+        _ref.read(runTimeProvider.notifier).value = 0;
+      }
+    } else if (runTime != null) {
+      _ref.read(runTimeProvider.notifier).value = null;
+    }
   }
 
   Future<void> syncMacOSSystemDns({String? serviceName}) {
@@ -276,11 +332,58 @@ class AppController {
         return !recoveryCancelled();
       }
 
-      commonPrint.log(
-        'Restarting the macOS core after a stable network change or wake',
+      final desiredTunEnabled = _ref.read(patchClashConfigProvider).tun.enable;
+      final realTunEnabled = _ref.read(realTunEnableProvider);
+      final shouldRebuildTun = desiredTunEnabled || realTunEnabled;
+
+      Future<void> repairNetwork() async {
+        if (recoveryCancelled()) return;
+
+        commonPrint.log('[APP] macOS TUN 恢复步骤 3/5：清理连接与 DNS 缓存');
+        await clashCore.closeConnections();
+        if (recoveryCancelled()) return;
+
+        // TUN 临时关闭期间先恢复物理网卡 DNS，避免恢复失败后系统无网络。
+        await macOS?.updateDns(true, serviceName: networkState.serviceName);
+        if (recoveryCancelled()) return;
+
+        await clashCore.flushDnsCache();
+        if (recoveryCancelled()) return;
+        await clashCore.flushFakeIP();
+      }
+
+      if (!shouldRebuildTun) {
+        commonPrint.log('[APP] macOS TUN 未启用，仅修复连接与 DNS');
+        await repairNetwork();
+        await _syncMacOSSystemDns(serviceName: networkState.serviceName);
+        return !recoveryCancelled();
+      }
+
+      commonPrint.log('[APP] 开始完整重建 macOS TUN');
+      await rebuildMacOSTun(
+        disableTun: () async {
+          commonPrint.log('[APP] macOS TUN 恢复步骤 1/5：临时关闭 TUN');
+          await _applyCoreTunConfig(false, persist: false);
+        },
+        stopListener: () async {
+          commonPrint.log('[APP] macOS TUN 恢复步骤 2/5：停止核心监听');
+          await clashCore.stopListener();
+        },
+        repairNetwork: repairNetwork,
+        startListener: () async {
+          commonPrint.log('[APP] macOS TUN 恢复步骤 4/5：重新启动核心监听');
+          await clashCore.startListener();
+        },
+        restoreTun: () async {
+          commonPrint.log('[APP] macOS TUN 恢复步骤 5/5：恢复 TUN 与系统 DNS');
+          await _updateClashConfig();
+          await _syncMacOSSystemDns(serviceName: networkState.serviceName);
+        },
+        shouldRestore: () => !lifecycleCancelled(),
       );
-      await _restartCoreWithStatus();
+      _syncDesktopRuntimePresentation();
       await _syncMacOSSystemDns(serviceName: networkState.serviceName);
+      commonPrint.log('[APP] macOS TUN 完整重建结束');
       return !recoveryCancelled();
     });
   }
@@ -1436,17 +1539,12 @@ class AppController {
       await globalState.updateStartTime();
     }
 
+    _syncDesktopRuntimePresentation();
     if (globalState.isStart) {
-      if (_ref.read(runTimeProvider) == null) {
-        _ref.read(runTimeProvider.notifier).value = 0;
-      }
       await globalState.startUpdateTasks([updateTraffic]);
       return;
     }
 
-    if (_ref.read(runTimeProvider) != null) {
-      _ref.read(runTimeProvider.notifier).value = null;
-    }
     globalState.stopUpdateTasks();
   }
 
@@ -1731,7 +1829,10 @@ class AppController {
   }
 
   void updateStart() {
-    updateStatus(!_ref.read(runTimeProvider.notifier).isStart);
+    final isRunning = system.isMacOS
+        ? globalState.isStart
+        : _ref.read(runTimeProvider.notifier).isStart;
+    updateStatus(!isRunning);
   }
 
   void updateCurrentSelectedMap(String groupName, String proxyName) {

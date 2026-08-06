@@ -27,12 +27,46 @@ bool shouldReconcileMacOSNetworkState({
   return force || previousFingerprint != currentFingerprint;
 }
 
-bool isMacOSNetworkRecoveryCurrent({
-  required bool mounted,
-  required int scheduledGeneration,
-  required int currentGeneration,
-}) {
-  return mounted && scheduledGeneration == currentGeneration;
+@visibleForTesting
+class MacOSNetworkRecoveryRequest {
+  final bool force;
+
+  const MacOSNetworkRecoveryRequest({required this.force});
+}
+
+@visibleForTesting
+class MacOSNetworkRecoveryCoordinator {
+  bool _isProcessing = false;
+  bool _hasPendingRequest = false;
+  bool _hasForcedRequest = false;
+
+  bool get isProcessing => _isProcessing;
+  bool get hasPendingRequest => _hasPendingRequest;
+
+  void schedule({bool force = false}) {
+    _hasPendingRequest = true;
+    _hasForcedRequest |= force;
+  }
+
+  MacOSNetworkRecoveryRequest? beginNext() {
+    if (_isProcessing || !_hasPendingRequest) return null;
+
+    _isProcessing = true;
+    _hasPendingRequest = false;
+    final request = MacOSNetworkRecoveryRequest(force: _hasForcedRequest);
+    // 强制恢复只属于当前请求，恢复期间的新网络事件不能继承该标记。
+    _hasForcedRequest = false;
+    return request;
+  }
+
+  void completeCurrent() {
+    _isProcessing = false;
+  }
+
+  void clearPending() {
+    _hasPendingRequest = false;
+    _hasForcedRequest = false;
+  }
 }
 
 class Application extends ConsumerStatefulWidget {
@@ -47,8 +81,7 @@ class ApplicationState extends ConsumerState<Application>
   Timer? _autoUpdateGroupTaskTimer;
   Timer? _autoUpdateProfilesTaskTimer;
   Timer? _networkChangeDebounceTimer;
-  int _networkChangeGeneration = 0;
-  bool _forceNextMacOSNetworkRecovery = false;
+  final _macOSNetworkRecoveryCoordinator = MacOSNetworkRecoveryCoordinator();
   bool _macOSNetworkRecoveryReady = false;
   String? _lastMacOSNetworkFingerprint;
 
@@ -175,74 +208,90 @@ class ApplicationState extends ConsumerState<Application>
 
     unawaited(globalState.appController.updateLocalIp());
     if (!_macOSNetworkRecoveryReady) return;
-    _scheduleMacOSNetworkRecovery();
+    _scheduleMacOSNetworkRecovery(reason: '网络状态变化');
   }
 
   void _handleMacOSSystemWake() {
     if (!mounted || !system.isMacOS || !_macOSNetworkRecoveryReady) return;
-    commonPrint.log('macOS system wake detected; forcing TUN and DNS recovery');
-    _scheduleMacOSNetworkRecovery(force: true);
+    commonPrint.log('[APP] 检测到 macOS 系统唤醒，准备恢复 TUN 与 DNS');
+    _scheduleMacOSNetworkRecovery(force: true, reason: '系统唤醒');
   }
 
-  void _scheduleMacOSNetworkRecovery({bool force = false}) {
-    _forceNextMacOSNetworkRecovery |= force;
-    final generation = ++_networkChangeGeneration;
+  void _scheduleMacOSNetworkRecovery({
+    bool force = false,
+    required String reason,
+  }) {
+    _macOSNetworkRecoveryCoordinator.schedule(force: force);
+    if (_macOSNetworkRecoveryCoordinator.isProcessing) {
+      commonPrint.log(
+        '[APP] macOS 网络恢复进行中，已合并后续请求：reason=$reason, force=$force',
+      );
+      return;
+    }
+
     _networkChangeDebounceTimer?.cancel();
     _networkChangeDebounceTimer = Timer(
       const Duration(milliseconds: 500),
-      () => unawaited(_handleMacOSNetworkChange(generation)),
+      () => unawaited(_drainMacOSNetworkRecoveryQueue()),
     );
   }
 
-  Future<void> _handleMacOSNetworkChange(int generation) async {
-    final networkState = await macOS?.waitForStableDefaultNetwork(
-      isCancelled: () => !isMacOSNetworkRecoveryCurrent(
-        mounted: mounted,
-        scheduledGeneration: generation,
-        currentGeneration: _networkChangeGeneration,
-      ),
-    );
-    if (networkState == null ||
-        !isMacOSNetworkRecoveryCurrent(
-          mounted: mounted,
-          scheduledGeneration: generation,
-          currentGeneration: _networkChangeGeneration,
-        )) {
-      return;
-    }
+  Future<void> _drainMacOSNetworkRecoveryQueue() async {
+    _networkChangeDebounceTimer = null;
+    while (mounted) {
+      final request = _macOSNetworkRecoveryCoordinator.beginNext();
+      if (request == null) return;
 
-    final force = _forceNextMacOSNetworkRecovery;
-    _forceNextMacOSNetworkRecovery = false;
+      try {
+        await _handleMacOSNetworkChange(request);
+      } catch (e, stackTrace) {
+        commonPrint.log('[APP] macOS 网络恢复协调器异常：$e\n$stackTrace');
+      } finally {
+        _macOSNetworkRecoveryCoordinator.completeCurrent();
+      }
+    }
+  }
+
+  Future<void> _handleMacOSNetworkChange(
+    MacOSNetworkRecoveryRequest request,
+  ) async {
+    final networkState = await macOS?.waitForStableDefaultNetwork(
+      isCancelled: () => !mounted,
+    );
+    if (networkState == null || !mounted) return;
+
     if (!shouldReconcileMacOSNetworkState(
       previousFingerprint: _lastMacOSNetworkFingerprint,
       currentFingerprint: networkState.fingerprint,
-      force: force,
+      force: request.force,
     )) {
+      commonPrint.log('[APP] macOS 网络未变化，跳过重复恢复');
       return;
     }
+
     try {
+      commonPrint.log(
+        '[APP] 开始 macOS TUN 与 DNS 恢复：service=${networkState.serviceName}, '
+        'force=${request.force}',
+      );
       final recovered = await globalState.appController
-          .handleMacOSNetworkChange(
-            networkState,
-            isCancelled: () => !isMacOSNetworkRecoveryCurrent(
-              mounted: mounted,
-              scheduledGeneration: generation,
-              currentGeneration: _networkChangeGeneration,
-            ),
-          );
-      if (!recovered ||
-          !isMacOSNetworkRecoveryCurrent(
-            mounted: mounted,
-            scheduledGeneration: generation,
-            currentGeneration: _networkChangeGeneration,
-          )) {
-        _forceNextMacOSNetworkRecovery |= force;
+          .handleMacOSNetworkChange(networkState, isCancelled: () => !mounted);
+      if (!recovered || !mounted) {
+        commonPrint.log('[APP] macOS 网络恢复已被用户操作或应用退出取消');
         return;
       }
+
       _lastMacOSNetworkFingerprint = networkState.fingerprint;
+      final latestNetworkState = await macOS?.defaultNetworkState;
+      if (latestNetworkState != null &&
+          latestNetworkState.fingerprint != networkState.fingerprint) {
+        commonPrint.log('[APP] 恢复期间默认网络再次变化，已排队复核');
+        _macOSNetworkRecoveryCoordinator.schedule();
+      } else {
+        commonPrint.log('[APP] macOS TUN 与 DNS 恢复完成');
+      }
     } catch (e) {
-      _forceNextMacOSNetworkRecovery |= force;
-      commonPrint.log('Failed to reconcile macOS network change: $e');
+      commonPrint.log('[APP] macOS TUN 与 DNS 恢复失败：$e');
       return;
     }
 
@@ -369,7 +418,7 @@ class ApplicationState extends ConsumerState<Application>
     _autoUpdateGroupTaskTimer?.cancel();
     _autoUpdateProfilesTaskTimer?.cancel();
     _networkChangeDebounceTimer?.cancel();
-    _networkChangeGeneration++;
+    _macOSNetworkRecoveryCoordinator.clearPending();
     ExternalControl.stop();
     if (!system.isAndroid && !globalState.isExiting) {
       unawaited(globalState.appController.handleExit());
