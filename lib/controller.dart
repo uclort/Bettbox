@@ -340,7 +340,7 @@ class AppController {
       Future<void> repairNetwork() async {
         if (recoveryCancelled()) return;
 
-        commonPrint.log('[APP] macOS TUN 恢复步骤 3/5：清理连接与 DNS 缓存');
+        commonPrint.log('macOS TUN 恢复步骤 3/5：清理连接与 DNS 缓存');
         await clashCore.closeConnections();
         if (recoveryCancelled()) return;
 
@@ -354,29 +354,29 @@ class AppController {
       }
 
       if (!shouldRebuildTun) {
-        commonPrint.log('[APP] macOS TUN 未启用，仅修复连接与 DNS');
+        commonPrint.log('macOS TUN 未启用，仅修复连接与 DNS');
         await repairNetwork();
         await _syncMacOSSystemDns(serviceName: networkState.serviceName);
         return !recoveryCancelled();
       }
 
-      commonPrint.log('[APP] 开始完整重建 macOS TUN');
+      commonPrint.log('开始完整重建 macOS TUN');
       await rebuildMacOSTun(
         disableTun: () async {
-          commonPrint.log('[APP] macOS TUN 恢复步骤 1/5：临时关闭 TUN');
+          commonPrint.log('macOS TUN 恢复步骤 1/5：临时关闭 TUN');
           await _applyCoreTunConfig(false, persist: false);
         },
         stopListener: () async {
-          commonPrint.log('[APP] macOS TUN 恢复步骤 2/5：停止核心监听');
+          commonPrint.log('macOS TUN 恢复步骤 2/5：停止核心监听');
           await clashCore.stopListener();
         },
         repairNetwork: repairNetwork,
         startListener: () async {
-          commonPrint.log('[APP] macOS TUN 恢复步骤 4/5：重新启动核心监听');
+          commonPrint.log('macOS TUN 恢复步骤 4/5：重新启动核心监听');
           await clashCore.startListener();
         },
         restoreTun: () async {
-          commonPrint.log('[APP] macOS TUN 恢复步骤 5/5：恢复 TUN 与系统 DNS');
+          commonPrint.log('macOS TUN 恢复步骤 5/5：恢复 TUN 与系统 DNS');
           // 核心及特权服务仍在运行，直接恢复当前配置即可。这里不能走
           // _updateClashConfig，否则临时的 realTun=false 会被当成首次启用，
           // 触发授权检查和不必要的完整核心重启。
@@ -391,7 +391,7 @@ class AppController {
       );
       _syncDesktopRuntimePresentation();
       await _syncMacOSSystemDns(serviceName: networkState.serviceName);
-      commonPrint.log('[APP] macOS TUN 完整重建结束');
+      commonPrint.log('macOS TUN 完整重建结束');
       return !recoveryCancelled();
     });
   }
@@ -615,7 +615,8 @@ class AppController {
 
   Future<bool> _shouldUpdateDashboardTick() async {
     final lifecycleState = WidgetsBinding.instance.lifecycleState;
-    final isPinned = system.isDesktop &&
+    final isPinned =
+        system.isDesktop &&
         _ref.read(windowSettingProvider.select((s) => s.isPinned));
     if (!isPinned && lifecycleState != AppLifecycleState.resumed) return false;
 
@@ -1671,8 +1672,9 @@ class AppController {
         ageSecretKey: ageSecretKey,
       ).update();
       if (globalState.navigatorKey.currentState?.canPop() ?? false) {
-        globalState.navigatorKey.currentState
-            ?.popUntil((route) => route.isFirst);
+        globalState.navigatorKey.currentState?.popUntil(
+          (route) => route.isFirst,
+        );
       }
       toProfiles();
       await addProfile(profile);
@@ -1732,8 +1734,9 @@ class AppController {
       }
 
       if (successCount > 0) {
-        globalState.navigatorKey.currentState
-            ?.popUntil((route) => route.isFirst);
+        globalState.navigatorKey.currentState?.popUntil(
+          (route) => route.isFirst,
+        );
         toProfiles();
       }
     } finally {
@@ -2548,8 +2551,6 @@ class AppController {
     // Ensure current profile exists
     _ensureCurrentProfile(profiles);
   }
-
-
 
   Future<T?> safeRun<T>(
     FutureOr<T> Function() futureFunction, {
