@@ -120,6 +120,7 @@ class Tray {
     bool focus = false,
     bool silent = false,
     List<Group>? groupsOverride,
+    bool prepareContextMenu = false,
   }) async {
     if (_isUpdating) return;
     _isUpdating = true;
@@ -137,6 +138,9 @@ class Tray {
       }
       if (system.isMacOS) {
         await _syncSpeedTitle(isStart: trayState.isStart);
+      }
+      if (system.isMacOS && !prepareContextMenu && !trayManager.isMenuOpen) {
+        return;
       }
       List<MenuItem> menuItems = [];
       final showMenuItem = MenuItem(
@@ -183,7 +187,7 @@ class Tray {
           MenuItem(
             key: 'persistent-delay-test',
             label: isTestingThisGroup
-                ? '⚡ ${appLocalizations.startTest}...'
+                ? '⚡ ${appLocalizations.testingDelay}...'
                 : '⚡ ${appLocalizations.startTest}',
             disabled: delayTestCoordinator.isTesting,
             onClick: (_) => _testGroupDelay(group),
@@ -316,9 +320,10 @@ class Tray {
       );
       menuItems.add(exitMenuItem);
       final menu = Menu(items: menuItems);
+      final keepMenuOpen = silent || (system.isMacOS && trayManager.isMenuOpen);
       await trayManager.setContextMenu(
         menu,
-        keepMenuOpen: silent,
+        keepMenuOpen: keepMenuOpen,
         brightness: trayState.brightness,
       );
       if (Platform.isLinux) {
@@ -342,6 +347,7 @@ class Tray {
           trayState: pending!,
           focus: pendingFocus,
           silent: pendingSilent,
+          prepareContextMenu: prepareContextMenu,
         );
       }
     }
@@ -402,7 +408,11 @@ class Tray {
     while (_isUpdating) {
       await Future<void>.delayed(const Duration(milliseconds: 10));
     }
-    await _doUpdate(trayState: trayState, groupsOverride: groups);
+    await _doUpdate(
+      trayState: trayState,
+      groupsOverride: groups,
+      prepareContextMenu: true,
+    );
     await trayManager.popUpContextMenu();
   }
 

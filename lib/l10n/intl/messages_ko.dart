@@ -883,6 +883,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "TCP 동시 다중 연결 허용",
     ),
     "testUrl": MessageLookupByLibrary.simpleMessage("테스트 URL"),
+    "testingDelay": MessageLookupByLibrary.simpleMessage("테스트 중"),
     "textScale": MessageLookupByLibrary.simpleMessage("텍스트 배율"),
     "theme": MessageLookupByLibrary.simpleMessage("테마"),
     "themeColor": MessageLookupByLibrary.simpleMessage("테마 색상"),

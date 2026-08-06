@@ -2184,6 +2184,11 @@ class AppLocalizations {
     return Intl.message('Start Test', name: 'startTest', desc: '', args: []);
   }
 
+  /// `Testing`
+  String get testingDelay {
+    return Intl.message('Testing', name: 'testingDelay', desc: '', args: []);
+  }
+
   /// `Add Profile`
   String get addProfile {
     return Intl.message('Add Profile', name: 'addProfile', desc: '', args: []);
