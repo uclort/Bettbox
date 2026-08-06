@@ -1683,8 +1683,9 @@ class AppController {
         ageSecretKey: ageSecretKey,
       ).update();
       if (globalState.navigatorKey.currentState?.canPop() ?? false) {
-        globalState.navigatorKey.currentState
-            ?.popUntil((route) => route.isFirst);
+        globalState.navigatorKey.currentState?.popUntil(
+          (route) => route.isFirst,
+        );
       }
       toProfiles();
       await addProfile(profile);
@@ -2083,6 +2084,18 @@ class AppController {
       silent: silent,
       force: force,
     );
+  }
+
+  Future<void> showTrayMenu({bool includeHiddenItems = false}) async {
+    final trayState = _ref.read(trayStateProvider);
+    final groups = includeHiddenItems
+        ? getVisibleGroups(
+            mode: trayState.mode,
+            groups: _ref.read(groupsProvider),
+            showHiddenItems: true,
+          )
+        : trayState.groups;
+    await tray.showContextMenu(trayState: trayState, groups: groups);
   }
 
   Future<void> _processRecoveryArchive(
