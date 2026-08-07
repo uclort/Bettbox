@@ -179,8 +179,8 @@ class ClashCore {
     clashInterface.closeConnection(id);
   }
 
-  Future<void> closeConnections() async {
-    await clashInterface.closeConnections();
+  Future<bool> closeConnections() async {
+    return await clashInterface.closeConnections();
   }
 
   void resetConnections() {
@@ -247,11 +247,17 @@ class ClashCore {
   }
 
   Future<void> startListener() async {
-    await clashInterface.startListener();
+    final success = await clashInterface.startListener();
+    if (!success) {
+      throw StateError('Core failed to start listener');
+    }
   }
 
   Future<void> stopListener() async {
-    await clashInterface.stopListener();
+    final success = await clashInterface.stopListener();
+    if (!success) {
+      throw StateError('Core failed to stop listener');
+    }
   }
 
   Future<Delay> getDelay(String url, String proxyName) async {
@@ -335,12 +341,12 @@ class ClashCore {
     await clashInterface.forceGc(forceFreeOSMemory: forceFreeOSMemory);
   }
 
-  Future<void> flushFakeIP() async {
-    await clashInterface.flushFakeIP();
+  Future<bool> flushFakeIP() async {
+    return await clashInterface.flushFakeIP();
   }
 
-  Future<void> flushDnsCache() async {
-    await clashInterface.flushDnsCache();
+  Future<bool> flushDnsCache() async {
+    return await clashInterface.flushDnsCache();
   }
 
   Future<Map<String, String>> generateAgeKeyPair() {

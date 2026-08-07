@@ -238,6 +238,7 @@ abstract class ClashHandlerInterface with ClashInterface {
       method: ActionMethod.updateConfig,
       data: json.encode(updateParams),
       timeout: const Duration(seconds: 60),
+      onTimeout: () => throw TimeoutException('updateConfig timeout'),
     );
   }
 
@@ -263,6 +264,7 @@ abstract class ClashHandlerInterface with ClashInterface {
       method: ActionMethod.setupConfig,
       data: data,
       timeout: const Duration(seconds: 60),
+      onTimeout: () => throw TimeoutException('setupConfig timeout'),
     );
   }
 
@@ -344,7 +346,10 @@ abstract class ClashHandlerInterface with ClashInterface {
 
   @override
   Future<bool> closeConnections() {
-    return invoke<bool>(method: ActionMethod.closeConnections);
+    return invoke<bool>(
+      method: ActionMethod.closeConnections,
+      timeout: const Duration(seconds: 5),
+    );
   }
 
   @override
@@ -384,12 +389,18 @@ abstract class ClashHandlerInterface with ClashInterface {
 
   @override
   Future<bool> startListener() {
-    return invoke<bool>(method: ActionMethod.startListener);
+    return invoke<bool>(
+      method: ActionMethod.startListener,
+      timeout: const Duration(seconds: 5),
+    );
   }
 
   @override
   stopListener() {
-    return invoke<bool>(method: ActionMethod.stopListener);
+    return invoke<bool>(
+      method: ActionMethod.stopListener,
+      timeout: const Duration(seconds: 5),
+    );
   }
 
   @override
@@ -421,12 +432,18 @@ abstract class ClashHandlerInterface with ClashInterface {
 
   @override
   FutureOr<bool> flushFakeIP() {
-    return invoke<bool>(method: ActionMethod.flushFakeIP);
+    return invoke<bool>(
+      method: ActionMethod.flushFakeIP,
+      timeout: const Duration(seconds: 5),
+    );
   }
 
   @override
   FutureOr<bool> flushDnsCache() {
-    return invoke<bool>(method: ActionMethod.flushDnsCache);
+    return invoke<bool>(
+      method: ActionMethod.flushDnsCache,
+      timeout: const Duration(seconds: 5),
+    );
   }
 
   @override

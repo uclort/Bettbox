@@ -34,6 +34,7 @@ import 'views/profiles/override_profile.dart';
 Future<bool> runMacOSTunStartup({
   required Future<Result<bool>> Function() requestAdmin,
   required Future<void> Function() restartCore,
+  required Future<void> Function() setupCoreWithoutTun,
   required Future<void> Function() applyTunConfig,
   required Future<void> Function() startListener,
   required Future<void> Function() stopListener,
@@ -45,6 +46,9 @@ Future<bool> runMacOSTunStartup({
 
   if (result.needRestart) {
     await restartCore();
+    // The restarted process has no active configuration. Load a non-TUN
+    // baseline before starting the listener so TUN can never get ahead of it.
+    await setupCoreWithoutTun();
   }
 
   await startListener();
@@ -70,28 +74,27 @@ Future<void> rebuildMacOSTun({
   bool Function()? shouldRestore,
 }) async {
   var tunRestoreRequired = false;
-  var listenerStopped = false;
+  var listenerRestartRequired = false;
   bool canRestore() => shouldRestore?.call() ?? true;
 
   try {
     // updateConfig 失败时核心可能已经部分应用配置，因此从开始拆除起就保证回滚。
     tunRestoreRequired = true;
     await disableTun();
+    // stopListener may time out after the core has already stopped it. Once the
+    // stop was attempted, require a confirmed start before restoring TUN.
+    listenerRestartRequired = true;
     await stopListener();
-    listenerStopped = true;
     await repairNetwork();
   } finally {
     // 一旦开始拆除 TUN，除非用户主动停止或退出，否则必须恢复完整链路。
     if (canRestore()) {
-      if (listenerStopped) {
-        try {
-          await startListener();
-        } finally {
-          if (tunRestoreRequired && canRestore()) {
-            await restoreTun();
-          }
-        }
-      } else if (tunRestoreRequired && canRestore()) {
+      if (listenerRestartRequired) {
+        // Do not restore TUN unless the listener is confirmed active. A failed
+        // listener start with TUN enabled would black-hole all captured traffic.
+        await startListener();
+      }
+      if (tunRestoreRequired && canRestore()) {
         await restoreTun();
       }
     }
@@ -341,16 +344,22 @@ class AppController {
         if (recoveryCancelled()) return;
 
         commonPrint.log('macOS TUN 恢复步骤 3/5：清理连接与 DNS 缓存');
-        await clashCore.closeConnections();
+        if (!await clashCore.closeConnections()) {
+          throw StateError('Core failed to close connections');
+        }
         if (recoveryCancelled()) return;
 
         // TUN 临时关闭期间先恢复物理网卡 DNS，避免恢复失败后系统无网络。
         await macOS?.updateDns(true, serviceName: networkState.serviceName);
         if (recoveryCancelled()) return;
 
-        await clashCore.flushDnsCache();
+        if (!await clashCore.flushDnsCache()) {
+          throw StateError('Core failed to flush DNS cache');
+        }
         if (recoveryCancelled()) return;
-        await clashCore.flushFakeIP();
+        if (!await clashCore.flushFakeIP()) {
+          throw StateError('Core failed to flush Fake-IP cache');
+        }
       }
 
       if (!shouldRebuildTun) {
@@ -387,7 +396,7 @@ class AppController {
           await _applyCoreTunConfig(targetTunEnabled);
           await _syncMacOSSystemDns(serviceName: networkState.serviceName);
         },
-        shouldRestore: () => !lifecycleCancelled(),
+        shouldRestore: () => !recoveryCancelled(),
       );
       _syncDesktopRuntimePresentation();
       await _syncMacOSSystemDns(serviceName: networkState.serviceName);
@@ -433,7 +442,16 @@ class AppController {
         try {
           final started = await runMacOSTunStartup(
             requestAdmin: () => _requestAdmin(true),
-            restartCore: restartCore,
+            restartCore: () =>
+                _restartCore(setupConfig: false, refreshData: false),
+            setupCoreWithoutTun: () async {
+              final configured = await _setupCoreConfig(enableTun: false);
+              if (!configured) {
+                throw StateError(
+                  'Failed to configure the restarted macOS core without TUN',
+                );
+              }
+            },
             applyTunConfig: _updateClashConfig,
             startListener: clashCore.startListener,
             stopListener: clashCore.stopListener,
