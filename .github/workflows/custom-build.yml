@@ -234,6 +234,77 @@ jobs:
             echo "bettbox_release=${bettbox_release}"
           } >> "${GITHUB_OUTPUT}"
 
+      - name: 校验 Release 说明
+        if: steps.meta.outputs.ready == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          UPSTREAM_SHA: ${{ steps.meta.outputs.upstream_sha }}
+        run: |
+          set -euo pipefail
+          for file in \
+            .custom-build/release-notes/CUSTOM_CHANGES.md \
+            .custom-build/release-notes/RELEASE_SUMMARY \
+            .custom-build/release-notes/LATEST_CHANGES.md; do
+            if [[ ! -s "${file}" ]]; then
+              echo "Release 说明缺失或为空：${file}" >&2
+              exit 1
+            fi
+          done
+
+          git fetch --force --tags origin
+          previous_release="$(
+            gh release list \
+              --repo "${GITHUB_REPOSITORY}" \
+              --limit 100 \
+              --json tagName,publishedAt \
+              --jq 'map(select(.tagName | startswith("custom-v"))) | sort_by(.publishedAt) | reverse | .[0].tagName // ""'
+          )"
+          if [[ -z "${previous_release}" ]] ||
+             ! git rev-parse --verify "${previous_release}^{commit}" >/dev/null 2>&1; then
+            exit 0
+          fi
+
+          previous_base="$(
+            git show \
+              "${previous_release}:.custom-build/metadata/bettbox-base-commit" \
+              2>/dev/null | tr -d '[:space:]' || true
+          )"
+          current_base="$(
+            tr -d '[:space:]' \
+              < .custom-build/metadata/bettbox-base-commit
+          )"
+          if [[ -z "${previous_base}" ]] ||
+             ! git rev-parse --verify "${previous_base}^{commit}" >/dev/null 2>&1; then
+            exit 0
+          fi
+
+          previous_patch="$(
+            git diff --binary "${previous_base}" "${previous_release}" -- \
+              . \
+              ':(exclude).custom-build/**' \
+              ':(exclude).github/workflows/**' |
+              git patch-id --stable | awk '{ print $1 }'
+          )"
+          current_patch="$(
+            git diff --binary "${current_base}" "${UPSTREAM_SHA}" -- \
+              . \
+              ':(exclude).custom-build/**' \
+              ':(exclude).github/workflows/**' |
+              git patch-id --stable | awk '{ print $1 }'
+          )"
+          previous_changes="${RUNNER_TEMP}/previous-latest-changes.md"
+          git show \
+            "${previous_release}:.custom-build/release-notes/LATEST_CHANGES.md" \
+            > "${previous_changes}" 2>/dev/null || : > "${previous_changes}"
+          if [[ "${previous_patch}" != "${current_patch}" ]] &&
+             cmp -s \
+               "${previous_changes}" \
+               .custom-build/release-notes/LATEST_CHANGES.md; then
+            echo "自定义应用代码已变化，但 LATEST_CHANGES.md 未更新。" >&2
+            exit 1
+          fi
+
       - name: 显示构建摘要
         if: steps.meta.outputs.ready == 'true'
         shell: bash
@@ -759,19 +830,6 @@ jobs:
             exit 1
           fi
 
-          if [[ ! -f .custom-build/release-notes/CUSTOM_CHANGES.md ]]; then
-            echo "错误：缺少 Bettbox 自定义改动说明。" >&2
-            exit 1
-          fi
-          if [[ ! -f .custom-build/release-notes/RELEASE_SUMMARY ]]; then
-            echo "错误：缺少 Bettbox 自定义 Release 精简说明。" >&2
-            exit 1
-          fi
-          if [[ ! -f .custom-build/release-notes/LATEST_CHANGES.md ]]; then
-            echo "错误：缺少相较上一自定义 Release 的增量说明。" >&2
-            exit 1
-          fi
-
           release_summary="$(
             tr -d '\r\n' < .custom-build/release-notes/RELEASE_SUMMARY
           )"
@@ -823,29 +881,6 @@ jobs:
               git show "${previous_release}:${latest_changes}" \
                 > "${previous_changes}" 2>/dev/null || : > "${previous_changes}"
 
-              if [[ -n "${previous_base}" ]] &&
-                 git rev-parse --verify "${previous_base}^{commit}" >/dev/null 2>&1; then
-                previous_patch="$(
-                  git diff --binary "${previous_base}" "${previous_release}" -- \
-                    . \
-                    ':(exclude).custom-build/metadata/**' \
-                    ':(exclude).custom-build/release-notes/**' |
-                    git patch-id --stable | awk '{ print $1 }'
-                )"
-                current_patch="$(
-                  git diff --binary "${current_base}" "${UPSTREAM_SHA}" -- \
-                    . \
-                    ':(exclude).custom-build/metadata/**' \
-                    ':(exclude).custom-build/release-notes/**' |
-                    git patch-id --stable | awk '{ print $1 }'
-                )"
-                if [[ "${previous_patch}" != "${current_patch}" ]] &&
-                   cmp -s "${previous_changes}" "${latest_changes}"; then
-                  echo "错误：自定义应用代码已变化，但 LATEST_CHANGES.md 未更新。" >&2
-                  exit 1
-                fi
-              fi
-
               echo "- 对比范围：[\`${previous_release}\`](https://github.com/${GITHUB_REPOSITORY}/releases/tag/${previous_release}) → \`${RELEASE_TAG}\`"
               if [[ -n "${previous_upstream}" &&
                     "${previous_upstream}" != "${BETTBOX_RELEASE}" ]]; then
@@ -894,7 +929,7 @@ jobs:
             echo
             echo "## 构建信息"
             echo
-            echo "- 上游 Bettbox Release：\`${BETTBOX_RELEASE}\`"
+            echo "- 上游 Bettbox main 基线：\`${BETTBOX_RELEASE}\`"
             echo "- Bettbox 应用版本：\`${APP_VERSION}\`"
             echo "- Bettbox custom-build commit：\`${UPSTREAM_SHA}\`"
             echo
