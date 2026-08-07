@@ -1,4 +1,4 @@
-name: 同步 Bettbox 自定义打包分支
+name: 同步内核并构建 Bettbox 自定义版
 
 on:
   schedule:
@@ -281,6 +281,40 @@ jobs:
           printf '%s\n' "${PATCH_SHA256}" \
             > "${custom_repository}/source/.snell-v6-patch-sha256"
 
+      - name: 更新自定义内核版本说明
+        shell: bash
+        env:
+          BETTBOX_BASE_LABEL: ${{ steps.branches.outputs.base_label }}
+        run: |
+          set -euo pipefail
+          bettbox_source="${GITHUB_WORKSPACE}/.bettbox-repository"
+          custom_repository="${GITHUB_WORKSPACE}/.custom-build/runtime/custom-mihomo"
+          app_version="$(
+            awk '$1 == "version:" { print $2; exit }' \
+              "${bettbox_source}/pubspec.yaml"
+          )"
+          mihomo_tag="$(
+            tr -d '[:space:]' \
+              < "${custom_repository}/source/.upstream-release"
+          )"
+          kernel_tree="$(
+            tr -d '[:space:]' \
+              < "${custom_repository}/source/.bettbox-kernel-tree"
+          )"
+          patch_sha256="$(
+            tr -d '[:space:]' \
+              < "${custom_repository}/source/.snell-v6-patch-sha256"
+          )"
+
+          printf '%s\n' "${BETTBOX_BASE_LABEL}" \
+            > "${custom_repository}/source/.bettbox-release"
+          sed -i \
+            -e "s#^| Mihomo 上游版本 |.*#| Mihomo 上游版本 | \`${mihomo_tag}\` | [\`source/.upstream-release\`](source/.upstream-release) |#" \
+            -e "s#^| Bettbox 适配版基线 |.*#| Bettbox 适配版基线 | \`${BETTBOX_BASE_LABEL}\`（\`${app_version}\`） | [\`source/.bettbox-release\`](source/.bettbox-release) |#" \
+            -e "s#^| Bettbox 内置 Mihomo 源码树 |.*#| Bettbox 内置 Mihomo 源码树 | \`${kernel_tree}\` | [\`source/.bettbox-kernel-tree\`](source/.bettbox-kernel-tree) |#" \
+            -e "s#^| OpenSnell v6 适配补丁 |.*#| OpenSnell v6 适配补丁 | \`${patch_sha256}\` | [\`source/.snell-v6-patch-sha256\`](source/.snell-v6-patch-sha256) |#" \
+            "${custom_repository}/README.md"
+
       - name: 提交私有 Mihomo 源码
         id: custom_source
         shell: bash
@@ -293,7 +327,7 @@ jobs:
           git -C "${custom_repository}" config user.name "github-actions[bot]"
           git -C "${custom_repository}" config user.email \
             "41898282+github-actions[bot]@users.noreply.github.com"
-          git -C "${custom_repository}" add --all source
+          git -C "${custom_repository}" add --all source README.md
 
           pushed=false
           if ! git -C "${custom_repository}" diff --cached --quiet; then

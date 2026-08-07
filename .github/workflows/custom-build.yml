@@ -1,4 +1,4 @@
-name: 使用自定义 Mihomo 构建 Bettbox
+name: 构建已同步的 Bettbox 自定义版
 
 on:
   push:
@@ -136,6 +136,38 @@ jobs:
           if [[ "${module_name}" != "github.com/metacubex/mihomo" ]]; then
             echo "自定义内核模块名错误：${module_name:-未声明}" >&2
             echo "必须为：github.com/metacubex/mihomo" >&2
+            exit 1
+          fi
+
+          expected_kernel="$(git rev-parse HEAD:core/Clash.Meta)"
+          actual_kernel="$(
+            tr -d '[:space:]' \
+              < .custom-build/runtime/custom-mihomo/source/.bettbox-kernel-tree
+          )"
+          expected_mihomo="$(
+            tr -d '[:space:]' < .custom-build/metadata/mihomo-release
+          )"
+          actual_mihomo="$(
+            tr -d '[:space:]' \
+              < .custom-build/runtime/custom-mihomo/source/.upstream-release
+          )"
+          expected_patch="$(
+            sha256sum \
+              .custom-build/runtime/custom-mihomo/patches/opensnell-v6.patch \
+              | awk '{print $1}'
+          )"
+          actual_patch="$(
+            tr -d '[:space:]' \
+              < .custom-build/runtime/custom-mihomo/source/.snell-v6-patch-sha256
+          )"
+          if [[ "${expected_kernel}" != "${actual_kernel}" ||
+                "${expected_mihomo}" != "${actual_mihomo}" ||
+                "${expected_patch}" != "${actual_patch}" ]]; then
+            echo "custom-mihomo 与当前 Bettbox 打包源码不一致。" >&2
+            echo "请先运行 custom-sync.yml，更新内核后再打包。" >&2
+            echo "Bettbox 内核树：${expected_kernel} / custom-mihomo：${actual_kernel}" >&2
+            echo "Mihomo 版本：${expected_mihomo} / custom-mihomo：${actual_mihomo}" >&2
+            echo "OpenSnell 补丁：${expected_patch} / custom-mihomo：${actual_patch}" >&2
             exit 1
           fi
 
