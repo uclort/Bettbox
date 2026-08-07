@@ -109,18 +109,15 @@ jobs:
           fi
 
           package_before="$(git rev-parse "origin/${PACKAGE_BRANCH}")"
-          git checkout -B "${PACKAGE_BRANCH}" "${main_after}"
-          git restore \
-            --source="${package_before}" \
-            --staged \
-            --worktree \
-            -- .github/workflows .custom-build
-          git add --all
-          if ! git diff --cached --quiet; then
-            git commit -m "chore: prepare custom build on upstream main"
+          git checkout -B "${PACKAGE_BRANCH}" "${package_before}"
+          if ! git merge-base --is-ancestor "${main_after}" HEAD; then
+            git merge --no-edit "${main_after}"
           fi
           for feature_branch in ${FEATURE_BRANCHES}; do
-            git merge --no-edit "origin/${feature_branch}"
+            feature_commit="$(git rev-parse "origin/${feature_branch}")"
+            if ! git merge-base --is-ancestor "${feature_commit}" HEAD; then
+              git merge --no-edit "${feature_commit}"
+            fi
           done
           for patch_branch in ${PATCH_BRANCHES}; do
             if ! git cherry-pick "origin/${patch_branch}"; then
