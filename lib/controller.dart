@@ -2086,6 +2086,18 @@ class AppController {
     );
   }
 
+  Future<void> showTrayMenu({bool includeHiddenItems = false}) async {
+    final trayState = _ref.read(trayStateProvider);
+    final groups = includeHiddenItems
+        ? getVisibleGroups(
+            mode: trayState.mode,
+            groups: _ref.read(groupsProvider),
+            showHiddenItems: true,
+          )
+        : trayState.groups;
+    await tray.showContextMenu(trayState: trayState, groups: groups);
+  }
+
   Future<void> _processRecoveryArchive(
     Future<Archive> Function() getArchive,
     RecoveryOption recoveryOption,
