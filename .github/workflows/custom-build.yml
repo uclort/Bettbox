@@ -46,6 +46,7 @@ jobs:
       upstream_sha: ${{ steps.meta.outputs.upstream_sha }}
       kernel_sha: ${{ steps.meta.outputs.kernel_sha }}
       app_version: ${{ steps.meta.outputs.app_version }}
+      final_app_version: ${{ steps.meta.outputs.final_app_version }}
       build_number: ${{ steps.meta.outputs.build_number }}
       bettbox_release: ${{ steps.meta.outputs.bettbox_release }}
       custom_mihomo_commit: ${{ steps.source.outputs.commit }}
@@ -222,7 +223,8 @@ jobs:
             echo "自定义构建编号超过 Android versionCode 上限。" >&2
             exit 1
           fi
-          release_tag="custom-v${app_version}-r${build_id}-${release_identity}"
+          final_app_version="${app_version%%+*}+${build_number}"
+          release_tag="custom-v${final_app_version}-r${build_id}-${release_identity}"
 
           {
             echo "ready=true"
@@ -230,6 +232,7 @@ jobs:
             echo "upstream_sha=${upstream_sha}"
             echo "kernel_sha=${kernel_sha}"
             echo "app_version=${app_version}"
+            echo "final_app_version=${final_app_version}"
             echo "build_number=${build_number}"
             echo "bettbox_release=${bettbox_release}"
           } >> "${GITHUB_OUTPUT}"
@@ -310,6 +313,7 @@ jobs:
         shell: bash
         env:
           RELEASE_TAG: ${{ steps.meta.outputs.release_tag }}
+          FINAL_APP_VERSION: ${{ steps.meta.outputs.final_app_version }}
           UPSTREAM_SHA: ${{ steps.meta.outputs.upstream_sha }}
           KERNEL_SHA: ${{ steps.meta.outputs.kernel_sha }}
         run: |
@@ -317,6 +321,7 @@ jobs:
             echo "## 准备并行构建"
             echo
             echo "- Release：\`${RELEASE_TAG}\`"
+            echo "- 最终安装版本：\`${FINAL_APP_VERSION}\`"
             echo "- Bettbox custom-build：\`${UPSTREAM_SHA}\`"
             echo "- 自定义 Mihomo 源码树：\`${KERNEL_SHA}\`"
           } >> "${GITHUB_STEP_SUMMARY}"
@@ -804,7 +809,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ needs.inspect.outputs.release_tag }}
-          APP_VERSION: ${{ needs.inspect.outputs.app_version }}
+          SOURCE_APP_VERSION: ${{ needs.inspect.outputs.app_version }}
+          FINAL_APP_VERSION: ${{ needs.inspect.outputs.final_app_version }}
           BETTBOX_RELEASE: ${{ needs.inspect.outputs.bettbox_release }}
           UPSTREAM_SHA: ${{ needs.inspect.outputs.upstream_sha }}
         run: |
@@ -923,6 +929,8 @@ jobs:
           {
             echo "基于上游 Bettbox \`${BETTBOX_RELEASE}\` 构建的自定义版本。"
             echo
+            echo "**最终安装版本：\`${FINAL_APP_VERSION}\`**"
+            echo
             cat "${incremental_notes}"
             echo
             cat .custom-build/release-notes/CUSTOM_CHANGES.md
@@ -930,7 +938,8 @@ jobs:
             echo "## 构建信息"
             echo
             echo "- 上游 Bettbox main 基线：\`${BETTBOX_RELEASE}\`"
-            echo "- Bettbox 应用版本：\`${APP_VERSION}\`"
+            echo "- 最终安装版本：\`${FINAL_APP_VERSION}\`"
+            echo "- 上游源码版本：\`${SOURCE_APP_VERSION}\`"
             echo "- Bettbox custom-build commit：\`${UPSTREAM_SHA}\`"
             echo
             echo "Release 仅包含三端安装包，不包含私有自定义 Mihomo 源码。"
@@ -947,7 +956,7 @@ jobs:
           gh release create "${RELEASE_TAG}" "${assets[@]}" \
             --repo "${GITHUB_REPOSITORY}" \
             --verify-tag \
-            --title "Bettbox ${BETTBOX_RELEASE} 自定义版 · ${release_summary}" \
+            --title "Bettbox ${FINAL_APP_VERSION} · ${BETTBOX_RELEASE} · ${release_summary}" \
             --notes-file "${notes_file}"
 
       - name: 更新桌面应用内更新源
