@@ -95,6 +95,10 @@ class Request {
   }
 
   Future<Map<String, dynamic>?> checkForUpdate() async {
+    if (isCustomUpdateBuild) {
+      return _checkForCustomUpdate();
+    }
+
     try {
       final t = DateTime.now().millisecondsSinceEpoch;
       final response = await _dio.get(
@@ -128,6 +132,61 @@ class Request {
       commonPrint.log('Check update failed: ${e.formatError}');
     }
     return null;
+  }
+
+  Future<Map<String, dynamic>?> _checkForCustomUpdate() async {
+    try {
+      final response = await _dio.get<List<dynamic>>(
+        'https://api.github.com/repos/$customUpdateRepository/releases',
+        queryParameters: {
+          'per_page': 30,
+          't': DateTime.now().millisecondsSinceEpoch,
+        },
+        options: Options(
+          headers: {
+            'Accept': 'application/vnd.github+json',
+            'X-GitHub-Api-Version': '2022-11-28',
+          },
+        ),
+      );
+      final releases =
+          (response.data ?? const <dynamic>[])
+              .whereType<Map<String, dynamic>>()
+              .where((release) => release['draft'] != true)
+              .toList()
+            ..sort((a, b) {
+              final aPublished =
+                  DateTime.tryParse(a['published_at']?.toString() ?? '') ??
+                  DateTime.fromMillisecondsSinceEpoch(0);
+              final bPublished =
+                  DateTime.tryParse(b['published_at']?.toString() ?? '') ??
+                  DateTime.fromMillisecondsSinceEpoch(0);
+              return bPublished.compareTo(aPublished);
+            });
+
+      if (releases.isEmpty) return null;
+      final latest = releases.first;
+      final latestTag = latest['tag_name']?.toString().trim() ?? '';
+      if (latestTag.isEmpty || latestTag == currentCustomReleaseTag) {
+        return null;
+      }
+      final buildIdPattern = RegExp(r'-r(\d{14})-');
+      final latestBuildId = int.tryParse(
+        buildIdPattern.firstMatch(latestTag)?.group(1) ?? '',
+      );
+      final currentBuildId = int.tryParse(
+        buildIdPattern.firstMatch(currentCustomReleaseTag)?.group(1) ?? '',
+      );
+      if (latestBuildId != null &&
+          currentBuildId != null &&
+          latestBuildId <= currentBuildId) {
+        return null;
+      }
+      return latest;
+    } catch (e) {
+      commonPrint.log('Check custom update failed: ${e.formatError}');
+      return null;
+    }
   }
 
   final List<String> _ipInfoSources = [

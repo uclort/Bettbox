@@ -655,5 +655,9 @@
   "ageKeyPairGeneratedSuccess": "已生成X25519密鑰對, 請妥善保存",
   "agePrivateKeyRequired": "請先輸入正確的Age 私鑰",
   "lineWrap": "自動換行",
-  "showHiddenItems": "顯示隱藏項"
+  "showHiddenItems": "顯示隱藏項",
+  "downloadAndInstall": "下載並安裝",
+  "updateDownloading": "正在下載更新：{progress}%",
+  "updateInstalling": "正在開啟系統安裝程式...",
+  "updateFailed": "更新失敗：{message}"
 }
