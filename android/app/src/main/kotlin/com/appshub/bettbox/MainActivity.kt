@@ -2,6 +2,7 @@ package com.appshub.bettbox
 
 import android.app.UiModeManager
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Bundle
@@ -42,6 +43,13 @@ class MainActivity : FlutterActivity() {
             installSplashScreen()
         }
         super.onCreate(savedInstanceState)
+        AppPlugin.handleAppUpdateIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        AppPlugin.handleAppUpdateIntent(intent)
     }
 
     override fun provideFlutterEngine(context: Context): FlutterEngine {

@@ -47,9 +47,13 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m12(count) => "${count} 件選択中";
 
-  static String m13(label) => "${label} は有効なURLである必要があります";
+  static String m13(progress) => "アップデートをダウンロード中：${progress}%";
 
-  static String m14(count) => "${Intl.plural(count, other: '年')}";
+  static String m14(message) => "アップデートに失敗しました：${message}";
+
+  static String m15(label) => "${label} は有効なURLである必要があります";
+
+  static String m16(count) => "${Intl.plural(count, other: '年')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -303,6 +307,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "domain": MessageLookupByLibrary.simpleMessage("ドメイン"),
     "doubleBounce": MessageLookupByLibrary.simpleMessage("ダブルバウンス"),
     "download": MessageLookupByLibrary.simpleMessage("受信"),
+    "downloadAndInstall": MessageLookupByLibrary.simpleMessage(
+      "ダウンロードしてインストール",
+    ),
     "dozeSuspend": MessageLookupByLibrary.simpleMessage("スリープ連携"),
     "dozeSuspendDesc": MessageLookupByLibrary.simpleMessage(
       "OSのDozeスリープモードに同期",
@@ -937,10 +944,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "unknown": MessageLookupByLibrary.simpleMessage("不明"),
     "unnamed": MessageLookupByLibrary.simpleMessage("無題"),
     "update": MessageLookupByLibrary.simpleMessage("更新"),
+    "updateDownloading": m13,
+    "updateFailed": m14,
+    "updateInstalling": MessageLookupByLibrary.simpleMessage(
+      "システムインストーラーを開いています...",
+    ),
     "upload": MessageLookupByLibrary.simpleMessage("送信"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("URLから設定を取得"),
-    "urlTip": m13,
+    "urlTip": m15,
     "useGlobalScriptOverride": MessageLookupByLibrary.simpleMessage(
       "グローバルスクリプトオーバーライドを使用",
     ),
@@ -970,6 +982,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "whitelistMode": MessageLookupByLibrary.simpleMessage("ホワイトリストモード"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("システムへ適用"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage("管理者権限が必要です"),
-    "years": m14,
+    "years": m16,
   };
 }
