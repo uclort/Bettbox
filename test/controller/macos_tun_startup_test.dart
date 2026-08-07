@@ -13,6 +13,7 @@ void main() {
           return Result.success(true);
         },
         restartCore: () async => events.add('restart'),
+        setupCoreWithoutTun: () async => events.add('setupWithoutTun'),
         applyTunConfig: () async => events.add('apply'),
         startListener: () async => events.add('start'),
         stopListener: () async => events.add('stop'),
@@ -33,13 +34,20 @@ void main() {
             return Result.success(true, needRestart: true);
           },
           restartCore: () async => events.add('restart'),
+          setupCoreWithoutTun: () async => events.add('setupWithoutTun'),
           applyTunConfig: () async => events.add('apply'),
           startListener: () async => events.add('start'),
           stopListener: () async => events.add('stop'),
         );
 
         expect(started, isTrue);
-        expect(events, ['authorize', 'restart', 'start', 'apply']);
+        expect(events, [
+          'authorize',
+          'restart',
+          'setupWithoutTun',
+          'start',
+          'apply',
+        ]);
       },
     );
 
@@ -52,6 +60,7 @@ void main() {
           return Result<bool>.error('authorization failed');
         },
         restartCore: () async => events.add('restart'),
+        setupCoreWithoutTun: () async => events.add('setupWithoutTun'),
         applyTunConfig: () async => events.add('apply'),
         startListener: () async => events.add('start'),
         stopListener: () async => events.add('stop'),
@@ -71,6 +80,7 @@ void main() {
             return Result.success(true);
           },
           restartCore: () async => events.add('restart'),
+          setupCoreWithoutTun: () async => events.add('setupWithoutTun'),
           applyTunConfig: () async {
             events.add('apply');
             throw StateError('apply failed');
@@ -97,6 +107,7 @@ void main() {
             events.add('restart');
             throw StateError('restart failed');
           },
+          setupCoreWithoutTun: () async => events.add('setupWithoutTun'),
           applyTunConfig: () async => events.add('apply'),
           startListener: () async => events.add('start'),
           stopListener: () async => events.add('stop'),
@@ -105,6 +116,30 @@ void main() {
       );
 
       expect(events, ['authorize', 'restart']);
+    });
+
+    test('does not start when the post-restart non-TUN setup fails', () async {
+      final events = <String>[];
+
+      await expectLater(
+        runMacOSTunStartup(
+          requestAdmin: () async {
+            events.add('authorize');
+            return Result.success(true, needRestart: true);
+          },
+          restartCore: () async => events.add('restart'),
+          setupCoreWithoutTun: () async {
+            events.add('setupWithoutTun');
+            throw StateError('setup failed');
+          },
+          applyTunConfig: () async => events.add('apply'),
+          startListener: () async => events.add('start'),
+          stopListener: () async => events.add('stop'),
+        ),
+        throwsStateError,
+      );
+
+      expect(events, ['authorize', 'restart', 'setupWithoutTun']);
     });
   });
 
@@ -175,7 +210,7 @@ void main() {
       expect(events, ['disableTun', 'restoreTun']);
     });
 
-    test('停止监听失败时重新恢复 TUN', () async {
+    test('停止监听失败时先确认监听恢复，再恢复 TUN', () async {
       final events = <String>[];
 
       await expectLater(
@@ -192,10 +227,15 @@ void main() {
         throwsStateError,
       );
 
-      expect(events, ['disableTun', 'stopListener', 'restoreTun']);
+      expect(events, [
+        'disableTun',
+        'stopListener',
+        'startListener',
+        'restoreTun',
+      ]);
     });
 
-    test('启动监听失败时仍尝试恢复 TUN', () async {
+    test('启动监听失败时不恢复 TUN', () async {
       final events = <String>[];
 
       await expectLater(
@@ -217,7 +257,6 @@ void main() {
         'stopListener',
         'repairNetwork',
         'startListener',
-        'restoreTun',
       ]);
     });
 

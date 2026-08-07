@@ -28,6 +28,20 @@ bool shouldReconcileMacOSNetworkState({
 }
 
 @visibleForTesting
+Future<void> runMacOSNetworkRecoveryWithRetry(
+  Future<void> Function() recover, {
+  Duration retryDelay = const Duration(seconds: 2),
+}) async {
+  try {
+    await recover();
+  } catch (error) {
+    commonPrint.log('macOS 网络恢复首次失败，准备进行一次重试：$error');
+    await Future.delayed(retryDelay);
+    await recover();
+  }
+}
+
+@visibleForTesting
 class MacOSNetworkRecoveryRequest {
   final bool force;
 
@@ -235,9 +249,11 @@ class ApplicationState extends ConsumerState<Application>
       if (request == null) return;
 
       try {
-        await _handleMacOSNetworkChange(request);
+        await runMacOSNetworkRecoveryWithRetry(
+          () => _handleMacOSNetworkChange(request),
+        );
       } catch (e, stackTrace) {
-        commonPrint.log('macOS 网络恢复协调器异常：$e\n$stackTrace');
+        commonPrint.log('macOS 网络恢复重试后仍失败：$e\n$stackTrace');
       } finally {
         _macOSNetworkRecoveryCoordinator.completeCurrent();
       }
@@ -260,30 +276,27 @@ class ApplicationState extends ConsumerState<Application>
       return;
     }
 
-    try {
-      commonPrint.log(
-        '开始 macOS TUN 与 DNS 恢复：service=${networkState.serviceName}, '
-        'force=${request.force}',
-      );
-      final recovered = await globalState.appController
-          .handleMacOSNetworkChange(networkState, isCancelled: () => !mounted);
-      if (!recovered || !mounted) {
-        commonPrint.log('macOS 网络恢复已被用户操作或应用退出取消');
-        return;
-      }
-
-      _lastMacOSNetworkFingerprint = networkState.fingerprint;
-      final latestNetworkState = await macOS?.defaultNetworkState;
-      if (latestNetworkState != null &&
-          latestNetworkState.fingerprint != networkState.fingerprint) {
-        commonPrint.log('恢复期间默认网络再次变化，已排队复核');
-        _macOSNetworkRecoveryCoordinator.schedule();
-      } else {
-        commonPrint.log('macOS TUN 与 DNS 恢复完成');
-      }
-    } catch (e) {
-      commonPrint.log('macOS TUN 与 DNS 恢复失败：$e');
+    commonPrint.log(
+      '开始 macOS TUN 与 DNS 恢复：service=${networkState.serviceName}, '
+      'force=${request.force}',
+    );
+    final recovered = await globalState.appController.handleMacOSNetworkChange(
+      networkState,
+      isCancelled: () => !mounted,
+    );
+    if (!recovered || !mounted) {
+      commonPrint.log('macOS 网络恢复已被用户操作或应用退出取消');
       return;
+    }
+
+    _lastMacOSNetworkFingerprint = networkState.fingerprint;
+    final latestNetworkState = await macOS?.defaultNetworkState;
+    if (latestNetworkState != null &&
+        latestNetworkState.fingerprint != networkState.fingerprint) {
+      commonPrint.log('恢复期间默认网络再次变化，已排队复核');
+      _macOSNetworkRecoveryCoordinator.schedule();
+    } else {
+      commonPrint.log('macOS TUN 与 DNS 恢复完成');
     }
 
     unawaited(globalState.appController.updateLocalIp());

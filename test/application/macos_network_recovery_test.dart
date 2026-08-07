@@ -3,6 +3,31 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('macOS network recovery', () {
+    test('retries a failed recovery once and then succeeds', () async {
+      var attempts = 0;
+
+      await runMacOSNetworkRecoveryWithRetry(() async {
+        attempts++;
+        if (attempts == 1) throw StateError('transient failure');
+      }, retryDelay: Duration.zero);
+
+      expect(attempts, 2);
+    });
+
+    test('stops after the single recovery retry also fails', () async {
+      var attempts = 0;
+
+      await expectLater(
+        runMacOSNetworkRecoveryWithRetry(() async {
+          attempts++;
+          throw StateError('persistent failure');
+        }, retryDelay: Duration.zero),
+        throwsStateError,
+      );
+
+      expect(attempts, 2);
+    });
+
     test('skips an unchanged network during regular connectivity updates', () {
       expect(
         shouldReconcileMacOSNetworkState(
