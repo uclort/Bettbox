@@ -548,12 +548,20 @@ class _DelayTestButtonState extends ConsumerState<DelayTestButton>
       animation: _controller.view,
       builder: (_, child) {
         final showLoading = _isTesting && _controller.isCompleted;
+        final isTestingOtherGroup =
+            delayTestCoordinator.isTesting && !_isTesting;
         final contentScale = showLoading ? 0.0 : _scale.value;
         return Stack(
           alignment: Alignment.center,
           children: [
             FloatingActionButton.extended(
               heroTag: null,
+              backgroundColor: isTestingOtherGroup
+                  ? context.colorScheme.onSurface.withValues(alpha: 0.12)
+                  : null,
+              foregroundColor: isTestingOtherGroup
+                  ? context.colorScheme.onSurface.withValues(alpha: 0.38)
+                  : null,
               onPressed:
                   delayTestCoordinator.isTesting || widget.groupName.isEmpty
                   ? null
