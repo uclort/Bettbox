@@ -7,12 +7,12 @@
     <language>zh-CN</language>
     <item>
       <title>Bettbox 1.18.9</title>
-      <pubDate>Sun, 09 Aug 2026 09:54:57 +0000</pubDate>
-      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.18.9+2090000055-r20260809094452-a6a2e791a4c5-60e76755db0c</link>
-      <sparkle:releaseNotesLink>https://github.com/uclort/Bettbox/releases/tag/custom-v1.18.9+2090000055-r20260809094452-a6a2e791a4c5-60e76755db0c</sparkle:releaseNotesLink>
-      <sparkle:version>2090000055</sparkle:version>
+      <pubDate>Sun, 09 Aug 2026 10:31:47 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.18.9+2090000056-r20260809102128-5e32955bc565-3dd546f3b2cc</link>
+      <sparkle:releaseNotesLink>https://github.com/uclort/Bettbox/releases/tag/custom-v1.18.9+2090000056-r20260809102128-5e32955bc565-3dd546f3b2cc</sparkle:releaseNotesLink>
+      <sparkle:version>2090000056</sparkle:version>
       <sparkle:shortVersionString>1.18.9</sparkle:shortVersionString>
-      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.18.9+2090000055-r20260809094452-a6a2e791a4c5-60e76755db0c/Bettbox-1.18.9-windows-amd64-setup.exe" length="39188269" type="application/octet-stream" sparkle:os="windows" sparkle:dsaSignature="MD0CHQCBLMs9pCeT2VREVW08+ssM9Q8qSRR7WwxAK/EAAhxZjUkblqPLOCKCPPGegR/bwmTkImqjn2XqRJyV" />
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.18.9+2090000056-r20260809102128-5e32955bc565-3dd546f3b2cc/Bettbox-1.18.9-windows-amd64-setup.exe" length="39186349" type="application/octet-stream" sparkle:os="windows" sparkle:dsaSignature="MD0CHQCT1o8HozfhCYg6rzvUyE+BeFBjWGRKrlMVD2NwAhx/1xykd9FhGdDIWJHLx12r1XH+nlPu4BWT78ny" />
     </item>
   </channel>
 </rss>
