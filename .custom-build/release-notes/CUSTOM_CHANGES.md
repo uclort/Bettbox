@@ -11,7 +11,7 @@
 ### 私有覆写脚本
 
 - 本地文件为 `scripts/uclort-desktop.js`。脚本包含私有订阅地址，因此不提交到公开 Bettbox 仓库；完整版本保存在私有 custom-mihomo 仓库同路径下，修改时必须同步两份并对照本节。
-- `latencyTestUrl` 是唯一测速地址，默认 `http://www.gstatic.com/generate_204`；OwO、源 HTTP/File Provider、脚本生成的 Inline Provider 和所有策略组均从该变量读取。Bettbox 开启“覆写测速链接”时由客户端配置入口统一覆盖策略组与 Provider。
+- `latencyTestUrl` 是唯一测速地址，默认 `https://www.gstatic.com/generate_204`；OwO、源 HTTP/File Provider、脚本生成的 Inline Provider 和所有策略组均从该变量读取。Bettbox 开启“覆写测速链接”时由客户端配置入口统一覆盖策略组与 Provider。
 - 保留源节点和源 Provider，过滤套餐/流量提示节点，为源节点增加 `FC - ` 前缀并按美国、日本、香港及倍率排序；首选地区与其他节点分别转为 Inline Provider。
 - 重建 Global、地区、Apple、Emby、抓包、CC 内网和 Fallback 分组及规则；新加坡、台湾不生成地区组。
 - `CC-intranet-en5` 使用 `dns-follow-interface: true` 和 `allow-other-interface: true`；内网域名仅维护一份路由清单，固定 hosts 保留为注释回退。
@@ -65,8 +65,8 @@
 - 标签页模式下其他策略组正在测速时，当前策略组的测速按钮保持原有外观；点击后提示正在测速的策略组名称，避免无反馈。
 - 所有平台和测速入口共用全局并发池，排队不计入单节点超时；默认并发 16、上限 32，失败任务统一结束加载并释放队列，避免秒出超时、永久转圈和结果跳变。
 - Mihomo 在配置代际切换时显式关闭旧 Proxy Provider，立即取消旧健康检查和拉取任务，避免覆盖安装或首次启动时新旧 Provider 同时测速。
-- Mihomo 按实际节点、测试地址及期望状态复用同一个在途 URLTest，Provider 健康检查与 Bettbox 主动测速不会再并发重复请求同一节点；结果只复用到等待中的调用，不设置固定缓存窗口。
-- 保留 `http://www.gstatic.com/generate_204` 时，`unified-delay` 对 HTTP 只发送一次 HEAD，避免不兼容连接复用的线路在第二次请求时重置连接；HTTPS 继续保持原有双请求测量。
+- Mihomo 按实际节点、测试地址及期望状态复用同一个在途 URLTest，Provider 健康检查与 Bettbox 主动测速不会再并发重复请求同一节点；每个等待者保留自己的 deadline，Provider 的短超时不会终止仍由前台等待的共享任务，最后一个等待者退出时才取消；不设置固定缓存窗口。
+- 默认测速地址使用 `https://www.gstatic.com/generate_204`，避免明文 HTTP HEAD 被线路中间设备直接断开；用户显式覆盖为 HTTP 时，`unified-delay` 仍只发送一次 HEAD。
 - Provider 后台健康检查失败不会再向页面广播失败状态；主动测速仍会明确写入成功或失败终态，避免更新后首次运行时未测速节点先显示“检测失败”。
 - 开启“覆写测速链接”时，核心同时覆盖策略组和 Provider 健康检查 URL，避免同一节点被两个测速地址产生的结果互相覆盖。
 - 节点测速增加端到端诊断日志：Dart 批次、桥接排队和 Mihomo 网络阶段共享 request ID，Provider 健康检查另带 batch ID；失败时记录解析、拨号、请求构造、TLS、HTTP、状态校验阶段、context、错误类型、耗时和节点来源。测试 URL 的账号、查询参数与 fragment 会脱敏，日志不包含节点密码。代码位于 `lib/clash/core.dart`、`lib/clash/interface.dart`、`lib/views/proxies/common.dart`、`core/hub.go`、`core/Clash.Meta/adapter/adapter.go`、`core/Clash.Meta/tunnel/tunnel.go` 和私有 custom-mihomo 对应路径；回归测试为 `core/Clash.Meta/adapter/patch_test.go`、`adapter/urltest_test.go` 与 `tunnel/provider_lifecycle_test.go`。

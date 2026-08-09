@@ -7,11 +7,12 @@ import (
 	"net"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/metacubex/mihomo/common/atomic"
+	"github.com/metacubex/mihomo/common/contextutils"
 	"github.com/metacubex/mihomo/common/queue"
-	"github.com/metacubex/mihomo/common/singleflight"
 	"github.com/metacubex/mihomo/common/utils"
 	"github.com/metacubex/mihomo/common/xsync"
 	"github.com/metacubex/mihomo/component/ca"
@@ -32,12 +33,26 @@ type internalProxyState struct {
 	history *queue.Queue[C.DelayHistory]
 }
 
+type urlTestCall struct {
+	ctx     context.Context
+	cancel  context.CancelFunc
+	done    chan struct{}
+	waiters int
+	delay   uint16
+	err     error
+}
+
+type urlTestGroup struct {
+	mu    sync.Mutex
+	calls map[string]*urlTestCall
+}
+
 type Proxy struct {
 	C.ProxyAdapter
 	alive        atomic.Bool
 	history      *queue.Queue[C.DelayHistory]
 	extra        xsync.Map[string, *internalProxyState]
-	urlTestGroup singleflight.Group[uint16]
+	urlTestGroup urlTestGroup
 }
 
 // Adapter implements C.Proxy
@@ -166,12 +181,63 @@ func (p *Proxy) MarshalJSON() ([]byte, error) {
 // URLTest get the delay for the specified URL
 // implements C.Proxy
 func (p *Proxy) URLTest(ctx context.Context, url string, expectedStatus utils.IntRanges[uint16]) (t uint16, err error) {
-	// BETTBOX-CUSTOM: 同一节点与地址只保留一个在途测速，Provider 与应用直接复用结果。
+	// BETTBOX-CUSTOM: 同一节点与地址只保留一个在途测速；每个等待者保留自己的超时。
 	key := url + "\x00" + expectedStatus.String()
-	t, err, _ = p.urlTestGroup.Do(key, func() (uint16, error) {
-		return p.urlTest(ctx, url, expectedStatus)
+	return p.urlTestGroup.Do(ctx, key, func(sharedCtx context.Context) (uint16, error) {
+		return p.urlTest(sharedCtx, url, expectedStatus)
 	})
-	return
+}
+
+func (g *urlTestGroup) Do(ctx context.Context, key string, fn func(context.Context) (uint16, error)) (uint16, error) {
+	if err := ctx.Err(); err != nil {
+		return 0, err
+	}
+
+	g.mu.Lock()
+	call := g.calls[key]
+	if call == nil {
+		sharedCtx, cancel := context.WithCancel(contextutils.WithoutCancel(ctx))
+		call = &urlTestCall{ctx: sharedCtx, cancel: cancel, done: make(chan struct{}), waiters: 1}
+		if g.calls == nil {
+			g.calls = map[string]*urlTestCall{}
+		}
+		g.calls[key] = call
+		go func() {
+			call.delay, call.err = fn(call.ctx)
+			g.mu.Lock()
+			if g.calls[key] == call {
+				delete(g.calls, key)
+			}
+			close(call.done)
+			call.cancel()
+			g.mu.Unlock()
+		}()
+	} else {
+		call.waiters++
+	}
+	g.mu.Unlock()
+
+	select {
+	case <-call.done:
+		return call.delay, call.err
+	case <-ctx.Done():
+		g.mu.Lock()
+		select {
+		case <-call.done:
+			g.mu.Unlock()
+			return call.delay, call.err
+		default:
+			call.waiters--
+			if call.waiters == 0 {
+				if g.calls[key] == call {
+					delete(g.calls, key)
+				}
+				call.cancel()
+			}
+			g.mu.Unlock()
+			return 0, ctx.Err()
+		}
+	}
 }
 
 func (p *Proxy) urlTest(ctx context.Context, url string, expectedStatus utils.IntRanges[uint16]) (t uint16, err error) {

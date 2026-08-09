@@ -21,13 +21,13 @@
 - 所有平台和入口共用全局测速并发池，排队时间不再计入单节点超时；默认并发 16、上限 32。
 - 核心测速超时调整为 10 秒，桥接等待为 12 秒；解析失败、节点不存在或其他异常都会结束加载并显示检测失败，避免秒出超时、永久转圈和结果跳变。
 - Provider 后台健康检查失败不再覆盖页面已有测速结果；只有用户主动测速才写入失败终态。
-- 覆写脚本使用全局 `latencyTestUrl` 统一 OwO、源 Provider、Inline Provider 和策略组测速地址，默认值为 `http://www.gstatic.com/generate_204`。
+- 覆写脚本使用全局 `latencyTestUrl` 统一 OwO、源 Provider、Inline Provider 和策略组测速地址，默认值为 `https://www.gstatic.com/generate_204`，避免明文 HTTP HEAD 被线路中间设备直接断开。
 - Bettbox 开启“覆写测速链接”时，同时覆盖策略组和 Provider 健康检查地址。
 - 增加节点测速全链路诊断日志，以 request ID 串联 Dart、桥接和 Mihomo 网络阶段，并记录 Provider batch ID、失败阶段、context、错误类型及各段耗时；不改变测速、并发、超时或重试行为。
 - 应用内日志与请求记录容量从 256 提高到 1024 条，完整保留一轮约 90 节点的详细测速记录。
 - 配置重载时立即关闭旧 Proxy Provider，取消上一代健康检查，修复首次启动或覆盖安装后同一 Provider 出现两批测速的问题。
-- Provider 健康检查与 Bettbox 主动测速在 Mihomo 内按节点、地址和期望状态复用同一个在途请求，不增加失败重试和固定缓存窗口。
-- HTTP 测速在 `unified-delay` 下不再发送第二次 HEAD，保留既有测速地址并避免部分线路因不兼容连接复用而随机返回 EOF 或 connection reset。
+- Provider 健康检查与 Bettbox 主动测速在 Mihomo 内按节点、地址和期望状态复用同一个在途请求；每个调用者保留自己的超时，Provider 超时不会提前终止仍在等待的前台测速，且不增加失败重试和固定缓存窗口。
+- 用户显式使用 HTTP 测速时，`unified-delay` 仍不发送第二次 HEAD，避免部分线路因不兼容连接复用而随机返回 EOF 或 connection reset。
 
 ### 自定义改动维护
 
