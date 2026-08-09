@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"net/netip"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -50,13 +51,39 @@ func (d *dhcpClient) ExchangeContext(ctx context.Context, m *D.Msg) (msg *D.Msg,
 	}
 
 	msg, _, err = batchExchange(ctx, clients, m)
-	return
+	if err == nil {
+		return msg, nil
+	}
+
+	// BETTBOX-CUSTOM: 接口 DNS 请求失败时按需刷新系统状态并重试，不轮询 macOS Scoped Resolver。
+	d.invalidateDNS()
+	clients, refreshErr := d.resolve(ctx)
+	if refreshErr != nil {
+		return nil, err
+	}
+	msg, _, err = batchExchange(ctx, clients, m)
+	return msg, err
 }
 
 func (d *dhcpClient) ResetConnection() {
+	d.invalidateDNS()
+}
+
+func (d *dhcpClient) invalidateDNS() {
+	d.lock.Lock()
+	defer d.lock.Unlock()
+
+	if d.done != nil {
+		return
+	}
 	for _, client := range d.clients {
 		client.ResetConnection()
 	}
+	d.ifaceInvalidate = time.Time{}
+	d.dnsInvalidate = time.Time{}
+	d.ifaceAddr = netip.Prefix{}
+	d.clients = nil
+	d.err = nil
 }
 
 func (d *dhcpClient) resolve(ctx context.Context) ([]dnsClient, error) {
@@ -141,11 +168,13 @@ func (d *dhcpClient) invalidate() (bool, error) {
 		return false, err
 	}
 
-	if time.Now().Before(d.dnsInvalidate) && d.ifaceAddr == addr {
+	if d.ifaceAddr == addr && (runtime.GOOS == "darwin" || time.Now().Before(d.dnsInvalidate)) {
 		return false, nil
 	}
 
-	d.dnsInvalidate = time.Now().Add(DHCPTTL)
+	if runtime.GOOS != "darwin" {
+		d.dnsInvalidate = time.Now().Add(DHCPTTL)
+	}
 	d.ifaceAddr = addr
 
 	return d.done == nil, nil

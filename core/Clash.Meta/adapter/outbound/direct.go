@@ -8,16 +8,26 @@ import (
 	"github.com/metacubex/mihomo/component/loopback"
 	"github.com/metacubex/mihomo/component/resolver"
 	C "github.com/metacubex/mihomo/constant"
+	D "github.com/metacubex/mihomo/dns"
 )
 
 type Direct struct {
 	*Base
-	loopBack *loopback.Detector
+	loopBack          *loopback.Detector
+	interfaceResolver resolver.Resolver
 }
 
 type DirectOption struct {
 	BasicOption
-	Name string `proxy:"name"`
+	Name               string `proxy:"name"`
+	DNSFollowInterface *bool  `proxy:"dns-follow-interface,omitempty"`
+}
+
+func (d *Direct) hostResolver() resolver.Resolver {
+	if d.interfaceResolver != nil {
+		return d.interfaceResolver
+	}
+	return resolver.DirectHostResolver
 }
 
 // DialContext implements C.ProxyAdapter
@@ -26,7 +36,7 @@ func (d *Direct) DialContext(ctx context.Context, metadata *C.Metadata) (C.Conn,
 		return nil, err
 	}
 	opts := d.DialOptions()
-	opts = append(opts, dialer.WithResolver(resolver.DirectHostResolver))
+	opts = append(opts, dialer.WithResolver(d.hostResolver()))
 	c, err := dialer.DialContext(ctx, "tcp", metadata.RemoteAddress(), opts...)
 	if err != nil {
 		return nil, err
@@ -50,8 +60,8 @@ func (d *Direct) ListenPacketContext(ctx context.Context, metadata *C.Metadata) 
 }
 
 func (d *Direct) ResolveUDP(ctx context.Context, metadata *C.Metadata) error {
-	if (!metadata.Resolved() || resolver.DirectHostResolver != resolver.DefaultResolver) && metadata.Host != "" {
-		ip, err := resolveIPWithResolver(ctx, metadata.Host, d.prefer, resolver.DirectHostResolver)
+	if (!metadata.Resolved() || d.interfaceResolver != nil || resolver.DirectHostResolver != resolver.DefaultResolver) && metadata.Host != "" {
+		ip, err := resolveIPWithResolver(ctx, metadata.Host, d.prefer, d.hostResolver())
 		if err != nil {
 			return fmt.Errorf("can't resolve ip: %w", err)
 		}
@@ -65,7 +75,7 @@ func (d *Direct) IsL3Protocol(metadata *C.Metadata) bool {
 }
 
 func NewDirectWithOption(option DirectOption) *Direct {
-	return &Direct{
+	direct := &Direct{
 		Base: NewBase(BaseOption{
 			Name:         option.Name,
 			Type:         C.Direct,
@@ -79,6 +89,16 @@ func NewDirectWithOption(option DirectOption) *Direct {
 		}),
 		loopBack: loopback.NewDetector(),
 	}
+
+	// BETTBOX-CUSTOM: 绑定接口的直连代理默认使用该接口的 DHCP DNS 解析目标域名。
+	if option.Interface != "" && (option.DNSFollowInterface == nil || *option.DNSFollowInterface) {
+		direct.interfaceResolver = D.NewResolver(D.Config{
+			Main: []D.NameServer{{Net: "dhcp", Addr: option.Interface}},
+			IPv6: true,
+		}).Resolver
+	}
+
+	return direct
 }
 
 func NewDirect() *Direct {

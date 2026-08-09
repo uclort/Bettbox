@@ -17,6 +17,14 @@ var (
 )
 
 func ResolveDNSFromDHCP(context context.Context, ifaceName string) ([]netip.Addr, error) {
+	// BETTBOX-CUSTOM: macOS 优先读取系统已持有的接口 DNS，避免重复 DHCPDISCOVER 被企业网络忽略。
+	if dns, err := resolveDNSFromSystem(context, ifaceName); err == nil && len(dns) > 0 {
+		return dns, nil
+	}
+	return resolveDNSFromBroadcast(context, ifaceName)
+}
+
+func resolveDNSFromBroadcast(context context.Context, ifaceName string) ([]netip.Addr, error) {
 	conn, err := ListenDHCPClient(context, ifaceName)
 	if err != nil {
 		return nil, err

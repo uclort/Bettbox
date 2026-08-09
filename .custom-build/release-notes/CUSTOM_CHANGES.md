@@ -1,5 +1,20 @@
 ## 本包改动（相较上游版本）
 
+### 上游融合必检
+
+- 同步 Bettbox、Mihomo 或 Snell 前后搜索 `BETTBOX-CUSTOM`，逐项确认标记代码仍然存在。
+- 融合后运行相关目录的 Go/Flutter 回归测试；不得仅以编译成功代替行为验证。
+- 自定义功能发生迁移、删除或被上游等价能力替代时，同步更新本文件和对应测试。
+- 未经用户明确要求，不创建 Pull Request。
+
+### Mihomo：direct proxy 跟随接口 DNS
+
+- 自定义 direct proxy 支持 `dns-follow-interface`；仅在配置了 `interface-name` 时生效，省略默认为 `true`。
+- 开启后，规则命中该 direct proxy 的域名由对应接口 DNS 解析，不再要求为同一批域名重复维护 `nameserver-policy`；显式设为 `false` 时保持原有全局 hosts/DNS 流程。
+- macOS 的 `dhcp://<interface>` 优先读取系统当前 Scoped Resolver，读取不到时才回退 Mihomo 原有 DHCP 广播，避免企业 DHCP 不响应重复 `DHCPDISCOVER`；正常状态不轮询，DNS 请求失败或连接重置时立即刷新并重试，其他平台继续使用原来的一小时缓存。
+- 核心标记位于 `core/Clash.Meta/adapter/outbound/direct.go`、`core/Clash.Meta/component/dhcp/dhcp.go` 和 `core/Clash.Meta/dns/dhcp.go`；回归测试位于对应包的 `direct_test.go`、`system_darwin_test.go`、`dhcp_test.go`。
+- 覆写脚本 `scripts/uclort-desktop.js` 的 `CC-intranet-en5` 显式开启该参数；内网域名只维护路由清单，固定 hosts 继续作为注释回退。
+
 ### 应用内更新
 
 - “关于本机 → 查找更新”改为检查 `uclort/Bettbox` 已发布的最新自定义 Release。

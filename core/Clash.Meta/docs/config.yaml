@@ -1660,6 +1660,7 @@ proxies: # socks5
   - name: en1-direct
     type: direct
     interface-name: en1
+    dns-follow-interface: true # 默认开启，使用 interface-name 对应接口的 DNS 解析目标域名
     routing-mark: 6667
 proxy-groups:
   # url-test 将按照 url 测试结果使用延迟最低节点
