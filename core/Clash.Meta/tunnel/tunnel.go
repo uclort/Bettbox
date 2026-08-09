@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/netip"
 	"path/filepath"
@@ -232,7 +233,6 @@ func Providers() map[string]P.ProxyProvider {
 	return providers
 }
 
-
 // RuleProviders return all loaded rule providers
 func RuleProviders() map[string]P.RuleProvider {
 	return ruleProviders
@@ -241,9 +241,22 @@ func RuleProviders() map[string]P.RuleProvider {
 // UpdateProxies handle update proxies
 func UpdateProxies(newProxies map[string]C.Proxy, newProviders map[string]P.ProxyProvider) {
 	configMux.Lock()
+	oldProviders := providers
 	proxies = newProxies
 	providers = newProviders
 	configMux.Unlock()
+
+	// BETTBOX-CUSTOM: 配置代际切换后立即取消旧 Provider 的健康检查和拉取任务。
+	for name, provider := range oldProviders {
+		if current, exists := newProviders[name]; exists && current == provider {
+			continue
+		}
+		if closer, ok := provider.(io.Closer); ok {
+			if err := closer.Close(); err != nil {
+				log.Warnln("close stale proxy provider %s error: %v", name, err)
+			}
+		}
+	}
 }
 
 func UpdateListeners(newListeners map[string]C.InboundListener) {

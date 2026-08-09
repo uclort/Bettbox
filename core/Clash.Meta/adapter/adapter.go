@@ -11,6 +11,7 @@ import (
 
 	"github.com/metacubex/mihomo/common/atomic"
 	"github.com/metacubex/mihomo/common/queue"
+	"github.com/metacubex/mihomo/common/singleflight"
 	"github.com/metacubex/mihomo/common/utils"
 	"github.com/metacubex/mihomo/common/xsync"
 	"github.com/metacubex/mihomo/component/ca"
@@ -33,9 +34,10 @@ type internalProxyState struct {
 
 type Proxy struct {
 	C.ProxyAdapter
-	alive   atomic.Bool
-	history *queue.Queue[C.DelayHistory]
-	extra   xsync.Map[string, *internalProxyState]
+	alive        atomic.Bool
+	history      *queue.Queue[C.DelayHistory]
+	extra        xsync.Map[string, *internalProxyState]
+	urlTestGroup singleflight.Group[uint16]
 }
 
 // Adapter implements C.Proxy
@@ -164,6 +166,15 @@ func (p *Proxy) MarshalJSON() ([]byte, error) {
 // URLTest get the delay for the specified URL
 // implements C.Proxy
 func (p *Proxy) URLTest(ctx context.Context, url string, expectedStatus utils.IntRanges[uint16]) (t uint16, err error) {
+	// BETTBOX-CUSTOM: 同一节点与地址只保留一个在途测速，Provider 与应用直接复用结果。
+	key := url + "\x00" + expectedStatus.String()
+	t, err, _ = p.urlTestGroup.Do(key, func() (uint16, error) {
+		return p.urlTest(ctx, url, expectedStatus)
+	})
+	return
+}
+
+func (p *Proxy) urlTest(ctx context.Context, url string, expectedStatus utils.IntRanges[uint16]) (t uint16, err error) {
 	trace := URLTestTraceFromContext(ctx)
 	if trace.ID == "" {
 		trace.ID = utils.NewUUIDV4().String()
@@ -296,7 +307,8 @@ func (p *Proxy) URLTest(ctx context.Context, url string, expectedStatus utils.In
 
 	_ = resp.Body.Close()
 
-	if unifiedDelay {
+	// HTTP 测速端点常被代理线路劫持或主动断开复用连接，不能发送第二次 HEAD。
+	if unifiedDelay && strings.HasPrefix(strings.ToLower(url), "https://") {
 		stage = "second-http-head"
 		second := time.Now()
 		var ignoredErr error
@@ -306,11 +318,6 @@ func (p *Proxy) URLTest(ctx context.Context, url string, expectedStatus utils.In
 			resp = secondResp
 			_ = resp.Body.Close()
 			start = second
-		} else {
-			if strings.HasPrefix(url, "http://") {
-				log.Warnln("%s failed to get the second response from %s: %v", p.Name(), url, ignoredErr)
-				log.Warnln("It is recommended to use HTTPS for provider.health-check.url and group.url to ensure better reliability. Due to some proxy providers hijacking test addresses and not being compatible with repeated HEAD requests, using HTTP may result in failed tests.")
-			}
 		}
 	}
 

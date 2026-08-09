@@ -64,9 +64,12 @@
 - 当前策略组测速时显示“⚡ 测速中...”，并保持不可重复点击。
 - 标签页模式下其他策略组正在测速时，当前策略组的测速按钮保持原有外观；点击后提示正在测速的策略组名称，避免无反馈。
 - 所有平台和测速入口共用全局并发池，排队不计入单节点超时；默认并发 16、上限 32，失败任务统一结束加载并释放队列，避免秒出超时、永久转圈和结果跳变。
+- Mihomo 在配置代际切换时显式关闭旧 Proxy Provider，立即取消旧健康检查和拉取任务，避免覆盖安装或首次启动时新旧 Provider 同时测速。
+- Mihomo 按实际节点、测试地址及期望状态复用同一个在途 URLTest，Provider 健康检查与 Bettbox 主动测速不会再并发重复请求同一节点；结果只复用到等待中的调用，不设置固定缓存窗口。
+- 保留 `http://www.gstatic.com/generate_204` 时，`unified-delay` 对 HTTP 只发送一次 HEAD，避免不兼容连接复用的线路在第二次请求时重置连接；HTTPS 继续保持原有双请求测量。
 - Provider 后台健康检查失败不会再向页面广播失败状态；主动测速仍会明确写入成功或失败终态，避免更新后首次运行时未测速节点先显示“检测失败”。
 - 开启“覆写测速链接”时，核心同时覆盖策略组和 Provider 健康检查 URL，避免同一节点被两个测速地址产生的结果互相覆盖。
-- 节点测速增加端到端诊断日志：Dart 批次、桥接排队和 Mihomo 网络阶段共享 request ID，Provider 健康检查另带 batch ID；失败时记录解析、拨号、请求构造、TLS、HTTP、状态校验阶段、context、错误类型、耗时和节点来源。测试 URL 的账号、查询参数与 fragment 会脱敏，日志不包含节点密码。代码位于 `lib/clash/core.dart`、`lib/clash/interface.dart`、`lib/views/proxies/common.dart`、`core/hub.go`、`core/Clash.Meta/adapter/adapter.go` 和私有 custom-mihomo 对应路径；回归测试为 `core/Clash.Meta/adapter/patch_test.go`。
+- 节点测速增加端到端诊断日志：Dart 批次、桥接排队和 Mihomo 网络阶段共享 request ID，Provider 健康检查另带 batch ID；失败时记录解析、拨号、请求构造、TLS、HTTP、状态校验阶段、context、错误类型、耗时和节点来源。测试 URL 的账号、查询参数与 fragment 会脱敏，日志不包含节点密码。代码位于 `lib/clash/core.dart`、`lib/clash/interface.dart`、`lib/views/proxies/common.dart`、`core/hub.go`、`core/Clash.Meta/adapter/adapter.go`、`core/Clash.Meta/tunnel/tunnel.go` 和私有 custom-mihomo 对应路径；回归测试为 `core/Clash.Meta/adapter/patch_test.go`、`adapter/urltest_test.go` 与 `tunnel/provider_lifecycle_test.go`。
 - 应用内日志与请求记录容量提高到 1024 条，确保一次约 90 节点的详细测速日志不会在导出前被 256 条环形容量截断。
 - 移除独立的启动、停止入口，运行状态完全由系统代理和虚拟网卡开关驱动。
 - 首次安装特权工具成功后原位刷新托盘，避免图标短暂消失再出现。

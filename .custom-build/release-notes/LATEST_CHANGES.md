@@ -25,6 +25,9 @@
 - Bettbox 开启“覆写测速链接”时，同时覆盖策略组和 Provider 健康检查地址。
 - 增加节点测速全链路诊断日志，以 request ID 串联 Dart、桥接和 Mihomo 网络阶段，并记录 Provider batch ID、失败阶段、context、错误类型及各段耗时；不改变测速、并发、超时或重试行为。
 - 应用内日志与请求记录容量从 256 提高到 1024 条，完整保留一轮约 90 节点的详细测速记录。
+- 配置重载时立即关闭旧 Proxy Provider，取消上一代健康检查，修复首次启动或覆盖安装后同一 Provider 出现两批测速的问题。
+- Provider 健康检查与 Bettbox 主动测速在 Mihomo 内按节点、地址和期望状态复用同一个在途请求，不增加失败重试和固定缓存窗口。
+- HTTP 测速在 `unified-delay` 下不再发送第二次 HEAD，保留既有测速地址并避免部分线路因不兼容连接复用而随机返回 EOF 或 connection reset。
 
 ### 自定义改动维护
 
