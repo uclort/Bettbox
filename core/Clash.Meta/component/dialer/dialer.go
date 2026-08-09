@@ -88,13 +88,14 @@ func ListenPacket(ctx context.Context, network, address string, rAddrPort netip.
 	} else {
 		if opt.allowOtherInterface {
 			opt.interfaceName = ResolveInterfaceName(opt.interfaceName, rAddrPort.Addr().Unmap())
-		}
-		if opt.interfaceName == "" {
-			opt.interfaceName = DefaultInterface.Load()
-		}
-		if opt.interfaceName == "" {
-			if finder := DefaultInterfaceFinder.Load(); finder != nil {
-				opt.interfaceName = finder.FindInterfaceName(rAddrPort.Addr().Unmap())
+		} else {
+			if opt.interfaceName == "" {
+				opt.interfaceName = DefaultInterface.Load()
+			}
+			if opt.interfaceName == "" {
+				if finder := DefaultInterfaceFinder.Load(); finder != nil {
+					opt.interfaceName = finder.FindInterfaceName(rAddrPort.Addr().Unmap())
+				}
 			}
 		}
 		if rAddrPort.Addr().Unmap().IsLoopback() {
@@ -148,13 +149,14 @@ func dialContext(ctx context.Context, network string, destination netip.Addr, po
 	} else {
 		if opt.allowOtherInterface {
 			opt.interfaceName = ResolveInterfaceName(opt.interfaceName, destination)
-		}
-		if opt.interfaceName == "" {
-			opt.interfaceName = DefaultInterface.Load()
-		}
-		if opt.interfaceName == "" {
-			if finder := DefaultInterfaceFinder.Load(); finder != nil {
-				opt.interfaceName = finder.FindInterfaceName(destination)
+		} else {
+			if opt.interfaceName == "" {
+				opt.interfaceName = DefaultInterface.Load()
+			}
+			if opt.interfaceName == "" {
+				if finder := DefaultInterfaceFinder.Load(); finder != nil {
+					opt.interfaceName = finder.FindInterfaceName(destination)
+				}
 			}
 		}
 		if opt.interfaceName != "" {

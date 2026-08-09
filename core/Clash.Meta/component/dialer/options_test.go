@@ -47,3 +47,13 @@ func TestResolveInterfaceNameFallsBack(t *testing.T) {
 		t.Fatalf("应回退到 %s，实际为 %s", fallback, actual)
 	}
 }
+
+func TestSystemDefaultInterfaceName(t *testing.T) {
+	name := systemDefaultInterfaceName(netip.Addr{})
+	if name == "" {
+		t.Skip("系统没有 IPv4 默认路由")
+	}
+	if !interfaceUsable(name, netip.Addr{}) {
+		t.Fatalf("探测到的默认接口 %s 不可用", name)
+	}
+}

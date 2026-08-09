@@ -74,8 +74,33 @@ func ResolveInterfaceName(name string, destination netip.Addr) string {
 		if interfaceUsable(name, destination) {
 			return name
 		}
+		return "" // TUN 已启用时不能让系统探测再次选中 TUN 自身。
+	}
+	if name = systemDefaultInterfaceName(destination); interfaceUsable(name, destination) {
+		return name
 	}
 	return ""
+}
+
+func systemDefaultInterfaceName(destination netip.Addr) string {
+	network := "udp4"
+	probe := netip.AddrFrom4([4]byte{192, 0, 2, 1})
+	if destination.Is6() {
+		network = "udp6"
+		probe = netip.MustParseAddr("2001:db8::1")
+	}
+	conn, err := net.DialUDP(network, nil, net.UDPAddrFromAddrPort(netip.AddrPortFrom(probe, 9)))
+	if err != nil {
+		return ""
+	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr).AddrPort().Addr().Unmap()
+	interfaceObj, err := iface.ResolveInterfaceByAddr(localAddr)
+	if err != nil {
+		return ""
+	}
+	return interfaceObj.Name
 }
 
 func interfaceUsable(name string, destination netip.Addr) bool {
