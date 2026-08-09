@@ -6,6 +6,7 @@ import (
 	"net/netip"
 
 	"github.com/metacubex/mihomo/common/atomic"
+	"github.com/metacubex/mihomo/component/iface"
 	"github.com/metacubex/mihomo/component/resolver"
 )
 
@@ -31,16 +32,17 @@ func (f NetDialerFunc) DialContext(ctx context.Context, network, address string)
 }
 
 type option struct {
-	interfaceName string
-	fallbackBind  bool
-	addrReuse     bool
-	routingMark   int
-	network       int
-	prefer        int
-	tfo           bool
-	mpTcp         bool
-	resolver      resolver.Resolver
-	netDialer     NetDialer
+	interfaceName       string
+	allowOtherInterface bool
+	fallbackBind        bool
+	addrReuse           bool
+	routingMark         int
+	network             int
+	prefer              int
+	tfo                 bool
+	mpTcp               bool
+	resolver            resolver.Resolver
+	netDialer           NetDialer
 }
 
 type Option func(opt *option)
@@ -49,6 +51,56 @@ func WithInterface(name string) Option {
 	return func(opt *option) {
 		opt.interfaceName = name
 	}
+}
+
+func WithAllowOtherInterface(allow bool) Option {
+	return func(opt *option) {
+		opt.allowOtherInterface = allow
+	}
+}
+
+// BETTBOX-CUSTOM: ResolveInterfaceName keeps the configured interface while it is usable and
+// otherwise returns the current default interface. An empty result lets the OS
+// select its default route when no interface finder is available.
+func ResolveInterfaceName(name string, destination netip.Addr) string {
+	if interfaceUsable(name, destination) {
+		return name
+	}
+	if name = DefaultInterface.Load(); interfaceUsable(name, destination) {
+		return name
+	}
+	if finder := DefaultInterfaceFinder.Load(); finder != nil {
+		name = finder.FindInterfaceName(destination)
+		if interfaceUsable(name, destination) {
+			return name
+		}
+	}
+	return ""
+}
+
+func interfaceUsable(name string, destination netip.Addr) bool {
+	if name == "" {
+		return false
+	}
+	interfaceObj, err := iface.ResolveInterface(name)
+	return err == nil && isInterfaceUsable(interfaceObj, destination)
+}
+
+func isInterfaceUsable(interfaceObj *iface.Interface, destination netip.Addr) bool {
+	if interfaceObj.Flags&net.FlagUp == 0 || interfaceObj.Flags&net.FlagRunning == 0 {
+		return false
+	}
+	if destination.Is4() {
+		_, err := interfaceObj.PickIPv4Addr(destination)
+		return err == nil
+	}
+	if destination.Is6() {
+		_, err := interfaceObj.PickIPv6Addr(destination)
+		return err == nil
+	}
+	_, ipv4Err := interfaceObj.PickIPv4Addr(destination)
+	_, ipv6Err := interfaceObj.PickIPv6Addr(destination)
+	return ipv4Err == nil || ipv6Err == nil
 }
 
 func WithFallbackBind(fallback bool) Option {

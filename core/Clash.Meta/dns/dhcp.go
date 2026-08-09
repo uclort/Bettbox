@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/metacubex/mihomo/component/dhcp"
+	"github.com/metacubex/mihomo/component/dialer"
 	"github.com/metacubex/mihomo/component/iface"
 	D "github.com/miekg/dns"
 )
@@ -21,7 +22,9 @@ const (
 )
 
 type dhcpClient struct {
-	ifaceName string
+	ifaceName           string
+	activeIfaceName     string
+	allowOtherInterface bool
 
 	lock            sync.Mutex
 	ifaceInvalidate time.Time
@@ -82,8 +85,10 @@ func (d *dhcpClient) invalidateDNS() {
 	d.ifaceInvalidate = time.Time{}
 	d.dnsInvalidate = time.Time{}
 	d.ifaceAddr = netip.Prefix{}
+	d.activeIfaceName = ""
 	d.clients = nil
 	d.err = nil
+	iface.FlushCache()
 }
 
 func (d *dhcpClient) resolve(ctx context.Context) ([]dnsClient, error) {
@@ -94,22 +99,23 @@ func (d *dhcpClient) resolve(ctx context.Context) ([]dnsClient, error) {
 		d.err = err
 	} else if invalidated {
 		done := make(chan struct{})
+		ifaceName := d.activeIfaceName
 
 		d.done = done
 
-		go func() {
+		go func(ifaceName string) {
 			ctx, cancel := context.WithTimeout(context.Background(), DHCPTimeout)
 			defer cancel()
 
 			var res []dnsClient
-			dns, err := dhcp.ResolveDNSFromDHCP(ctx, d.ifaceName)
+			dns, err := dhcp.ResolveDNSFromDHCP(ctx, ifaceName)
 			// dns never empty if err is nil
 			if err == nil {
 				nameserver := make([]NameServer, 0, len(dns))
 				for _, item := range dns {
 					nameserver = append(nameserver, NameServer{
 						Addr:      net.JoinHostPort(item.String(), "53"),
-						ProxyName: d.ifaceName,
+						ProxyName: ifaceName,
 					})
 				}
 
@@ -124,7 +130,7 @@ func (d *dhcpClient) resolve(ctx context.Context) ([]dnsClient, error) {
 			d.done = nil
 			d.clients = res
 			d.err = err
-		}()
+		}(ifaceName)
 	}
 
 	d.lock.Unlock()
@@ -158,7 +164,11 @@ func (d *dhcpClient) invalidate() (bool, error) {
 
 	d.ifaceInvalidate = time.Now().Add(IfaceTTL)
 
-	ifaceObj, err := iface.ResolveInterface(d.ifaceName)
+	ifaceName := d.ifaceName
+	if d.allowOtherInterface {
+		ifaceName = dialer.ResolveInterfaceName(ifaceName, netip.Addr{})
+	}
+	ifaceObj, err := iface.ResolveInterface(ifaceName)
 	if err != nil {
 		return false, err
 	}
@@ -168,18 +178,19 @@ func (d *dhcpClient) invalidate() (bool, error) {
 		return false, err
 	}
 
-	if d.ifaceAddr == addr && (runtime.GOOS == "darwin" || time.Now().Before(d.dnsInvalidate)) {
+	if d.activeIfaceName == ifaceName && d.ifaceAddr == addr && (runtime.GOOS == "darwin" || time.Now().Before(d.dnsInvalidate)) {
 		return false, nil
 	}
 
 	if runtime.GOOS != "darwin" {
 		d.dnsInvalidate = time.Now().Add(DHCPTTL)
 	}
+	d.activeIfaceName = ifaceName
 	d.ifaceAddr = addr
 
 	return d.done == nil, nil
 }
 
-func newDHCPClient(ifaceName string) *dhcpClient {
-	return &dhcpClient{ifaceName: ifaceName}
+func newDHCPClient(ifaceName string, allowOtherInterface bool) *dhcpClient {
+	return &dhcpClient{ifaceName: ifaceName, allowOtherInterface: allowOtherInterface}
 }

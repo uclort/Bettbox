@@ -123,7 +123,7 @@ func transform(servers []NameServer, resolver resolver.Resolver) []dnsClient {
 		case "https":
 			c = newDoHClient(s.Addr, resolver, s.PreferH3, s.Params, s.ProxyAdapter, s.ProxyName)
 		case "dhcp":
-			c = newDHCPClient(s.Addr)
+			c = newDHCPClient(s.Addr, s.Params["allow-other-interface"] == "true")
 		case "system":
 			c = newSystemClient()
 		case "tailscale":

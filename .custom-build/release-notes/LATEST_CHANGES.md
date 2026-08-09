@@ -1,6 +1,7 @@
 ### 内网接口 DNS
 
 - Mihomo direct proxy 新增 `dns-follow-interface`，绑定 en5 的内网直连代理会自动使用 en5 当前 DNS 解析目标域名。
+- 新增默认开启的 `allow-other-interface`；en5 不存在、未运行或没有可用地址时，连接和 DNS 自动切到当前默认接口，插入内网 Wi-Fi 后无需手动改为普通 DIRECT。
 - macOS 优先读取系统已有的 en5 作用域 DNS；正常状态不轮询，解析失败或网络重置时才刷新并重试。
 - 覆写脚本不再为内网域名重复维护 `nameserver-policy`，固定 hosts 仍保留为注释回退。
 

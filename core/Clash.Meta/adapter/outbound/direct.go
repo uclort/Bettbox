@@ -13,14 +13,16 @@ import (
 
 type Direct struct {
 	*Base
-	loopBack          *loopback.Detector
-	interfaceResolver resolver.Resolver
+	loopBack            *loopback.Detector
+	interfaceResolver   resolver.Resolver
+	allowOtherInterface bool
 }
 
 type DirectOption struct {
 	BasicOption
-	Name               string `proxy:"name"`
-	DNSFollowInterface *bool  `proxy:"dns-follow-interface,omitempty"`
+	Name                string `proxy:"name"`
+	DNSFollowInterface  *bool  `proxy:"dns-follow-interface,omitempty"`
+	AllowOtherInterface *bool  `proxy:"allow-other-interface,omitempty"`
 }
 
 func (d *Direct) hostResolver() resolver.Resolver {
@@ -30,12 +32,16 @@ func (d *Direct) hostResolver() resolver.Resolver {
 	return resolver.DirectHostResolver
 }
 
+func (d *Direct) dialOptions() []dialer.Option {
+	return append(d.DialOptions(), dialer.WithAllowOtherInterface(d.allowOtherInterface))
+}
+
 // DialContext implements C.ProxyAdapter
 func (d *Direct) DialContext(ctx context.Context, metadata *C.Metadata) (C.Conn, error) {
 	if err := d.loopBack.CheckConn(metadata); err != nil {
 		return nil, err
 	}
-	opts := d.DialOptions()
+	opts := d.dialOptions()
 	opts = append(opts, dialer.WithResolver(d.hostResolver()))
 	c, err := dialer.DialContext(ctx, "tcp", metadata.RemoteAddress(), opts...)
 	if err != nil {
@@ -52,7 +58,7 @@ func (d *Direct) ListenPacketContext(ctx context.Context, metadata *C.Metadata) 
 	if err := d.ResolveUDP(ctx, metadata); err != nil {
 		return nil, err
 	}
-	pc, err := dialer.NewDialer(d.DialOptions()...).ListenPacket(ctx, "udp", "", metadata.AddrPort())
+	pc, err := dialer.NewDialer(d.dialOptions()...).ListenPacket(ctx, "udp", "", metadata.AddrPort())
 	if err != nil {
 		return nil, err
 	}
@@ -75,6 +81,7 @@ func (d *Direct) IsL3Protocol(metadata *C.Metadata) bool {
 }
 
 func NewDirectWithOption(option DirectOption) *Direct {
+	allowOtherInterface := option.AllowOtherInterface == nil || *option.AllowOtherInterface
 	direct := &Direct{
 		Base: NewBase(BaseOption{
 			Name:         option.Name,
@@ -87,13 +94,18 @@ func NewDirectWithOption(option DirectOption) *Direct {
 			RoutingMark:  option.RoutingMark,
 			Prefer:       option.IPVersion,
 		}),
-		loopBack: loopback.NewDetector(),
+		loopBack:            loopback.NewDetector(),
+		allowOtherInterface: allowOtherInterface,
 	}
 
-	// BETTBOX-CUSTOM: 绑定接口的直连代理默认使用该接口的 DHCP DNS 解析目标域名。
+	// BETTBOX-CUSTOM: 绑定接口的直连代理默认使用该接口（含不可用回退接口）的 DHCP DNS 解析目标域名。
 	if option.Interface != "" && (option.DNSFollowInterface == nil || *option.DNSFollowInterface) {
 		direct.interfaceResolver = D.NewResolver(D.Config{
-			Main: []D.NameServer{{Net: "dhcp", Addr: option.Interface}},
+			Main: []D.NameServer{{
+				Net:    "dhcp",
+				Addr:   option.Interface,
+				Params: map[string]string{"allow-other-interface": fmt.Sprint(allowOtherInterface)},
+			}},
 			IPv6: true,
 		}).Resolver
 	}

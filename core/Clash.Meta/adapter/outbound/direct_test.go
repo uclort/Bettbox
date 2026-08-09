@@ -15,6 +15,9 @@ func TestDirectDNSFollowInterface(t *testing.T) {
 		if direct.interfaceResolver == nil {
 			t.Fatal("绑定接口的 direct proxy 默认应创建接口 DNS resolver")
 		}
+		if !direct.allowOtherInterface {
+			t.Fatal("allow-other-interface 默认应开启")
+		}
 	})
 
 	t.Run("显式关闭", func(t *testing.T) {
@@ -28,6 +31,18 @@ func TestDirectDNSFollowInterface(t *testing.T) {
 			t.Fatal("dns-follow-interface=false 时应继续使用原有全局 DNS")
 		}
 	})
+
+	t.Run("禁止回退其他接口", func(t *testing.T) {
+		disabled := false
+		direct := NewDirectWithOption(DirectOption{
+			BasicOption:         BasicOption{Interface: "en5"},
+			Name:                "CC-intranet-en5",
+			AllowOtherInterface: &disabled,
+		})
+		if direct.allowOtherInterface {
+			t.Fatal("allow-other-interface=false 未生效")
+		}
+	})
 }
 
 func TestDirectDNSFollowInterfaceDecode(t *testing.T) {
@@ -38,12 +53,16 @@ func TestDirectDNSFollowInterfaceDecode(t *testing.T) {
 		KeyReplacer:      structure.DefaultKeyReplacer,
 	})
 	if err := decoder.Decode(map[string]any{
-		"name":                 "CC-intranet-en5",
-		"dns-follow-interface": false,
+		"name":                  "CC-intranet-en5",
+		"dns-follow-interface":  false,
+		"allow-other-interface": false,
 	}, &option); err != nil {
 		t.Fatal(err)
 	}
 	if option.DNSFollowInterface == nil || *option.DNSFollowInterface {
 		t.Fatal("dns-follow-interface=false 未正确解析")
+	}
+	if option.AllowOtherInterface == nil || *option.AllowOtherInterface {
+		t.Fatal("allow-other-interface=false 未正确解析")
 	}
 }
