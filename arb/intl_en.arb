@@ -633,6 +633,7 @@
   "wakelock": "Wakelock",
   "wakelockDescription": "Keeps the screen on and app active in the background without requiring special CPU wakelock permissions.",
   "tunEnableRequireAdmin": "Enabling the TUN virtual network adapter requires Administrator or ROOT privileges.",
+  "tunRouteConflict": "Another VPN/TUN is still active ({interface}). Turn it off and try again.",
   "restartTip": "Restart TUN for changes to take effect",
   "restart": "Restart",
   "restartCoreTitle": "Restart Core",

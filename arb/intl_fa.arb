@@ -634,6 +634,7 @@
   "wakelock": "قفل روشن ماندن صفحه",
   "wakelockDescription": "جلوگیری از خاموش شدن خودکار صفحه نمایش برای فعال ماندن برنامه‌ها در پس‌زمینه.",
   "tunEnableRequireAdmin": "استفاده از حالت TUN نیازمند دسترسی Admin یا ROOT است",
+  "tunRouteConflict": "یک VPN/TUN دیگر همچنان فعال است ({interface}). آن را خاموش کنید و دوباره تلاش کنید.",
   "restartTip": "تغییرات پس از راه‌اندازی مجدد TUN اعمال می‌شود",
   "restart": "راه‌اندازی مجدد",
   "restartCoreTitle": "راه‌اندازی مجدد هسته",

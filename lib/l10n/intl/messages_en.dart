@@ -51,13 +51,16 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m12(count) => "${count} items selected";
 
-  static String m13(progress) => "Downloading update: ${progress}%";
+  static String m13(interface) =>
+      "Another VPN/TUN is still active (${interface}). Turn it off and try again.";
 
-  static String m14(message) => "Update failed: ${message}";
+  static String m14(progress) => "Downloading update: ${progress}%";
 
-  static String m15(label) => "${label} must be a URL";
+  static String m15(message) => "Update failed: ${message}";
 
-  static String m16(count) =>
+  static String m16(label) => "${label} must be a URL";
+
+  static String m17(count) =>
       "${Intl.plural(count, one: 'year', other: 'years')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -1136,6 +1139,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunEnableRequireAdmin": MessageLookupByLibrary.simpleMessage(
       "Enabling the TUN virtual network adapter requires Administrator or ROOT privileges.",
     ),
+    "tunRouteConflict": m13,
     "tunnel": MessageLookupByLibrary.simpleMessage("Tunnel"),
     "tunnelAddress": MessageLookupByLibrary.simpleMessage("Listen Address"),
     "tunnelAddressHint": MessageLookupByLibrary.simpleMessage(
@@ -1168,15 +1172,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "unknown": MessageLookupByLibrary.simpleMessage("Unknown"),
     "unnamed": MessageLookupByLibrary.simpleMessage("Unnamed"),
     "update": MessageLookupByLibrary.simpleMessage("Update"),
-    "updateDownloading": m13,
-    "updateFailed": m14,
+    "updateDownloading": m14,
+    "updateFailed": m15,
     "updateInstalling": MessageLookupByLibrary.simpleMessage(
       "Opening the system installer...",
     ),
     "upload": MessageLookupByLibrary.simpleMessage("Upload"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("Get profile via URL"),
-    "urlTip": m15,
+    "urlTip": m16,
     "useGlobalScriptOverride": MessageLookupByLibrary.simpleMessage(
       "Use Global Script Override",
     ),
@@ -1212,6 +1216,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "Requires administrator privileges",
     ),
-    "years": m16,
+    "years": m17,
   };
 }

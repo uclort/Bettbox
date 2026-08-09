@@ -47,13 +47,16 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m12(count) => "${count}개 선택됨";
 
-  static String m13(progress) => "업데이트 다운로드 중: ${progress}%";
+  static String m13(interface) =>
+      "다른 VPN/TUN이 아직 실행 중입니다(${interface}). 종료한 후 다시 시도하세요.";
 
-  static String m14(message) => "업데이트 실패: ${message}";
+  static String m14(progress) => "업데이트 다운로드 중: ${progress}%";
 
-  static String m15(label) => "${label} 항목은 올바른 URL이어야 합니다";
+  static String m15(message) => "업데이트 실패: ${message}";
 
-  static String m16(count) => "${Intl.plural(count, other: '#년')}";
+  static String m16(label) => "${label} 항목은 올바른 URL이어야 합니다";
+
+  static String m17(count) => "${Intl.plural(count, other: '#년')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -915,6 +918,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunEnableRequireAdmin": MessageLookupByLibrary.simpleMessage(
       "TUN 가상 어댑터 기능을 사용하려면 관리자(ROOT) 권한이 필요합니다",
     ),
+    "tunRouteConflict": m13,
     "tunnel": MessageLookupByLibrary.simpleMessage("터널"),
     "tunnelAddress": MessageLookupByLibrary.simpleMessage("바인딩 주소"),
     "tunnelAddressHint": MessageLookupByLibrary.simpleMessage(
@@ -943,15 +947,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "unknown": MessageLookupByLibrary.simpleMessage("알 수 없음"),
     "unnamed": MessageLookupByLibrary.simpleMessage("제목 없음"),
     "update": MessageLookupByLibrary.simpleMessage("업데이트"),
-    "updateDownloading": m13,
-    "updateFailed": m14,
+    "updateDownloading": m14,
+    "updateFailed": m15,
     "updateInstalling": MessageLookupByLibrary.simpleMessage(
       "시스템 설치 프로그램을 여는 중...",
     ),
     "upload": MessageLookupByLibrary.simpleMessage("업로드"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("URL 주소로 프로필 가져오기"),
-    "urlTip": m15,
+    "urlTip": m16,
     "useGlobalScriptOverride": MessageLookupByLibrary.simpleMessage(
       "글로벌 스크립트 오버라이드 사용",
     ),
@@ -981,6 +985,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "whitelistMode": MessageLookupByLibrary.simpleMessage("화이트리스트 모드"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("시스템 적용"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage("관리자 권한이 필요합니다"),
-    "years": m16,
+    "years": m17,
   };
 }

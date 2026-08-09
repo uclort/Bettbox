@@ -828,7 +828,22 @@ class AppController {
     });
   }
 
+  Future<bool> _blockConflictingMacOSTun(bool targetTun) async {
+    if (!system.isMacOS || !targetTun || _ref.read(realTunEnableProvider)) {
+      return false;
+    }
+    final interface = await macOS?.getTunRouteConflictInterface();
+    if (interface == null) return false;
+
+    _ref
+        .read(patchClashConfigProvider.notifier)
+        .updateState((state) => state.copyWith.tun(enable: false));
+    globalState.showNotifier(appLocalizations.tunRouteConflict(interface));
+    return true;
+  }
+
   Future<bool?> _prepareTun(bool targetTun) async {
+    if (await _blockConflictingMacOSTun(targetTun)) return false;
     final res = await _requestAdmin(targetTun);
     if (res.needRestart) {
       await _restartCore(setupConfig: false, refreshData: false);
@@ -1888,6 +1903,7 @@ class AppController {
     final current = _ref.read(patchClashConfigProvider).tun.enable;
     final target = enabled ?? !current;
     if (target == current) return;
+    if (await _blockConflictingMacOSTun(target)) return;
     _ref
         .read(patchClashConfigProvider.notifier)
         .updateState((state) => state.copyWith.tun(enable: target));

@@ -634,6 +634,7 @@
   "wakelock": "亮屏锁",
   "wakelockDescription": "本功能不需要任何特殊权限，因为它仅启用屏幕唤醒锁，而不是任何CPU唤醒锁，应用会在后台保持必要的活跃，且屏幕不会自动熄灭，这在一些场景下会很有用",
   "tunEnableRequireAdmin": "启用TUN虚拟网卡功能需要管理员或ROOT权限",
+  "tunRouteConflict": "检测到其他 VPN/TUN 仍在运行（{interface}），请关闭后重试。",
   "restartTip": "重启TUN后改变生效",
   "restart": "重启",
   "restartCoreTitle": "重启内核",

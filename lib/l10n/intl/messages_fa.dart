@@ -48,13 +48,16 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m12(count) => "${count} مورد انتخاب شده";
 
-  static String m13(progress) => "در حال دانلود به‌روزرسانی: ${progress}%";
+  static String m13(interface) =>
+      "یک VPN/TUN دیگر همچنان فعال است (${interface}). آن را خاموش کنید و دوباره تلاش کنید.";
 
-  static String m14(message) => "به‌روزرسانی ناموفق بود: ${message}";
+  static String m14(progress) => "در حال دانلود به‌روزرسانی: ${progress}%";
 
-  static String m15(label) => "${label} باید یک URL معتبر باشد";
+  static String m15(message) => "به‌روزرسانی ناموفق بود: ${message}";
 
-  static String m16(count) => "${Intl.plural(count, other: '# سال')}";
+  static String m16(label) => "${label} باید یک URL معتبر باشد";
+
+  static String m17(count) => "${Intl.plural(count, other: '# سال')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -1166,6 +1169,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunEnableRequireAdmin": MessageLookupByLibrary.simpleMessage(
       "استفاده از حالت TUN نیازمند دسترسی Admin یا ROOT است",
     ),
+    "tunRouteConflict": m13,
     "tunnel": MessageLookupByLibrary.simpleMessage("تونل"),
     "tunnelAddress": MessageLookupByLibrary.simpleMessage("آدرس گوش به زنگ"),
     "tunnelAddressHint": MessageLookupByLibrary.simpleMessage(
@@ -1198,8 +1202,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "unknown": MessageLookupByLibrary.simpleMessage("نامشخص"),
     "unnamed": MessageLookupByLibrary.simpleMessage("بدون نام"),
     "update": MessageLookupByLibrary.simpleMessage("بروزرسانی"),
-    "updateDownloading": m13,
-    "updateFailed": m14,
+    "updateDownloading": m14,
+    "updateFailed": m15,
     "updateInstalling": MessageLookupByLibrary.simpleMessage(
       "در حال باز کردن نصب‌کننده سیستم...",
     ),
@@ -1208,7 +1212,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "urlDesc": MessageLookupByLibrary.simpleMessage(
       "دریافت پروفایل از طریق آدرس URL",
     ),
-    "urlTip": m15,
+    "urlTip": m16,
     "useGlobalScriptOverride": MessageLookupByLibrary.simpleMessage(
       "استفاده از اسکریپت اورراید سراسری",
     ),
@@ -1246,6 +1250,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "نیازمند دسترسی مدیریت (Admin)",
     ),
-    "years": m16,
+    "years": m17,
   };
 }

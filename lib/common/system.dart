@@ -503,6 +503,24 @@ class MacOSNetworkState {
   });
 }
 
+String? parseMacOSTunRouteConflict(String output) {
+  String? valueForKey(String key) {
+    return RegExp(
+      '^\\s*$key:\\s*(\\S+)\\s*\$',
+      multiLine: true,
+    ).firstMatch(output)?.group(1);
+  }
+
+  final interface = valueForKey('interface');
+  if (valueForKey('destination') != '1.0.0.0' ||
+      valueForKey('mask') != '255.0.0.0' ||
+      interface == null ||
+      !interface.startsWith('utun')) {
+    return null;
+  }
+  return interface;
+}
+
 class MacOS {
   static MacOS? _instance;
   static const _dnsBackupFileName = 'macos_system_dns_backup.json';
@@ -514,6 +532,12 @@ class MacOS {
   factory MacOS() {
     _instance ??= MacOS._internal();
     return _instance!;
+  }
+
+  Future<String?> getTunRouteConflictInterface() async {
+    final result = await Process.run('/sbin/route', ['-n', 'get', '1.0.0.1']);
+    if (result.exitCode != 0) return null;
+    return parseMacOSTunRouteConflict(result.stdout.toString());
   }
 
   Future<({String device, String gateway})?> _getDefaultRoute() async {

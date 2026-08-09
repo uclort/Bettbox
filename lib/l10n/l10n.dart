@@ -5169,6 +5169,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Another VPN/TUN is still active ({interface}). Turn it off and try again.`
+  String tunRouteConflict(Object interface) {
+    return Intl.message(
+      'Another VPN/TUN is still active ($interface). Turn it off and try again.',
+      name: 'tunRouteConflict',
+      desc: '',
+      args: [interface],
+    );
+  }
+
   /// `Restart TUN for changes to take effect`
   String get restartTip {
     return Intl.message(

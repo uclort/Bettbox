@@ -47,13 +47,15 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m12(count) => "已选择 ${count} 项";
 
-  static String m13(progress) => "正在下载更新：${progress}%";
+  static String m13(interface) => "检测到其他 VPN/TUN 仍在运行（${interface}），请关闭后重试。";
 
-  static String m14(message) => "更新失败：${message}";
+  static String m14(progress) => "正在下载更新：${progress}%";
 
-  static String m15(label) => "${label}必须为URL";
+  static String m15(message) => "更新失败：${message}";
 
-  static String m16(count) => "${Intl.plural(count, other: '年')}";
+  static String m16(label) => "${label}必须为URL";
+
+  static String m17(count) => "${Intl.plural(count, other: '年')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -789,6 +791,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunEnableRequireAdmin": MessageLookupByLibrary.simpleMessage(
       "启用TUN虚拟网卡功能需要管理员或ROOT权限",
     ),
+    "tunRouteConflict": m13,
     "tunnel": MessageLookupByLibrary.simpleMessage("Tunnel"),
     "tunnelAddress": MessageLookupByLibrary.simpleMessage("监听地址"),
     "tunnelAddressHint": MessageLookupByLibrary.simpleMessage(
@@ -815,13 +818,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "unknown": MessageLookupByLibrary.simpleMessage("未知"),
     "unnamed": MessageLookupByLibrary.simpleMessage("未命名"),
     "update": MessageLookupByLibrary.simpleMessage("更新"),
-    "updateDownloading": m13,
-    "updateFailed": m14,
+    "updateDownloading": m14,
+    "updateFailed": m15,
     "updateInstalling": MessageLookupByLibrary.simpleMessage("正在打开系统安装程序..."),
     "upload": MessageLookupByLibrary.simpleMessage("上传"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("通过URL获取配置文件"),
-    "urlTip": m15,
+    "urlTip": m16,
     "useGlobalScriptOverride": MessageLookupByLibrary.simpleMessage("使用全局脚本覆写"),
     "useHosts": MessageLookupByLibrary.simpleMessage("使用Hosts"),
     "useSystemHosts": MessageLookupByLibrary.simpleMessage("使用系统Hosts"),
@@ -849,6 +852,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "whitelistMode": MessageLookupByLibrary.simpleMessage("白名单模式"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("写入系统"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage("需要管理员权限"),
-    "years": m16,
+    "years": m17,
   };
 }

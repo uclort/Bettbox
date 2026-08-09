@@ -52,13 +52,16 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m12(count) => "Выбрано: ${count}";
 
-  static String m13(progress) => "Загрузка обновления: ${progress}%";
+  static String m13(interface) =>
+      "Другая VPN/TUN всё ещё активна (${interface}). Отключите её и повторите попытку.";
 
-  static String m14(message) => "Ошибка обновления: ${message}";
+  static String m14(progress) => "Загрузка обновления: ${progress}%";
 
-  static String m15(label) => "${label} должен быть URL";
+  static String m15(message) => "Ошибка обновления: ${message}";
 
-  static String m16(count) =>
+  static String m16(label) => "${label} должен быть URL";
+
+  static String m17(count) =>
       "${Intl.plural(count, one: 'год', few: 'года', many: 'лет', other: 'лет')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -1157,6 +1160,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunEnableRequireAdmin": MessageLookupByLibrary.simpleMessage(
       "Для включения виртуального адаптера TUN требуются права администратора или ROOT.",
     ),
+    "tunRouteConflict": m13,
     "tunnel": MessageLookupByLibrary.simpleMessage("Туннель"),
     "tunnelAddress": MessageLookupByLibrary.simpleMessage(
       "Адрес прослушивания",
@@ -1197,15 +1201,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "unknown": MessageLookupByLibrary.simpleMessage("Неизвестно"),
     "unnamed": MessageLookupByLibrary.simpleMessage("Без имени"),
     "update": MessageLookupByLibrary.simpleMessage("Обновить"),
-    "updateDownloading": m13,
-    "updateFailed": m14,
+    "updateDownloading": m14,
+    "updateFailed": m15,
     "updateInstalling": MessageLookupByLibrary.simpleMessage(
       "Открытие системного установщика...",
     ),
     "upload": MessageLookupByLibrary.simpleMessage("Отправка"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("Получить профиль по URL"),
-    "urlTip": m15,
+    "urlTip": m16,
     "useGlobalScriptOverride": MessageLookupByLibrary.simpleMessage(
       "Глобальное переопределение",
     ),
@@ -1245,6 +1249,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "Требуются права администратора",
     ),
-    "years": m16,
+    "years": m17,
   };
 }

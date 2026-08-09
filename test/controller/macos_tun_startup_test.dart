@@ -1,4 +1,5 @@
 import 'package:bett_box/controller.dart';
+import 'package:bett_box/common/system.dart';
 import 'package:bett_box/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -333,5 +334,21 @@ void main() {
         );
       }
     }
+  });
+
+  test('只识别会与 macOS TUN 启动冲突的分流路由', () {
+    const conflictingRoute = '''
+destination: 1.0.0.0
+       mask: 255.0.0.0
+  interface: utun9
+''';
+    const normalRoute = '''
+destination: default
+    gateway: 192.168.0.1
+  interface: en0
+''';
+
+    expect(parseMacOSTunRouteConflict(conflictingRoute), 'utun9');
+    expect(parseMacOSTunRouteConflict(normalRoute), isNull);
   });
 }

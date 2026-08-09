@@ -47,13 +47,15 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m12(count) => "已選擇 ${count} 項";
 
-  static String m13(progress) => "正在下載更新：${progress}%";
+  static String m13(interface) => "偵測到其他 VPN/TUN 仍在運行（${interface}），請關閉後重試。";
 
-  static String m14(message) => "更新失敗：${message}";
+  static String m14(progress) => "正在下載更新：${progress}%";
 
-  static String m15(label) => "${label}必須為 URL";
+  static String m15(message) => "更新失敗：${message}";
 
-  static String m16(count) => "${Intl.plural(count, other: '年')}";
+  static String m16(label) => "${label}必須為 URL";
+
+  static String m17(count) => "${Intl.plural(count, other: '年')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -813,6 +815,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunEnableRequireAdmin": MessageLookupByLibrary.simpleMessage(
       "啟用TUN虛擬網卡功能需要管理員或ROOT權限",
     ),
+    "tunRouteConflict": m13,
     "tunnel": MessageLookupByLibrary.simpleMessage("Tunnel"),
     "tunnelAddress": MessageLookupByLibrary.simpleMessage("監聽地址"),
     "tunnelAddressHint": MessageLookupByLibrary.simpleMessage(
@@ -839,13 +842,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "unknown": MessageLookupByLibrary.simpleMessage("未知"),
     "unnamed": MessageLookupByLibrary.simpleMessage("未命名"),
     "update": MessageLookupByLibrary.simpleMessage("更新"),
-    "updateDownloading": m13,
-    "updateFailed": m14,
+    "updateDownloading": m14,
+    "updateFailed": m15,
     "updateInstalling": MessageLookupByLibrary.simpleMessage("正在開啟系統安裝程式..."),
     "upload": MessageLookupByLibrary.simpleMessage("上傳"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("透過 URL 獲取設定檔"),
-    "urlTip": m15,
+    "urlTip": m16,
     "useGlobalScriptOverride": MessageLookupByLibrary.simpleMessage(
       "使用全域指令碼覆寫",
     ),
@@ -875,6 +878,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "whitelistMode": MessageLookupByLibrary.simpleMessage("白名單模式"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("寫入系統"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage("需要管理員權限"),
-    "years": m16,
+    "years": m17,
   };
 }

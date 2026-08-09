@@ -47,13 +47,16 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m12(count) => "${count} 件選択中";
 
-  static String m13(progress) => "アップデートをダウンロード中：${progress}%";
+  static String m13(interface) =>
+      "別の VPN/TUN がまだ実行中です（${interface}）。終了してから再試行してください。";
 
-  static String m14(message) => "アップデートに失敗しました：${message}";
+  static String m14(progress) => "アップデートをダウンロード中：${progress}%";
 
-  static String m15(label) => "${label} は有効なURLである必要があります";
+  static String m15(message) => "アップデートに失敗しました：${message}";
 
-  static String m16(count) => "${Intl.plural(count, other: '年')}";
+  static String m16(label) => "${label} は有効なURLである必要があります";
+
+  static String m17(count) => "${Intl.plural(count, other: '年')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -907,6 +910,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunEnableRequireAdmin": MessageLookupByLibrary.simpleMessage(
       "TUN仮想NIC機能の有効化には管理者（ROOT）権限が必要です",
     ),
+    "tunRouteConflict": m13,
     "tunnel": MessageLookupByLibrary.simpleMessage("トンネル"),
     "tunnelAddress": MessageLookupByLibrary.simpleMessage("バインドアドレス"),
     "tunnelAddressHint": MessageLookupByLibrary.simpleMessage(
@@ -935,15 +939,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "unknown": MessageLookupByLibrary.simpleMessage("不明"),
     "unnamed": MessageLookupByLibrary.simpleMessage("無題"),
     "update": MessageLookupByLibrary.simpleMessage("更新"),
-    "updateDownloading": m13,
-    "updateFailed": m14,
+    "updateDownloading": m14,
+    "updateFailed": m15,
     "updateInstalling": MessageLookupByLibrary.simpleMessage(
       "システムインストーラーを開いています...",
     ),
     "upload": MessageLookupByLibrary.simpleMessage("送信"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("URLから設定を取得"),
-    "urlTip": m15,
+    "urlTip": m16,
     "useGlobalScriptOverride": MessageLookupByLibrary.simpleMessage(
       "グローバルスクリプトオーバーライドを使用",
     ),
@@ -973,6 +977,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "whitelistMode": MessageLookupByLibrary.simpleMessage("ホワイトリストモード"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("システムへ適用"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage("管理者権限が必要です"),
-    "years": m16,
+    "years": m17,
   };
 }
