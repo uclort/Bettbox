@@ -183,6 +183,10 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     final columns = max(4 * ((dashboardState.viewWidth / 320).ceil()), 8);
     final spacing = 16.ap;
     final isMobileView = ref.watch(isMobileViewProvider);
+    final floatingBottomBarReserve = isMobileView
+        ? getFloatingBottomBarReserveHeight(context)
+        : 0.0;
+    final androidStartButtonReserve = system.isAndroid ? 72.0 : 0.0;
     final children = [
       ...dashboardState.dashboardWidgets
           .where(
@@ -205,15 +209,20 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
           ref.watch(customDashboardTitleProvider) ?? appLocalizations.dashboard,
       actions: _buildActions(),
       floatingActionButton: system.isAndroid
-          ? const AndroidStartButton()
+          ? Padding(
+              padding: EdgeInsets.only(
+                bottom: isMobileView
+                    ? getFloatingBottomBarFABReserveHeight(context)
+                    : 0,
+              ),
+              child: const AndroidStartButton(),
+            )
           : null,
       body: Align(
         alignment: Alignment.topCenter,
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16).copyWith(
-            bottom:
-                16 +
-                (isMobileView ? getFloatingBottomBarReserveHeight(context) : 0),
+            bottom: 16 + floatingBottomBarReserve + androidStartButtonReserve,
           ),
           child: _buildIsEdit((isEdit) {
             if (isEdit) {

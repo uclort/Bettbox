@@ -127,7 +127,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoLaunchDesc": MessageLookupByLibrary.simpleMessage("跟隨系統自動啟動"),
     "autoRun": MessageLookupByLibrary.simpleMessage("自動連線"),
     "autoRunDesc": MessageLookupByLibrary.simpleMessage("應用打開後自動連線"),
-    "autoSetSystemDns": MessageLookupByLibrary.simpleMessage("自動設定系統 DNS"),
     "autoUpdate": MessageLookupByLibrary.simpleMessage("自動更新"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage("自動更新間隔（分鐘）"),
     "backup": MessageLookupByLibrary.simpleMessage("備份"),

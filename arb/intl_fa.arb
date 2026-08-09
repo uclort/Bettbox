@@ -610,7 +610,6 @@
   "importFailed": "وارد کردن ناموفق بود",
   "importFile": "وارد کردن از فایل",
   "importUrl": "وارد کردن از URL",
-  "autoSetSystemDns": "تنظیم خودکار DNS سیستم",
   "details": "جزئیات",
   "creationTime": "زمان ایجاد",
   "progress": "پردازش",

@@ -2049,25 +2049,24 @@ final currentBrightnessProvider = AutoDisposeProvider<Brightness>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef CurrentBrightnessRef = AutoDisposeProviderRef<Brightness>;
-String _$autoSetSystemDnsStateHash() =>
-    r'2e0976e079100325b1ca797285df48a94c2c066c';
+String _$managedMacOSDnsStateHash() =>
+    r'c1d371f0e3867bb83dcd6f045de2d17647ffe5a3';
 
-/// See also [autoSetSystemDnsState].
-@ProviderFor(autoSetSystemDnsState)
-final autoSetSystemDnsStateProvider =
-    AutoDisposeProvider<VM2<bool, bool>>.internal(
-      autoSetSystemDnsState,
-      name: r'autoSetSystemDnsStateProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$autoSetSystemDnsStateHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+/// See also [managedMacOSDnsState].
+@ProviderFor(managedMacOSDnsState)
+final managedMacOSDnsStateProvider = AutoDisposeProvider<bool>.internal(
+  managedMacOSDnsState,
+  name: r'managedMacOSDnsStateProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$managedMacOSDnsStateHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef AutoSetSystemDnsStateRef = AutoDisposeProviderRef<VM2<bool, bool>>;
+typedef ManagedMacOSDnsStateRef = AutoDisposeProviderRef<bool>;
 String _$profileOverrideStateHash() =>
     r'0a1657ff3b4657fcc481a4cdd1deda5b353bf845';
 

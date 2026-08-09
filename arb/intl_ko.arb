@@ -610,7 +610,6 @@
   "importFailed": "가져오기 실패",
   "importFile": "파일에서 가져오기",
   "importUrl": "URL에서 가져오기",
-  "autoSetSystemDns": "시스템 DNS 자동 설정",
   "details": "상세 정보",
   "creationTime": "생성 시간",
   "progress": "프로세스",

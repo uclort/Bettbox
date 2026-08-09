@@ -105,9 +105,8 @@ Future<void> rebuildMacOSTun({
 bool shouldUseManagedMacOSDns({
   required bool isRunning,
   required bool tunEnabled,
-  required bool autoSetSystemDns,
 }) {
-  return isRunning && tunEnabled && autoSetSystemDns;
+  return isRunning && tunEnabled;
 }
 
 @visibleForTesting
@@ -311,7 +310,6 @@ class AppController {
     final shouldSet = shouldUseManagedMacOSDns(
       isRunning: globalState.isStart,
       tunEnabled: _ref.read(realTunEnableProvider),
-      autoSetSystemDns: _ref.read(networkSettingProvider).autoSetSystemDns,
     );
     try {
       await macOS!.updateDns(!shouldSet, serviceName: serviceName);

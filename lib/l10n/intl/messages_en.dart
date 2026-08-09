@@ -170,9 +170,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoRunDesc": MessageLookupByLibrary.simpleMessage(
       "Connect on app launch",
     ),
-    "autoSetSystemDns": MessageLookupByLibrary.simpleMessage(
-      "Auto Set System DNS",
-    ),
     "autoUpdate": MessageLookupByLibrary.simpleMessage("Auto Update"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage(
       "Auto update interval (min)",

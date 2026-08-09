@@ -4979,16 +4979,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Auto Set System DNS`
-  String get autoSetSystemDns {
-    return Intl.message(
-      'Auto Set System DNS',
-      name: 'autoSetSystemDns',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Details`
   String get details {
     return Intl.message('Details', name: 'details', desc: '', args: []);

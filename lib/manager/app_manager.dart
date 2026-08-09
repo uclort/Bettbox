@@ -68,7 +68,7 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
     if (window == null) {
       return;
     }
-    ref.listenManual(autoSetSystemDnsStateProvider, (prev, next) async {
+    ref.listenManual(managedMacOSDnsStateProvider, (prev, next) async {
       if (prev == next) {
         return;
       }
@@ -104,7 +104,8 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
       }
       isMinimized = await window?.isMinimized ?? false;
     }
-    final isPinned = system.isDesktop &&
+    final isPinned =
+        system.isDesktop &&
         ref.read(windowSettingProvider.select((s) => s.isPinned));
     final shouldRun = (isForeground || isPinned) && isVisible && !isMinimized;
 

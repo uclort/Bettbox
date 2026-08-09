@@ -610,7 +610,6 @@
   "importFailed": "インポート失敗",
   "importFile": "ファイルからインポート",
   "importUrl": "URLからインポート",
-  "autoSetSystemDns": "システムDNSを自動設定",
   "details": "詳細",
   "creationTime": "作成日時",
   "progress": "プロセス",

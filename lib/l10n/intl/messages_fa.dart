@@ -164,9 +164,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoRunDesc": MessageLookupByLibrary.simpleMessage(
       "اتصال خودکار پروکسی پس از باز شدن برنامه",
     ),
-    "autoSetSystemDns": MessageLookupByLibrary.simpleMessage(
-      "تنظیم خودکار DNS سیستم",
-    ),
     "autoUpdate": MessageLookupByLibrary.simpleMessage("بروزرسانی خودکار"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage(
       "فاصله بروزرسانی خودکار (دقیقه)",

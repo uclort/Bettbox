@@ -643,8 +643,8 @@ class _TrayClickBehaviorDialogState extends State<_TrayClickBehaviorDialog> {
   }
 }
 
-class TraySection extends ConsumerWidget {
-  const TraySection({super.key});
+class EnableTraySpeedItem extends ConsumerWidget {
+  const EnableTraySpeedItem({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -652,39 +652,18 @@ class TraySection extends ConsumerWidget {
       vpnSettingProvider.select((state) => state.enableTraySpeed),
     );
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const TrayClickBehaviorItem(),
-        if (system.isMacOS) ...[
-          Divider(
-            height: 1,
-            thickness: 1,
-            color: context.colorScheme.outlineVariant.withValues(
-              alpha: context.colorScheme.brightness == Brightness.light
-                  ? 0.3
-                  : 0.2,
-            ),
-            indent: 16,
-            endIndent: 16,
-          ),
-          ListItem.switchItem(
-            title: Text(appLocalizations.enableTraySpeed),
-            subtitle: Text(appLocalizations.enableTraySpeedDesc),
-            delegate: SwitchDelegate(
-              value: enableTraySpeed,
-              onChanged: (bool value) async {
-                ref
-                    .read(vpnSettingProvider.notifier)
-                    .updateState(
-                      (state) => state.copyWith(enableTraySpeed: value),
-                    );
-                await globalState.appController.updateTray();
-              },
-            ),
-          ),
-        ],
-      ],
+    return ListItem.switchItem(
+      title: Text(appLocalizations.enableTraySpeed),
+      subtitle: Text(appLocalizations.enableTraySpeedDesc),
+      delegate: SwitchDelegate(
+        value: enableTraySpeed,
+        onChanged: (bool value) async {
+          ref
+              .read(vpnSettingProvider.notifier)
+              .updateState((state) => state.copyWith(enableTraySpeed: value));
+          await globalState.appController.updateTray();
+        },
+      ),
     );
   }
 }
@@ -701,7 +680,8 @@ class OtherSettingView extends ConsumerWidget {
       const StoreFixItem(),
       const DisableQuicSection(),
       if (system.isAndroid) const NetworkSpeedNotificationItem(),
-      if (system.isMacOS) const TraySection(),
+      if (system.isMacOS) const TrayClickBehaviorItem(),
+      if (system.isMacOS) const EnableTraySpeedItem(),
       if (system.isWindows) const HighPriorityItem(),
       if (system.isWindows) const NetworkFixItem(),
       if (system.isAndroid) const BatteryOptimizationItem(),

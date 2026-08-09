@@ -611,7 +611,6 @@
   "importFailed": "Ошибка импорта",
   "importFile": "Импорт из файла",
   "importUrl": "Импорт по URL",
-  "autoSetSystemDns": "Автоматически настроить системный DNS",
   "details": "Подробности",
   "creationTime": "Время создания",
   "progress": "Прогресс",

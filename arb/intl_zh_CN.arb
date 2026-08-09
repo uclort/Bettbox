@@ -610,7 +610,6 @@
   "importFailed": "导入失败",
   "importFile": "通过文件导入",
   "importUrl": "通过URL导入",
-  "autoSetSystemDns": "自动设置系统DNS",
   "details": "详情",
   "creationTime": "创建时间",
   "progress": "进程",

@@ -150,32 +150,6 @@ class SystemProxyItem extends ConsumerWidget {
   }
 }
 
-class AutoSetSystemDnsItem extends ConsumerWidget {
-  const AutoSetSystemDnsItem({super.key});
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final autoSetSystemDnsState = ref.watch(autoSetSystemDnsStateProvider);
-    final canSetSystemDns = autoSetSystemDnsState.a;
-    final autoSetSystemDns = autoSetSystemDnsState.b;
-    return ListItem.switchItem(
-      title: Text(appLocalizations.autoSetSystemDns),
-      delegate: SwitchDelegate(
-        value: autoSetSystemDns,
-        onChanged: canSetSystemDns
-            ? (bool value) async {
-                ref
-                    .read(networkSettingProvider.notifier)
-                    .updateState(
-                      (state) => state.copyWith(autoSetSystemDns: value),
-                    );
-              }
-            : null,
-      ),
-    );
-  }
-}
-
 class StrictRouteItem extends ConsumerWidget {
   const StrictRouteItem({super.key});
 
@@ -571,7 +545,6 @@ final networkItems = [
     title: appLocalizations.options,
     items: [
       if (system.isDesktop) const TUNItem(),
-      if (system.isMacOS) const AutoSetSystemDnsItem(),
       if (!system.isAndroid) const StrictRouteItem(),
       const IcmpForwardingItem(),
       const DnsHijackItem(),

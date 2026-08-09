@@ -833,15 +833,6 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         ),
       ),
       _SearchItem(
-        title: appLocalizations.autoSetSystemDns,
-        category: networkCategory,
-        onTap: (context, _) => _pushPage(
-          context,
-          appLocalizations.network,
-          const NetworkListView(),
-        ),
-      ),
-      _SearchItem(
         title: appLocalizations.strictRoute,
         subtitle: appLocalizations.strictRouteDesc,
         category: networkCategory,

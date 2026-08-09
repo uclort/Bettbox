@@ -169,9 +169,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoRunDesc": MessageLookupByLibrary.simpleMessage(
       "Подключаться при запуске приложения",
     ),
-    "autoSetSystemDns": MessageLookupByLibrary.simpleMessage(
-      "Автоматически настроить системный DNS",
-    ),
     "autoUpdate": MessageLookupByLibrary.simpleMessage("Автообновление"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage(
       "Интервал автообновления (минуты)",

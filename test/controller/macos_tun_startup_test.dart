@@ -305,22 +305,17 @@ void main() {
   });
 
   group('managed macOS DNS state', () {
-    test('requires the master switch, TUN, and automatic DNS', () {
+    test('follows the running TUN state', () {
       for (final isRunning in [false, true]) {
         for (final tunEnabled in [false, true]) {
-          for (final autoSetSystemDns in [false, true]) {
-            expect(
-              shouldUseManagedMacOSDns(
-                isRunning: isRunning,
-                tunEnabled: tunEnabled,
-                autoSetSystemDns: autoSetSystemDns,
-              ),
-              isRunning && tunEnabled && autoSetSystemDns,
-              reason:
-                  'isRunning=$isRunning, tunEnabled=$tunEnabled, '
-                  'autoSetSystemDns=$autoSetSystemDns',
-            );
-          }
+          expect(
+            shouldUseManagedMacOSDns(
+              isRunning: isRunning,
+              tunEnabled: tunEnabled,
+            ),
+            isRunning && tunEnabled,
+            reason: 'isRunning=$isRunning, tunEnabled=$tunEnabled',
+          );
         }
       }
     });

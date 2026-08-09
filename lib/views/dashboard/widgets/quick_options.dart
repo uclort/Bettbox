@@ -24,7 +24,6 @@ class TUNButton extends StatelessWidget {
                   generateSection(
                     items: [
                       if (system.isDesktop) const TUNItem(),
-                      if (system.isMacOS) const AutoSetSystemDnsItem(),
                       if (!system.isAndroid) const StrictRouteItem(),
                       const IcmpForwardingItem(),
                       const TunStackItem(),
