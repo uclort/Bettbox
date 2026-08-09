@@ -633,14 +633,14 @@ func handleSuspend(suspended bool) bool {
 
 func init() {
 	adapter.UrlTestHook = func(url string, name string, delay uint16) {
-		delayData := &Delay{
-			Url:  url,
-			Name: name,
-		}
+		// 后台健康检查失败不更新界面；主动测速会通过返回值写入终态。
 		if delay == 0 {
-			delayData.Value = -1
-		} else {
-			delayData.Value = int32(delay)
+			return
+		}
+		delayData := &Delay{
+			Url:   url,
+			Name:  name,
+			Value: int32(delay),
 		}
 		sendMessage(Message{
 			Type: DelayMessage,

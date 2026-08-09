@@ -307,11 +307,7 @@ func setupConfig(params *SetupParams) error {
 
 	constant.DefaultTestURL = params.TestURL
 	if params.OverrideTestUrl && params.Config != nil {
-		if params.Config.ProxyGroup != nil {
-			for _, group := range params.Config.ProxyGroup {
-				group["url"] = params.TestURL
-			}
-		}
+		overrideTestURLs(params.Config, params.TestURL)
 	}
 
 	var err error
@@ -326,6 +322,17 @@ func setupConfig(params *SetupParams) error {
 	runtime.GC()
 	debug.FreeOSMemory()
 	return nil
+}
+
+func overrideTestURLs(rawConfig *config.RawConfig, testURL string) {
+	for _, group := range rawConfig.ProxyGroup {
+		group["url"] = testURL
+	}
+	for _, proxyProvider := range rawConfig.ProxyProvider {
+		if healthCheck, ok := proxyProvider["health-check"].(map[string]any); ok {
+			healthCheck["url"] = testURL
+		}
+	}
 }
 
 func UnmarshalJson(data []byte, v any) error {

@@ -300,12 +300,23 @@ jobs:
           git show \
             "${previous_release}:.custom-build/release-notes/LATEST_CHANGES.md" \
             > "${previous_changes}" 2>/dev/null || : > "${previous_changes}"
-          if [[ "${previous_patch}" != "${current_patch}" ]] &&
-             cmp -s \
-               "${previous_changes}" \
-               .custom-build/release-notes/LATEST_CHANGES.md; then
-            echo "自定义应用代码已变化，但 LATEST_CHANGES.md 未更新。" >&2
-            exit 1
+          if [[ "${previous_patch}" != "${current_patch}" ]]; then
+            if cmp -s \
+                 "${previous_changes}" \
+                 .custom-build/release-notes/LATEST_CHANGES.md; then
+              echo "自定义应用代码已变化，但 LATEST_CHANGES.md 未更新。" >&2
+              exit 1
+            fi
+            previous_custom="${RUNNER_TEMP}/previous-custom-changes.md"
+            git show \
+              "${previous_release}:.custom-build/release-notes/CUSTOM_CHANGES.md" \
+              > "${previous_custom}" 2>/dev/null || : > "${previous_custom}"
+            if cmp -s \
+                 "${previous_custom}" \
+                 .custom-build/release-notes/CUSTOM_CHANGES.md; then
+              echo "自定义应用代码已变化，但 CUSTOM_CHANGES.md 未更新。" >&2
+              exit 1
+            fi
           fi
 
       - name: 显示构建摘要
