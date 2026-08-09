@@ -139,14 +139,7 @@ class _NodeExclusionDialogState extends ConsumerState<_NodeExclusionDialog> {
 class _ConcurrencyLimitItem extends ConsumerWidget {
   const _ConcurrencyLimitItem();
 
-  static const _options = [8, 16, 32, 64, 250];
-
-  String _getDisplayText(int value, BuildContext context) {
-    if (value == 250) {
-      return 'MAX';
-    }
-    return '$value';
-  }
+  static const _options = [8, 16, 32];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -161,8 +154,8 @@ class _ConcurrencyLimitItem extends ConsumerWidget {
       delegate: OptionsDelegate(
         title: appLocalizations.concurrencyLimit,
         options: _options,
-        value: concurrencyLimit,
-        textBuilder: (value) => _getDisplayText(value, context),
+        value: normalizeDelayTestConcurrency(concurrencyLimit),
+        textBuilder: (value) => '$value',
         onChanged: (value) {
           if (value != null) {
             ref.read(proxiesStyleSettingProvider.notifier).updateState(

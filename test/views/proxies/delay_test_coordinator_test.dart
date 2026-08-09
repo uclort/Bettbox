@@ -103,4 +103,43 @@ void main() {
 
     expect({first, second}, hasLength(2));
   });
+
+  test('limits concurrent requests and releases failed slots', () async {
+    final pool = DelayTestRequestPool();
+    final completers = List.generate(3, (_) => Completer<Delay>());
+    var started = 0;
+    var maxActive = 0;
+
+    Future<Delay> request(int index) async {
+      started++;
+      maxActive = pool.activeCount > maxActive ? pool.activeCount : maxActive;
+      return completers[index].future;
+    }
+
+    final requests = List.generate(
+      3,
+      (index) => pool.run(
+        DelayTestTarget(name: 'proxy-$index', url: 'https://example.com'),
+        () => request(index),
+        maxConcurrent: 2,
+      ),
+    );
+
+    expect(started, 2);
+    final firstFailure = requests.first.then<void>((_) {}, onError: (_) {});
+    completers[0].completeError(Exception('network error'));
+    await Future<void>.delayed(Duration.zero);
+    expect(started, 3);
+
+    for (var index = 1; index < completers.length; index++) {
+      completers[index].complete(
+        Delay(name: 'proxy-$index', url: 'https://example.com', value: 10),
+      );
+    }
+    await firstFailure;
+    await Future.wait(requests.skip(1));
+
+    expect(maxActive, 2);
+    expect(pool.activeCount, 0);
+  });
 }

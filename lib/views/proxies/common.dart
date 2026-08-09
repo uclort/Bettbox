@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:collection';
+
 import 'package:bett_box/clash/clash.dart';
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/enum/enum.dart';
@@ -52,23 +55,68 @@ class DelayTestTarget {
 
 class DelayTestRequestPool {
   final Map<DelayTestTarget, Future<Delay>> _pendingRequests = {};
+  final Queue<_DelayTestRequest> _queue = Queue();
+  int _activeCount = 0;
 
   int get pendingCount => _pendingRequests.length;
+  int get activeCount => _activeCount;
 
-  Future<Delay> run(DelayTestTarget target, Future<Delay> Function() action) {
+  Future<Delay> run(
+    DelayTestTarget target,
+    Future<Delay> Function() action, {
+    int maxConcurrent = defaultDelayTestConcurrencyLimit,
+  }) {
     final pendingRequest = _pendingRequests[target];
     if (pendingRequest != null) {
       return pendingRequest;
     }
 
-    final request = action();
-    _pendingRequests[target] = request;
-    return request.whenComplete(() {
+    final completer = Completer<Delay>();
+    late final Future<Delay> request;
+    request = completer.future.whenComplete(() {
       if (identical(_pendingRequests[target], request)) {
         _pendingRequests.remove(target);
       }
     });
+    _pendingRequests[target] = request;
+    _queue.add(
+      _DelayTestRequest(
+        action: action,
+        completer: completer,
+        maxConcurrent: normalizeDelayTestConcurrency(maxConcurrent),
+      ),
+    );
+    _drain();
+    return request;
   }
+
+  void _drain() {
+    while (_queue.isNotEmpty && _activeCount < _queue.first.maxConcurrent) {
+      final request = _queue.removeFirst();
+      _activeCount++;
+      Future.sync(request.action)
+          .then(
+            request.completer.complete,
+            onError: request.completer.completeError,
+          )
+          .whenComplete(() {
+            _activeCount--;
+            _drain();
+          });
+    }
+  }
+}
+
+class _DelayTestRequest {
+  final Future<Delay> Function() action;
+  final Completer<Delay> completer;
+  final int maxConcurrent;
+
+  const _DelayTestRequest({
+    required this.action,
+    required this.completer,
+    required this.maxConcurrent,
+  });
 }
 
 final _delayTestRequestPool = DelayTestRequestPool();
@@ -103,14 +151,26 @@ Future<void> proxyDelayTest(Proxy proxy, [String? testUrl]) async {
   appController.addSortNum();
 }
 
-Future<Delay> _testProxyDelay(DelayTestTarget target) {
+Future<Delay> _testProxyDelay(DelayTestTarget target) async {
+  final appController = globalState.appController;
+  appController.setDelay(Delay(url: target.url, name: target.name, value: 0));
   return _delayTestRequestPool.run(target, () async {
-    final appController = globalState.appController;
-    appController.setDelay(Delay(url: target.url, name: target.name, value: 0));
-    final delay = await clashCore.getDelay(target.url, target.name);
-    appController.setDelay(delay);
-    return delay;
-  });
+    try {
+      final result = await clashCore.getDelay(target.url, target.name);
+      final delay = Delay(
+        url: target.url,
+        name: target.name,
+        value: (result.value ?? -1) > 0 ? result.value : -1,
+      );
+      appController.setDelay(delay);
+      return delay;
+    } catch (e) {
+      commonPrint.log('Delay test failed for ${target.name}: $e');
+      final delay = Delay(url: target.url, name: target.name, value: -1);
+      appController.setDelay(delay);
+      return delay;
+    }
+  }, maxConcurrent: globalState.config.proxiesStyle.concurrencyLimit);
 }
 
 bool _isNonTestableProxyName(String proxyName) {
@@ -163,21 +223,12 @@ Future<void> delayTest(
       }
       targets.add(DelayTestTarget(name: name, url: url));
     }
-    final concurrencyLimit = globalState.config.proxiesStyle.concurrencyLimit;
-
-    // 按实际节点和实际测试地址创建任务，避免多个代理组别名重复测速。
-    final delayTasks = targets.map((target) {
-      return () async {
+    await Future.wait(
+      targets.map((target) async {
         await _testProxyDelay(target);
         await onDelayUpdated?.call();
-      };
-    }).toList();
-
-    // Execute tasks in batches
-    final batchedTasks = delayTasks.batch(concurrencyLimit);
-    for (final batchTasks in batchedTasks) {
-      await Future.wait(batchTasks.map((task) => task()));
-    }
+      }),
+    );
     appController.addSortNum();
   }
 

@@ -24,7 +24,14 @@ final baseInfoEdgeInsets = EdgeInsets.symmetric(
 
 final defaultTextScaleFactor =
     WidgetsBinding.instance.platformDispatcher.textScaleFactor;
-const httpTimeoutDuration = Duration(milliseconds: 5000);
+const httpTimeoutDuration = Duration(seconds: 10);
+const defaultDelayTestConcurrencyLimit = 16;
+const maxDelayTestConcurrencyLimit = 32;
+
+int normalizeDelayTestConcurrency(int value) {
+  return value.clamp(1, maxDelayTestConcurrencyLimit);
+}
+
 const moreDuration = Duration(milliseconds: 100);
 const animateDuration = Duration(milliseconds: 100);
 const midDuration = Duration(milliseconds: 200);

@@ -241,7 +241,13 @@ func handleAsyncTestDelay(paramsString string, fn func(string)) {
 			}
 		}
 
+		testUrl := constant.DefaultTestURL
+
+		if params.TestUrl != "" {
+			testUrl = params.TestUrl
+		}
 		delayData := &Delay{
+			Url:  testUrl,
 			Name: params.ProxyName,
 		}
 
@@ -251,13 +257,6 @@ func handleAsyncTestDelay(paramsString string, fn func(string)) {
 			fn(string(data))
 			return false, nil
 		}
-
-		testUrl := constant.DefaultTestURL
-
-		if params.TestUrl != "" {
-			testUrl = params.TestUrl
-		}
-		delayData.Url = testUrl
 
 		delay, err := proxy.URLTest(ctx, testUrl, expectedStatus)
 		if err != nil || delay == 0 {
