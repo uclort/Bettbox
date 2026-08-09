@@ -77,7 +77,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "action": MessageLookupByLibrary.simpleMessage("Action"),
     "action_mode": MessageLookupByLibrary.simpleMessage("Switch Mode"),
     "action_proxy": MessageLookupByLibrary.simpleMessage("System Proxy"),
-    "action_start": MessageLookupByLibrary.simpleMessage("Start/Stop"),
     "action_tun": MessageLookupByLibrary.simpleMessage("TUN"),
     "action_view": MessageLookupByLibrary.simpleMessage("Show/Hide"),
     "add": MessageLookupByLibrary.simpleMessage("Add"),
@@ -844,7 +843,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "Please enter a different port",
     ),
     "portTip": m10,
-    "powerSwitch": MessageLookupByLibrary.simpleMessage("Power"),
     "preferH3Desc": MessageLookupByLibrary.simpleMessage(
       "Prioritize DoH HTTP/3",
     ),
@@ -973,9 +971,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "restart": MessageLookupByLibrary.simpleMessage("Restart"),
     "restartApp": MessageLookupByLibrary.simpleMessage("Restart App"),
-    "restartCoreDesc": MessageLookupByLibrary.simpleMessage(
-      "Manually restart the core?",
-    ),
     "restartCoreTitle": MessageLookupByLibrary.simpleMessage("Restart Core"),
     "restartTip": MessageLookupByLibrary.simpleMessage(
       "Restart TUN for changes to take effect",
@@ -1006,7 +1001,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "selectAll": MessageLookupByLibrary.simpleMessage("Select All"),
     "selected": MessageLookupByLibrary.simpleMessage("Selected"),
     "selectedCountTitle": m12,
-    "serviceReady": MessageLookupByLibrary.simpleMessage("Service Ready"),
     "serviceRunning": MessageLookupByLibrary.simpleMessage("Service Running"),
     "settings": MessageLookupByLibrary.simpleMessage("Settings"),
     "show": MessageLookupByLibrary.simpleMessage("Show"),
@@ -1015,10 +1009,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "showMenu": MessageLookupByLibrary.simpleMessage("Show Menu"),
     "showPanel": MessageLookupByLibrary.simpleMessage("Show Panel"),
-    "showStartSwitch": MessageLookupByLibrary.simpleMessage("Linkage Switch"),
-    "showStartSwitchDesc": MessageLookupByLibrary.simpleMessage(
-      "Display independent switch button on the homepage",
-    ),
     "shrink": MessageLookupByLibrary.simpleMessage("Compact"),
     "silentLaunch": MessageLookupByLibrary.simpleMessage("Silent Launch"),
     "silentLaunchDesc": MessageLookupByLibrary.simpleMessage(

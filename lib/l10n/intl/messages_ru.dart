@@ -78,7 +78,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "action": MessageLookupByLibrary.simpleMessage("Действие"),
     "action_mode": MessageLookupByLibrary.simpleMessage("Переключить режим"),
     "action_proxy": MessageLookupByLibrary.simpleMessage("Системный прокси"),
-    "action_start": MessageLookupByLibrary.simpleMessage("Запуск/Остановка"),
     "action_tun": MessageLookupByLibrary.simpleMessage("Виртуальный адаптер"),
     "action_view": MessageLookupByLibrary.simpleMessage("Показать/Скрыть"),
     "add": MessageLookupByLibrary.simpleMessage("Добавить"),
@@ -859,7 +858,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "Введите разные порты",
     ),
     "portTip": m10,
-    "powerSwitch": MessageLookupByLibrary.simpleMessage("Запуск"),
     "preferH3Desc": MessageLookupByLibrary.simpleMessage(
       "Приоритет HTTP/3 для DoH",
     ),
@@ -988,9 +986,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "restart": MessageLookupByLibrary.simpleMessage("Перезапуск"),
     "restartApp": MessageLookupByLibrary.simpleMessage("Перезапустить"),
-    "restartCoreDesc": MessageLookupByLibrary.simpleMessage(
-      "Перезапустить ядро вручную?",
-    ),
     "restartCoreTitle": MessageLookupByLibrary.simpleMessage("Перезапуск ядра"),
     "restartTip": MessageLookupByLibrary.simpleMessage(
       "Изменения вступят в силу после перезапуска TUN",
@@ -1019,19 +1014,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "selectAll": MessageLookupByLibrary.simpleMessage("Выбрать все"),
     "selected": MessageLookupByLibrary.simpleMessage("Выбрано"),
     "selectedCountTitle": m12,
-    "serviceReady": MessageLookupByLibrary.simpleMessage("Служба готова"),
     "serviceRunning": MessageLookupByLibrary.simpleMessage("Служба запущена"),
     "settings": MessageLookupByLibrary.simpleMessage("Настройки"),
     "show": MessageLookupByLibrary.simpleMessage("Показать"),
     "showHiddenItems": MessageLookupByLibrary.simpleMessage("Показать скрытые"),
     "showMenu": MessageLookupByLibrary.simpleMessage("Показать меню"),
     "showPanel": MessageLookupByLibrary.simpleMessage("Показать панель"),
-    "showStartSwitch": MessageLookupByLibrary.simpleMessage(
-      "Связанный переключатель",
-    ),
-    "showStartSwitchDesc": MessageLookupByLibrary.simpleMessage(
-      "Отображать отдельную кнопку переключения на главной странице",
-    ),
     "shrink": MessageLookupByLibrary.simpleMessage("Стандарт"),
     "silentLaunch": MessageLookupByLibrary.simpleMessage("Тихий запуск"),
     "silentLaunchDesc": MessageLookupByLibrary.simpleMessage(

@@ -30,7 +30,6 @@ _AppSettingProps _$AppSettingPropsFromJson(Map<String, dynamic> json) =>
       openLogs: json['openLogs'] as bool? ?? true,
       closeConnections: json['closeConnections'] as bool? ?? true,
       testUrl: json['testUrl'] as String? ?? defaultTestUrl,
-      showStartSwitch: json['showStartSwitch'] as bool? ?? true,
       enableNavBarHapticFeedback:
           json['enableNavBarHapticFeedback'] as bool? ?? true,
       autoCheckUpdate: json['autoCheckUpdate'] as bool? ?? true,
@@ -69,7 +68,6 @@ Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
       'openLogs': instance.openLogs,
       'closeConnections': instance.closeConnections,
       'testUrl': instance.testUrl,
-      'showStartSwitch': instance.showStartSwitch,
       'enableNavBarHapticFeedback': instance.enableNavBarHapticFeedback,
       'autoCheckUpdate': instance.autoCheckUpdate,
       'showLabel': instance.showLabel,

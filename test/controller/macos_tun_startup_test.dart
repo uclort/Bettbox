@@ -325,4 +325,18 @@ void main() {
       }
     });
   });
+
+  test('系统代理或 TUN 任一开启时桌面内核就应运行', () {
+    for (final systemProxy in [false, true]) {
+      for (final tunEnabled in [false, true]) {
+        expect(
+          shouldRunDesktopCore(
+            systemProxy: systemProxy,
+            tunEnabled: tunEnabled,
+          ),
+          systemProxy || tunEnabled,
+        );
+      }
+    }
+  });
 }

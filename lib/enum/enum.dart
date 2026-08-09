@@ -337,7 +337,7 @@ enum DashboardWidget {
   fcmStatus(GridItem(crossAxisCellCount: 4, child: FcmStatus())),
   onlinePanel(GridItem(crossAxisCellCount: 4, child: OnlinePanel())),
   startButton(
-    GridItem(crossAxisCellCount: 4, isDeletable: false, child: StartButton()),
+    GridItem(crossAxisCellCount: 4, isDeletable: false, child: RunTime()),
   );
 
   final GridItem widget;

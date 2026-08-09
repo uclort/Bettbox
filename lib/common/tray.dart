@@ -57,7 +57,7 @@ class Tray {
     if (system.isAndroid) {
       return;
     }
-    if (force) {
+    if (force && !system.isMacOS) {
       await trayManager.destroy();
       _isSpeedTitleVisible = false;
       _lastDisplayedUpload = null;
@@ -150,18 +150,6 @@ class Tray {
         },
       );
       menuItems.add(showMenuItem);
-      final startMenuItem = MenuItem.checkbox(
-        label: trayState.isStart
-            ? appLocalizations.stop
-            : appLocalizations.start,
-        onClick: (_) async {
-          final appController = globalState.appController;
-          await appController.updateStatus(!trayState.isStart);
-          await appController.updateTray();
-        },
-        checked: false,
-      );
-      menuItems.add(startMenuItem);
       menuItems.add(MenuItem.separator());
       for (final mode in Mode.values) {
         menuItems.add(
@@ -239,27 +227,25 @@ class Tray {
       if (menuGroups.isNotEmpty) {
         menuItems.add(MenuItem.separator());
       }
-      if (trayState.isStart) {
-        menuItems.add(
-          MenuItem.checkbox(
-            label: appLocalizations.tun,
-            onClick: (_) {
-              globalState.appController.updateTun();
-            },
-            checked: trayState.tunEnable,
-          ),
-        );
-        menuItems.add(
-          MenuItem.checkbox(
-            label: appLocalizations.systemProxy,
-            onClick: (_) {
-              globalState.appController.updateSystemProxy();
-            },
-            checked: trayState.systemProxy,
-          ),
-        );
-        menuItems.add(MenuItem.separator());
-      }
+      menuItems.add(
+        MenuItem.checkbox(
+          label: appLocalizations.tun,
+          onClick: (_) async {
+            await globalState.appController.updateTun();
+          },
+          checked: trayState.tunEnable,
+        ),
+      );
+      menuItems.add(
+        MenuItem.checkbox(
+          label: appLocalizations.systemProxy,
+          onClick: (_) async {
+            await globalState.appController.updateSystemProxy();
+          },
+          checked: trayState.systemProxy,
+        ),
+      );
+      menuItems.add(MenuItem.separator());
       final restartMenuItem = MenuItem(
         label: appLocalizations.restartApp,
         onClick: (_) async {

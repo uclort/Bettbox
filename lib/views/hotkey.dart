@@ -38,7 +38,9 @@ class HotKeyView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      for (final hotAction in HotAction.values)
+      for (final hotAction in HotAction.values.where(
+        (action) => action != HotAction.start,
+      ))
         Consumer(
           builder: (_, ref, _) {
             final hotKeyAction = ref.watch(getHotKeyActionProvider(hotAction));
@@ -57,7 +59,7 @@ class HotKeyView extends StatelessWidget {
               },
             );
           },
-        )
+        ),
     ];
     return generateListView(items);
   }

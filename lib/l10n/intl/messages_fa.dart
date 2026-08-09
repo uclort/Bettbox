@@ -73,7 +73,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "action": MessageLookupByLibrary.simpleMessage("عملیات"),
     "action_mode": MessageLookupByLibrary.simpleMessage("تغییر حالت"),
     "action_proxy": MessageLookupByLibrary.simpleMessage("پروکسی سیستم"),
-    "action_start": MessageLookupByLibrary.simpleMessage("شروع / توقف"),
     "action_tun": MessageLookupByLibrary.simpleMessage("کارت شبکه مجازی (TUN)"),
     "action_view": MessageLookupByLibrary.simpleMessage("نمایش / پنهان"),
     "add": MessageLookupByLibrary.simpleMessage("افزودن"),
@@ -852,7 +851,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "لطفاً پورت غیرتکراری وارد کنید",
     ),
     "portTip": m10,
-    "powerSwitch": MessageLookupByLibrary.simpleMessage("کلید روشن/خاموش"),
     "preferH3Desc": MessageLookupByLibrary.simpleMessage(
       "اولویت استفاده از HTTP/3 در DoH",
     ),
@@ -991,9 +989,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "restartApp": MessageLookupByLibrary.simpleMessage(
       "راه‌اندازی مجدد برنامه",
     ),
-    "restartCoreDesc": MessageLookupByLibrary.simpleMessage(
-      "آیا هسته به صورت دستی راه‌اندازی مجدد شود؟",
-    ),
     "restartCoreTitle": MessageLookupByLibrary.simpleMessage(
       "راه‌اندازی مجدد هسته",
     ),
@@ -1030,7 +1025,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "selectAll": MessageLookupByLibrary.simpleMessage("انتخاب همه"),
     "selected": MessageLookupByLibrary.simpleMessage("انتخاب شده"),
     "selectedCountTitle": m12,
-    "serviceReady": MessageLookupByLibrary.simpleMessage("سرویس آماده است"),
     "serviceRunning": MessageLookupByLibrary.simpleMessage(
       "سرویس در حال اجرا است",
     ),
@@ -1041,10 +1035,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "showMenu": MessageLookupByLibrary.simpleMessage("نمایش منو"),
     "showPanel": MessageLookupByLibrary.simpleMessage("نمایش پنل"),
-    "showStartSwitch": MessageLookupByLibrary.simpleMessage("دکمه کلید سوئیچ"),
-    "showStartSwitchDesc": MessageLookupByLibrary.simpleMessage(
-      "نمایش دکمه مستقل روشن/خاموش در صفحه اصلی",
-    ),
     "shrink": MessageLookupByLibrary.simpleMessage("فشرده"),
     "silentLaunch": MessageLookupByLibrary.simpleMessage("اجرای بی‌صدا"),
     "silentLaunchDesc": MessageLookupByLibrary.simpleMessage(

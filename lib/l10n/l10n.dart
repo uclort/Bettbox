@@ -1584,26 +1584,6 @@ class AppLocalizations {
     return Intl.message('Core', name: 'core', desc: '', args: []);
   }
 
-  /// `Linkage Switch`
-  String get showStartSwitch {
-    return Intl.message(
-      'Linkage Switch',
-      name: 'showStartSwitch',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Display independent switch button on the homepage`
-  String get showStartSwitchDesc {
-    return Intl.message(
-      'Display independent switch button on the homepage',
-      name: 'showStartSwitchDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Bettbox is based on the powerful and flexible Mihomo (Clash.Meta) proxy kernel, dedicated to a superior user experience. Forked from FlClash: Better Experience, Out of the box`
   String get desc {
     return Intl.message(
@@ -2654,11 +2634,6 @@ class AppLocalizations {
     return Intl.message('Stop', name: 'stop', desc: '', args: []);
   }
 
-  /// `Power`
-  String get powerSwitch {
-    return Intl.message('Power', name: 'powerSwitch', desc: '', args: []);
-  }
-
   /// `Uptime`
   String get runTime {
     return Intl.message('Uptime', name: 'runTime', desc: '', args: []);
@@ -2669,16 +2644,6 @@ class AppLocalizations {
     return Intl.message(
       'Please add a profile first',
       name: 'checkOrAddProfile',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Service Ready`
-  String get serviceReady {
-    return Intl.message(
-      'Service Ready',
-      name: 'serviceReady',
       desc: '',
       args: [],
     );
@@ -3797,11 +3762,6 @@ class AppLocalizations {
   /// `Show/Hide`
   String get action_view {
     return Intl.message('Show/Hide', name: 'action_view', desc: '', args: []);
-  }
-
-  /// `Start/Stop`
-  String get action_start {
-    return Intl.message('Start/Stop', name: 'action_start', desc: '', args: []);
   }
 
   /// `Switch Mode`
@@ -5239,16 +5199,6 @@ class AppLocalizations {
     return Intl.message(
       'Restart Core',
       name: 'restartCoreTitle',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Manually restart the core?`
-  String get restartCoreDesc {
-    return Intl.message(
-      'Manually restart the core?',
-      name: 'restartCoreDesc',
       desc: '',
       args: [],
     );
