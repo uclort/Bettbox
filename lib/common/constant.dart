@@ -146,7 +146,7 @@ double getWidgetHeight(num lines) {
   return max(lines * 84 + (lines - 1) * 16, 0).ap;
 }
 
-const maxLength = 256;
+const maxLength = 1024;
 
 final mainIsolate = 'BettboxMainIsolate';
 
