@@ -66,6 +66,7 @@
 - 所有平台和测速入口共用全局并发池，排队不计入单节点超时；默认并发 16、上限 32，失败任务统一结束加载并释放队列，避免秒出超时、永久转圈和结果跳变。
 - Provider 后台健康检查失败不会再向页面广播失败状态；主动测速仍会明确写入成功或失败终态，避免更新后首次运行时未测速节点先显示“检测失败”。
 - 开启“覆写测速链接”时，核心同时覆盖策略组和 Provider 健康检查 URL，避免同一节点被两个测速地址产生的结果互相覆盖。
+- 节点测速增加端到端诊断日志：Dart 批次、桥接排队和 Mihomo 网络阶段共享 request ID，Provider 健康检查另带 batch ID；失败时记录解析、拨号、请求构造、TLS、HTTP、状态校验阶段、context、错误类型、耗时和节点来源。测试 URL 的账号、查询参数与 fragment 会脱敏，日志不包含节点密码。代码位于 `lib/clash/core.dart`、`lib/clash/interface.dart`、`lib/views/proxies/common.dart`、`core/hub.go`、`core/Clash.Meta/adapter/adapter.go` 和私有 custom-mihomo 对应路径；回归测试为 `core/Clash.Meta/adapter/patch_test.go`。
 - 移除独立的启动、停止入口，运行状态完全由系统代理和虚拟网卡开关驱动。
 - 首次安装特权工具成功后原位刷新托盘，避免图标短暂消失再出现。
 

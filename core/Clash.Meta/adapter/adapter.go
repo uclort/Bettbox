@@ -164,7 +164,26 @@ func (p *Proxy) MarshalJSON() ([]byte, error) {
 // URLTest get the delay for the specified URL
 // implements C.Proxy
 func (p *Proxy) URLTest(ctx context.Context, url string, expectedStatus utils.IntRanges[uint16]) (t uint16, err error) {
+	trace := URLTestTraceFromContext(ctx)
+	if trace.ID == "" {
+		trace.ID = utils.NewUUIDV4().String()
+	}
+	if trace.Source == "" {
+		trace.Source = "mihomo"
+	}
+	proxyInfo := p.ProxyInfo()
+	testURL := urlForLog(url)
+	testStarted := time.Now()
+	deadlineIn := int64(-1)
+	if deadline, ok := ctx.Deadline(); ok {
+		deadlineIn = time.Until(deadline).Milliseconds()
+	}
+	stage := "parse-url"
+	statusCode := 0
 	var satisfied bool
+
+	log.Infoln("[DELAY-TEST][NETWORK] id=%s source=%s batch=%s phase=start proxy=%q type=%s address=%q provider=%q interface=%q url=%q deadline-in=%dms unified=%t",
+		trace.ID, trace.Source, trace.BatchID, p.Name(), p.Type(), p.Addr(), proxyInfo.ProviderName, proxyInfo.Interface, testURL, deadlineIn, UnifiedDelay.Load())
 
 	defer func() {
 		if UrlTestHook != nil {
@@ -201,6 +220,19 @@ func (p *Proxy) URLTest(ctx context.Context, url string, expectedStatus utils.In
 			state.history.Pop()
 		}
 
+		elapsed := time.Since(testStarted).Milliseconds()
+		contextErr := ctx.Err()
+		if err != nil {
+			log.Warnln("[DELAY-TEST][NETWORK] id=%s source=%s batch=%s phase=finish outcome=error stage=%s proxy=%q type=%s provider=%q url=%q elapsed=%dms delay=%dms status=%d alive=%t context-error=%v error-type=%T error=%v",
+				trace.ID, trace.Source, trace.BatchID, stage, p.Name(), p.Type(), proxyInfo.ProviderName, testURL, elapsed, t, statusCode, alive, contextErr, err, err)
+		} else if !satisfied {
+			log.Warnln("[DELAY-TEST][NETWORK] id=%s source=%s batch=%s phase=finish outcome=unexpected-status stage=%s proxy=%q type=%s provider=%q url=%q elapsed=%dms delay=%dms status=%d alive=%t context-error=%v",
+				trace.ID, trace.Source, trace.BatchID, stage, p.Name(), p.Type(), proxyInfo.ProviderName, testURL, elapsed, t, statusCode, alive, contextErr)
+		} else {
+			log.Infoln("[DELAY-TEST][NETWORK] id=%s source=%s batch=%s phase=finish outcome=success stage=%s proxy=%q type=%s provider=%q url=%q elapsed=%dms delay=%dms status=%d alive=%t context-error=%v",
+				trace.ID, trace.Source, trace.BatchID, stage, p.Name(), p.Type(), proxyInfo.ProviderName, testURL, elapsed, t, statusCode, alive, contextErr)
+		}
+
 	}()
 
 	unifiedDelay := UnifiedDelay.Load()
@@ -210,6 +242,7 @@ func (p *Proxy) URLTest(ctx context.Context, url string, expectedStatus utils.In
 		return
 	}
 
+	stage = "dial"
 	start := time.Now()
 	instance, err := p.DialContext(ctx, &addr)
 	if err != nil {
@@ -219,12 +252,14 @@ func (p *Proxy) URLTest(ctx context.Context, url string, expectedStatus utils.In
 		_ = instance.Close()
 	}()
 
+	stage = "create-request"
 	req, err := http.NewRequest(http.MethodHead, url, nil)
 	if err != nil {
 		return
 	}
 	req = req.WithContext(ctx)
 
+	stage = "tls-config"
 	tlsConfig, err := ca.GetTLSConfig(ca.Option{})
 	if err != nil {
 		return
@@ -252,6 +287,7 @@ func (p *Proxy) URLTest(ctx context.Context, url string, expectedStatus utils.In
 
 	defer client.CloseIdleConnections()
 
+	stage = "http-head"
 	resp, err := client.Do(req)
 
 	if err != nil {
@@ -261,6 +297,7 @@ func (p *Proxy) URLTest(ctx context.Context, url string, expectedStatus utils.In
 	_ = resp.Body.Close()
 
 	if unifiedDelay {
+		stage = "second-http-head"
 		second := time.Now()
 		var ignoredErr error
 		var secondResp *http.Response
@@ -277,9 +314,25 @@ func (p *Proxy) URLTest(ctx context.Context, url string, expectedStatus utils.In
 		}
 	}
 
+	stage = "validate-status"
+	if resp != nil {
+		statusCode = resp.StatusCode
+	}
 	satisfied = resp != nil && (expectedStatus == nil || expectedStatus.Check(uint16(resp.StatusCode)))
 	t = uint16(time.Since(start) / time.Millisecond)
+	stage = "complete"
 	return
+}
+
+func urlForLog(rawURL string) string {
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return "<invalid-url>"
+	}
+	parsed.User = nil
+	parsed.RawQuery = ""
+	parsed.Fragment = ""
+	return parsed.String()
 }
 
 func NewProxy(adapter C.ProxyAdapter) *Proxy {

@@ -23,6 +23,7 @@
 - Provider 后台健康检查失败不再覆盖页面已有测速结果；只有用户主动测速才写入失败终态。
 - 覆写脚本使用全局 `latencyTestUrl` 统一 OwO、源 Provider、Inline Provider 和策略组测速地址，默认值为 `http://www.gstatic.com/generate_204`。
 - Bettbox 开启“覆写测速链接”时，同时覆盖策略组和 Provider 健康检查地址。
+- 增加节点测速全链路诊断日志，以 request ID 串联 Dart、桥接和 Mihomo 网络阶段，并记录 Provider batch ID、失败阶段、context、错误类型及各段耗时；不改变测速、并发、超时或重试行为。
 
 ### 自定义改动维护
 

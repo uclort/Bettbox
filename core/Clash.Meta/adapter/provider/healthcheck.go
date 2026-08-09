@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/common/atomic"
 	"github.com/metacubex/mihomo/common/singledo"
 	"github.com/metacubex/mihomo/common/utils"
@@ -180,6 +181,11 @@ func (hc *HealthCheck) execute(b *errgroup.Group, url, uid string, option *extra
 		b.Go(func() error {
 			ctx, cancel := context.WithTimeout(hc.ctx, hc.timeout)
 			defer cancel()
+			ctx = adapter.WithURLTestTrace(ctx, adapter.URLTestTrace{
+				ID:      utils.NewUUIDV4().String(),
+				Source:  "provider-health-check",
+				BatchID: uid,
+			})
 			log.Debugln("Health Checking, proxy: %s, url: %s, id: {%s}", p.Name(), url, uid)
 			_, _ = p.URLTest(ctx, url, expectedStatus)
 			log.Debugln("Health Checked, proxy: %s, url: %s, alive: %t, delay: %d ms uid: {%s}", p.Name(), url, p.AliveForTestUrl(url), p.LastDelayForTestUrl(url), uid)

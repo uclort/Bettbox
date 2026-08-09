@@ -206,6 +206,7 @@ Future<void> delayTest(
 }) async {
   Future<void> runTest() async {
     final appController = globalState.appController;
+    final stopwatch = Stopwatch()..start();
     final targets = <DelayTestTarget>{};
     for (final proxy in proxies) {
       if (_isNonTestableProxy(proxy)) {
@@ -223,11 +224,27 @@ Future<void> delayTest(
       }
       targets.add(DelayTestTarget(name: name, url: url));
     }
-    await Future.wait(
+
+    commonPrint.log(
+      '[DELAY-TEST][BATCH] phase=start group="${groupName ?? ''}" '
+      'targets=${targets.length} concurrency='
+      '${normalizeDelayTestConcurrency(globalState.config.proxiesStyle.concurrencyLimit)}',
+    );
+    final results = await Future.wait(
       targets.map((target) async {
-        await _testProxyDelay(target);
+        final result = await _testProxyDelay(target);
         await onDelayUpdated?.call();
+        return result;
       }),
+    );
+    final successCount = results
+        .where((delay) => (delay.value ?? -1) > 0)
+        .length;
+    commonPrint.log(
+      '[DELAY-TEST][BATCH] phase=finish group="${groupName ?? ''}" '
+      'targets=${targets.length} success=$successCount '
+      'failed=${results.length - successCount} '
+      'elapsed=${stopwatch.elapsedMilliseconds}ms',
     );
     appController.addSortNum();
   }

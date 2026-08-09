@@ -73,6 +73,7 @@ type ChangeProxyParams struct {
 }
 
 type TestDelayParams struct {
+	RequestID string `json:"request-id"`
 	ProxyName string `json:"proxy-name"`
 	TestUrl   string `json:"test-url"`
 	Timeout   int64  `json:"timeout"`

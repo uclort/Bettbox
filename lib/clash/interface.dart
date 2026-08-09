@@ -405,7 +405,9 @@ abstract class ClashHandlerInterface with ClashInterface {
 
   @override
   Future<String> asyncTestDelay(String url, String proxyName) {
+    final requestId = utils.uuidV4;
     final delayParams = {
+      'request-id': requestId,
       'proxy-name': proxyName,
       'timeout': httpTimeoutDuration.inMilliseconds,
       'test-url': url,
@@ -415,6 +417,11 @@ abstract class ClashHandlerInterface with ClashInterface {
       data: json.encode(delayParams),
       timeout: httpTimeoutDuration + const Duration(seconds: 2),
       onTimeout: () {
+        commonPrint.log(
+          '[DELAY-TEST][DART] id=$requestId phase=bridge-timeout '
+          'proxy="$proxyName" url="$url" timeout='
+          '${(httpTimeoutDuration + const Duration(seconds: 2)).inMilliseconds}ms',
+        );
         return json.encode(Delay(name: proxyName, value: -1, url: url));
       },
     );
