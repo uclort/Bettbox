@@ -308,6 +308,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "customUrl": MessageLookupByLibrary.simpleMessage("Пользовательский URL"),
     "cut": MessageLookupByLibrary.simpleMessage("Вырезать"),
     "dark": MessageLookupByLibrary.simpleMessage("Тёмная"),
+    "darkIcon": MessageLookupByLibrary.simpleMessage("Тёмная иконка"),
+    "darkIconDesc": MessageLookupByLibrary.simpleMessage(
+      "Переключить на тёмный стиль рабочего стола вручную",
+    ),
     "dashboard": MessageLookupByLibrary.simpleMessage("Обзор"),
     "days": m0,
     "defaultNameserver": MessageLookupByLibrary.simpleMessage(

@@ -309,6 +309,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "customUrl": MessageLookupByLibrary.simpleMessage("Custom URL"),
     "cut": MessageLookupByLibrary.simpleMessage("Cut"),
     "dark": MessageLookupByLibrary.simpleMessage("Dark"),
+    "darkIcon": MessageLookupByLibrary.simpleMessage("Dark Icon"),
+    "darkIconDesc": MessageLookupByLibrary.simpleMessage(
+      "Manually switch dark desktop app icon",
+    ),
     "dashboard": MessageLookupByLibrary.simpleMessage("Dash"),
     "days": m0,
     "defaultNameserver": MessageLookupByLibrary.simpleMessage(

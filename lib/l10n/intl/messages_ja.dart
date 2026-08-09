@@ -242,6 +242,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "customUrl": MessageLookupByLibrary.simpleMessage("カスタムURL"),
     "cut": MessageLookupByLibrary.simpleMessage("切り取り"),
     "dark": MessageLookupByLibrary.simpleMessage("ダーク"),
+    "darkIcon": MessageLookupByLibrary.simpleMessage("ダークアイコン"),
+    "darkIconDesc": MessageLookupByLibrary.simpleMessage(
+      "デスクトップアプリのアイコンをダーク系に切り替え",
+    ),
     "dashboard": MessageLookupByLibrary.simpleMessage("ホーム"),
     "days": m0,
     "defaultNameserver": MessageLookupByLibrary.simpleMessage("デフォルトDNSサーバー"),

@@ -4694,6 +4694,21 @@ class AppLocalizations {
     );
   }
 
+  /// `Dark Icon`
+  String get darkIcon {
+    return Intl.message('Dark Icon', name: 'darkIcon', desc: '', args: []);
+  }
+
+  /// `Manually switch dark desktop app icon`
+  String get darkIconDesc {
+    return Intl.message(
+      'Manually switch dark desktop app icon',
+      name: 'darkIconDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Light Icon`
   String get lightIcon {
     return Intl.message('Light Icon', name: 'lightIcon', desc: '', args: []);

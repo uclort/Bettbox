@@ -230,6 +230,7 @@ class ProfileItem extends StatelessWidget {
         final patchConfig = globalState.config.patchClashConfig;
         final runtimeConfig = await globalState.patchRawConfig(
           patchConfig: patchConfig,
+          profile: profile,
         );
         final content = await encodeYamlTask(runtimeConfig);
         if (!context.mounted) {

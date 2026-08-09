@@ -307,6 +307,12 @@ class SyntaxHighlighter {
   }
 
   TextSpan? getLineSpan(int lineIndex, String lineText) {
+    final getLineTextFn = getLineText;
+    final isSubstring = getLineTextFn != null && getLineTextFn(lineIndex).length != lineText.length;
+    if (isSubstring) {
+      return _highlightLine(lineText);
+    }
+
     final mergedCache = _mergedCache[lineIndex];
     if (mergedCache != null &&
         mergedCache.version == _version &&

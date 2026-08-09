@@ -254,6 +254,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "customUrl": MessageLookupByLibrary.simpleMessage("사용자 지정 URL"),
     "cut": MessageLookupByLibrary.simpleMessage("잘라내기"),
     "dark": MessageLookupByLibrary.simpleMessage("다크"),
+    "darkIcon": MessageLookupByLibrary.simpleMessage("다크 아이콘"),
+    "darkIconDesc": MessageLookupByLibrary.simpleMessage(
+      "데스크톱 앱 아이콘을 어두운 색계열로 전환",
+    ),
     "dashboard": MessageLookupByLibrary.simpleMessage("홈"),
     "days": m0,
     "defaultNameserver": MessageLookupByLibrary.simpleMessage("기본 네임서버"),

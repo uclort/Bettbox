@@ -572,6 +572,8 @@
   "textScale": "Text Scaling",
   "trayIconInvert": "Invert Tray Icon",
   "trayIconInvertDesc": "Invert the current tray icon color",
+  "darkIcon": "Dark Icon",
+  "darkIconDesc": "Manually switch dark desktop app icon",
   "lightIcon": "Light Icon",
   "lightIconDesc": "Manually switch light desktop app icon",
   "harmonyFont": "Font Fix",

@@ -566,14 +566,15 @@ class GlobalState {
 
   Future<Map<String, dynamic>> patchRawConfig({
     required ClashConfig patchConfig,
+    Profile? profile,
   }) async {
-    final profile = config.currentProfile;
-    if (profile == null) {
+    final targetProfile = profile ?? config.currentProfile;
+    if (targetProfile == null) {
       return {};
     }
-    final profileId = profile.id;
+    final profileId = targetProfile.id;
     final configMap = await getProfileConfig(profileId);
-    final rawConfig = await handleEvaluate(configMap, profile: profile);
+    final rawConfig = await handleEvaluate(configMap, profile: targetProfile);
     final originalProxyGroups = rawConfig['proxy-groups'];
 
     final realPatchConfig = patchConfig.copyWith(
@@ -657,7 +658,7 @@ class GlobalState {
         }
         if (proxyProvider['url'] != null) {
           proxyProvider['path'] = await appPath.getProvidersFilePath(
-            profile.id,
+            targetProfile.id,
             'proxies',
             proxyProvider['url'],
           );
@@ -674,7 +675,7 @@ class GlobalState {
         }
         if (ruleProvider['url'] != null) {
           ruleProvider['path'] = await appPath.getProvidersFilePath(
-            profile.id,
+            targetProfile.id,
             'rules',
             ruleProvider['url'],
           );
@@ -870,9 +871,9 @@ class GlobalState {
     }
 
     final scriptActive = config.scriptProps.currentScript != null &&
-        profile.useScriptOverride;
+        targetProfile.useScriptOverride;
 
-    final overrideData = profile.overrideData;
+    final overrideData = targetProfile.overrideData;
     if (overrideData.enable && !scriptActive) {
       if (overrideData.rule.type == OverrideRuleType.override) {
         rules = overrideData.runningRule;
@@ -929,10 +930,10 @@ class GlobalState {
       }
     }
 
-    if (profile.groupSwitches.isNotEmpty &&
+    if (targetProfile.groupSwitches.isNotEmpty &&
         !scriptActive &&
         rawConfig['proxy-groups'] is List) {
-      final disabledGroups = profile.groupSwitches.entries
+      final disabledGroups = targetProfile.groupSwitches.entries
           .where((e) => !e.value)
           .map((e) => e.key)
           .toSet();

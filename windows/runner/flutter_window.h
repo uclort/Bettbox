@@ -33,10 +33,13 @@ class FlutterWindow : public Win32Window {
   void SetupAppMethodChannel();
   
   // Set window icon
-  bool SetWindowIcon(bool use_light_icon);
+  bool SetWindowIcon(bool use_dark_icon);
   
+  // Update desktop and start menu shortcuts icon
+  void UpdateShortcutsIcon(bool use_dark_icon);
+
   // Save icon preference
-  void SaveIconPreference(bool use_light_icon);
+  void SaveIconPreference(bool use_dark_icon);
   
   // Load icon preference
   bool LoadIconPreference();

@@ -27,6 +27,7 @@ categories:
   - Network
 
 startup_notify: true
+startup_wm_class: com.appshub.bettbox
 
 postinstall_scripts:
   - |

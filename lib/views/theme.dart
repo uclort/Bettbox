@@ -48,7 +48,7 @@ class ThemeView extends ConsumerWidget {
 
     final toggleItems = [
       if (shouldShowHarmonyFont) _HarmonyFontItem(),
-      _LightIconItem(),
+      _DarkIconItem(),
       if (system.isWindows) _TrayIconInvertItem(),
       _TextScaleFactorItem(),
     ];
@@ -474,37 +474,46 @@ class _HarmonyFontItem extends ConsumerWidget {
   }
 }
 
-class _LightIconItem extends ConsumerWidget {
-  const _LightIconItem();
+class _DarkIconItem extends ConsumerWidget {
+  const _DarkIconItem();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final useLightIcon = ref.watch(
-      themeSettingProvider.select((state) => state.useLightIcon),
+    final isWindowsOrLinux = system.isWindows || system.isLinux;
+    final useDarkIcon = ref.watch(
+      themeSettingProvider.select((state) => state.useDarkIcon),
     );
     return ListItem.switchItem(
-      leading: Icon(Icons.light_mode_outlined),
+      leading: Icon(
+        isWindowsOrLinux
+            ? Icons.light_mode_outlined
+            : Icons.dark_mode_outlined,
+      ),
       horizontalTitleGap: 12,
       title: Text(
-        appLocalizations.lightIcon,
+        isWindowsOrLinux
+            ? appLocalizations.lightIcon
+            : appLocalizations.darkIcon,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
           color: context.colorScheme.onSurfaceVariant,
         ),
       ),
       subtitle: Text(
-        appLocalizations.lightIconDesc,
+        isWindowsOrLinux
+            ? appLocalizations.lightIconDesc
+            : appLocalizations.darkIconDesc,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: context.colorScheme.onSurfaceVariant.withOpacity(0.7),
         ),
       ),
       delegate: SwitchDelegate(
-        value: useLightIcon,
+        value: useDarkIcon,
         onChanged: (value) async {
           // Call native method to switch icon
           await app.setLauncherIcon(value);
           ref
               .read(themeSettingProvider.notifier)
-              .updateState((state) => state.copyWith(useLightIcon: value));
+              .updateState((state) => state.copyWith(useDarkIcon: value));
         },
       ),
     );

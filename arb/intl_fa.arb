@@ -573,6 +573,8 @@
   "textScale": "مقیاس متن",
   "trayIconInvert": "معکوس‌سازی آیکون تسک‌بار",
   "trayIconInvertDesc": "معکوس کردن رنگ آیکون تسک‌بار",
+  "darkIcon": "آیکون تاریک",
+  "darkIconDesc": "تغییر آیکون برنامه به تم تاریک",
   "lightIcon": "آیکون روشن",
   "lightIconDesc": "تغییر آیکون برنامه به تم روشن",
   "harmonyFont": "ترمیم فونت",

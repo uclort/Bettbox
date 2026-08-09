@@ -21,6 +21,7 @@ generic_name: Bettbox
 group: Applications/Internet
 
 startup_notify: true
+startup_wm_class: com.appshub.bettbox
 
 install: |
   mkdir -p %{buildroot}%{_bindir}

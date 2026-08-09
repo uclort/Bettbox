@@ -4,6 +4,7 @@
 #include <flutter/method_channel.h>
 #include <flutter/standard_method_codec.h>
 #include <shobjidl.h>  // For ITaskbarList3
+#include <shlobj.h>    // For Shell link API
 
 #include "flutter/generated_plugin_registrant.h"
 #include "resource.h"
@@ -40,8 +41,8 @@ bool FlutterWindow::OnCreate() {
   SetupAppMethodChannel();
   
   // Load and apply saved icon preference
-  bool use_light_icon = LoadIconPreference();
-  SetWindowIcon(use_light_icon);
+  bool use_dark_icon = LoadIconPreference();
+  SetWindowIcon(use_dark_icon);
   
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
@@ -98,28 +99,28 @@ void FlutterWindow::SetupAppMethodChannel() {
         if (call.method_name() == "setLauncherIcon") {
           const auto* arguments = std::get_if<flutter::EncodableMap>(call.arguments());
           if (arguments) {
-            auto use_light_icon_it = arguments->find(flutter::EncodableValue("useLightIcon"));
-            if (use_light_icon_it != arguments->end()) {
-              bool use_light_icon = std::get<bool>(use_light_icon_it->second);
-              bool success = SetWindowIcon(use_light_icon);
+            auto use_dark_icon_it = arguments->find(flutter::EncodableValue("useDarkIcon"));
+            if (use_dark_icon_it != arguments->end()) {
+              bool use_dark_icon = std::get<bool>(use_dark_icon_it->second);
+              bool success = SetWindowIcon(use_dark_icon);
               result->Success(flutter::EncodableValue(success));
               return;
             }
           }
-          result->Error("INVALID_ARGUMENT", "Missing useLightIcon argument");
+          result->Error("INVALID_ARGUMENT", "Missing useDarkIcon argument");
         } else {
           result->NotImplemented();
         }
       });
 }
 
-bool FlutterWindow::SetWindowIcon(bool use_light_icon) {
+bool FlutterWindow::SetWindowIcon(bool use_dark_icon) {
   HWND hwnd = GetHandle();
   if (!hwnd) {
     return false;
   }
 
-  std::wstring icon_name = use_light_icon ? L"icon_light.ico" : L"icon.ico";
+  std::wstring icon_name = use_dark_icon ? L"icon_light.ico" : L"icon.ico";
   wchar_t exe_path_buf[MAX_PATH] = {0};
   DWORD exe_path_len = GetModuleFileNameW(NULL, exe_path_buf, MAX_PATH);
   std::wstring exe_path = exe_path_len > 0 ? std::wstring(exe_path_buf) : L"";
@@ -180,13 +181,87 @@ bool FlutterWindow::SetWindowIcon(bool use_light_icon) {
   RedrawWindow(hwnd, NULL, NULL,
                RDW_INVALIDATE | RDW_FRAME | RDW_UPDATENOW | RDW_ALLCHILDREN);
 
+  // Update desktop & start menu shortcuts
+  UpdateShortcutsIcon(use_dark_icon);
+
   // Save preference to registry
-  SaveIconPreference(use_light_icon);
+  SaveIconPreference(use_dark_icon);
 
   return true;
 }
 
-void FlutterWindow::SaveIconPreference(bool use_light_icon) {
+void FlutterWindow::UpdateShortcutsIcon(bool use_dark_icon) {
+  wchar_t exe_path_buf[MAX_PATH] = {0};
+  DWORD exe_path_len = GetModuleFileNameW(NULL, exe_path_buf, MAX_PATH);
+  std::wstring exe_path = exe_path_len > 0 ? std::wstring(exe_path_buf) : L"";
+  if (exe_path.empty()) return;
+
+  std::wstring base_dir = L".";
+  size_t last_slash = exe_path.find_last_of(L"\\/");
+  if (last_slash != std::wstring::npos) {
+    base_dir = exe_path.substr(0, last_slash);
+  }
+
+  std::wstring icon_name = use_dark_icon ? L"icon_light.ico" : L"icon.ico";
+  std::wstring icon_path = base_dir + L"\\data\\flutter_assets\\assets\\images\\" + icon_name;
+
+  int csidl_locations[] = {
+      CSIDL_DESKTOPDIRECTORY,
+      CSIDL_COMMON_DESKTOPDIRECTORY,
+      CSIDL_PROGRAMS,
+      CSIDL_COMMON_PROGRAMS
+  };
+
+  // COM is already initialized in main.cpp via CoInitializeEx; no need to re-init here.
+  IShellLinkW* pShellLink = NULL;
+  HRESULT hr = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLinkW, (void**)&pShellLink);
+  if (FAILED(hr) || !pShellLink) {
+    return;
+  }
+
+  IPersistFile* pPersistFile = NULL;
+  hr = pShellLink->QueryInterface(IID_IPersistFile, (void**)&pPersistFile);
+  if (FAILED(hr) || !pPersistFile) {
+    pShellLink->Release();
+    return;
+  }
+
+  bool updated_any = false;
+  for (int csidl : csidl_locations) {
+    wchar_t dir_path[MAX_PATH] = {0};
+    if (SUCCEEDED(SHGetFolderPathW(NULL, csidl, NULL, 0, dir_path))) {
+      WIN32_FIND_DATAW find_data;
+      std::wstring search_pattern = std::wstring(dir_path) + L"\\*.lnk";
+      HANDLE hFind = FindFirstFileW(search_pattern.c_str(), &find_data);
+      if (hFind != INVALID_HANDLE_VALUE) {
+        do {
+          std::wstring lnk_path = std::wstring(dir_path) + L"\\" + find_data.cFileName;
+          if (SUCCEEDED(pPersistFile->Load(lnk_path.c_str(), STGM_READWRITE))) {
+            wchar_t target_path[MAX_PATH] = {0};
+            if (SUCCEEDED(pShellLink->GetPath(target_path, MAX_PATH, NULL, 0))) {
+              if (_wcsicmp(target_path, exe_path.c_str()) == 0) {
+                pShellLink->SetIconLocation(icon_path.c_str(), 0);
+                if (SUCCEEDED(pPersistFile->Save(lnk_path.c_str(), TRUE))) {
+                  updated_any = true;
+                }
+              }
+            }
+          }
+        } while (FindNextFileW(hFind, &find_data));
+        FindClose(hFind);
+      }
+    }
+  }
+
+  pPersistFile->Release();
+  pShellLink->Release();
+
+  if (updated_any) {
+    SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, NULL, NULL);
+  }
+}
+
+void FlutterWindow::SaveIconPreference(bool use_dark_icon) {
   HKEY hKey;
   LONG result = RegCreateKeyExW(
       HKEY_CURRENT_USER,
@@ -201,8 +276,8 @@ void FlutterWindow::SaveIconPreference(bool use_light_icon) {
   );
 
   if (result == ERROR_SUCCESS) {
-    DWORD value = use_light_icon ? 1 : 0;
-    RegSetValueExW(hKey, L"UseLightIcon", 0, REG_DWORD, (BYTE*)&value, sizeof(DWORD));
+    DWORD value = use_dark_icon ? 1 : 0;
+    RegSetValueExW(hKey, L"UseDarkIcon", 0, REG_DWORD, (BYTE*)&value, sizeof(DWORD));
     RegCloseKey(hKey);
   }
 }
@@ -220,7 +295,7 @@ bool FlutterWindow::LoadIconPreference() {
   if (result == ERROR_SUCCESS) {
     DWORD value = 0;
     DWORD size = sizeof(DWORD);
-    result = RegQueryValueExW(hKey, L"UseLightIcon", NULL, NULL, (BYTE*)&value, &size);
+    result = RegQueryValueExW(hKey, L"UseDarkIcon", NULL, NULL, (BYTE*)&value, &size);
     RegCloseKey(hKey);
     
     if (result == ERROR_SUCCESS) {

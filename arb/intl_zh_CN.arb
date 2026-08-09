@@ -573,6 +573,8 @@
   "textScale": "文本缩放",
   "trayIconInvert": "托盘反转",
   "trayIconInvertDesc": "针对当前托盘图标颜色取反设置",
+  "darkIcon": "深色图标",
+  "darkIconDesc": "手动切换深色系桌面APP图标",
   "lightIcon": "浅色图标",
   "lightIconDesc": "手动切换浅色系桌面APP图标",
   "harmonyFont": "字体修复",

@@ -305,6 +305,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "customUrl": MessageLookupByLibrary.simpleMessage("آدرس URL سفارشی"),
     "cut": MessageLookupByLibrary.simpleMessage("برش"),
     "dark": MessageLookupByLibrary.simpleMessage("تاریک"),
+    "darkIcon": MessageLookupByLibrary.simpleMessage("آیکون تاریک"),
+    "darkIconDesc": MessageLookupByLibrary.simpleMessage(
+      "تغییر آیکون برنامه به تم تاریک",
+    ),
     "dashboard": MessageLookupByLibrary.simpleMessage("داشبورد"),
     "days": m0,
     "defaultNameserver": MessageLookupByLibrary.simpleMessage(

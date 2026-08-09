@@ -219,6 +219,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "customUrl": MessageLookupByLibrary.simpleMessage("自定义URL"),
     "cut": MessageLookupByLibrary.simpleMessage("剪切"),
     "dark": MessageLookupByLibrary.simpleMessage("深色"),
+    "darkIcon": MessageLookupByLibrary.simpleMessage("深色图标"),
+    "darkIconDesc": MessageLookupByLibrary.simpleMessage("手动切换深色系桌面APP图标"),
     "dashboard": MessageLookupByLibrary.simpleMessage("首页"),
     "days": m0,
     "defaultNameserver": MessageLookupByLibrary.simpleMessage("默认域名服务器"),

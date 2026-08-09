@@ -372,8 +372,12 @@ class _ToolViewState extends ConsumerState<ToolsView> {
             _pushPage(context, appLocalizations.theme, const ThemeView()),
       ),
       _SearchItem(
-        title: appLocalizations.lightIcon,
-        subtitle: appLocalizations.lightIconDesc,
+        title: (system.isWindows || system.isLinux)
+            ? appLocalizations.lightIcon
+            : appLocalizations.darkIcon,
+        subtitle: (system.isWindows || system.isLinux)
+            ? appLocalizations.lightIconDesc
+            : appLocalizations.darkIconDesc,
         category: themeCategory,
         onTap: (context, _) =>
             _pushPage(context, appLocalizations.theme, const ThemeView()),
@@ -802,46 +806,50 @@ class _ToolViewState extends ConsumerState<ToolsView> {
           const NetworkListView(),
         ),
       ),
-      _SearchItem(
-        title: appLocalizations.systemProxy,
-        subtitle: appLocalizations.systemProxyDesc,
-        category: networkCategory,
-        onTap: (context, _) => _pushPage(
-          context,
-          appLocalizations.network,
-          const NetworkListView(),
+      if (system.isDesktop)
+        _SearchItem(
+          title: appLocalizations.systemProxy,
+          subtitle: appLocalizations.systemProxyDesc,
+          category: networkCategory,
+          onTap: (context, _) => _pushPage(
+            context,
+            appLocalizations.network,
+            const NetworkListView(),
+          ),
         ),
-      ),
-      _SearchItem(
-        title: appLocalizations.bypassDomain,
-        subtitle: appLocalizations.bypassDomainDesc,
-        category: networkCategory,
-        onTap: (context, _) => _pushPage(
-          context,
-          appLocalizations.network,
-          const NetworkListView(),
+      if (system.isDesktop)
+        _SearchItem(
+          title: appLocalizations.bypassDomain,
+          subtitle: appLocalizations.bypassDomainDesc,
+          category: networkCategory,
+          onTap: (context, _) => _pushPage(
+            context,
+            appLocalizations.network,
+            const NetworkListView(),
+          ),
         ),
-      ),
-      _SearchItem(
-        title: appLocalizations.tun,
-        subtitle: appLocalizations.tunDesc,
-        category: networkCategory,
-        onTap: (context, _) => _pushPage(
-          context,
-          appLocalizations.network,
-          const NetworkListView(),
+      if (system.isDesktop)
+        _SearchItem(
+          title: appLocalizations.tun,
+          subtitle: appLocalizations.tunDesc,
+          category: networkCategory,
+          onTap: (context, _) => _pushPage(
+            context,
+            appLocalizations.network,
+            const NetworkListView(),
+          ),
         ),
-      ),
-      _SearchItem(
-        title: appLocalizations.strictRoute,
-        subtitle: appLocalizations.strictRouteDesc,
-        category: networkCategory,
-        onTap: (context, _) => _pushPage(
-          context,
-          appLocalizations.network,
-          const NetworkListView(),
+      if (!system.isAndroid)
+        _SearchItem(
+          title: appLocalizations.strictRoute,
+          subtitle: appLocalizations.strictRouteDesc,
+          category: networkCategory,
+          onTap: (context, _) => _pushPage(
+            context,
+            appLocalizations.network,
+            const NetworkListView(),
+          ),
         ),
-      ),
       _SearchItem(
         title: appLocalizations.icmpForwarding,
         subtitle: appLocalizations.icmpForwardingDesc,

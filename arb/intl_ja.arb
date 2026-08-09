@@ -573,6 +573,8 @@
   "textScale": "テキスト倍率",
   "trayIconInvert": "トレイアイコン反転",
   "trayIconInvertDesc": "現在のトレイアイコンの色を反転設定",
+  "darkIcon": "ダークアイコン",
+  "darkIconDesc": "デスクトップアプリのアイコンをダーク系に切り替え",
   "lightIcon": "ライトアイコン",
   "lightIconDesc": "デスクトップアプリのアイコンをライト系に切り替え",
   "harmonyFont": "フォント修復",
