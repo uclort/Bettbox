@@ -12,6 +12,7 @@ import 'package:bett_box/providers/providers.dart';
 
 final _iconCache = <String, Uint8List?>{};
 final _iconCacheKeys = <String>[];
+final _iconLoads = <String, Future<Uint8List?>>{};
 const _maxIconCacheSize = 50;
 Uint8List? _defaultIconCache;
 Future<Uint8List?>? _defaultIconFuture;
@@ -207,21 +208,25 @@ class TrackerInfoItem extends ConsumerWidget {
   }
 }
 
-Future<Uint8List?> _getPackageIcon(String process, String processPath) async {
-  if (system.isMacOS && processPath.isEmpty) return null;
+Future<Uint8List?> _getPackageIcon(String process, String processPath) {
+  if (system.isMacOS && processPath.isEmpty) return Future.value();
   if (process.isEmpty && processPath.isEmpty) {
     return _getDefaultPackageIcon();
   }
   final cacheKey = '$process\n$processPath';
   if (_iconCache.containsKey(cacheKey)) {
-    return _iconCache[cacheKey];
+    return Future.value(_iconCache[cacheKey]);
   }
-  final icon = await app.getPackageIcon(process, processPath: processPath);
-  if (icon != null) {
-    _addToIconCache(cacheKey, icon);
-    return icon;
-  }
-  return system.isMacOS ? null : _getDefaultPackageIcon();
+  return _iconLoads[cacheKey] ??= app
+      .getPackageIcon(process, processPath: processPath)
+      .then((icon) async {
+        if (icon == null && !system.isMacOS) {
+          return _getDefaultPackageIcon();
+        }
+        _addToIconCache(cacheKey, icon);
+        return icon;
+      })
+      .whenComplete(() => _iconLoads.remove(cacheKey));
 }
 
 Future<Uint8List?> _getDefaultPackageIcon() {

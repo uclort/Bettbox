@@ -1,7 +1,10 @@
 import 'package:bett_box/common/navigation.dart';
 import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/models.dart';
+import 'package:bett_box/views/connection/item.dart';
 import 'package:bett_box/views/network_monitor_data.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 TrackerInfo _tracker({
@@ -24,6 +27,40 @@ TrackerInfo _tracker({
 }
 
 void main() {
+  testWidgets('相同进程图标的并发请求只调用一次原生接口', (tester) async {
+    const channel = MethodChannel('app');
+    const processPath =
+        '/Applications/Bettbox-Icon-Dedup-Test.app/Contents/MacOS/Test';
+    var processIconCalls = 0;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          if (call.method == 'getPackageIcon' &&
+              (call.arguments as Map)['processPath'] == processPath) {
+            processIconCalls++;
+            await Future<void>.delayed(const Duration(milliseconds: 10));
+          }
+          return null;
+        });
+    addTearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null),
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Row(
+          children: [
+            ProcessIcon(process: 'Test', processPath: processPath),
+            ProcessIcon(process: 'Test', processPath: processPath),
+          ],
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 20));
+
+    expect(processIconCalls, 1);
+  });
+
   test('导航使用统一网络面板替换旧请求、连接和日志入口', () {
     final items = navigation.getItems(hasProxies: true);
     final labels = items.map((item) => item.label).toSet();

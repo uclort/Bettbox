@@ -126,22 +126,33 @@ class MainFlutterWindow: NSWindow {
     }
 
     private func processIconData(processPath: String) -> FlutterStandardTypedData? {
-        let image: NSImage?
-        if processPath.isEmpty {
-            image = NSApp.applicationIconImage
-        } else {
-            var iconPath = processPath
-            if let range = processPath.range(of: ".app/", options: .caseInsensitive) {
-                iconPath = String(processPath[..<range.upperBound].dropLast())
+        return autoreleasepool {
+            let image: NSImage?
+            if processPath.isEmpty {
+                image = NSApp.applicationIconImage
+            } else {
+                var iconPath = processPath
+                if let range = processPath.range(of: ".app/", options: .caseInsensitive) {
+                    iconPath = String(processPath[..<range.upperBound].dropLast())
+                }
+                image = NSWorkspace.shared.icon(forFile: iconPath)
             }
-            image = NSWorkspace.shared.icon(forFile: iconPath)
+            guard let image else { return nil }
+
+            let size = NSSize(width: 64, height: 64)
+            let resized = NSImage(size: size)
+            resized.lockFocus()
+            NSGraphicsContext.current?.imageInterpolation = .high
+            image.draw(in: NSRect(origin: .zero, size: size))
+            resized.unlockFocus()
+
+            guard let tiff = resized.tiffRepresentation,
+                  let bitmap = NSBitmapImageRep(data: tiff),
+                  let data = bitmap.representation(using: .png, properties: [:]) else {
+                return nil
+            }
+            return FlutterStandardTypedData(bytes: data)
         }
-        guard let tiff = image?.tiffRepresentation,
-              let bitmap = NSBitmapImageRep(data: tiff),
-              let data = bitmap.representation(using: .png, properties: [:]) else {
-            return nil
-        }
-        return FlutterStandardTypedData(bytes: data)
     }
     
     private func saveIconPreference(useDarkIcon: Bool) {
