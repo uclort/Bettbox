@@ -12,4 +12,6 @@ export 'backup_and_recovery.dart';
 export 'resources.dart';
 export 'connection/requests.dart';
 export 'connection/connections.dart';
+export 'network_monitor.dart';
+export 'network_monitor_navigation.dart';
 export 'developer.dart';

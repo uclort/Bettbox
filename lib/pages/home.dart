@@ -279,9 +279,10 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
   }
 
   int get _pageIndex {
-    return widget.navigationItems.indexWhere(
+    final index = widget.navigationItems.indexWhere(
       (item) => item.label == globalState.appState.pageLabel,
     );
+    return index < 0 ? 0 : index;
   }
 
   Future<void> _toPage(

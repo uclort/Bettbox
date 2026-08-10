@@ -79,6 +79,15 @@
 - 移除独立的启动、停止入口，运行状态完全由系统代理和虚拟网卡开关驱动。
 - 首次安装特权工具成功后原位刷新托盘，避免图标短暂消失再出现。
 
+### 桌面网络面板
+
+- 桌面导航以一个“网络面板”入口替换原“请求 / 连接 / 日志”三个页签；托盘菜单在“虚拟网卡”上方提供相同入口并以上下分割线隔开。点击后打开独立子窗口，复用主进程已有的 Mihomo 核心、请求和日志状态，不重复初始化核心或单例锁。
+- Android 在“更多”中提供“网络面板”入口，并以内嵌页面复用同一套数据和交互，不加载桌面多窗口能力。
+- 面板集成最近请求、活动连接、DNS、设备、流量统计和日志；支持按客户端或主机名筛选、全文搜索、点击全部表头切换升降序，以及拖拽表头分隔线调整列宽。
+- 请求与日志由主窗口收到新数据后主动推送刷新；活动连接受 Mihomo 快照接口限制，仅在连接页可见时每 250 ms 更新，其他页面每 5 秒兜底同步。
+- 选中请求或连接后展开底部详情，展示通用信息、计时与日志，以及请求/响应报头和正文页签；Mihomo 未提供 HTTP 原文时明确显示不可用，不伪造抓包数据。
+- 面板代码位于 `lib/views/network_monitor.dart`、`lib/views/network_monitor_detail.dart` 和 `lib/views/network_monitor_data.dart`，桌面/Android 导航与托盘入口位于 `lib/common/navigation.dart`、`lib/views/network_monitor_navigation.dart` 和 `lib/common/tray.dart`；排序、列宽与入口回归测试位于 `test/views/network_monitor_test.dart`，桌面多窗口注册同步覆盖 macOS、Windows 和 Linux。
+
 ### 统一启停交互
 
 - 移除“联动开关”，系统代理或虚拟网卡任一开启即代表 Bettbox 启动。

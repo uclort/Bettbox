@@ -10,6 +10,7 @@ import 'package:bett_box/plugins/tile.dart';
 import 'package:bett_box/plugins/vpn.dart';
 import 'package:bett_box/state.dart';
 import 'package:code_forge/code_forge.dart';
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,6 +21,7 @@ import 'clash/lib.dart';
 import 'common/common.dart';
 import 'common/external_control.dart';
 import 'models/models.dart';
+import 'views/network_monitor.dart';
 
 ReceivePort? _serviceReceiverPort;
 ReceivePort? _messageReceiverPort;
@@ -27,6 +29,14 @@ ReceivePort? _messageReceiverPort;
 Future<void> main(List<String> args) async {
   globalState.isService = false;
   WidgetsFlutterBinding.ensureInitialized();
+
+  if (system.isDesktop) {
+    final currentWindow = await WindowController.fromCurrentEngine();
+    if (currentWindow.arguments == networkMonitorWindowArgument) {
+      await runNetworkMonitorWindow(currentWindow);
+      return;
+    }
+  }
 
   if (system.isDesktop &&
       (args.contains('--exit') || args.contains('--restart'))) {

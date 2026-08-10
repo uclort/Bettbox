@@ -18,6 +18,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'controller.dart';
 import 'pages/pages.dart';
+import 'views/network_monitor.dart';
 
 bool shouldReconcileMacOSNetworkState({
   required String? previousFingerprint,
@@ -305,10 +306,12 @@ class ApplicationState extends ConsumerState<Application>
 
   Widget _buildPlatformState(Widget child) {
     if (system.isDesktop) {
-      return WindowManager(
-        child: TrayManager(
-          child: HotKeyManager(
-            child: ProxyManager(child: SmartAutoStopManager(child: child)),
+      return NetworkMonitorHost(
+        child: WindowManager(
+          child: TrayManager(
+            child: HotKeyManager(
+              child: ProxyManager(child: SmartAutoStopManager(child: child)),
+            ),
           ),
         ),
       );

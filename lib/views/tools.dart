@@ -18,7 +18,6 @@ import 'package:bett_box/views/config/network.dart';
 import 'package:bett_box/views/config/ntp.dart';
 import 'package:bett_box/views/config/sniffer.dart';
 import 'package:bett_box/views/config/tunnel.dart';
-import 'package:bett_box/views/connection/connections.dart';
 import 'package:bett_box/views/hotkey.dart';
 import 'package:bett_box/views/other_setting.dart';
 import 'package:bett_box/widgets/widgets.dart';
@@ -65,21 +64,18 @@ class ToolsView extends ConsumerStatefulWidget {
 
 class _ToolViewState extends ConsumerState<ToolsView> {
   Widget _buildNavigationPage(NavigationItem navigationItem) {
-    if (navigationItem.label == PageLabel.connections) {
-      return const ConnectionsView(respectCurrentPage: false);
-    }
     return navigationItem.builder(context);
   }
 
   Widget _buildNavigationMenuItem(NavigationItem navigationItem) {
     return ListItem.next(
       leading: navigationItem.icon,
-      title: Text(Intl.message(navigationItem.label.name)),
+      title: Text(navigationItem.label.localizedName),
       subtitle: navigationItem.description != null
           ? Text(Intl.message(navigationItem.description!))
           : null,
       delegate: NextDelegate(
-        title: Intl.message(navigationItem.label.name),
+        title: navigationItem.label.localizedName,
         builder: (_) => _buildNavigationPage(navigationItem),
         wrap: false,
       ),
@@ -201,7 +197,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
     for (final item in moreItems) {
       items.add(
         _SearchItem(
-          title: Intl.message(item.label.name),
+          title: item.label.localizedName,
           subtitle: item.description != null
               ? Intl.message(item.description!)
               : null,
@@ -209,7 +205,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
           leading: item.icon,
           onTap: (context, _) => _pushPage(
             context,
-            Intl.message(item.label.name),
+            item.label.localizedName,
             _buildNavigationPage(item),
           ),
         ),

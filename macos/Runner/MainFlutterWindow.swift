@@ -1,4 +1,5 @@
 import Cocoa
+import desktop_multi_window
 import FlutterMacOS
 import window_manager
 import LaunchAtLogin
@@ -35,6 +36,9 @@ class MainFlutterWindow: NSWindow {
         setupSystemWakeNotification()
         
         RegisterGeneratedPlugins(registry: flutterViewController)
+        FlutterMultiWindowPlugin.setOnWindowCreatedCallback { controller in
+            RegisterGeneratedPlugins(registry: controller)
+        }
         
         // Load and apply saved icon preference
         if loadIconPreference() {

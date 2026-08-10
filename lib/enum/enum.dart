@@ -366,6 +366,7 @@ enum PageLabel {
   resources,
   script,
   connections,
+  networkMonitor,
 }
 
 extension PageLabelExtension on PageLabel {
@@ -389,6 +390,8 @@ extension PageLabelExtension on PageLabel {
         return appLocalizations.script;
       case PageLabel.connections:
         return appLocalizations.navConnections;
+      case PageLabel.networkMonitor:
+        return '网络面板';
     }
   }
 }
