@@ -60,6 +60,7 @@
 - 托盘菜单与代理面板共享测速状态；相同实际节点和测试地址复用测速请求，避免重复并发测速及较晚的超时结果覆盖已成功延迟，并持续显示测速进度和结果。
 - 修复应用窗口未显示或未激活时，托盘延迟测速首次点击无响应的问题。
 - macOS 托盘菜单改为点击托盘时才使用最新状态创建；菜单打开期间只原位更新，修复测速中或测速完成后节点切换、“显示”等菜单项点击丢失的问题。
+- 托盘一级菜单依次显示系统代理、虚拟网卡，并将重启内核放在一级、重启软件放入工具子菜单；“显示窗口 / 网络面板 / 系统代理 / 虚拟网卡 / 重启内核 / 退出”使用 macOS 原生菜单快捷键 `⌘M / ⌘D / ⌘S / ⌘E / ⌘R / ⌘Q`，菜单同步显示快捷键标识。
 - 二级菜单父项只负责展开子菜单，不再响应无效的空点击。
 - 节点测速结果使用独立右对齐列，菜单宽度同时为节点名称和结果预留空间。
 - 当前策略组测速时显示“⚡ 测速中...”，并保持不可重复点击。
@@ -77,16 +78,22 @@
 - 节点测速增加端到端诊断日志：Dart 批次、桥接排队和 Mihomo 网络阶段共享 request ID，Provider 健康检查另带 batch ID；失败时记录解析、拨号、请求构造、TLS、HTTP、状态校验阶段、context、错误类型、耗时和节点来源。测试 URL 的账号、查询参数与 fragment 会脱敏，日志不包含节点密码。代码位于 `lib/clash/core.dart`、`lib/clash/interface.dart`、`lib/views/proxies/common.dart`、`core/hub.go`、`core/Clash.Meta/adapter/adapter.go`、`core/Clash.Meta/tunnel/tunnel.go` 和私有 custom-mihomo 对应路径；回归测试为 `core/Clash.Meta/adapter/patch_test.go`、`adapter/urltest_test.go` 与 `tunnel/provider_lifecycle_test.go`。
 - 应用内日志与请求记录容量提高到 1024 条，确保一次约 90 节点的详细测速日志不会在导出前被 256 条环形容量截断。
 - 移除独立的启动、停止入口，运行状态完全由系统代理和虚拟网卡开关驱动。
+- 系统代理管理器只关闭当前 Bettbox 进程成功启用过的代理；启动、退出或状态同步时若系统代理开关本来就是关闭状态，不调用系统关闭代理命令，确保系统代理与虚拟网卡均关闭时不影响 Surge 等其他软件的系统代理。代码位于 `plugins/proxy/lib/proxy.dart`。
 - 首次安装特权工具成功后原位刷新托盘，避免图标短暂消失再出现。
 
 ### 桌面网络面板
 
-- 桌面导航以一个“网络面板”入口替换原“请求 / 连接 / 日志”三个页签；托盘菜单在“虚拟网卡”上方提供相同入口并以上下分割线隔开。点击后打开独立子窗口，复用主进程已有的 Mihomo 核心、请求和日志状态，不重复初始化核心或单例锁。
+- 桌面导航以一个“网络面板”入口替换原“请求 / 连接 / 日志”三个页签；托盘菜单在“虚拟网卡”上方提供相同入口并以上下分割线隔开。点击后以同一可执行文件的 `--network-panel` 参数启动独立进程，在 Dock/任务栏使用基于 Bettbox 原图标逐像素保留、仅于右下角叠加蓝色网络波形徽标的专属图标；关闭面板不影响 Bettbox，Bettbox 正常退出或主进程管道断开时会关闭面板。
+- 独立进程不初始化 Mihomo、单例锁或托盘，通过 `ExternalControl` 现有本地 UDS/TCP 通道读取主进程请求、连接和日志并执行清理/断连操作；请求与日志变更使用持久订阅连接主动通知。移除 `desktop_multi_window` 和子引擎全插件重复注册，避免 `tray_manager` 全局事件通道被子窗口覆盖。
 - Android 在“更多”中提供“网络面板”入口，并以内嵌页面复用同一套数据和交互，不加载桌面多窗口能力。
 - 面板集成最近请求、活动连接、DNS、设备、流量统计和日志；支持按客户端或主机名筛选、全文搜索、点击全部表头切换升降序，以及拖拽表头分隔线调整列宽。
+- 顶栏搜索框与页签统一垂直居中；最近请求和活动连接复用客户端/主机名侧栏，DNS、设备、流量统计和日志分别使用对应的类型、地址/接管/活跃状态、统计维度和真实日志级别侧栏。
+- 请求和连接列表移除复选框列，按错误、活动、结束和其他状态显示红、黄、绿、灰圆点；日期按本机时区显示，策略链连续空白被压缩。列表的水平与垂直滚动相互独立并裁剪在内容区，展开底部详情时不再发生表格穿透或错位。
+- DNS 数据只保留带有效目标 IP 的最新域名记录，并按 `hosts / normal / fake-ip、redir-host` 映射为本地、系统和动态；设备数据过滤空客户端；日志按 Mihomo 的 `error / warning / info / debug / silent` 级别进行真实筛选。
 - 请求与日志由主窗口收到新数据后主动推送刷新；活动连接受 Mihomo 快照接口限制，仅在连接页可见时每 250 ms 更新，其他页面每 5 秒兜底同步。
 - 选中请求或连接后展开底部详情，展示通用信息、计时与日志，以及请求/响应报头和正文页签；Mihomo 未提供 HTTP 原文时明确显示不可用，不伪造抓包数据。
-- 面板代码位于 `lib/views/network_monitor.dart`、`lib/views/network_monitor_detail.dart` 和 `lib/views/network_monitor_data.dart`，桌面/Android 导航与托盘入口位于 `lib/common/navigation.dart`、`lib/views/network_monitor_navigation.dart` 和 `lib/common/tray.dart`；排序、列宽与入口回归测试位于 `test/views/network_monitor_test.dart`，桌面多窗口注册同步覆盖 macOS、Windows 和 Linux。
+- 面板进程不跟踪来源应用，关闭时不调用任何应用激活 API；除 Bettbox 主进程负责启动和退出面板进程外，Dock、Cmd+Tab、窗口层级和关闭后的前台选择均由 macOS 按两个普通独立 App 处理。
+- 面板代码位于 `lib/views/network_monitor.dart`、`lib/views/network_monitor_detail.dart` 和 `lib/views/network_monitor_data.dart`，进程与 IPC 生命周期位于 `lib/common/window.dart`、`lib/common/external_control.dart`，桌面/Android 导航与托盘入口位于 `lib/common/navigation.dart`、`lib/views/network_monitor_navigation.dart` 和 `lib/common/tray.dart`；排序、列宽、状态、时区、DNS 与入口回归测试位于 `test/views/network_monitor_test.dart`，独立进程入口覆盖 macOS、Windows 和 Linux。
 
 ### 统一启停交互
 
@@ -108,5 +115,6 @@
 ### 自定义构建与发布
 
 - Release 保留本包相较上游的完整功能说明，并单独列出相较上一自定义 Release 的上游同步与自定义增量。
+- `custom-build.yml` 的手动触发支持仅构建并发布 macOS Apple Silicon；该模式只生成 arm64 DMG、对应更新元数据和 Sparkle appcast，其他平台不会创建 Action 任务。
 - 自定义应用代码发生变化但没有补充增量说明时拒绝发布，避免 Release 内容与安装包不一致。
 - 自定义应用代码发生变化但没有同步完整改动总账时同样拒绝发布。

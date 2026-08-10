@@ -8,14 +8,17 @@ TrackerInfo _tracker({
   required String id,
   required String process,
   required int upload,
+  Metadata? metadata,
+  List<String> chains = const ['代理'],
+  String rule = 'MATCH',
 }) {
   return TrackerInfo(
     id: id,
     upload: upload,
     start: DateTime.utc(2026, 8, 10),
-    metadata: Metadata(process: process),
-    chains: const ['代理'],
-    rule: 'MATCH',
+    metadata: metadata ?? Metadata(process: process),
+    chains: chains,
+    rule: rule,
     rulePayload: '',
   );
 }
@@ -86,5 +89,101 @@ void main() {
     expect(monitorResizedColumnWidth(100, 20), 120);
     expect(monitorResizedColumnWidth(60, -20), 48);
     expect(monitorResizedColumnWidth(580, 40), 600);
+  });
+
+  test('状态点按错误、活动、结束和其他映射', () {
+    final active = _tracker(id: 'active', process: 'A', upload: 0);
+    final rejected = _tracker(
+      id: 'rejected',
+      process: 'B',
+      upload: 0,
+      chains: const ['REJECT'],
+    );
+    final finished = _tracker(
+      id: 'finished',
+      process: 'C',
+      upload: 0,
+      metadata: const Metadata(process: 'C', host: 'example.com'),
+    );
+    final other = _tracker(id: 'other', process: 'D', upload: 0);
+
+    expect(
+      monitorTrackerStatus(active, {'active'}),
+      MonitorTrackerStatus.active,
+    );
+    expect(
+      monitorTrackerStatus(rejected, const {}),
+      MonitorTrackerStatus.error,
+    );
+    expect(
+      monitorTrackerStatus(finished, const {}),
+      MonitorTrackerStatus.finished,
+    );
+    expect(monitorTrackerStatus(other, const {}), MonitorTrackerStatus.other);
+  });
+
+  test('时间按本机时区显示，策略名称压缩连续空白', () {
+    final utc = DateTime.utc(2026, 8, 10, 5, 42, 54);
+    final local = utc.toLocal();
+    String two(int value) => value.toString().padLeft(2, '0');
+
+    expect(
+      monitorClock(utc),
+      '${two(local.hour)}:${two(local.minute)}:${two(local.second)}',
+    );
+    expect(
+      monitorPolicyName(
+        _tracker(
+          id: 'policy',
+          process: 'A',
+          upload: 0,
+          chains: const ['OWO-🇺🇸   US  DMIT   CORONA'],
+        ),
+      ),
+      'OWO-🇺🇸 US DMIT CORONA',
+    );
+  });
+
+  test('DNS 类型与有效解析地址按 Mihomo 元数据映射', () {
+    TrackerInfo dns(DnsMode mode, String address) => _tracker(
+      id: mode.name,
+      process: 'A',
+      upload: 0,
+      metadata: Metadata(
+        process: 'A',
+        host: 'example.com',
+        destinationIP: address,
+        dnsMode: mode,
+      ),
+    );
+
+    expect(monitorDnsType(dns(DnsMode.hosts, '127.0.0.1')), '本地');
+    expect(monitorDnsType(dns(DnsMode.normal, '1.1.1.1')), '系统');
+    expect(monitorDnsType(dns(DnsMode.fakeIp, '198.18.0.1')), '动态');
+    expect(monitorDnsAddress(dns(DnsMode.normal, '')), isEmpty);
+  });
+
+  test('不同页面使用可实际筛选的侧栏分类', () {
+    expect(monitorStaticSidebarSections[MonitorPage.dns]!.first.items, [
+      '全部',
+      '本地',
+      '系统',
+      '动态',
+    ]);
+    expect(
+      monitorStaticSidebarSections[MonitorPage.devices]!.expand(
+        (section) => section.items,
+      ),
+      containsAll(['已分配', '未指派', '网关', '代理', '无', '已启用', '不活跃']),
+    );
+    expect(monitorDefaultSidebarFilter(MonitorPage.traffic), '策略');
+    expect(monitorStaticSidebarSections[MonitorPage.logs]!.first.items, [
+      '全部',
+      '错误',
+      '警告',
+      '信息',
+      '调试',
+      '静默',
+    ]);
   });
 }

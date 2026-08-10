@@ -126,6 +126,9 @@ class TrayManager {
       'icon': item.icon,
       'checked': item.checked,
       'disabled': item.disabled,
+      'shortcut': item.key?.startsWith('shortcut:') == true
+          ? item.key!.substring('shortcut:'.length)
+          : null,
       'submenu': item.submenu == null ? null : _menuToJson(item.submenu!),
     }..removeWhere((key, value) => value == null);
   }

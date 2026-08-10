@@ -363,6 +363,17 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
         return sublabel.isEmpty ? label : "\(label)\t\(sublabel)"
     }
 
+    private func applyShortcut(_ shortcut: String, to menuItem: NSMenuItem) {
+        let parts = shortcut.split(separator: "-")
+        guard parts.count == 2, parts[0] == "command" else {
+            menuItem.keyEquivalent = ""
+            menuItem.keyEquivalentModifierMask = []
+            return
+        }
+        menuItem.keyEquivalent = String(parts[1]).lowercased()
+        menuItem.keyEquivalentModifierMask = [.command]
+    }
+
     private func preferredMenuLayout(
         _ items: [NSDictionary]
     ) -> (width: CGFloat, detailWidth: CGFloat) {
@@ -427,6 +438,7 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
             let toolTip: String = itemDict["toolTip"] as? String ?? ""
             let checked: Bool? = itemDict["checked"] as? Bool
             let disabled: Bool = itemDict["disabled"] as? Bool ?? true
+            let shortcut: String = itemDict["shortcut"] as? String ?? ""
             
             if (type == "separator") {
                 menuItem = NSMenuItem.separator()
@@ -441,6 +453,7 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
             menuItem.isEnabled = !disabled
             menuItem.action = !disabled ? #selector(statusItemMenuButtonClicked) : nil
             menuItem.target = self
+            applyShortcut(shortcut, to: menuItem)
 
             if key == "persistent-delay-test" {
                 let persistentView = PersistentTrayMenuItemView(
@@ -541,6 +554,7 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
             let toolTip: String = itemDict["toolTip"] as? String ?? ""
             let checked: Bool? = itemDict["checked"] as? Bool
             let disabled: Bool = itemDict["disabled"] as? Bool ?? true
+            let shortcut: String = itemDict["shortcut"] as? String ?? ""
 
             let menuItem: NSMenuItem
             if key.isEmpty {
@@ -562,6 +576,7 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
             menuItem.toolTip = toolTip
             menuItem.isEnabled = !disabled
             menuItem.action = !disabled ? #selector(statusItemMenuButtonClicked) : nil
+            applyShortcut(shortcut, to: menuItem)
 
             if let persistentView = menuItem.view as? PersistentTrayMenuItemView {
                 persistentView.update(label: label, disabled: disabled)

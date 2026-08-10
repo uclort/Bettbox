@@ -51,6 +51,22 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
 
   Widget _buildDetail(BuildContext context) {
     final item = _selected!;
+    final status = monitorTrackerStatus(
+      item,
+      _connections.map((item) => item.id).toSet(),
+    );
+    final statusColor = switch (status) {
+      MonitorTrackerStatus.error => Colors.red,
+      MonitorTrackerStatus.active => Colors.amber,
+      MonitorTrackerStatus.finished => Colors.green,
+      MonitorTrackerStatus.other => Theme.of(context).colorScheme.outline,
+    };
+    final statusLabel = switch (status) {
+      MonitorTrackerStatus.error => '错误',
+      MonitorTrackerStatus.active => '活跃',
+      MonitorTrackerStatus.finished => '已完成',
+      MonitorTrackerStatus.other => '其他',
+    };
     const tabs = ['通用', '计时 & 日志', '请求报头', '响应报头', '请求数据', '响应数据'];
     return SizedBox(
       height: 260,
@@ -76,18 +92,8 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
                   ),
                 ),
                 Chip(
-                  avatar: Icon(
-                    _connections.any((e) => e.id == item.id)
-                        ? Icons.circle
-                        : Icons.history,
-                    size: 10,
-                    color: _connections.any((e) => e.id == item.id)
-                        ? Colors.amber
-                        : Colors.blue,
-                  ),
-                  label: Text(
-                    _connections.any((e) => e.id == item.id) ? '活跃' : '已完成',
-                  ),
+                  avatar: Icon(Icons.circle, size: 10, color: statusColor),
+                  label: Text(statusLabel),
                 ),
               ],
             ),

@@ -10,7 +10,6 @@
 #include <unistd.h>
 
 #include "flutter/generated_plugin_registrant.h"
-#include "desktop_multi_window/desktop_multi_window_plugin.h"
 
 static gboolean _is_dev_build() {
   return g_str_has_suffix(APPLICATION_ID, ".dev");
@@ -117,8 +116,6 @@ static void my_application_activate(GApplication* application) {
   gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(view));
 
   fl_register_plugins(FL_PLUGIN_REGISTRY(view));
-  desktop_multi_window_plugin_set_window_created_callback(
-      [](FlPluginRegistry* registry) { fl_register_plugins(registry); });
   
   // Setup app method channel
   setup_app_method_channel(view);
@@ -135,6 +132,13 @@ static gboolean my_application_local_command_line(GApplication* application, gch
   MyApplication* self = MY_APPLICATION(application);
   // Strip out the first argument as it is the binary name.
   self->dart_entrypoint_arguments = g_strdupv(*arguments + 1);
+
+  for (gchar** arg = self->dart_entrypoint_arguments; arg && *arg; arg++) {
+    if (g_strcmp0(*arg, "--network-panel") == 0) {
+      g_application_set_flags(application, G_APPLICATION_NON_UNIQUE);
+      break;
+    }
+  }
 
   // Check for --exit or --restart before GApplication registration
   for (gchar** arg = self->dart_entrypoint_arguments; arg && *arg; arg++) {

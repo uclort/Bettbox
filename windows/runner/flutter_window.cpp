@@ -7,7 +7,6 @@
 #include <shlobj.h>    // For Shell link API
 
 #include "flutter/generated_plugin_registrant.h"
-#include "desktop_multi_window/desktop_multi_window_plugin.h"
 #include "resource.h"
 
 #ifdef BETTBOX_DEV
@@ -37,11 +36,6 @@ bool FlutterWindow::OnCreate() {
     return false;
   }
   RegisterPlugins(flutter_controller_->engine());
-  DesktopMultiWindowSetWindowCreatedCallback([](void* controller) {
-    auto* flutter_view_controller =
-        reinterpret_cast<flutter::FlutterViewController*>(controller);
-    RegisterPlugins(flutter_view_controller->engine());
-  });
   
   // Register app method channel
   SetupAppMethodChannel();

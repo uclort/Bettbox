@@ -145,7 +145,8 @@ class Tray {
       }
       List<MenuItem> menuItems = [];
       final showMenuItem = MenuItem(
-        label: appLocalizations.show,
+        key: 'shortcut:command-m',
+        label: '显示窗口',
         onClick: (_) {
           window?.show();
         },
@@ -230,6 +231,7 @@ class Tray {
       }
       menuItems.add(
         MenuItem(
+          key: 'shortcut:command-d',
           label: '网络面板',
           onClick: (_) async {
             try {
@@ -243,15 +245,7 @@ class Tray {
       menuItems.add(MenuItem.separator());
       menuItems.add(
         MenuItem.checkbox(
-          label: appLocalizations.tun,
-          onClick: (_) async {
-            await globalState.appController.updateTun();
-          },
-          checked: trayState.tunEnable,
-        ),
-      );
-      menuItems.add(
-        MenuItem.checkbox(
+          key: 'shortcut:command-s',
           label: appLocalizations.systemProxy,
           onClick: (_) async {
             await globalState.appController.updateSystemProxy();
@@ -259,25 +253,20 @@ class Tray {
           checked: trayState.systemProxy,
         ),
       );
-      menuItems.add(MenuItem.separator());
-      final restartMenuItem = MenuItem(
-        label: appLocalizations.restartApp,
-        onClick: (_) async {
-          await Restart.restartApp();
-        },
-      );
-      menuItems.add(restartMenuItem);
-
-      final List<MenuItem> moreMenuItems = [
+      menuItems.add(
         MenuItem.checkbox(
-          label: appLocalizations.autoLaunch,
+          key: 'shortcut:command-e',
+          label: appLocalizations.tun,
           onClick: (_) async {
-            globalState.appController.updateAutoLaunch();
+            await globalState.appController.updateTun();
           },
-          checked: trayState.autoLaunch,
+          checked: trayState.tunEnable,
         ),
-        _buildCopyEnvSubmenu(trayState.port),
+      );
+      menuItems.add(MenuItem.separator());
+      menuItems.add(
         MenuItem(
+          key: 'shortcut:command-r',
           label: appLocalizations.restartCoreTitle,
           onClick: (_) async {
             final appController = globalState.appController;
@@ -289,6 +278,23 @@ class Tray {
               );
               await appController.updateTray();
             }
+          },
+        ),
+      );
+
+      final List<MenuItem> moreMenuItems = [
+        MenuItem.checkbox(
+          label: appLocalizations.autoLaunch,
+          onClick: (_) async {
+            globalState.appController.updateAutoLaunch();
+          },
+          checked: trayState.autoLaunch,
+        ),
+        _buildCopyEnvSubmenu(trayState.port),
+        MenuItem(
+          label: appLocalizations.restartApp,
+          onClick: (_) async {
+            await Restart.restartApp();
           },
         ),
       ];
@@ -314,6 +320,7 @@ class Tray {
 
       menuItems.add(MenuItem.separator());
       final exitMenuItem = MenuItem(
+        key: 'shortcut:command-q',
         label: appLocalizations.exit,
         onClick: (_) async {
           await globalState.appController.handleExit();

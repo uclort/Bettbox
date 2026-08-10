@@ -8,28 +8,34 @@ enum ProxyTypes { http, https, socks }
 
 class Proxy extends ProxyPlatform {
   static String url = "127.0.0.1";
+  bool _startedByApp = false;
 
   @override
   Future<bool?> startProxy(
     int port, [
     List<String> bypassDomain = const [],
   ]) async {
-    return switch (Platform.operatingSystem) {
+    final result = switch (Platform.operatingSystem) {
       "macos" => await _startProxyWithMacos(port, bypassDomain),
       "linux" => await _startProxyWithLinux(port, bypassDomain),
       "windows" => await ProxyPlatform.instance.startProxy(port, bypassDomain),
       String() => false,
     };
+    if (result == true) _startedByApp = true;
+    return result;
   }
 
   @override
   Future<bool?> stopProxy() async {
-    return switch (Platform.operatingSystem) {
+    if (!_startedByApp) return true;
+    final result = switch (Platform.operatingSystem) {
       "macos" => await _stopProxyWithMacos(),
       "linux" => await _stopProxyWithLinux(),
       "windows" => await ProxyPlatform.instance.stopProxy(),
       String() => false,
     };
+    if (result == true) _startedByApp = false;
+    return result;
   }
 
   Future<String> _getKWriteConfigCmd() async {

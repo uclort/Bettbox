@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:bett_box/common/common.dart';
@@ -51,8 +53,7 @@ class Window {
     });
   }
 
-  void updateMacOSBrightness(Brightness brightness) {
-  }
+  void updateMacOSBrightness(Brightness brightness) {}
 
   Future<void> show() async {
     globalState.handleForeground();
@@ -91,3 +92,65 @@ class Window {
 }
 
 final window = system.isDesktop ? Window() : null;
+
+class NetworkMonitorProcess {
+  Process? _process;
+  Future<void>? _opening;
+
+  Future<void> open() {
+    final opening = _opening;
+    if (opening != null) return opening;
+    final future = _open();
+    _opening = future;
+    return future.whenComplete(() {
+      if (identical(_opening, future)) _opening = null;
+    });
+  }
+
+  Future<void> _open() async {
+    final current = _process;
+    if (current != null) {
+      try {
+        current.stdin.writeln('show');
+        await current.stdin.flush();
+        return;
+      } catch (_) {
+        if (identical(_process, current)) _process = null;
+        current.kill();
+      }
+    }
+
+    final process = await Process.start(
+      Platform.resolvedExecutable,
+      const ['--network-panel'],
+      workingDirectory: File(Platform.resolvedExecutable).parent.path,
+    );
+    _process = process;
+    unawaited(process.stdout.drain<void>());
+    unawaited(
+      process.stderr
+          .transform(utf8.decoder)
+          .forEach((line) => commonPrint.log('Network panel: $line')),
+    );
+    unawaited(
+      process.exitCode.then((_) {
+        if (identical(_process, process)) _process = null;
+      }),
+    );
+  }
+
+  Future<void> close() async {
+    final process = _process;
+    _process = null;
+    if (process == null) return;
+    try {
+      process.stdin.writeln('exit');
+      await process.stdin.flush();
+      await process.exitCode.timeout(const Duration(seconds: 2));
+    } catch (_) {
+      process.kill();
+    }
+  }
+}
+
+final networkMonitorProcess = NetworkMonitorProcess();

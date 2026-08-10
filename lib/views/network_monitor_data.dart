@@ -1,10 +1,38 @@
 import 'package:bett_box/clash/clash.dart';
+import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/models.dart';
 import 'package:flutter/foundation.dart';
 
 enum MonitorPage { requests, connections, dns, devices, traffic, logs }
 
 enum MonitorClientMode { client, host }
+
+enum MonitorTrackerStatus { error, active, finished, other }
+
+typedef MonitorSidebarSection = ({String title, List<String> items});
+
+const monitorStaticSidebarSections = <MonitorPage, List<MonitorSidebarSection>>{
+  MonitorPage.dns: [
+    (title: '类型', items: ['全部', '本地', '系统', '动态']),
+  ],
+  MonitorPage.devices: [
+    (title: '', items: ['全部']),
+    (title: '静态 IP 地址', items: ['已分配', '未指派']),
+    (title: '接管模式', items: ['网关', '代理', '无']),
+    (title: '活跃状态', items: ['已启用', '不活跃']),
+  ],
+  MonitorPage.traffic: [
+    (title: '类型', items: ['策略', '进程', '网络适配器', '设备', '主机名']),
+  ],
+  MonitorPage.logs: [
+    (title: '级别', items: ['全部', '错误', '警告', '信息', '调试', '静默']),
+  ],
+};
+
+String monitorDefaultSidebarFilter(MonitorPage page) {
+  final sections = monitorStaticSidebarSections[page];
+  return sections == null ? '' : sections.first.items.first;
+}
 
 class NetworkMonitorSnapshotReader {
   Map<String, TrackerInfo> _previousConnections = const {};
@@ -110,7 +138,43 @@ String monitorRuleName(TrackerInfo item) {
   return [item.rule, item.rulePayload].where((e) => e.isNotEmpty).join(' ');
 }
 
-String monitorPolicyName(TrackerInfo item) => item.chains.join(' → ');
+String monitorPolicyName(TrackerInfo item) => item.chains
+    .map((value) => value.replaceAll(RegExp(r'\s+'), ' ').trim())
+    .where((value) => value.isNotEmpty)
+    .join(' → ');
+
+MonitorTrackerStatus monitorTrackerStatus(
+  TrackerInfo item,
+  Set<String> activeIds,
+) {
+  if (activeIds.contains(item.id)) return MonitorTrackerStatus.active;
+  final result = '${item.rule} ${item.chains.join(' ')}'.toUpperCase();
+  if (result.contains('REJECT')) return MonitorTrackerStatus.error;
+  if (item.id.isNotEmpty &&
+      (item.metadata.host.isNotEmpty ||
+          item.metadata.destinationIP.isNotEmpty)) {
+    return MonitorTrackerStatus.finished;
+  }
+  return MonitorTrackerStatus.other;
+}
+
+String monitorDnsType(TrackerInfo item) => switch (item.metadata.dnsMode) {
+  DnsMode.hosts => '本地',
+  DnsMode.fakeIp || DnsMode.redirHost => '动态',
+  DnsMode.normal || null => '系统',
+};
+
+String monitorDnsAddress(TrackerInfo item) =>
+    item.metadata.destinationIP.trim();
+
+String monitorLogLevelLabel(String level) => switch (level.toLowerCase()) {
+  'error' => '错误',
+  'warning' => '警告',
+  'info' => '信息',
+  'debug' => '调试',
+  'silent' => '静默',
+  _ => '信息',
+};
 
 String monitorMethodName(TrackerInfo item) {
   if (item.metadata.destinationPort == '443') return 'HTTPS';
@@ -162,6 +226,7 @@ class MonitorLog {
 String monitorShortId(String id) => id.length <= 8 ? id : id.substring(0, 8);
 
 String monitorClock(DateTime value) {
+  value = value.toLocal();
   String two(int value) => value.toString().padLeft(2, '0');
   return '${two(value.hour)}:${two(value.minute)}:${two(value.second)}';
 }

@@ -1278,6 +1278,7 @@ class AppController {
 
     try {
       if (system.isDesktop) {
+        await networkMonitorProcess.close();
         try {
           await trayManager.destroy();
         } catch (e) {

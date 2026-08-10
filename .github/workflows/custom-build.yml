@@ -15,6 +15,11 @@ on:
         description: 指定需要构建的 custom-build 提交
         required: false
         type: string
+      macos_arm64_only:
+        description: 只构建并发布 macOS Apple Silicon
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -50,6 +55,7 @@ jobs:
       build_number: ${{ steps.meta.outputs.build_number }}
       bettbox_release: ${{ steps.meta.outputs.bettbox_release }}
       custom_mihomo_commit: ${{ steps.source.outputs.commit }}
+      build_matrix: ${{ steps.matrix.outputs.value }}
 
     steps:
       - name: 检出 Bettbox 打包分支
@@ -237,6 +243,20 @@ jobs:
             echo "bettbox_release=${bettbox_release}"
           } >> "${GITHUB_OUTPUT}"
 
+      - name: 选择构建平台
+        id: matrix
+        shell: bash
+        env:
+          MACOS_ARM64_ONLY: ${{ inputs.macos_arm64_only || false }}
+        run: |
+          set -euo pipefail
+          if [[ "${MACOS_ARM64_ONLY}" == "true" ]]; then
+            include='[{"name":"macOS Apple Silicon","platform":"macos","arch":"arm64","os":"macos-15","artifact":"Bettbox-macOS-arm64"}]'
+          else
+            include='[{"name":"Android Pixel 6a (arm64-v8a)","platform":"android","arch":"arm64","os":"ubuntu-24.04","artifact":"Bettbox-Android-arm64-v8a"},{"name":"Windows x64","platform":"windows","arch":"amd64","os":"windows-2022","artifact":"Bettbox-Windows-x64"},{"name":"macOS Apple Silicon","platform":"macos","arch":"arm64","os":"macos-15","artifact":"Bettbox-macOS-arm64"},{"name":"macOS Intel","platform":"macos","arch":"amd64","os":"macos-15","artifact":"Bettbox-macOS-amd64"}]'
+          fi
+          echo "value={\"include\":${include}}" >> "${GITHUB_OUTPUT}"
+
       - name: 校验 Release 说明
         if: steps.meta.outputs.ready == 'true'
         shell: bash
@@ -345,28 +365,7 @@ jobs:
     timeout-minutes: 120
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - name: Android Pixel 6a (arm64-v8a)
-            platform: android
-            arch: arm64
-            os: ubuntu-24.04
-            artifact: Bettbox-Android-arm64-v8a
-          - name: Windows x64
-            platform: windows
-            arch: amd64
-            os: windows-2022
-            artifact: Bettbox-Windows-x64
-          - name: macOS Apple Silicon
-            platform: macos
-            arch: arm64
-            os: macos-15
-            artifact: Bettbox-macOS-arm64
-          - name: macOS Intel
-            platform: macos
-            arch: amd64
-            os: macos-15
-            artifact: Bettbox-macOS-amd64
+      matrix: ${{ fromJSON(needs.inspect.outputs.build_matrix) }}
 
     env:
       APP_UPDATE_REPOSITORY: uclort/Bettbox
@@ -788,7 +787,7 @@ jobs:
           df -h "${GITHUB_WORKSPACE}"
 
   release:
-    name: 发布三端安装包
+    name: 发布安装包
     needs:
       - inspect
       - build
@@ -953,7 +952,7 @@ jobs:
             echo "- 上游源码版本：\`${SOURCE_APP_VERSION}\`"
             echo "- Bettbox custom-build commit：\`${UPSTREAM_SHA}\`"
             echo
-            echo "Release 仅包含三端安装包，不包含私有自定义 Mihomo 源码。"
+            echo "Release 仅包含本次 Action 生成的安装包，不包含私有自定义 Mihomo 源码。"
             echo
             echo "Windows 与 macOS 安装包未做商业代码签名；Android 安装包使用 Bettbox 自定义版固定 Release 签名。"
           } > "${notes_file}"
@@ -978,6 +977,7 @@ jobs:
           BUILD_NUMBER: ${{ needs.inspect.outputs.build_number }}
           UPSTREAM_SHA: ${{ needs.inspect.outputs.upstream_sha }}
           FEED_BRANCH: custom-update-feed
+          MACOS_ARM64_ONLY: ${{ inputs.macos_arm64_only || false }}
         run: |
           set -euo pipefail
 
@@ -1046,8 +1046,10 @@ jobs:
           }
 
           generate_feed macos arm64
-          generate_feed macos amd64
-          generate_feed windows amd64
+          if [[ "${MACOS_ARM64_ONLY}" != "true" ]]; then
+            generate_feed macos amd64
+            generate_feed windows amd64
+          fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -1071,7 +1073,7 @@ jobs:
           RELEASE_TAG: ${{ needs.inspect.outputs.release_tag }}
         run: |
           {
-            echo "## 三端构建已发布"
+            echo "## 构建已发布"
             echo
             echo "Release：\`${RELEASE_TAG}\`"
           } >> "${GITHUB_STEP_SUMMARY}"

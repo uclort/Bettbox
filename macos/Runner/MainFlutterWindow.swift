@@ -1,5 +1,4 @@
 import Cocoa
-import desktop_multi_window
 import FlutterMacOS
 import window_manager
 import LaunchAtLogin
@@ -36,13 +35,12 @@ class MainFlutterWindow: NSWindow {
         setupSystemWakeNotification()
         
         RegisterGeneratedPlugins(registry: flutterViewController)
-        FlutterMultiWindowPlugin.setOnWindowCreatedCallback { controller in
-            RegisterGeneratedPlugins(registry: controller)
-        }
         
         // Load and apply saved icon preference
-        if loadIconPreference() {
-            setDockIcon(useDarkIcon: true)
+        if CommandLine.arguments.contains("--network-panel") {
+            _ = setDockIcon(named: "network_monitor_icon")
+        } else if loadIconPreference() {
+            _ = setDockIcon(useDarkIcon: true)
         }
         
         super.awakeFromNib()
@@ -102,23 +100,24 @@ class MainFlutterWindow: NSWindow {
     
     private func setDockIcon(useDarkIcon: Bool) -> Bool {
         let iconName = useDarkIcon ? "icon_black_macOS" : "icon_light_macOS"
-        
-        // Load icon from app bundle
-        guard let iconPath = Bundle.main.path(forResource: iconName, ofType: "png", inDirectory: "data/flutter_assets/assets/images"),
+        let result = setDockIcon(named: iconName)
+        if result {
+            saveIconPreference(useDarkIcon: useDarkIcon)
+        }
+        return result
+    }
+
+    private func setDockIcon(named iconName: String) -> Bool {
+        guard let iconPath = Bundle.main.privateFrameworksURL?
+            .appendingPathComponent("App.framework/Resources/flutter_assets/assets/images/\(iconName).png").path,
               let image = NSImage(contentsOfFile: iconPath) else {
-            // Fallback to default app icon if load fails
             if let appIcon = NSImage(named: "AppIcon") {
                 NSApp.applicationIconImage = appIcon
             }
             return false
         }
         
-        // Set Dock icon
         NSApp.applicationIconImage = image
-        
-        // Save preference
-        saveIconPreference(useDarkIcon: useDarkIcon)
-        
         return true
     }
     
