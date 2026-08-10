@@ -496,15 +496,7 @@ class _DelayTestButtonState extends ConsumerState<DelayTestButton>
   bool get _isTesting => delayTestCoordinator.isTestingGroup(widget.groupName);
 
   Future<void> _healthcheck() async {
-    final testingGroupName = delayTestCoordinator.testingGroupName;
-    if (testingGroupName != null) {
-      if (testingGroupName != widget.groupName && mounted) {
-        context.showSnackBar(
-          '$testingGroupName ${appLocalizations.testingDelay}',
-        );
-      }
-      return;
-    }
+    if (_isTesting) return;
     await widget.onClick();
   }
 

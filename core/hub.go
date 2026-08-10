@@ -209,13 +209,13 @@ func handleResetTraffic() {
 func handleAsyncTestDelay(paramsString string, fn func(string)) {
 	requestedAt := time.Now()
 	requestID := utils.NewUUIDV4().String()
-	mBatch.Go(paramsString, func() (bool, error) {
+	go func() {
 		var params = &TestDelayParams{}
 		err := json.Unmarshal([]byte(paramsString), params)
 		if err != nil {
 			log.Warnln("[DELAY-TEST][BRIDGE] id=%s phase=parse-error queue=%dms error=%v", requestID, time.Since(requestedAt).Milliseconds(), err)
 			fn("")
-			return false, nil
+			return
 		}
 		if params.RequestID != "" {
 			requestID = params.RequestID
@@ -225,11 +225,10 @@ func handleAsyncTestDelay(paramsString string, fn func(string)) {
 		if err != nil {
 			log.Warnln("[DELAY-TEST][BRIDGE] id=%s phase=expected-status-error proxy=%q queue=%dms error=%v", requestID, params.ProxyName, time.Since(requestedAt).Milliseconds(), err)
 			fn("")
-			return false, nil
+			return
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*time.Duration(params.Timeout))
-		defer cancel()
+		ctx := context.Background()
 
 		var proxy constant.Proxy
 		var exist bool
@@ -266,7 +265,7 @@ func handleAsyncTestDelay(paramsString string, fn func(string)) {
 			delayData.Value = -1
 			data, _ := json.Marshal(delayData)
 			fn(string(data))
-			return false, nil
+			return
 		}
 
 		queueElapsed := time.Since(requestedAt).Milliseconds()
@@ -274,8 +273,10 @@ func handleAsyncTestDelay(paramsString string, fn func(string)) {
 			requestID, params.ProxyName, proxy.Name(), proxy.Type(), providerName, testUrl, params.Timeout, queueElapsed)
 		networkStarted := time.Now()
 		ctx = adapter.WithURLTestTrace(ctx, adapter.URLTestTrace{
-			ID:     requestID,
-			Source: "bettbox-app",
+			ID:               requestID,
+			Source:           "bettbox-app",
+			ConcurrencyLimit: params.ConcurrencyLimit,
+			Timeout:          time.Millisecond * time.Duration(params.Timeout),
 		})
 		delay, err := proxy.URLTest(ctx, testUrl, expectedStatus)
 		if err != nil || delay == 0 {
@@ -284,7 +285,7 @@ func handleAsyncTestDelay(paramsString string, fn func(string)) {
 			delayData.Value = -1
 			data, _ := json.Marshal(delayData)
 			fn(string(data))
-			return false, nil
+			return
 		}
 
 		log.Infoln("[DELAY-TEST][BRIDGE] id=%s source=bettbox-app phase=finish outcome=success proxy=%q resolved=%q type=%s provider=%q url=%q timeout=%dms queue=%dms network=%dms total=%dms delay=%dms alive=%t context-error=%v",
@@ -292,8 +293,7 @@ func handleAsyncTestDelay(paramsString string, fn func(string)) {
 		delayData.Value = int32(delay)
 		data, _ := json.Marshal(delayData)
 		fn(string(data))
-		return false, nil
-	})
+	}()
 }
 
 func handleGetConnections() string {

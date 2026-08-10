@@ -1,6 +1,9 @@
 package adapter
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 type UrlTestCheck func(url string, name string, delay uint16)
 
@@ -8,9 +11,12 @@ var UrlTestHook UrlTestCheck
 
 // BETTBOX-CUSTOM: correlate app and provider delay tests with network-stage diagnostics.
 type URLTestTrace struct {
-	ID      string
-	Source  string
-	BatchID string
+	ID               string
+	Source           string
+	BatchID          string
+	ConcurrencyLimit int
+	Background       bool
+	Timeout          time.Duration
 }
 
 type urlTestTraceContextKey struct{}

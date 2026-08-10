@@ -364,7 +364,7 @@ class _GroupHeader extends ConsumerWidget {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.network_ping),
-                    onPressed: delayTestCoordinator.isTesting
+                    onPressed: isTestingThisGroup
                         ? null
                         : () => _delayTest(context),
                     tooltip: appLocalizations.startTest,

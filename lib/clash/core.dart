@@ -260,12 +260,20 @@ class ClashCore {
     }
   }
 
-  Future<Delay> getDelay(String url, String proxyName) async {
+  Future<Delay> getDelay(
+    String url,
+    String proxyName, {
+    required int concurrencyLimit,
+  }) async {
     final stopwatch = Stopwatch()..start();
     commonPrint.log(
       '[DELAY-TEST][DART] phase=request proxy="$proxyName" url="$url"',
     );
-    final data = await clashInterface.asyncTestDelay(url, proxyName);
+    final data = await clashInterface.asyncTestDelay(
+      url,
+      proxyName,
+      concurrencyLimit,
+    );
     if (data.isEmpty) {
       commonPrint.log(
         '[DELAY-TEST][DART] phase=empty-response proxy="$proxyName" '

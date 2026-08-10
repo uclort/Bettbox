@@ -133,6 +133,8 @@ class AppController {
   bool _isUpdatingGroups = false;
   Timer? _updateGroupsRetryTimer;
   int _coreGeneration = 0;
+  int _delayGeneration = 0;
+  int get delayGeneration => _delayGeneration;
   int _setupGeneration = 0;
   int _macOSNetworkRecoveryGeneration = 0;
 
@@ -191,10 +193,15 @@ class AppController {
 
   void _invalidateCoreReads() {
     _coreGeneration++;
+    _delayGeneration++;
     _backgroundLoadVersion++;
     _updateGroupsRetryTimer?.cancel();
     _updateGroupsRetryTimer = null;
     _updateGroupsRetryCount = 0;
+  }
+
+  void invalidateDelayResults() {
+    _delayGeneration++;
   }
 
   Future<void> restartCore() {
@@ -915,6 +922,7 @@ class AppController {
 
   Future<void> setupClashConfig() {
     return _coreLifecycleLock.synchronized(() async {
+      _invalidateCoreReads();
       await safeRun(() async {
         await _setupCoreConfig();
       }, needLoading: false);

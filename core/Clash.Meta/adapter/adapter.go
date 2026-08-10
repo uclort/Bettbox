@@ -26,8 +26,15 @@ var UnifiedDelay = atomic.NewBool(false)
 
 const (
 	defaultHistoriesNum       = 10
-	urlTestSuccessReuseWindow = time.Second
+	defaultURLTestConcurrency = 16
+
+	foregroundURLTest urlTestClass = 0
+	backgroundURLTest urlTestClass = 1
 )
+
+var sharedURLTestManager = urlTestManager{
+	calls: make(map[urlTestKey]*urlTestCall),
+}
 
 type internalProxyState struct {
 	alive   atomic.Bool
@@ -35,25 +42,44 @@ type internalProxyState struct {
 }
 
 type urlTestCall struct {
-	ctx     context.Context
-	cancel  context.CancelFunc
-	done    chan struct{}
-	waiters int
-	delay   uint16
-	err     error
+	key         urlTestKey
+	ctx         context.Context
+	cancel      context.CancelFunc
+	done        chan struct{}
+	started     chan struct{}
+	startedAt   time.Time
+	fn          func(context.Context) (uint16, error)
+	waiters     int
+	concurrency int
+	class       urlTestClass
+	running     bool
+	delay       uint16
+	err         error
 }
 
-type urlTestGroup struct {
-	mu    sync.Mutex
-	calls map[string]*urlTestCall
+type urlTestClass uint8
+
+type urlTestKey struct {
+	proxy          *Proxy
+	url            string
+	expectedStatus string
+}
+
+type urlTestManager struct {
+	mu               sync.Mutex
+	calls            map[urlTestKey]*urlTestCall
+	queues           [2][]*urlTestCall
+	active           int
+	foregroundActive int
+	nextClass        urlTestClass
 }
 
 type Proxy struct {
 	C.ProxyAdapter
-	alive        atomic.Bool
-	history      *queue.Queue[C.DelayHistory]
-	extra        xsync.Map[string, *internalProxyState]
-	urlTestGroup urlTestGroup
+	alive   atomic.Bool
+	retired atomic.Bool
+	history *queue.Queue[C.DelayHistory]
+	extra   xsync.Map[string, *internalProxyState]
 }
 
 // Adapter implements C.Proxy
@@ -182,73 +208,210 @@ func (p *Proxy) MarshalJSON() ([]byte, error) {
 // URLTest get the delay for the specified URL
 // implements C.Proxy
 func (p *Proxy) URLTest(ctx context.Context, url string, expectedStatus utils.IntRanges[uint16]) (t uint16, err error) {
-	// BETTBOX-CUSTOM: 同一节点与地址只保留一个在途测速；每个等待者保留自己的超时。
-	key := url + "\x00" + expectedStatus.String()
-	return p.urlTestGroup.Do(ctx, key, func(sharedCtx context.Context) (uint16, error) {
+	if p.retired.Load() {
+		return 0, context.Canceled
+	}
+	// BETTBOX-CUSTOM: 所有来源共用节点级在途测速；完成后立即移除，不缓存结果。
+	key := urlTestKey{proxy: p, url: url, expectedStatus: expectedStatus.String()}
+	return sharedURLTestManager.Do(ctx, key, func(sharedCtx context.Context) (uint16, error) {
 		return p.urlTest(sharedCtx, url, expectedStatus)
 	})
 }
 
-func (g *urlTestGroup) Do(ctx context.Context, key string, fn func(context.Context) (uint16, error)) (uint16, error) {
+func (m *urlTestManager) Do(ctx context.Context, key urlTestKey, fn func(context.Context) (uint16, error)) (uint16, error) {
 	if err := ctx.Err(); err != nil {
 		return 0, err
 	}
 
-	g.mu.Lock()
-	call := g.calls[key]
+	trace := URLTestTraceFromContext(ctx)
+	class := foregroundURLTest
+	if trace.Background {
+		class = backgroundURLTest
+	}
+
+	m.mu.Lock()
+	call := m.calls[key]
 	if call == nil {
 		sharedCtx, cancel := context.WithCancel(contextutils.WithoutCancel(ctx))
-		call = &urlTestCall{ctx: sharedCtx, cancel: cancel, done: make(chan struct{}), waiters: 1}
-		if g.calls == nil {
-			g.calls = map[string]*urlTestCall{}
+		concurrency := trace.ConcurrencyLimit
+		if concurrency <= 0 || concurrency > defaultURLTestConcurrency {
+			concurrency = defaultURLTestConcurrency
 		}
-		g.calls[key] = call
-		go func() {
-			call.delay, call.err = fn(call.ctx)
-			g.mu.Lock()
-			if g.calls[key] == call {
-				if call.err == nil {
-					time.AfterFunc(urlTestSuccessReuseWindow, func() {
-						g.mu.Lock()
-						if g.calls[key] == call {
-							delete(g.calls, key)
-						}
-						g.mu.Unlock()
-					})
-				} else {
-					delete(g.calls, key)
-				}
-			}
-			close(call.done)
-			call.cancel()
-			g.mu.Unlock()
-		}()
+		call = &urlTestCall{
+			key:         key,
+			ctx:         sharedCtx,
+			cancel:      cancel,
+			done:        make(chan struct{}),
+			started:     make(chan struct{}),
+			fn:          fn,
+			waiters:     1,
+			concurrency: concurrency,
+			class:       class,
+		}
+		m.calls[key] = call
+		m.queues[class] = append(m.queues[class], call)
+		if class == backgroundURLTest {
+			m.nextClass = backgroundURLTest
+		}
+		m.dispatch()
 	} else {
 		call.waiters++
+		if class == backgroundURLTest && !call.running && call.class == foregroundURLTest {
+			call.class = backgroundURLTest
+			m.queues[backgroundURLTest] = append(m.queues[backgroundURLTest], call)
+			m.nextClass = backgroundURLTest
+			m.dispatch()
+		}
 	}
-	g.mu.Unlock()
+	m.mu.Unlock()
+
+	return m.wait(ctx, call, trace.Timeout)
+}
+
+func (m *urlTestManager) wait(ctx context.Context, call *urlTestCall, timeout time.Duration) (uint16, error) {
+	if timeout > 0 {
+		select {
+		case <-call.done:
+			return call.delay, call.err
+		case <-call.started:
+		case <-ctx.Done():
+			return m.leave(call, ctx.Err())
+		}
+
+		remaining := timeout - time.Since(call.startedAt)
+		if remaining <= 0 {
+			return m.leave(call, context.DeadlineExceeded)
+		}
+		timer := time.NewTimer(remaining)
+		defer timer.Stop()
+		select {
+		case <-call.done:
+			return call.delay, call.err
+		case <-timer.C:
+			return m.leave(call, context.DeadlineExceeded)
+		case <-ctx.Done():
+			return m.leave(call, ctx.Err())
+		}
+	}
 
 	select {
 	case <-call.done:
 		return call.delay, call.err
 	case <-ctx.Done():
-		g.mu.Lock()
-		select {
-		case <-call.done:
-			g.mu.Unlock()
-			return call.delay, call.err
-		default:
-			call.waiters--
-			if call.waiters == 0 {
-				if g.calls[key] == call {
-					delete(g.calls, key)
-				}
-				call.cancel()
-			}
-			g.mu.Unlock()
-			return 0, ctx.Err()
+		return m.leave(call, ctx.Err())
+	}
+}
+
+func (m *urlTestManager) leave(call *urlTestCall, err error) (uint16, error) {
+	m.mu.Lock()
+	select {
+	case <-call.done:
+		m.mu.Unlock()
+		return call.delay, call.err
+	default:
+	}
+
+	call.waiters--
+	if call.waiters == 0 {
+		if m.calls[call.key] == call {
+			delete(m.calls, call.key)
+		}
+		call.cancel()
+		m.dispatch()
+	}
+	m.mu.Unlock()
+	return 0, err
+}
+
+func (m *urlTestManager) ready(class urlTestClass) bool {
+	queue := m.queues[class]
+	for len(queue) != 0 {
+		call := queue[0]
+		if m.calls[call.key] == call && !call.running && call.class == class {
+			m.queues[class] = queue
+			return class != foregroundURLTest || m.foregroundActive < call.concurrency
+		}
+		queue = queue[1:]
+	}
+	m.queues[class] = queue
+	return false
+}
+
+func (m *urlTestManager) dispatch() {
+	for m.active < defaultURLTestConcurrency {
+		foregroundReady := m.ready(foregroundURLTest)
+		backgroundReady := m.ready(backgroundURLTest)
+		if !foregroundReady && !backgroundReady {
+			return
+		}
+
+		class := foregroundURLTest
+		if foregroundReady && backgroundReady {
+			class = m.nextClass
+			m.nextClass = 1 - class
+		} else if backgroundReady {
+			class = backgroundURLTest
+		}
+
+		call := m.queues[class][0]
+		m.queues[class] = m.queues[class][1:]
+		call.running = true
+		call.startedAt = time.Now()
+		close(call.started)
+		m.active++
+		if class == foregroundURLTest {
+			m.foregroundActive++
+		}
+		go m.run(call, class)
+	}
+}
+
+func (m *urlTestManager) run(call *urlTestCall, class urlTestClass) {
+	call.delay, call.err = call.fn(call.ctx)
+	m.mu.Lock()
+	if m.calls[call.key] == call {
+		delete(m.calls, call.key)
+	}
+	close(call.done)
+	call.cancel()
+	m.active--
+	if class == foregroundURLTest {
+		m.foregroundActive--
+	}
+	m.dispatch()
+	m.mu.Unlock()
+}
+
+// CancelURLTests cancels queued and running tests for replaced proxy instances.
+func CancelURLTests(proxies []C.Proxy) {
+	targets := make(map[*Proxy]struct{}, len(proxies))
+	for _, proxy := range proxies {
+		if target, ok := proxy.(*Proxy); ok {
+			target.retired.Store(true)
+			targets[target] = struct{}{}
 		}
 	}
+	sharedURLTestManager.cancel(func(proxy *Proxy) bool {
+		_, ok := targets[proxy]
+		return ok
+	})
+}
+
+func (m *urlTestManager) cancel(matches func(*Proxy) bool) {
+	m.mu.Lock()
+	for key, call := range m.calls {
+		if !matches(key.proxy) {
+			continue
+		}
+		delete(m.calls, key)
+		call.cancel()
+		if !call.running {
+			call.err = context.Canceled
+			close(call.done)
+		}
+	}
+	m.dispatch()
+	m.mu.Unlock()
 }
 
 func (p *Proxy) urlTest(ctx context.Context, url string, expectedStatus utils.IntRanges[uint16]) (t uint16, err error) {
@@ -274,7 +437,7 @@ func (p *Proxy) urlTest(ctx context.Context, url string, expectedStatus utils.In
 		trace.ID, trace.Source, trace.BatchID, p.Name(), p.Type(), p.Addr(), proxyInfo.ProviderName, proxyInfo.Interface, testURL, deadlineIn, UnifiedDelay.Load())
 
 	defer func() {
-		if UrlTestHook != nil {
+		if UrlTestHook != nil && !p.retired.Load() {
 			UrlTestHook(url, p.Name(), t)
 		}
 

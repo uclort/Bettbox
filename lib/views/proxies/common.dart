@@ -1,6 +1,3 @@
-import 'dart:async';
-import 'dart:collection';
-
 import 'package:bett_box/clash/clash.dart';
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/enum/enum.dart';
@@ -10,26 +7,23 @@ import 'package:bett_box/state.dart';
 import 'package:flutter/foundation.dart';
 
 class DelayTestCoordinator extends ChangeNotifier {
-  String? _testingGroupName;
+  final Set<String> _testingGroups = {};
 
-  String? get testingGroupName => _testingGroupName;
+  bool get isTesting => _testingGroups.isNotEmpty;
 
-  bool get isTesting => _testingGroupName != null;
-
-  bool isTestingGroup(String groupName) => _testingGroupName == groupName;
+  bool isTestingGroup(String groupName) => _testingGroups.contains(groupName);
 
   Future<bool> run(String groupName, Future<void> Function() action) async {
-    if (isTesting) {
+    if (!_testingGroups.add(groupName)) {
       return false;
     }
 
-    _testingGroupName = groupName;
     notifyListeners();
     try {
       await action();
       return true;
     } finally {
-      _testingGroupName = null;
+      _testingGroups.remove(groupName);
       notifyListeners();
     }
   }
@@ -52,74 +46,6 @@ class DelayTestTarget {
   @override
   int get hashCode => Object.hash(name, url);
 }
-
-class DelayTestRequestPool {
-  final Map<DelayTestTarget, Future<Delay>> _pendingRequests = {};
-  final Queue<_DelayTestRequest> _queue = Queue();
-  int _activeCount = 0;
-
-  int get pendingCount => _pendingRequests.length;
-  int get activeCount => _activeCount;
-
-  Future<Delay> run(
-    DelayTestTarget target,
-    Future<Delay> Function() action, {
-    int maxConcurrent = defaultDelayTestConcurrencyLimit,
-  }) {
-    final pendingRequest = _pendingRequests[target];
-    if (pendingRequest != null) {
-      return pendingRequest;
-    }
-
-    final completer = Completer<Delay>();
-    late final Future<Delay> request;
-    request = completer.future.whenComplete(() {
-      if (identical(_pendingRequests[target], request)) {
-        _pendingRequests.remove(target);
-      }
-    });
-    _pendingRequests[target] = request;
-    _queue.add(
-      _DelayTestRequest(
-        action: action,
-        completer: completer,
-        maxConcurrent: normalizeDelayTestConcurrency(maxConcurrent),
-      ),
-    );
-    _drain();
-    return request;
-  }
-
-  void _drain() {
-    while (_queue.isNotEmpty && _activeCount < _queue.first.maxConcurrent) {
-      final request = _queue.removeFirst();
-      _activeCount++;
-      Future.sync(request.action)
-          .then(
-            request.completer.complete,
-            onError: request.completer.completeError,
-          )
-          .whenComplete(() {
-            _activeCount--;
-            _drain();
-          });
-    }
-  }
-}
-
-class _DelayTestRequest {
-  final Future<Delay> Function() action;
-  final Completer<Delay> completer;
-  final int maxConcurrent;
-
-  const _DelayTestRequest({
-    required this.action,
-    required this.completer,
-    required this.maxConcurrent,
-  });
-}
-
-final _delayTestRequestPool = DelayTestRequestPool();
 
 double get listHeaderHeight {
   final measure = globalState.measure;
@@ -153,24 +79,43 @@ Future<void> proxyDelayTest(Proxy proxy, [String? testUrl]) async {
 
 Future<Delay> _testProxyDelay(DelayTestTarget target) async {
   final appController = globalState.appController;
-  appController.setDelay(Delay(url: target.url, name: target.name, value: 0));
-  return _delayTestRequestPool.run(target, () async {
-    try {
-      final result = await clashCore.getDelay(target.url, target.name);
-      final delay = Delay(
-        url: target.url,
-        name: target.name,
-        value: (result.value ?? -1) > 0 ? result.value : -1,
+  final generation = appController.delayGeneration;
+  void setResult(Delay delay) {
+    if (generation == appController.delayGeneration) {
+      appController.setDelay(delay);
+    } else if (appController.getTrayProxyDelay(
+          proxyName: target.name,
+          testUrl: target.url,
+        ) ==
+        0) {
+      appController.setDelay(
+        Delay(url: target.url, name: target.name, value: null),
       );
-      appController.setDelay(delay);
-      return delay;
-    } catch (e) {
-      commonPrint.log('Delay test failed for ${target.name}: $e');
-      final delay = Delay(url: target.url, name: target.name, value: -1);
-      appController.setDelay(delay);
-      return delay;
     }
-  }, maxConcurrent: globalState.config.proxiesStyle.concurrencyLimit);
+  }
+
+  appController.setDelay(Delay(url: target.url, name: target.name, value: 0));
+  try {
+    final result = await clashCore.getDelay(
+      target.url,
+      target.name,
+      concurrencyLimit: normalizeDelayTestConcurrency(
+        globalState.config.proxiesStyle.concurrencyLimit,
+      ),
+    );
+    final delay = Delay(
+      url: target.url,
+      name: target.name,
+      value: (result.value ?? -1) > 0 ? result.value : -1,
+    );
+    setResult(delay);
+    return delay;
+  } catch (e) {
+    commonPrint.log('Delay test failed for ${target.name}: $e');
+    final delay = Delay(url: target.url, name: target.name, value: -1);
+    setResult(delay);
+    return delay;
+  }
 }
 
 bool _isNonTestableProxyName(String proxyName) {
