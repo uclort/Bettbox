@@ -135,6 +135,11 @@ class _NetworkMonitorHostState extends ConsumerState<NetworkMonitorHost> {
         return _snapshot(includeTraffic: arguments == true);
       case 'dnsSnapshot':
         return _readMonitorDnsSnapshot(ref);
+      case 'countryCode':
+        return (await clashCore.getCountryCode(
+              arguments as String,
+            ))?.countryCode ??
+            '';
       case 'clearRequests':
         ref.read(requestsProvider.notifier).clearRequests();
         return true;
@@ -215,6 +220,7 @@ class NetworkMonitorView extends ConsumerStatefulWidget {
 }
 
 class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
+  static const _columnWidthPreferencePrefix = 'networkMonitor.columnWidth.';
   final _snapshotReader = NetworkMonitorSnapshotReader();
   Timer? _fallbackTimer;
   Timer? _connectionsTimer;
@@ -241,12 +247,14 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
   int _totalTrafficUp = 0;
   int _totalTrafficDown = 0;
   int _detailTab = 0;
+  double _detailHeight = 260;
   bool _loading = false;
   bool _dnsLoading = false;
   bool _refreshPending = false;
   String? _error;
   final _trackerVerticalController = ScrollController();
   final _trackerHorizontalController = ScrollController();
+  final Map<String, Future<String>> _countryCodes = {};
   final Map<MonitorSortColumn, double> _columnWidths = {
     MonitorSortColumn.status: 64,
     MonitorSortColumn.date: 72,
@@ -263,6 +271,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
   @override
   void initState() {
     super.initState();
+    unawaited(_restoreColumnWidths());
     if (widget.embedded) {
       _requestsSubscription = ref.listenManual(
         requestsProvider.select(
@@ -301,6 +310,31 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
   }
 
   void _update(VoidCallback change) => setState(change);
+
+  Future<void> _restoreColumnWidths() async {
+    final prefs = await preferences.sharedPreferencesCompleter.future;
+    if (!mounted || prefs == null) return;
+    final saved = <MonitorSortColumn, double>{};
+    for (final column in MonitorSortColumn.values) {
+      final width = prefs.getDouble(
+        '$_columnWidthPreferencePrefix${column.name}',
+      );
+      if (width != null) {
+        saved[column] = monitorResizedColumnWidth(width, 0);
+      }
+    }
+    if (saved.isNotEmpty) setState(() => _columnWidths.addAll(saved));
+  }
+
+  void _saveColumnWidth(MonitorSortColumn column) {
+    unawaited(() async {
+      final prefs = await preferences.sharedPreferencesCompleter.future;
+      await prefs?.setDouble(
+        '$_columnWidthPreferencePrefix${column.name}',
+        _columnWidths[column]!,
+      );
+    }());
+  }
 
   @override
   void dispose() {
@@ -389,6 +423,20 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
     }
   }
 
+  Future<String> _lookupCountryCode(String ip) {
+    return _countryCodes.putIfAbsent(ip, () async {
+      try {
+        if (widget.embedded) {
+          return (await clashCore.getCountryCode(ip))?.countryCode ?? '';
+        }
+        return (await ExternalControl.request('countryCode', ip))?.toString() ??
+            '';
+      } catch (_) {
+        return '';
+      }
+    });
+  }
+
   Future<void> _refreshDnsSources() async {
     if (_dnsLoading) return;
     _dnsLoading = true;
@@ -456,7 +504,15 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
     for (final item in _pageTrackers) {
       if (monitorIsInternalTracker(item)) continue;
       final value = monitorTrackerFacetValue(item, _trackerFacet);
-      if (value.isNotEmpty) values[value] = item;
+      if (value.isEmpty) continue;
+      final currentPath = values[value]?.metadata.processPath ?? '';
+      final nextPath = item.metadata.processPath;
+      if (!values.containsKey(value) ||
+          (currentPath.isEmpty && nextPath.isNotEmpty) ||
+          (!currentPath.toLowerCase().contains('.app/') &&
+              nextPath.toLowerCase().contains('.app/'))) {
+        values[value] = item;
+      }
     }
     return Map.fromEntries(
       values.entries.toList()..sort((a, b) => a.key.compareTo(b.key)),
@@ -893,6 +949,8 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
                     );
                   });
                 },
+                onHorizontalDragEnd: (_) => _saveColumnWidth(column),
+                onHorizontalDragCancel: () => _saveColumnWidth(column),
                 child: SizedBox(
                   width: 9,
                   child: VerticalDivider(
@@ -935,8 +993,8 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
             ),
             _trackerTextCell(MonitorSortColumn.date, monitorClock(item.start)),
             _trackerClientCell(item),
-            _trackerTextCell(MonitorSortColumn.rule, monitorRuleName(item)),
-            _trackerTextCell(MonitorSortColumn.policy, monitorPolicyName(item)),
+            _trackerRuleCell(context, item),
+            _trackerPolicyCell(item),
             _trackerTextCell(
               MonitorSortColumn.upload,
               monitorBytes(item.upload),
@@ -976,6 +1034,65 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
         column,
         Text(value, maxLines: 1, overflow: TextOverflow.ellipsis),
       );
+
+  Widget _trackerRuleCell(BuildContext context, TrackerInfo item) {
+    final rule = monitorCompactWhitespace(item.rule);
+    final payload = monitorCompactWhitespace(item.rulePayload);
+    return _trackerCell(
+      MonitorSortColumn.rule,
+      Row(
+        children: [
+          if (rule.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: Text(
+                rule,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 11,
+                ),
+              ),
+            ),
+          if (rule.isNotEmpty && payload.isNotEmpty) const SizedBox(width: 5),
+          if (payload.isNotEmpty)
+            Expanded(
+              child: Text(
+                payload,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _trackerPolicyCell(TrackerInfo item) {
+    final parts = monitorPolicyName(item).split(' ');
+    return _trackerCell(
+      MonitorSortColumn.policy,
+      Text.rich(
+        TextSpan(
+          children: [
+            for (var index = 0; index < parts.length; index++) ...[
+              if (index > 0)
+                const WidgetSpan(
+                  alignment: PlaceholderAlignment.middle,
+                  child: SizedBox(width: 4),
+                ),
+              TextSpan(text: parts[index]),
+            ],
+          ],
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+  }
 
   Widget _trackerClientCell(TrackerInfo item) => _trackerCell(
     MonitorSortColumn.client,

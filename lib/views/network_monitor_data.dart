@@ -436,7 +436,15 @@ String monitorAddress(TrackerInfo item) {
   final host = item.metadata.host.isNotEmpty
       ? item.metadata.host
       : item.metadata.destinationIP;
-  return '$host:${item.metadata.destinationPort}';
+  return monitorEndpoint(host, item.metadata.destinationPort);
+}
+
+String monitorEndpoint(String host, String port) {
+  host = host.trim();
+  port = port.trim();
+  if (host.isEmpty) return '';
+  if (host.contains(':') && !host.startsWith('[')) host = '[$host]';
+  return port.isEmpty ? host : '$host:$port';
 }
 
 Map<String, Object?> normalizeMonitorMap(Object? value) {
@@ -471,6 +479,34 @@ class MonitorLog {
       dateTime: map['dateTime']?.toString() ?? '',
     );
   }
+}
+
+String monitorRemoteIP(TrackerInfo item) {
+  final remote = item.metadata.remoteDestination.trim();
+  return remote.isNotEmpty ? remote : item.metadata.destinationIP.trim();
+}
+
+bool monitorLogBelongsToTracker(MonitorLog log, TrackerInfo item) {
+  final payload = log.payload.toLowerCase();
+  if (item.id.isNotEmpty && payload.contains(item.id.toLowerCase())) {
+    return true;
+  }
+  final source = monitorEndpoint(
+    item.metadata.sourceIP,
+    item.metadata.sourcePort,
+  ).toLowerCase();
+  if (source.isEmpty || !payload.contains(source)) return false;
+  final targetHost = item.metadata.host.trim().isNotEmpty
+      ? item.metadata.host
+      : monitorRemoteIP(item);
+  final targets =
+      {targetHost, item.metadata.destinationIP, monitorRemoteIP(item)}
+          .map(
+            (target) => monitorEndpoint(target, item.metadata.destinationPort),
+          )
+          .toSet()
+        ..removeWhere((target) => target.isEmpty);
+  return targets.isEmpty || targets.any((target) => payload.contains(target));
 }
 
 String monitorClock(DateTime value) {

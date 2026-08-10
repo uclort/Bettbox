@@ -296,6 +296,7 @@ class _ProcessIconState extends State<ProcessIcon> {
           height: widget.size,
           alignment: Alignment.center,
           child: FutureBuilder<Uint8List?>(
+            key: ValueKey('${widget.process}\n${widget.processPath}'),
             future: _iconFuture,
             builder: (context, snapshot) {
               final iconBytes = snapshot.data;
@@ -311,7 +312,6 @@ class _ProcessIconState extends State<ProcessIcon> {
                 ),
                 width: widget.size,
                 height: widget.size,
-                gaplessPlayback: true,
               );
             },
           ),

@@ -61,6 +61,38 @@ void main() {
     expect(processIconCalls, 1);
   });
 
+  testWidgets('复用进程图标组件时立即清除上一行图标', (tester) async {
+    const channel = MethodChannel('app');
+    const oldPath = '/Applications/Bettbox-Old-Icon.app/Contents/MacOS/Test';
+    const newPath = '/Applications/Bettbox-No-Icon.app/Contents/MacOS/Test';
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (_) async => null);
+    addTearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null),
+    );
+
+    var path = oldPath;
+    late StateSetter update;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: StatefulBuilder(
+          builder: (context, setState) {
+            update = setState;
+            return ProcessIcon(process: 'Test', processPath: path);
+          },
+        ),
+      ),
+    );
+    expect(find.byKey(const ValueKey('Test\n$oldPath')), findsOneWidget);
+
+    update(() => path = newPath);
+    await tester.pump();
+    expect(find.byKey(const ValueKey('Test\n$oldPath')), findsNothing);
+    expect(find.byKey(const ValueKey('Test\n$newPath')), findsOneWidget);
+    expect(find.byIcon(Icons.apps_outlined), findsOneWidget);
+  });
+
   test('导航使用统一网络面板替换旧请求、连接和日志入口', () {
     final items = navigation.getItems(hasProxies: true);
     final labels = items.map((item) => item.label).toSet();
@@ -179,6 +211,38 @@ void main() {
       ),
       'OWO-🇺🇸 US DMIT CORONA',
     );
+  });
+
+  test('详情日志只按当前请求的源端口和目标关联', () {
+    final selected = _tracker(
+      id: 'selected',
+      process: 'codex',
+      upload: 0,
+      metadata: const Metadata(
+        process: 'codex',
+        sourceIP: '198.18.0.1',
+        sourcePort: '63246',
+        host: 'chatgpt.com',
+        destinationPort: '443',
+        remoteDestination: '69.63.197.145',
+      ),
+    );
+    const current = MonitorLog(
+      level: 'info',
+      dateTime: '2026-08-10 16:39:12',
+      payload:
+          '[TCP] 198.18.0.1:63246(codex) --> chatgpt.com:443 match RuleSet(ai)',
+    );
+    const other = MonitorLog(
+      level: 'info',
+      dateTime: '2026-08-10 16:39:12',
+      payload:
+          '[TCP] 198.18.0.1:63247(codex) --> chatgpt.com:443 match RuleSet(ai)',
+    );
+
+    expect(monitorRemoteIP(selected), '69.63.197.145');
+    expect(monitorLogBelongsToTracker(current, selected), isTrue);
+    expect(monitorLogBelongsToTracker(other, selected), isFalse);
   });
 
   test('DNS 模式与有效解析地址按 Mihomo 元数据映射', () {

@@ -67,14 +67,43 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
       MonitorTrackerStatus.finished => '已完成',
       MonitorTrackerStatus.other => '其他',
     };
-    const tabs = ['通用', '计时 & 日志', '请求报头', '响应报头', '请求数据', '响应数据'];
+    const tabs = ['通用', 'Mihomo 链路'];
+    final maxHeight = (MediaQuery.sizeOf(context).height * .65)
+        .clamp(220.0, 620.0)
+        .toDouble();
     return SizedBox(
-      height: 260,
+      height: _detailHeight.clamp(180.0, maxHeight).toDouble(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          MouseRegion(
+            cursor: SystemMouseCursors.resizeRow,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onVerticalDragUpdate: (details) {
+                _update(() {
+                  _detailHeight = (_detailHeight - details.delta.dy)
+                      .clamp(180.0, maxHeight)
+                      .toDouble();
+                });
+              },
+              child: SizedBox(
+                height: 8,
+                child: Center(
+                  child: Container(
+                    width: 36,
+                    height: 3,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
             child: Row(
               children: [
                 if (system.isMacOS)
@@ -153,43 +182,141 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
               '规则：${monitorRuleName(item)}',
               '策略：${monitorPolicyName(item)}',
             ], width: 250),
-            _infoCard(context, 'IP 地址', [
-              '出站：${item.metadata.sourceIP}:${item.metadata.sourcePort}',
-              '远程：${item.metadata.destinationIP}:${item.metadata.destinationPort}',
-              '地区：${item.metadata.destinationGeoIP.join(' ')}',
-              'ASN：${item.metadata.destinationIPASN}',
-            ], width: 250),
+            _ipInfoCard(context, item),
             _infoCard(context, '进程', [
               '名称：${monitorClientName(item)}',
-              '路径：${item.metadata.processPath}',
+              if (item.metadata.processPath.isNotEmpty)
+                '路径：${item.metadata.processPath}',
             ], width: 320),
           ],
         ),
       );
     }
-    if (_detailTab == 1) {
-      final keys = [
-        item.id,
-        item.metadata.host,
-        item.metadata.process,
-      ].where((value) => value.isNotEmpty).map((value) => value.toLowerCase());
-      final logs = _logs
-          .where((log) {
-            final payload = log.payload.toLowerCase();
-            return keys.any(payload.contains);
-          })
-          .toList()
-          .reversed;
-      if (logs.isEmpty) return const Center(child: Text('当前连接没有可关联的日志'));
-      return ListView(
-        padding: const EdgeInsets.all(12),
-        children: [
-          for (final log in logs)
-            SelectableText('${log.dateTime} [${log.level}] ${log.payload}'),
-        ],
-      );
+    return _buildMihomoFlow(context, item);
+  }
+
+  Widget _ipInfoCard(BuildContext context, TrackerInfo item) {
+    final remoteIP = monitorRemoteIP(item);
+    final metadataRegion = item.metadata.destinationGeoIP.join(' ');
+    final dnsMode = monitorDnsMode(item);
+
+    Widget buildCard(String region) {
+      final lines = <String>[
+        if (item.metadata.sourceIP.isNotEmpty)
+          '入站源 IP：${monitorEndpoint(item.metadata.sourceIP, item.metadata.sourcePort)}',
+        if (item.metadata.host.isNotEmpty)
+          '目标域名：${monitorEndpoint(item.metadata.host, item.metadata.destinationPort)}',
+        if (remoteIP.isNotEmpty)
+          '出站远端 IP：${monitorEndpoint(remoteIP, item.metadata.destinationPort)}',
+        if (item.metadata.destinationIP.isNotEmpty &&
+            item.metadata.destinationIP != remoteIP)
+          '${dnsMode == 'fake-ip' ? 'Fake-IP' : '内核目标 IP'}：${monitorEndpoint(item.metadata.destinationIP, item.metadata.destinationPort)}',
+        if (item.metadata.dnsMode != null) 'DNS 模式：$dnsMode',
+        if (item.metadata.sourceGeoIP.isNotEmpty)
+          '入站地区：${item.metadata.sourceGeoIP.join(' ')}',
+        if (item.metadata.sourceIPASN.isNotEmpty)
+          '入站 ASN：${item.metadata.sourceIPASN}',
+        if (region.isNotEmpty) '出站地区：$region',
+        if (item.metadata.destinationIPASN.isNotEmpty)
+          '出站 ASN：${item.metadata.destinationIPASN}',
+      ];
+      return _infoCard(context, 'IP 地址', lines, width: 300);
     }
-    return const Center(child: Text('Mihomo 当前未提供该连接的 HTTP 报头或正文数据'));
+
+    if (remoteIP.isEmpty || metadataRegion.isNotEmpty) {
+      return buildCard(metadataRegion);
+    }
+    return FutureBuilder<String>(
+      future: _lookupCountryCode(remoteIP),
+      builder: (_, snapshot) => buildCard(snapshot.data ?? ''),
+    );
+  }
+
+  Widget _buildMihomoFlow(BuildContext context, TrackerInfo item) {
+    final source = monitorEndpoint(
+      item.metadata.sourceIP,
+      item.metadata.sourcePort,
+    );
+    final remoteIP = monitorRemoteIP(item);
+    final remote = monitorEndpoint(remoteIP, item.metadata.destinationPort);
+    final dnsMode = monitorDnsMode(item);
+    final destinationIP = item.metadata.destinationIP.trim();
+    final logs = _logs.where((log) => monitorLogBelongsToTracker(log, item));
+    final steps = <({IconData icon, String title, String value})>[
+      if (source.isNotEmpty)
+        (
+          icon: Icons.input,
+          title: '入站',
+          value: '${item.metadata.network.toUpperCase()} $source',
+        ),
+      if (item.metadata.host.isNotEmpty)
+        (
+          icon: Icons.dns_outlined,
+          title: 'DNS 处理',
+          value: destinationIP.isEmpty
+              ? '${item.metadata.host}${dnsMode == '未知' ? '' : ' · $dnsMode'}'
+              : '${item.metadata.host} → $destinationIP${dnsMode == '未知' ? '' : ' · $dnsMode'}',
+        )
+      else if (destinationIP.isNotEmpty)
+        (icon: Icons.language, title: '目标识别', value: destinationIP),
+      if (monitorRuleName(item).isNotEmpty)
+        (
+          icon: Icons.rule_outlined,
+          title: '规则匹配',
+          value: monitorRuleName(item),
+        ),
+      if (monitorPolicyName(item).isNotEmpty)
+        (icon: Icons.alt_route, title: '出站路径', value: monitorPolicyName(item)),
+      if (remote.isNotEmpty)
+        (
+          icon: Icons.link,
+          title: '建立出站',
+          value:
+              '$remote · ${monitorClock(item.start)} · ${monitorDuration(item.start)}',
+        ),
+    ];
+    return ListView(
+      padding: const EdgeInsets.all(12),
+      children: [
+        for (final step in steps)
+          _flowStep(context, step.icon, step.title, step.value),
+        if (logs.isNotEmpty) ...[
+          const Divider(height: 24),
+          Text('当前请求内核日志', style: Theme.of(context).textTheme.labelLarge),
+          const SizedBox(height: 8),
+          for (final log in logs)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: SelectableText(
+                '${log.dateTime} [${log.level}] ${log.payload}',
+              ),
+            ),
+        ],
+      ],
+    );
+  }
+
+  Widget _flowStep(
+    BuildContext context,
+    IconData icon,
+    String title,
+    String value,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 72,
+            child: Text(title, style: Theme.of(context).textTheme.labelMedium),
+          ),
+          Expanded(child: SelectableText(value)),
+        ],
+      ),
+    );
   }
 
   Widget _infoCard(
