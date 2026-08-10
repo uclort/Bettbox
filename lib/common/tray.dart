@@ -138,7 +138,7 @@ class Tray {
         );
       }
       if (system.isMacOS) {
-        await _syncSpeedTitle(isStart: trayState.isStart);
+        await _syncSpeedTitle();
       }
       if (system.isMacOS && !prepareContextMenu && !trayManager.isMenuOpen) {
         return;
@@ -363,14 +363,14 @@ class Tray {
   }
 
   Future<void> updateSpeed(Traffic traffic) async {
-    _lastTraffic = traffic;
+    _lastTraffic = _trayTrafficActive ? traffic : Traffic();
     if (!system.isMacOS || !_traySpeedEnabled) {
       return;
     }
-    await _setSpeedTitle(traffic);
+    await _setSpeedTitle(_lastTraffic);
   }
 
-  Future<void> _syncSpeedTitle({required bool isStart}) async {
+  Future<void> _syncSpeedTitle() async {
     if (!_traySpeedEnabled) {
       if (!_isSpeedTitleVisible) {
         return;
@@ -383,7 +383,7 @@ class Tray {
       return;
     }
 
-    if (!isStart) {
+    if (!_trayTrafficActive) {
       _lastTraffic = Traffic();
     }
     await _setSpeedTitle(_lastTraffic);

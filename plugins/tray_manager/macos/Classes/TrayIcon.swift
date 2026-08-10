@@ -140,6 +140,10 @@ public class TrayIcon: NSView {
             ],
             range: fullRange
         )
+        attributedTitle.removeAttribute(
+            .foregroundColor,
+            range: fullRange
+        )
         if !active {
             attributedTitle.addAttribute(
                 .foregroundColor,
