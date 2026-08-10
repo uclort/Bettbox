@@ -1,5 +1,5 @@
 <h4 align="right">
-  <a href="README.md">简体中文</a> | <a href="README_en.md">English</a> | <a href="README_ru.md">Русский</a> | <strong>فارسی</strong> | <a href="README_ja.md">日本語</a> | <a href="README_ko.md">한국어</a>
+  <a href="../README.md">简体中文</a> | <a href="README_en.md">English</a> | <a href="README_ru.md">Русский</a> | <strong>فارسی</strong> | <a href="README_ja.md">日本語</a> | <a href="README_ko.md">한국어</a>
 </h4>
 
 <h1 align="center">⚡ Bettbox</h1>
@@ -24,24 +24,6 @@ Bettbox یعنی: Better Experience, Out of the box (تجربه برتر، آم�
 [![Telegram Group](https://img.shields.io/badge/Bettbox-Chat-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/appshub_chat) [![Telegram Channel](https://img.shields.io/badge/Bettbox-Channel-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/appshub_channel)
 
 ---
-
-## 🛠️ نصب و دانلود
-
-لطفاً برای دانلود آخرین فایل نصب مناسب سیستم خود به صفحه **[[انتشارها (Releases)]](https://github.com/appshubcc/Bettbox/releases)** مراجعه کنید.
-
-
-* **پلتفرم‌های دسکتاپ**: **Windows** (x64/arm64)، **macOS** (Intel/Apple Silicon)، **Linux** (x64/arm64)
-* **اندروید**: Android (ARMv8 / ARMv7 / x86_64 / Universal)
-* **تلویزیون اندروید (Android TV)**: پشتیبانی کامل، ARMv7 32-bit اختیاری
-* **سیستم‌عامل HarmonyOS NEXT**: لطفاً همراه با برنامه [[ZhuoYiTong]](https://harmonyos.cool/android-app) استفاده کنید.
-
-**سایر روش‌های نصب:**<br>
-**آرچ لینوکس (ArchLinux):** <code>yay -S bettbox-bin</code> یا <code>paru -S bettbox-bin</code> (نگهداری توسط [lyj404](https://github.com/lyj404/bettbox-aur))<br>
-**AMD64=v1:** <code>yay -S bettbox-compatible-bin</code> یا <code>paru -S bettbox-compatible-bin</code> (نگهداری توسط [VillagerTom](https://github.com/VillagerTom))
-
----
-</div>
-
 ## 🚀 ویژگی‌های اصلی
 
 * **آماده استفاده**: مدیریت پایدار دسترسی‌ها و تجربه روان TUN/VPN همراه با بهینه‌سازی‌های پیش‌فرض برای استفاده فوری.
@@ -54,12 +36,32 @@ Bettbox یعنی: Better Experience, Out of the box (تجربه برتر، آم�
 * **ویجت‌های داشبورد**: ویجت‌های شیک داخلی برای مانیتورینگ زنده سرعت شبکه و وضعیت سیستم در صفحه اصلی.
 * **شخصی‌سازی**: تم‌های رنگی متنوع، آیکون‌ها و عنوان‌های سفارشی همراه با ۱۰ انیمیشن تست سرعت پویا.
 * **انعطاف‌پذیری بالا**: پشتیبانی از UI تقسیم ترافیک برای تمامی اسکریپت‌های JS همراه با کلیدهای بصری سفارشی.
+* **ویرایشگر حرفه‌ای**: ویرایشگر داخلی code-forge بازنویسی شده با عملکرد بالا در تمامی پلتفرم‌ها هم‌سطح IDE‌های حرفه‌ای.
 * **پشتیبانی از دستگاه‌های قدیمی**: نگهداری مستمر نسخه‌های Compatible برای سیستم‌عامل‌ها و سخت‌افزارهای قدیمی جهت افزایش طول عمر دستگاه.
 * **حریم خصوصی کامل**: متن‌باز، بدون تبلیغات، فرآیند شفاف CI/CD و بدون هیچ‌گونه جمع‌آوری داده در پس‌زمینه.
 * **جامعه‌محور**: ارزیابی دقیق بازخوردها و اولویت‌دهی به گزارش‌های باکیفیت. صدای شما شنیده می‌شود.
 
 ---
+</div>
 
+## 🛠️ نصب و دانلود
+
+لطفاً برای دانلود آخرین فایل نصب مناسب سیستم خود به صفحه **[[انتشارها (Releases)]](https://github.com/appshubcc/Bettbox/releases)** مراجعه کنید.
+
+
+* **پلتفرم‌های دسکتاپ**: 
+**Windows 8.1+:** (x64/arm64)
+**Linux Kernel 5.4+:** (x64/arm64)
+**macOS 10.15+:** (Intel/Apple Silicon)
+* **اندروید 8.0+**: Android (ARMv8 / ARMv7 / x86_64 / Universal)
+* **تلویزیون اندروید (Android TV)**: پشتیبانی کامل، ARMv7 32-bit اختیاری
+* **سیستم‌عامل HarmonyOS NEXT**: لطفاً همراه با برنامه [[ZhuoYiTong]](https://harmonyos.cool/android-app) استفاده کنید.
+
+**سایر روش‌های نصب:**<br>
+**آرچ لینوکس (ArchLinux):** <code>yay -S bettbox-bin</code> یا <code>paru -S bettbox-bin</code> (نگهداری توسط [lyj404](https://github.com/lyj404/bettbox-aur))<br>
+**AMD64=v1:** <code>yay -S bettbox-compatible-bin</code> یا <code>paru -S bettbox-compatible-bin</code> (نگهداری توسط [VillagerTom](https://github.com/VillagerTom))
+
+---
 ## ❓ سوالات متداول
 
 1. **مشکلات نصب، راه‌اندازی و امنیت**:
@@ -98,32 +100,31 @@ Bettbox یعنی: Better Experience, Out of the box (تجربه برتر، آم�
 
 نمونه در ویندوز:
 
-* نیازها: سیستم ویندوز (ویندوز ۱۰ یا بالاتر)
+* نیاز به سیستم ویندوز (OS ≥ Windows 10)
 * ابزارها: Git, Visual Studio, Flutter 3.44.x, Golang, Inno Setup, Rust
-* `flutter pub get` (دریافت وابستگی‌ها)
-* `dart .\setup.dart windows --arch amd64 --out core` (ساخت فقط هسته Core)
-* `dart .\setup.dart windows --arch amd64 --out app --compatible` (نسخه سازگار اختیاری)
-* فایل‌های خروجی در پوشه `dist/` قرار می‌گیرند.
+```bash
+* flutter pub get
+* dart .\setup.dart windows --arch amd64 --out core (فقط هسته اصلی)
+* dart .\setup.dart windows --arch amd64 --out app --compatible (نسخه Compatible اختیاری)
+* خروجی در پوشه `dist/` قرار می‌گیرد
+```
 
-سازگاری رابط کاربری اسکریپت‌های سفارشی:
+سفارشی‌سازی UI اسکریپت:
 
-* به عنوان نمونه در پیکربندی **[MyClash از AIsouler](https://github.com/AIsouler/MyClash)**: کافیست عبارات زیر را در سطر اول اسکریپت قرار دهید:
+* از نسخه v1.18.8، برنامه Bettbox از اسکریپت‌های سفارشی پشتیبانی می‌کند. برای نمونه **[مخزن اسکریپت AIsouler](https://github.com/AIsouler/MyClash)** کافیست کد زیر را در سطر اول اسکریپت قرار دهید:
 * <code>const Compatible_With_Bettbox = { ruleOptionsEnable: true };</code>
 
 ---
 
 ### ☕ حمایت مالی
 
-**در صورت مفید بودن پروژه، می‌توانید از طریق روش‌های زیر یا لینک‌های پیشنهادی بالا از توسعه حمایت کنید:**
+**در صورت تمایل می‌توانید از توسعه پروژه حمایت کنید:**
 
-* TRON (TRC-20): <code>TCkTtZfF2WrciZLaJj3e1aqrh3zdTnCkDa</code>
-* EVM Compatible: <code>0xF8B1B39431013359D83F38a4e403087624618E67</code>
-* Solana: <code>C2YQPcKR2YmrPtBvkE13wckjgescUfMA5HzUioR4rQUd</code>
+* EVM Compatible:  <code>0xF8B1B39431013359D83F38a4e403087624618E67</code>
 * Bitcoin: <code>bc1qu950cl6035qvllmzk6cfw3l30j2lg3cq9n6g6h</code>
-
 ---
 
-## ❤️ تقدیر و تشکر
+## 🙏 قدردانی
 
 <table>
   <tr>
@@ -136,14 +137,14 @@ Bettbox یعنی: Better Experience, Out of the box (تجربه برتر، آم�
   </tr>
 </table>
 
-**[FlClash GUI](https://github.com/chen08209/FlClash)** - **[Mihomo Core](https://github.com/MetaCubeX/mihomo)**
+**[FlClash GUI](https://github.com/chen08209/FlClash)** 〢 **[Mihomo Core](https://github.com/MetaCubeX/mihomo)**
 
-با تشکر از تمامی مشارکت‌کنندگان [Contributors](https://github.com/appshubcc/Bettbox/graphs/contributors) و پروژه‌های مرتبط:
+تشکر ویژه از تمامی [مشارکت‌کنندگان](https://github.com/appshubcc/Bettbox/graphs/contributors) و پروژه‌های مرتبط:
 
 [CMFA](https://github.com/MetaCubeX/ClashMetaForAndroid), [Sparkle](https://github.com/xishang0128/sparkle), [SFA](https://github.com/SagerNet/sing-box-for-android), [HUSI](https://github.com/xchacha20-poly1305/husi), [V2rayN](https://github.com/2dust/v2rayN)
 
 ---
 
-## 📄 لایسنس
+## 📄 مجوز
 
-تحت لایسنس GPL-3.0.
+مجوز GPL-3.0

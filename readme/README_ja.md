@@ -1,5 +1,5 @@
 <h4 align="right">
-  <a href="README.md">简体中文</a> | <a href="README_en.md">English</a> | <a href="README_ru.md">Русский</a> | <a href="README_fa.md">فارسی</a> | <strong>日本語</strong> | <a href="README_ko.md">한국어</a>
+  <a href="../README.md">简体中文</a> | <a href="README_en.md">English</a> | <a href="README_ru.md">Русский</a> | <a href="README_fa.md">فارسی</a> | <strong>日本語</strong> | <a href="README_ko.md">한국어</a>
 </h4>
 
 <h1 align="center">⚡ Bettbox</h1>
@@ -24,24 +24,6 @@ Bettbox：Better Experience, Out of the box（優れた体験を、すぐに使�
 [![Telegram Group](https://img.shields.io/badge/Bettbox-Chat-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/appshub_chat) [![Telegram Channel](https://img.shields.io/badge/Bettbox-Channel-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/appshub_channel)
 
 ---
-
-## 🛠️ インストールとダウンロード
-
-ご利用のプラットフォームおよびシステムに適した最新のインストールパッケージを **[[Releases]](https://github.com/appshubcc/Bettbox/releases)** ページからダウンロードしてください。
-
-
-* **全デスクトッププラットフォーム**: **Windows** (x64/arm64), **macOS** (Intel/Apple Silicon), **Linux** (x64/arm64)
-* **Android 端末**: Android (ARMv8 / ARMv7 / x86_64 / Universal)
-* **Android TV**: 完全対応、ARMv7 32ビット版も選択可能
-* **HarmonyOS NEXT**: [[卓易通]](https://harmonyos.cool/android-app) と組み合わせてご利用ください
-
-**その他のインストール方法:**<br>
-**ArchLinux:** <code>yay -S bettbox-bin または paru -S bettbox-bin</code> ([lyj404](https://github.com/lyj404/bettbox-aur) により維持)<br>
-**AMD64=v1:** <code>yay -S bettbox-compatible-bin または paru -S bettbox-compatible-bin</code> ([VillagerTom](https://github.com/VillagerTom) により維持)
-
----
-</div>
-
 ## 🚀 主な特徴
 
 * **箱から出してすぐ使える**：安定した権限処理と快適な TUN/VPN 体験。最適化プリセット済みで即座に使用可能。
@@ -54,12 +36,32 @@ Bettbox：Better Experience, Out of the box（優れた体験を、すぐに使�
 * **ホームウィジェット**：通信速度や動作ステータスをホーム画面で一目で確認できる美しいウィジェットを内蔵。
 * **カスタマイズ**：豊富なカラーテーマ、カスタムアイコン/タイトル、10 種類の動的スピードテストアニメーションを収録。
 * **優れた拡張性**：すべての JS オーバーライド脚本に対応する分流 UI 設定と、使いやすいトグルスイッチを提供。
+* **プロ仕様エディタ**：全プラットフォーム対応の高速再構築 code-forge エディタを内蔵し、プロレベルのエディタ体験を実現。
 * **レガシー互換**：旧 OS や旧ハードウェア向けの Compatible バージョンを継続維持し、デバイスの寿命を延長。
 * **プライバシーリスクゼロ**：オープンソース、広告なし。透明な CI/CD と外部監査対応で、背景でのデータ収集を遮断。
 * **コミュニティ重視**：フィードバックを真摯に評価し、質の高い Issue を優先対応。ユーザーの声を大切にします。
 
 ---
+</div>
 
+## 🛠️ インストールとダウンロード
+
+ご利用のプラットフォームおよびシステムに適した最新のインストールパッケージを **[[Releases]](https://github.com/appshubcc/Bettbox/releases)** ページからダウンロードしてください。
+
+
+* **全デスクトッププラットフォーム**: 
+**Windows 8.1+:** (x64/arm64)
+**Linux Kernel 5.4+:** (x64/arm64)
+**macOS 10.15+:** (Intel/Apple Silicon)
+* **Android 8.0+ 端末**: Android (ARMv8 / ARMv7 / x86_64 / Universal)
+* **Android TV**: 完全対応、ARMv7 32ビット版も選択可能
+* **HarmonyOS NEXT**: [[卓易通]](https://harmonyos.cool/android-app) と組み合わせてご利用ください
+
+**その他のインストール方法:**<br>
+**ArchLinux:** <code>yay -S bettbox-bin または paru -S bettbox-bin</code> ([lyj404](https://github.com/lyj404/bettbox-aur) により維持)<br>
+**AMD64=v1:** <code>yay -S bettbox-compatible-bin または paru -S bettbox-compatible-bin</code> ([VillagerTom](https://github.com/VillagerTom) により維持)
+
+---
 ## ❓ よくある質問
 
 1. **インストール・起動およびセキュリティ**：
@@ -98,32 +100,31 @@ Bettbox：Better Experience, Out of the box（優れた体験を、すぐに使�
 
 Windows の例：
 
-* 環境：Windows 端末（OS ≥ Windows 10）
-* 必須ツール：Git, Visual Studio, Flutter 3.44.x, Golang, Inno Setup, Rust
-* `flutter pub get` (依存関係の取得)
-* `dart .\setup.dart windows --arch amd64 --out core` (Core のみビルド)
-* `dart .\setup.dart windows --arch amd64 --out app --compatible` (Compatible バージョン、オプション)
-* ビルド成果物は `dist/` ディレクトリに生成されます。
+* Windows PC が必要です（OS ≥ Windows 10）
+* 必要環境：Git, Visual Studio, Flutter 3.44.x, Golang, Inno Setup, Rust
+```bash
+* flutter pub get
+* dart .\setup.dart windows --arch amd64 --out core (コアのみビルド)
+* dart .\setup.dart windows --arch amd64 --out app --compatible (Compatible版オプション)
+* ビルド完了後、成果物は `dist/` ディレクトリに生成されます
+```
 
-カスタムスクリプト UI 対応：
+カスタムスクリプト UI 適応：
 
-* AIsouler の **[MyClash 設定共有](https://github.com/AIsouler/MyClash)** を例にすると、スクリプトの先頭行に以下の宣言を追加するだけで、Bettbox 組み込みの視覚的スイッチを利用できます：
+* v1.18.8 より、Bettbox は外部オーバーライドスクリプトの UI 適応をサポートしています。例えば AIsouler の **[スクリプト/設定リポジトリ](https://github.com/AIsouler/MyClash)** の場合、スクリプトの1行目に以下を追加するだけで、Bettbox 内蔵のトグルスイッチを直接使用できます：
 * <code>const Compatible_With_Bettbox = { ruleOptionsEnable: true };</code>
 
 ---
 
-### ☕ 開発のサポート
+### ☕ 開発のサポート（スポンサー）
 
-**このプロジェクトが役に立った場合は、以下の方法で開発を支援するか、上記の推奨リンクをご利用いただけます：**
+**プロジェクトがお役に立ちましたら、以下の方法で開発をサポートしていただけます：**
 
-* TRON (TRC-20): <code>TCkTtZfF2WrciZLaJj3e1aqrh3zdTnCkDa</code>
-* EVM Compatible: <code>0xF8B1B39431013359D83F38a4e403087624618E67</code>
-* Solana: <code>C2YQPcKR2YmrPtBvkE13wckjgescUfMA5HzUioR4rQUd</code>
+* EVM Compatible:  <code>0xF8B1B39431013359D83F38a4e403087624618E67</code>
 * Bitcoin: <code>bc1qu950cl6035qvllmzk6cfw3l30j2lg3cq9n6g6h</code>
-
 ---
 
-## ❤️ 謝辞
+## 🙏 謝辞
 
 <table>
   <tr>
@@ -136,9 +137,9 @@ Windows の例：
   </tr>
 </table>
 
-**[FlClash GUI](https://github.com/chen08209/FlClash)** 〢 **[Mihomo Core](https://github.com/MetaCubeX/mihomo)**
+**[FlClash GUI](https://github.com/chen08209/FlClash)** Clearance **[Mihomo Core](https://github.com/MetaCubeX/mihomo)**
 
-貢献者の皆様 [Contributors](https://github.com/appshubcc/Bettbox/graphs/contributors) および関連オープンソースプロジェクト：
+すべての [コントリビューター](https://github.com/appshubcc/Bettbox/graphs/contributors) および関連オープンソースプロジェクトに感謝いたします：
 
 [CMFA](https://github.com/MetaCubeX/ClashMetaForAndroid), [Sparkle](https://github.com/xishang0128/sparkle), [SFA](https://github.com/SagerNet/sing-box-for-android), [HUSI](https://github.com/xchacha20-poly1305/husi), [V2rayN](https://github.com/2dust/v2rayN)
 

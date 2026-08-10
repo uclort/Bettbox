@@ -6704,35 +6704,28 @@ class _CodeFieldRenderer extends RenderBox implements MouseTrackerAnnotation {
     return (x: 0.0, yInLine: 0.0);
   }
 
-  /// Snaps a raw UTF-16 index to a valid code-unit boundary by walking
-  /// backwards (if [snapBack] is true) or forwards until we are not
-  /// inside a surrogate pair.
+  /// Snaps a raw UTF-16 index to a valid Grapheme Cluster boundary in [s].
+  ///
+  /// If [index] falls inside a Grapheme Cluster (such as a flag emoji,
+  /// ZWJ sequence, or combined character), this snaps to the start
+  /// of the cluster if [snapBack] is true, or to the end of the cluster
+  /// if [snapBack] is false.
   static int _safeUtf16Bound(String s, int index, {bool snapBack = true}) {
     final len = s.length;
     if (index <= 0) return 0;
     if (index >= len) return len;
-    // If we're at a low surrogate, move to a safe boundary.
-    final cu = s.codeUnitAt(index);
-    if (cu >= 0xDC00 && cu <= 0xDFFF) {
-      if (snapBack) {
-        // step back until we're not a low surrogate
-        int i = index - 1;
-        while (i > 0 &&
-            s.codeUnitAt(i) >= 0xDC00 &&
-            s.codeUnitAt(i) <= 0xDFFF) {
-          i--;
-        }
-        return i;
-      } else {
-        // step forward until we're not a low surrogate
-        int i = index + 1;
-        while (i < len &&
-            s.codeUnitAt(i) >= 0xDC00 &&
-            s.codeUnitAt(i) <= 0xDFFF) {
-          i++;
-        }
-        return i;
+    int currentUtf16Offset = 0;
+    for (final char in s.characters) {
+      final charLen = char.length;
+      final clusterStart = currentUtf16Offset;
+      final clusterEnd = currentUtf16Offset + charLen;
+
+      if (index > clusterStart && index < clusterEnd) {
+        return snapBack ? clusterStart : clusterEnd;
       }
+
+      if (clusterEnd >= index) break;
+      currentUtf16Offset = clusterEnd;
     }
     return index;
   }
@@ -9989,7 +9982,11 @@ class _CodeFieldRenderer extends RenderBox implements MouseTrackerAnnotation {
             endLineText,
             width: paragraphWidth,
           );
-      final clampedCol = endCol.clamp(0, endLineText.length);
+      final utf16Col = CodeForgeController.scalarToUtf16Offset(
+        endLineText,
+        endCol,
+      );
+      final clampedCol = utf16Col.clamp(0, endLineText.length);
       final paragraphOffset = isRTL
           ? (lineWrap ? 0.0 : (contentWidth - (paragraphWidth ?? 0)))
           : 0.0;

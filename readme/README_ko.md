@@ -1,5 +1,5 @@
 <h4 align="right">
-  <a href="README.md">简体中文</a> | <a href="README_en.md">English</a> | <a href="README_ru.md">Русский</a> | <a href="README_fa.md">فارسی</a> | <a href="README_ja.md">日本語</a> | <strong>한국어</strong>
+  <a href="../README.md">简体中文</a> | <a href="README_en.md">English</a> | <a href="README_ru.md">Русский</a> | <a href="README_fa.md">فارسی</a> | <a href="README_ja.md">日本語</a> | <strong>한국어</strong>
 </h4>
 
 <h1 align="center">⚡ Bettbox</h1>
@@ -24,24 +24,6 @@ Bettbox: Better Experience, Out of the box (뛰어난 경험, 설치 즉시 사�
 [![Telegram Group](https://img.shields.io/badge/Bettbox-Chat-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/appshub_chat) [![Telegram Channel](https://img.shields.io/badge/Bettbox-Channel-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/appshub_channel)
 
 ---
-
-## 🛠️ 설치 및 다운로드
-
-플랫폼과 시스템에 맞는 최신 설치 패키지를 **[[Releases]](https://github.com/appshubcc/Bettbox/releases)** 페이지에서 다운로드하십시오.
-
-
-* **모든 데스크톱 플랫폼**: **Windows** (x64/arm64), **macOS** (Intel/Apple Silicon), **Linux** (x64/arm64)
-* **Android 기기**: Android (ARMv8 / ARMv7 / x86_64 / Universal)
-* **Android TV**: 완전 지원, ARMv7 32비트 버전 선택 가능
-* **HarmonyOS NEXT**: [[卓易通]](https://harmonyos.cool/android-app) 프로그램과 함께 사용하십시오.
-
-**기타 설치 방법:**<br>
-**ArchLinux:** <code>yay -S bettbox-bin 또는 paru -S bettbox-bin</code> ([lyj404](https://github.com/lyj404/bettbox-aur) 관리)<br>
-**AMD64=v1:** <code>yay -S bettbox-compatible-bin 또는 paru -S bettbox-compatible-bin</code> ([VillagerTom](https://github.com/VillagerTom) 관리)
-
----
-</div>
-
 ## 🚀 핵심 특징
 
 * **설치 즉시 사용**: 안정적인 권한 처리와 쾌적한 TUN/VPN 환경. 최적화가 완비되어 설치 후 바로 사용할 수 있습니다.
@@ -54,12 +36,32 @@ Bettbox: Better Experience, Out of the box (뛰어난 경험, 설치 즉시 사�
 * **홈 위젯**: 실시간 네트워크 속도와 실행 상태를 홈 화면에서 한눈에 모니터링하는 세련된 위젯 내장.
 * **개인화 맞춤**: 풍부한 색상 테마, 사용자 지정 아이콘/제목 및 10가지 동적 속도 측정 애니메이션 지원.
 * **높은 확장성**: 모든 JS 오버라이드 스크립트를 위한 분류 UI 지원과 편리한 시각적 토글 스위치 제공.
+* **전문가급 에디터**: 전 플랫폼 지원 고성능 재구축 code-forge 에디터 내장으로 IDE 수준의 편집 환경 제공.
 * **구형 기기 지원**: 구형 OS 및 하드웨어를 위한 Compatible 버전을 지속 관리하여 기기 수명을 연장합니다.
 * **개인정보 위험 Zero**: 오픈소스, 무광고, 투명한 CI/CD 프로세스 및 외부 감사 수용으로 백그라운드 데이터 수집 전면 차단.
 * **커뮤니티 중심**: 피드백을 깊이 있게 검토하고 유용한 Issue를 우선 처리합니다. 사용자 의견을 귀담아듣습니다.
 
 ---
+</div>
 
+## 🛠️ 설치 및 다운로드
+
+플랫폼과 시스템에 맞는 최신 설치 패키지를 **[[Releases]](https://github.com/appshubcc/Bettbox/releases)** 페이지에서 다운로드하십시오.
+
+
+* **모든 데스크톱 플랫폼**: 
+**Windows 8.1+:** (x64/arm64)
+**Linux Kernel 5.4+:** (x64/arm64)
+**macOS 10.15+:** (Intel/Apple Silicon)
+* **Android 8.0+ 기기**: Android (ARMv8 / ARMv7 / x86_64 / Universal)
+* **Android TV**: 완전 지원, ARMv7 32비트 버전 선택 가능
+* **HarmonyOS NEXT**: [[卓易通]](https://harmonyos.cool/android-app) 프로그램과 함께 사용하십시오.
+
+**기타 설치 방법:**<br>
+**ArchLinux:** <code>yay -S bettbox-bin 또는 paru -S bettbox-bin</code> ([lyj404](https://github.com/lyj404/bettbox-aur) 관리)<br>
+**AMD64=v1:** <code>yay -S bettbox-compatible-bin 또는 paru -S bettbox-compatible-bin</code> ([VillagerTom](https://github.com/VillagerTom) 관리)
+
+---
 ## ❓ 자주 묻는 질문
 
 1. **설치, 실행 및 보안 문제**:
@@ -98,32 +100,31 @@ Bettbox: Better Experience, Out of the box (뛰어난 경험, 설치 즉시 사�
 
 Windows 환경을 예로 들면:
 
-* Windows 장치가 필요합니다 (OS 버전 ≥ Windows 10)
-* 기타 필수 환경: Git, Visual Studio, Flutter 3.44.x, Golang, Inno Setup, Rust
-* `flutter pub get` (의존성 패키지 설치)
-* `dart .\setup.dart windows --arch amd64 --out core` (Core 커널만 빌드)
-* `dart .\setup.dart windows --arch amd64 --out app --compatible` (호환 버전 빌드 선택)
-* 빌드가 완료되면, 최종 결과물은 `dist/` 디렉터리에 저장됩니다.
+* Windows PC가 필요합니다 (OS ≥ Windows 10)
+* 필요 환경: Git, Visual Studio, Flutter 3.44.x, Golang, Inno Setup, Rust
+```bash
+* flutter pub get
+* dart .\setup.dart windows --arch amd64 --out core (코어만 빌드)
+* dart .\setup.dart windows --arch amd64 --out app --compatible (Compatible 버전 옵션)
+* 빌드 완료 후 결과물은 `dist/` 디렉토리에 생성됩니다
+```
 
-사용자 지정 스크립트 UI 맞춤:
+사용자 지정 스크립트 UI 적응:
 
-* AIsouler의 **[MyClash 설정 공유](https://github.com/AIsouler/MyClash)**를 예로 들면, 첫 줄에 다음 선언을 추가하기만 하면 Bettbox 내장 시각적 토글 스위치를 바로 사용할 수 있습니다.
+* v1.18.8부터 Bettbox는 외부 오버라이드 스크립트 UI 적응을 지원합니다. 예를 들어 AIsouler의 **[스크립트/설정 저장소](https://github.com/AIsouler/MyClash)**의 경우, 스크립트 첫 줄에 다음을 추가하면 Bettbox 내장 시각적 토글을 직접 사용할 수 있습니다:
 * <code>const Compatible_With_Bettbox = { ruleOptionsEnable: true };</code>
 
 ---
 
-### ☕ 개발 후원
+### ☕ 후원 및 지원
 
-**이 프로젝트가 유용하다고 생각하신다면, 아래의 방법을 통해 개발을 후원하시거나 위의 추천 링크를 이용해 주십시오:**
+**프로젝트가 도움이 되었다면 다음 방법으로 개발을 후원하실 수 있습니다:**
 
-* TRON (TRC-20): <code>TCkTtZfF2WrciZLaJj3e1aqrh3zdTnCkDa</code>
-* EVM Compatible: <code>0xF8B1B39431013359D83F38a4e403087624618E67</code>
-* Solana: <code>C2YQPcKR2YmrPtBvkE13wckjgescUfMA5HzUioR4rQUd</code>
+* EVM Compatible:  <code>0xF8B1B39431013359D83F38a4e403087624618E67</code>
 * Bitcoin: <code>bc1qu950cl6035qvllmzk6cfw3l30j2lg3cq9n6g6h</code>
-
 ---
 
-## ❤️ 감사의 글
+## 🙏 감사의 글
 
 <table>
   <tr>
@@ -136,9 +137,9 @@ Windows 환경을 예로 들면:
   </tr>
 </table>
 
-**[FlClash GUI](https://github.com/chen08209/FlClash)** 〢 **[Mihomo Core](https://github.com/MetaCubeX/mihomo)**
+**[FlClash GUI](https://github.com/chen08209/FlClash)** Clearance **[Mihomo Core](https://github.com/MetaCubeX/mihomo)**
 
-기타 프로젝트 기여자 [Contributors](https://github.com/appshubcc/Bettbox/graphs/contributors) 및 오픈 소스 프로젝트 참조:
+프로젝트에 기여해 주신 모든 [기여자](https://github.com/appshubcc/Bettbox/graphs/contributors) 및 오픈소스 프로젝트에 감사드립니다:
 
 [CMFA](https://github.com/MetaCubeX/ClashMetaForAndroid), [Sparkle](https://github.com/xishang0128/sparkle), [SFA](https://github.com/SagerNet/sing-box-for-android), [HUSI](https://github.com/xchacha20-poly1305/husi), [V2rayN](https://github.com/2dust/v2rayN)
 

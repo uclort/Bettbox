@@ -1,5 +1,5 @@
 <h4 align="right">
-  <strong>简体中文</strong> | <a href="README_en.md">English</a> | <a href="README_ru.md">Русский</a> | <a href="README_fa.md">فارسی</a> | <a href="README_ja.md">日本語</a> | <a href="README_ko.md">한국어</a>
+  <a href="../README.md">简体中文</a> | <a href="README_en.md">English</a> | <a href="README_ru.md">Русский</a> | <a href="README_fa.md">فارسی</a> | <a href="README_ja.md">日本語</a> | <a href="README_ko.md">한국어</a>
 </h4>
 
 <h1 align="center">⚡ Bettbox</h1>
@@ -24,40 +24,6 @@ Bettbox意为: Better Experience, Out of the box，更好的体验，亦开箱�
 [![Telegram Group](https://img.shields.io/badge/Bettbox-Chat-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/appshub_chat) [![Telegram Channel](https://img.shields.io/badge/Bettbox-Channel-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/appshub_channel)
 
 ---
-###   🛩️ 推荐服务
-### 小众低调专线  〢  [百变小樱](https://www.bbxy01.com/v2/register?code=c09R)
-
-### Bettbox新用户独享：首充6.8折优惠码：bettbox68
-
-**简评** : ❚ ❚  老牌小众专线，海外团队运营多年，当前线路包括: 优化直连/BGP中转/IEPL专线
-
---------------------------------
-### 低价直连  〢  [良心云](https://xn--9kqz23b19z.com/#/register?code=VTnrQYAj)  〢  [一分机场](https://xn--4gqx1hgtfdmt.com/#/register?code=AuCiXprV)  〢  [赔钱机场](https://xn--mes358aby2apfg.com/register?code=z7TUZLmM&cover=sfw)
-
-**简评** : ❚ ❚  AWS&渠道机，跑路风险相对较低，量大管饱，1000G不限时套餐通常更有性价比
-
----
-
-## 🛠️ 安装与下载
-
-请前往 **[[Releases]](https://github.com/appshubcc/Bettbox/releases)** 页面下载最新适合您平台和系统的安装包
-
-
-* **全平台桌面端**: 
-**Windows 8.1+**: (x64/arm64)
-**Linux Kernel 5.4++**: (x64/arm64)
-**macOS 10.15+**: (Intel/Apple Silicon)
-* **Android 8.0+**: Android (ARMv8/ ARMv7/ x86_64/ Universal) 
-* **Android TV**: 已适配，可选 ARMv7 32位
-* **鸿蒙 NEXT**: 可配合 [[卓易通]](https://harmonyos.cool/android-app) 使用
-
-**其他安装方式:**<br>
-**ArchLinux:** <code>yay -S bettbox-bin 或 paru -S bettbox-bin</code> (由[lyj404](https://github.com/lyj404/bettbox-aur)维护)<br>
-**AMD64=v1:** <code>yay -S bettbox-compatible-bin 或 paru -S bettbox-compatible-bin</code> (由[VillagerTom](https://github.com/VillagerTom)维护)
-
----
-</div>
-
 ## 🚀 核心特性
 
 * **开箱即用**：稳定的权限处理与舒适的 TUN/VPN 体验，大量预置优化细节，开箱即达可用状态。
@@ -70,12 +36,45 @@ Bettbox意为: Better Experience, Out of the box，更好的体验，亦开箱�
 * **首页小组件**：内置多款精致 Widget 小组件，在首页直观掌控实时网速与全局运行状态。
 * **个性化定制**：支持丰富色彩主题、自定义图标/标题等，甚至还包含 10 种精美测速动画。
 * **自定义适配**：提供首个JS覆写脚本可用的分流 UI 适配，以及自定义可用的可视化便捷开关。
+* **专业编辑**：多平台内置高性能重构版code-forge编辑器，甚至可媲美专业级别的编辑器体验。
 * **设备兼容**：持续维护面向旧版系统及老旧硬件的 Compatible 兼容版本，延长设备使用周期。
 * **零隐私风险**：开源、无广告，全透明的 CI/CD 流程且接受全方位审计，杜绝后台隐私收集。
 * **社区导向**：我们会认真评估社区反馈，优先对待高质量的 Issue，你的声音不会无故被淹没。
 
 ---
+</div>
 
+###   🛩️ 推荐服务
+### 小众低调专线  〢  [百变小樱](https://www.bbxy01.com/v2/register?code=c09R)
+
+### Bettbox新用户独享68折优惠码：bettbox68
+
+**简评** : ❚ ❚  老牌小众专线，海外团队运营多年，稳定性与口碑优秀，折后约17元/月或127元/年，适合对稳定性和延迟要求较高的用户，后台每次签到可额外领取叠加5-10GB流量
+
+--------------------------------
+### 低价直连  〢  [良心云](https://xn--9kqz23b19z.com/#/register?code=VTnrQYAj)  〢  [一分](https://xn--4gqx1hgtfdmt.com/#/register?code=AuCiXprV)  〢  [赔钱](https://xn--mes358aby2apfg.com/register?code=z7TUZLmM&cover=sfw)
+
+**简评** : ❚  AWS或资源渠道机，直连风险相对较低，1000G不限时套餐通常更有性价比，量大管饱，价格低廉，适合要求不高的用户或备用机场流量选择
+
+---
+## 🛠️ 安装与下载
+
+请前往 **[[Releases]](https://github.com/appshubcc/Bettbox/releases)** 页面下载最新适合您平台和系统的安装包
+
+
+* **全平台桌面端**: 
+**Windows 8.1+:** (x64/arm64)
+**Linux Kernel 5.4+:** (x64/arm64)
+**macOS 10.15+:** (Intel/Apple Silicon)
+* **Android 8.0+:** Android (ARMv8/ ARMv7/ x86_64/ Universal) 
+* **Android TV:** 已适配，可选 ARMv7 32位
+* **鸿蒙 NEXT:** 可配合 [[卓易通]](https://harmonyos.cool/android-app) 使用
+
+**其他安装方式:**<br>
+**ArchLinux:** <code>yay -S bettbox-bin 或 paru -S bettbox-bin</code> (由[lyj404](https://github.com/lyj404/bettbox-aur)维护)<br>
+**AMD64=v1:** <code>yay -S bettbox-compatible-bin 或 paru -S bettbox-compatible-bin</code> (由[VillagerTom](https://github.com/VillagerTom)维护)
+
+---
 ##  常见问题
 
 1.  **安装启动及安全问题**：
@@ -132,13 +131,10 @@ Bettbox意为: Better Experience, Out of the box，更好的体验，亦开箱�
 
 ### ☕ 赞助支持
 
-**如果您觉得这个项目对您有所帮助，可通过以下方式赞助开发或使用上方的推荐链接：**
+**如果您觉得这个项目对您有所帮助，可通过以下方式赞助开发或使用推荐链接：**
 
-* TRON (TRC-20)：   <code>TCkTtZfF2WrciZLaJj3e1aqrh3zdTnCkDa</code>
 * EVM Compatible：  <code>0xF8B1B39431013359D83F38a4e403087624618E67</code>
-* Solana：  <code>C2YQPcKR2YmrPtBvkE13wckjgescUfMA5HzUioR4rQUd</code>
 * Bitcoin： <code>bc1qu950cl6035qvllmzk6cfw3l30j2lg3cq9n6g6h</code>
-
 ---
 
 ##  致谢

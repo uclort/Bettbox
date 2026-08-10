@@ -1,5 +1,5 @@
 <h4 align="right">
-  <a href="README.md">简体中文</a> | <a href="README_en.md">English</a> | <strong>Русский</strong> | <a href="README_fa.md">فارسی</a> | <a href="README_ja.md">日本語</a> | <a href="README_ko.md">한국어</a>
+  <a href="../README.md">简体中文</a> | <a href="README_en.md">English</a> | <strong>Русский</strong> | <a href="README_fa.md">فارسی</a> | <a href="README_ja.md">日本語</a> | <a href="README_ko.md">한국어</a>
 </h4>
 
 <h1 align="center">⚡ Bettbox</h1>
@@ -24,24 +24,6 @@
 [![Telegram Group](https://img.shields.io/badge/Bettbox-Chat-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/appshub_chat) [![Telegram Channel](https://img.shields.io/badge/Bettbox-Channel-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/appshub_channel)
 
 ---
-
-## 🛠️ Установка и загрузка
-
-Перейдите на страницу **[[Releases]](https://github.com/appshubcc/Bettbox/releases)**, чтобы скачать актуальный установочный пакет для вашей платформы и системы.
-
-
-* **Все ПК платформы**: **Windows** (x64/arm64), **macOS** (Intel/Apple Silicon), **Linux** (x64/arm64)
-* **Устройства Android**: Android (ARMv8 / ARMv7 / x86_64 / Universal)
-* **Android TV**: Поддерживается, опционально ARMv7 32-bit
-* **HarmonyOS NEXT**: Совместимо при использовании с [[ZhuoYiTong]](https://harmonyos.cool/android-app)
-
-**Другие способы установки:**<br>
-**ArchLinux:** <code>yay -S bettbox-bin или paru -S bettbox-bin</code> (поддерживается [lyj404](https://github.com/lyj404/bettbox-aur))<br>
-**AMD64=v1:** <code>yay -S bettbox-compatible-bin или paru -S bettbox-compatible-bin</code> (поддерживается [VillagerTom](https://github.com/VillagerTom))
-
----
-</div>
-
 ## 🚀 Основные особенности
 
 * **Готово к работе**: Стабильное управление правами и удобный TUN/VPN. Предустановленные оптимизации для мгновенного старта.
@@ -54,12 +36,32 @@
 * **Виджеты на главном экране**: Стильные виджеты для удобного контроля скорости сети и состояния системы.
 * **Кастомизация**: Разнообразные цветовые темы, пользовательские иконки/заголовки и 10 динамических анимаций спидтеста.
 * **Гибкая адаптация**: Наглядное UI-разделение для всех JS-скриптов оверрайда с удобными переключателями.
+* **Профессиональный редактор**: Встроенный высокопроизводительный редактор code-forge на всех платформах, не уступающий профессиональным IDE.
 * **Поддержка старых устройств**: Постоянный релиз сборок Compatible для старых ОС и железа, продлевающий срок службы устройств.
 * **Конфиденциальность 100%**: Открытый код, без рекламы, прозрачный CI/CD и доступность для аудита. Нулевой сбор данных в фоне.
 * **Внимание к сообществу**: Мы ценим обратную связь и оперативно реагируем на качественные Issue — ваш голос важен.
 
 ---
+</div>
 
+## 🛠️ Установка и загрузка
+
+Перейдите на страницу **[[Releases]](https://github.com/appshubcc/Bettbox/releases)**, чтобы скачать актуальный установочный пакет для вашей платформы и системы.
+
+
+* **Все ПК платформы**: 
+**Windows 8.1+:** (x64/arm64)
+**Linux Kernel 5.4+:** (x64/arm64)
+**macOS 10.15+:** (Intel/Apple Silicon)
+* **Устройства Android 8.0+:** Android (ARMv8 / ARMv7 / x86_64 / Universal)
+* **Android TV:** Поддерживается, опционально ARMv7 32-bit
+* **HarmonyOS NEXT:** Совместимо при использовании с [[ZhuoYiTong]](https://harmonyos.cool/android-app)
+
+**Другие способы установки:**<br>
+**ArchLinux:** <code>yay -S bettbox-bin или paru -S bettbox-bin</code> (поддерживается [lyj404](https://github.com/lyj404/bettbox-aur))<br>
+**AMD64=v1:** <code>yay -S bettbox-compatible-bin или paru -S bettbox-compatible-bin</code> (поддерживается [VillagerTom](https://github.com/VillagerTom))
+
+---
 ## ❓ FAQ (Часто задаваемые вопросы)
 
 1. **Проблемы с установкой, запуском и безопасностью**:
@@ -98,32 +100,31 @@
 
 Пример для Windows:
 
-* Требования: ПК под управлением Windows (ОС ≥ Windows 10)
-* Необходимое окружение: Git, Visual Studio, Flutter 3.44.x, Golang, Inno Setup, Rust
-* `flutter pub get` (получить зависимости)
-* `dart .\setup.dart windows --arch amd64 --out core` (сборка только Core ядра)
-* `dart .\setup.dart windows --arch amd64 --out app --compatible` (опциональная совместимая версия)
-* Готовые файлы будут находиться в папке `dist/`
+* Требуется ПК с Windows (ОС ≥ Windows 10)
+* Окружение: Git, Visual Studio, Flutter 3.44.x, Golang, Inno Setup, Rust
+```bash
+* flutter pub get
+* dart .\setup.dart windows --arch amd64 --out core (Только ядро)
+* dart .\setup.dart windows --arch amd64 --out app --compatible (Опциональная сборка Compatible)
+* Готовые файлы располагаются в директории `dist/`
+```
 
-Адаптация UI для пользовательских скриптов:
+Адаптация пользовательских скриптов UI:
 
-* На примере конфигурации **[MyClash от AIsouler](https://github.com/AIsouler/MyClash)**: достаточно добавить следующую строку первой строкой в скрипт, чтобы задействовать визуальные переключатели Bettbox:
+* Начиная с v1.18.8, Bettbox поддерживает внешние скрипты оверрайда для UI. Например, для конфигураций AIsouler **[Репозиторий скриптов](https://github.com/AIsouler/MyClash)** достаточно добавить строку в начало скрипта:
 * <code>const Compatible_With_Bettbox = { ruleOptionsEnable: true };</code>
 
 ---
 
-### ☕ Спонсорская поддержка
+### ☕ Поддержка проекта
 
-**Если этот проект был вам полезен, вы можете поддержать разработку следующими способами:**
+**Если вам нравится проект, вы можете поддержать разработку:**
 
-* TRON (TRC-20): <code>TCkTtZfF2WrciZLaJj3e1aqrh3zdTnCkDa</code>
-* EVM Compatible: <code>0xF8B1B39431013359D83F38a4e403087624618E67</code>
-* Solana: <code>C2YQPcKR2YmrPtBvkE13wckjgescUfMA5HzUioR4rQUd</code>
+* EVM Compatible:  <code>0xF8B1B39431013359D83F38a4e403087624618E67</code>
 * Bitcoin: <code>bc1qu950cl6035qvllmzk6cfw3l30j2lg3cq9n6g6h</code>
-
 ---
 
-## ❤️ Благодарности
+## 🙏 Благодарности
 
 <table>
   <tr>
@@ -136,9 +137,9 @@
   </tr>
 </table>
 
-**[FlClash GUI](https://github.com/chen08209/FlClash)** - **[Mihomo Core](https://github.com/MetaCubeX/mihomo)**
+**[FlClash GUI](https://github.com/chen08209/FlClash)** 〢 **[Mihomo Core](https://github.com/MetaCubeX/mihomo)**
 
-Благодарим всех участников [Contributors](https://github.com/appshubcc/Bettbox/graphs/contributors) и смежные проекты с открытым исходным кодом:
+Отдельное спасибо всем [Участникам](https://github.com/appshubcc/Bettbox/graphs/contributors) и разработчикам смежных проектов:
 
 [CMFA](https://github.com/MetaCubeX/ClashMetaForAndroid), [Sparkle](https://github.com/xishang0128/sparkle), [SFA](https://github.com/SagerNet/sing-box-for-android), [HUSI](https://github.com/xchacha20-poly1305/husi), [V2rayN](https://github.com/2dust/v2rayN)
 
