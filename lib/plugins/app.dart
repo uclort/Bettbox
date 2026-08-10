@@ -100,10 +100,12 @@ class App {
 
   Future<Uint8List?> getPackageIcon(
     String packageName, {
+    String processPath = '',
     bool forceRefresh = false,
   }) async {
     return await methodChannel.invokeMethod<Uint8List>('getPackageIcon', {
       'packageName': packageName,
+      'processPath': processPath,
       'forceRefresh': forceRefresh,
     });
   }

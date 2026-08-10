@@ -27,7 +27,7 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
               label: const Text('关闭全部连接'),
             ),
           TextButton.icon(
-            onPressed: _refresh,
+            onPressed: _reload,
             icon: const Icon(Icons.refresh, size: 18),
             label: const Text('重新载入'),
           ),
@@ -77,7 +77,14 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
             child: Row(
               children: [
-                const Icon(Icons.apps, size: 28),
+                if (system.isMacOS)
+                  ProcessIcon(
+                    process: item.metadata.process,
+                    processPath: item.metadata.processPath,
+                    size: 28,
+                  )
+                else
+                  const Icon(Icons.apps, size: 28),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(

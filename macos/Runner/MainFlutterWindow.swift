@@ -72,6 +72,10 @@ class MainFlutterWindow: NSWindow {
             }
             
             switch call.method {
+            case "getPackageIcon":
+                let arguments = call.arguments as? [String: Any]
+                let processPath = arguments?["processPath"] as? String ?? ""
+                result(self.processIconData(processPath: processPath))
             case "setLauncherIcon":
                 if let arguments = call.arguments as? [String: Any],
                    let useDarkIcon = arguments["useDarkIcon"] as? Bool {
@@ -119,6 +123,25 @@ class MainFlutterWindow: NSWindow {
         
         NSApp.applicationIconImage = image
         return true
+    }
+
+    private func processIconData(processPath: String) -> FlutterStandardTypedData? {
+        let image: NSImage?
+        if processPath.isEmpty {
+            image = NSApp.applicationIconImage
+        } else {
+            var iconPath = processPath
+            if let range = processPath.range(of: ".app/", options: .caseInsensitive) {
+                iconPath = String(processPath[..<range.upperBound].dropLast())
+            }
+            image = NSWorkspace.shared.icon(forFile: iconPath)
+        }
+        guard let tiff = image?.tiffRepresentation,
+              let bitmap = NSBitmapImageRep(data: tiff),
+              let data = bitmap.representation(using: .png, properties: [:]) else {
+            return nil
+        }
+        return FlutterStandardTypedData(bytes: data)
     }
     
     private func saveIconPreference(useDarkIcon: Bool) {

@@ -7,6 +7,8 @@ import 'package:bett_box/common/common.dart';
 import 'package:bett_box/common/external_control.dart';
 import 'package:bett_box/models/models.dart';
 import 'package:bett_box/providers/providers.dart';
+import 'package:bett_box/state.dart';
+import 'package:bett_box/views/connection/item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
@@ -16,6 +18,23 @@ import 'network_monitor_data.dart';
 part 'network_monitor_detail.dart';
 
 Future<void> openNetworkMonitorWindow() => networkMonitorProcess.open();
+
+Future<List<Map<String, Object?>>> _readMonitorDnsSnapshot(
+  WidgetRef ref,
+) async {
+  final rawConfig = await globalState.patchRawConfig(
+    patchConfig: ref.read(patchClashConfigProvider),
+  );
+  var systemHosts = '';
+  if (system.isMacOS || system.isLinux) {
+    final file = File('/etc/hosts');
+    if (await file.exists()) systemHosts = await file.readAsString();
+  }
+  return monitorConfiguredDnsEntries(
+    rawConfig,
+    systemHosts,
+  ).map((item) => item.toJson()).toList();
+}
 
 Future<void> runNetworkMonitorProcess() async {
   await windowManager.ensureInitialized();
@@ -102,17 +121,20 @@ class _NetworkMonitorHostState extends ConsumerState<NetworkMonitorHost> {
     super.dispose();
   }
 
-  Future<Map<String, Object?>> _snapshot() async {
+  Future<Map<String, Object?>> _snapshot({bool includeTraffic = false}) async {
     return _snapshotReader.read(
       requests: ref.read(requestsProvider).list,
       logs: ref.read(logsProvider).list,
+      includeTraffic: includeTraffic,
     );
   }
 
   Future<Object?> _handleMethodCall(String method, Object? arguments) async {
     switch (method) {
       case 'snapshot':
-        return _snapshot();
+        return _snapshot(includeTraffic: arguments == true);
+      case 'dnsSnapshot':
+        return _readMonitorDnsSnapshot(ref);
       case 'clearRequests':
         ref.read(requestsProvider.notifier).clearRequests();
         return true;
@@ -196,29 +218,37 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
   final _snapshotReader = NetworkMonitorSnapshotReader();
   Timer? _fallbackTimer;
   Timer? _connectionsTimer;
+  Timer? _trafficTimer;
+  Timer? _eventRefreshTimer;
   StreamSubscription<void>? _networkMonitorSubscription;
   ProviderSubscription<TrackerInfo?>? _requestsSubscription;
   ProviderSubscription<Log?>? _logsSubscription;
   List<TrackerInfo> _requests = const [], _connections = const [];
   List<MonitorLog> _logs = const [];
+  List<MonitorDnsEntry> _dnsSources = const [];
   MonitorPage _page = MonitorPage.requests;
-  MonitorClientMode _clientMode = MonitorClientMode.client;
+  MonitorTrackerFacet _trackerFacet = MonitorTrackerFacet.process;
   MonitorSortState _sort = const MonitorSortState(
     MonitorSortColumn.date,
     false,
   );
   TrackerInfo? _selected;
-  String? _clientFilter;
+  String? _trackerFilter;
   String _sidebarFilter = '';
   String _query = '';
+  int _trafficUp = 0;
+  int _trafficDown = 0;
+  int _totalTrafficUp = 0;
+  int _totalTrafficDown = 0;
   int _detailTab = 0;
   bool _loading = false;
+  bool _dnsLoading = false;
   bool _refreshPending = false;
   String? _error;
   final _trackerVerticalController = ScrollController();
   final _trackerHorizontalController = ScrollController();
   final Map<MonitorSortColumn, double> _columnWidths = {
-    MonitorSortColumn.id: 80,
+    MonitorSortColumn.status: 64,
     MonitorSortColumn.date: 72,
     MonitorSortColumn.client: 120,
     MonitorSortColumn.rule: 105,
@@ -257,9 +287,18 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
     _connectionsTimer = Timer.periodic(const Duration(milliseconds: 250), (_) {
       if (_page == MonitorPage.connections) unawaited(_refresh());
     });
+    _trafficTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (_page == MonitorPage.traffic) unawaited(_refresh());
+    });
   }
 
-  void _handleDataChanged() => unawaited(_refresh());
+  void _handleDataChanged() {
+    if (_eventRefreshTimer?.isActive == true) return;
+    _eventRefreshTimer = Timer(
+      const Duration(milliseconds: 250),
+      () => unawaited(_refresh()),
+    );
+  }
 
   void _update(VoidCallback change) => setState(change);
 
@@ -270,6 +309,8 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
     _logsSubscription?.close();
     _fallbackTimer?.cancel();
     _connectionsTimer?.cancel();
+    _trafficTimer?.cancel();
+    _eventRefreshTimer?.cancel();
     _trackerVerticalController.dispose();
     _trackerHorizontalController.dispose();
     super.dispose();
@@ -286,8 +327,12 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
           ? await _snapshotReader.read(
               requests: ref.read(requestsProvider).list,
               logs: ref.read(logsProvider).list,
+              includeTraffic: _page == MonitorPage.traffic,
             )
-          : await ExternalControl.request('snapshot');
+          : await ExternalControl.request(
+              'snapshot',
+              _page == MonitorPage.traffic,
+            );
       if (!mounted || raw == null) return;
       final map = normalizeMonitorMap(raw);
       final requests = (map['requests'] as List? ?? const [])
@@ -299,10 +344,16 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
       final logs = (map['logs'] as List? ?? const [])
           .map(MonitorLog.fromJson)
           .toList();
+      final traffic = normalizeMonitorMap(map['traffic'] ?? const {});
+      final totalTraffic = normalizeMonitorMap(map['totalTraffic'] ?? const {});
       setState(() {
         _requests = requests;
         _connections = connections;
         _logs = logs;
+        _trafficUp = (traffic['up'] as num?)?.toInt() ?? 0;
+        _trafficDown = (traffic['down'] as num?)?.toInt() ?? 0;
+        _totalTrafficUp = (totalTraffic['up'] as num?)?.toInt() ?? 0;
+        _totalTrafficDown = (totalTraffic['down'] as num?)?.toInt() ?? 0;
         _error = null;
       });
     } catch (error) {
@@ -338,18 +389,53 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
     }
   }
 
+  Future<void> _refreshDnsSources() async {
+    if (_dnsLoading) return;
+    _dnsLoading = true;
+    try {
+      final raw = widget.embedded
+          ? await _readMonitorDnsSnapshot(ref)
+          : await ExternalControl.request('dnsSnapshot');
+      if (!mounted || raw == null) return;
+      final list = raw as List;
+      setState(() {
+        _dnsSources = list.map(MonitorDnsEntry.fromJson).toList();
+        _error = null;
+      });
+    } catch (error) {
+      if (mounted) setState(() => _error = '读取 DNS 配置失败：$error');
+    } finally {
+      _dnsLoading = false;
+    }
+  }
+
+  Future<void> _reload() async {
+    await _refresh();
+    if (_page == MonitorPage.dns) await _refreshDnsSources();
+  }
+
   List<TrackerInfo> get _pageTrackers => switch (_page) {
     MonitorPage.connections => _connections,
     _ => _requests,
   };
 
+  List<TrackerInfo> get _allTrackers {
+    final values = <String, TrackerInfo>{};
+    for (final item in [..._requests, ..._connections]) {
+      values[item.id] = item;
+    }
+    return values.values
+        .where((item) => !monitorIsInternalTracker(item))
+        .toList();
+  }
+
   List<TrackerInfo> get _visibleTrackers {
     final query = _query.toLowerCase().trim();
+    final activeIds = _connections.map((item) => item.id).toSet();
     final filtered = _pageTrackers.where((item) {
-      final sideValue = _clientMode == MonitorClientMode.client
-          ? monitorClientName(item)
-          : item.metadata.host;
-      if (_clientFilter != null && sideValue != _clientFilter) return false;
+      if (monitorIsInternalTracker(item)) return false;
+      final sideValue = monitorTrackerFacetValue(item, _trackerFacet);
+      if (_trackerFilter != null && sideValue != _trackerFilter) return false;
       if (query.isEmpty) return true;
       return [
         item.id,
@@ -361,23 +447,20 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
         item.metadata.destinationIP,
       ].join(' ').toLowerCase().contains(query);
     }).toList();
-    filtered.sort((a, b) => compareMonitorTrackers(a, b, _sort));
+    filtered.sort((a, b) => compareMonitorTrackers(a, b, _sort, activeIds));
     return filtered;
   }
 
-  List<String> get _sidebarItems {
-    final values =
-        _pageTrackers
-            .map(
-              (item) => _clientMode == MonitorClientMode.client
-                  ? monitorClientName(item)
-                  : item.metadata.host,
-            )
-            .where((value) => value.isNotEmpty)
-            .toSet()
-            .toList()
-          ..sort();
-    return values;
+  Map<String, TrackerInfo> get _sidebarTrackers {
+    final values = <String, TrackerInfo>{};
+    for (final item in _pageTrackers) {
+      if (monitorIsInternalTracker(item)) continue;
+      final value = monitorTrackerFacetValue(item, _trackerFacet);
+      if (value.isNotEmpty) values[value] = item;
+    }
+    return Map.fromEntries(
+      values.entries.toList()..sort((a, b) => a.key.compareTo(b.key)),
+    );
   }
 
   @override
@@ -461,11 +544,16 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
                               setState(() {
                                 _page = page;
                                 _selected = null;
-                                _clientFilter = null;
+                                _trackerFilter = null;
                                 _sidebarFilter = monitorDefaultSidebarFilter(
                                   page,
                                 );
                               });
+                              if (page == MonitorPage.dns) {
+                                unawaited(_refreshDnsSources());
+                              } else if (page == MonitorPage.traffic) {
+                                unawaited(_refresh());
+                              }
                             },
                             child: Text(labels[page]!),
                           ),
@@ -510,6 +598,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
     if (_page != MonitorPage.requests && _page != MonitorPage.connections) {
       return _buildStaticSidebar(context);
     }
+    final facetLabel = monitorTrackerFacetLabel(_trackerFacet);
     return Container(
       width: 220,
       color: Theme.of(context).colorScheme.surfaceContainerLow,
@@ -517,58 +606,80 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SegmentedButton<MonitorClientMode>(
-            showSelectedIcon: false,
-            segments: const [
-              ButtonSegment(
-                value: MonitorClientMode.client,
-                label: Text('按客户端'),
-              ),
-              ButtonSegment(value: MonitorClientMode.host, label: Text('按主机名')),
+          Text('Mihomo 字段', style: Theme.of(context).textTheme.labelMedium),
+          DropdownButton<MonitorTrackerFacet>(
+            value: _trackerFacet,
+            isExpanded: true,
+            items: [
+              for (final facet in MonitorTrackerFacet.values)
+                DropdownMenuItem(
+                  value: facet,
+                  child: Text(monitorTrackerFacetLabel(facet)),
+                ),
             ],
-            selected: {_clientMode},
-            onSelectionChanged: (value) {
+            onChanged: (value) {
+              if (value == null) return;
               setState(() {
-                _clientMode = value.first;
-                _clientFilter = null;
+                _trackerFacet = value;
+                _trackerFilter = null;
               });
             },
           ),
-          const SizedBox(height: 16),
-          Text(
-            _clientMode == MonitorClientMode.client ? '客户端' : '主机名',
-            style: Theme.of(context).textTheme.labelMedium,
-          ),
+          const SizedBox(height: 8),
+          Text(facetLabel, style: Theme.of(context).textTheme.labelMedium),
           const SizedBox(height: 6),
           _sidebarButton(
             context,
-            label: _clientMode == MonitorClientMode.client ? '所有客户端' : '所有主机名',
-            selected: _clientFilter == null,
-            icon: _clientMode == MonitorClientMode.client
-                ? Icons.apps_outlined
-                : Icons.language_outlined,
-            onTap: () => setState(() => _clientFilter = null),
+            label: '全部$facetLabel',
+            selected: _trackerFilter == null,
+            leading: _trackerFacetIcon(),
+            onTap: () => setState(() => _trackerFilter = null),
           ),
           const SizedBox(height: 10),
-          Expanded(
-            child: ListView(
-              children: [
-                for (final item in _sidebarItems)
-                  _sidebarButton(
-                    context,
-                    label: item,
-                    selected: _clientFilter == item,
-                    icon: _clientMode == MonitorClientMode.client
-                        ? Icons.apps_outlined
-                        : Icons.language_outlined,
-                    onTap: () => setState(() => _clientFilter = item),
-                  ),
-              ],
-            ),
-          ),
+          Expanded(child: _buildTrackerSidebarList(context)),
         ],
       ),
     );
+  }
+
+  Widget _buildTrackerSidebarList(BuildContext context) {
+    final entries = _sidebarTrackers.entries.toList();
+    return ListView.builder(
+      itemCount: entries.length,
+      itemExtent: 42,
+      itemBuilder: (context, index) {
+        final entry = entries[index];
+        final item = entry.value;
+        return _sidebarButton(
+          context,
+          label: entry.key,
+          selected: _trackerFilter == entry.key,
+          leading: _trackerFacetIcon(item),
+          onTap: () => setState(() => _trackerFilter = entry.key),
+        );
+      },
+    );
+  }
+
+  Widget _trackerFacetIcon([TrackerInfo? item]) {
+    if (_trackerFacet == MonitorTrackerFacet.process &&
+        item != null &&
+        system.isMacOS) {
+      return ProcessIcon(
+        process: item.metadata.process,
+        processPath: item.metadata.processPath,
+        size: 20,
+      );
+    }
+    final icon = switch (_trackerFacet) {
+      MonitorTrackerFacet.process => Icons.apps_outlined,
+      MonitorTrackerFacet.source => Icons.lan_outlined,
+      MonitorTrackerFacet.target => Icons.language_outlined,
+      MonitorTrackerFacet.network => Icons.swap_horiz_outlined,
+      MonitorTrackerFacet.rule => Icons.rule_outlined,
+      MonitorTrackerFacet.outbound => Icons.alt_route_outlined,
+    };
+    return Icon(icon, size: 18);
   }
 
   Widget _buildStaticSidebar(BuildContext context) {
@@ -610,7 +721,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
     required String label,
     required bool selected,
     required VoidCallback onTap,
-    IconData? icon,
+    Widget? leading,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
@@ -623,7 +734,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
           dense: true,
           minTileHeight: 38,
           contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-          leading: icon == null ? null : Icon(icon, size: 18),
+          leading: leading,
           title: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
           onTap: onTap,
         ),
@@ -634,7 +745,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
   Widget _buildError(BuildContext context) {
     return MaterialBanner(
       content: Text(_error!),
-      actions: [TextButton(onPressed: _refresh, child: const Text('重试'))],
+      actions: [TextButton(onPressed: _reload, child: const Text('重试'))],
     );
   }
 
@@ -653,7 +764,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
     final items = _visibleTrackers;
     final activeIds = _connections.map((item) => item.id).toSet();
     final columns = <(String, MonitorSortColumn)>[
-      ('ID', MonitorSortColumn.id),
+      ('状态', MonitorSortColumn.status),
       ('日期', MonitorSortColumn.date),
       ('客户端', MonitorSortColumn.client),
       ('规则', MonitorSortColumn.rule),
@@ -672,103 +783,50 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
         );
         return ClipRect(
           child: Scrollbar(
-            controller: _trackerVerticalController,
+            controller: _trackerHorizontalController,
             notificationPredicate: (notification) =>
-                notification.metrics.axis == Axis.vertical,
+                notification.metrics.axis == Axis.horizontal,
             child: SingleChildScrollView(
-              controller: _trackerVerticalController,
-              child: Scrollbar(
-                controller: _trackerHorizontalController,
-                notificationPredicate: (notification) =>
-                    notification.metrics.axis == Axis.horizontal,
-                child: SingleChildScrollView(
-                  controller: _trackerHorizontalController,
-                  scrollDirection: Axis.horizontal,
-                  child: SizedBox(
-                    width: tableWidth < constraints.maxWidth
-                        ? constraints.maxWidth
-                        : tableWidth,
-                    child: DataTable(
-                      showCheckboxColumn: false,
-                      headingRowHeight: 36,
-                      dataRowMinHeight: 34,
-                      dataRowMaxHeight: 34,
-                      horizontalMargin: 0,
-                      columnSpacing: 0,
-                      columns: [
-                        for (final column in columns)
-                          DataColumn(
-                            label: _resizableHeader(
-                              context,
-                              column.$1,
-                              column.$2,
-                            ),
-                          ),
-                      ],
-                      rows: [
-                        for (final item in items)
-                          DataRow(
-                            selected: _selected?.id == item.id,
-                            onSelectChanged: (_) => setState(() {
-                              _selected = item;
-                              _detailTab = 0;
-                            }),
-                            cells: [
-                              _idDataCell(
+              controller: _trackerHorizontalController,
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: tableWidth < constraints.maxWidth
+                    ? constraints.maxWidth
+                    : tableWidth,
+                height: constraints.maxHeight,
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: 36,
+                      child: Row(
+                        children: [
+                          for (final column in columns)
+                            _resizableHeader(context, column.$1, column.$2),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1),
+                    Expanded(
+                      child: Scrollbar(
+                        controller: _trackerVerticalController,
+                        child: ListView.builder(
+                          controller: _trackerVerticalController,
+                          itemCount: items.length,
+                          itemExtent: 35,
+                          itemBuilder: (context, index) {
+                            final item = items[index];
+                            return RepaintBoundary(
+                              child: _buildTrackerRow(
                                 context,
                                 item,
                                 monitorTrackerStatus(item, activeIds),
                               ),
-                              _textDataCell(
-                                MonitorSortColumn.date,
-                                monitorClock(item.start),
-                              ),
-                              _textDataCell(
-                                MonitorSortColumn.client,
-                                monitorClientName(item),
-                              ),
-                              _textDataCell(
-                                MonitorSortColumn.rule,
-                                monitorRuleName(item),
-                              ),
-                              _textDataCell(
-                                MonitorSortColumn.policy,
-                                monitorPolicyName(item),
-                              ),
-                              _textDataCell(
-                                MonitorSortColumn.upload,
-                                monitorBytes(item.upload),
-                              ),
-                              _textDataCell(
-                                MonitorSortColumn.download,
-                                monitorBytes(item.download),
-                              ),
-                              _textDataCell(
-                                MonitorSortColumn.duration,
-                                monitorDuration(item.start),
-                              ),
-                              DataCell(
-                                SizedBox(
-                                  width:
-                                      _columnWidths[MonitorSortColumn.method],
-                                  child: Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: _methodChip(
-                                      context,
-                                      monitorMethodName(item),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              _textDataCell(
-                                MonitorSortColumn.address,
-                                monitorAddress(item),
-                              ),
-                            ],
-                          ),
-                      ],
+                            );
+                          },
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
@@ -850,51 +908,119 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
     );
   }
 
-  DataCell _textDataCell(MonitorSortColumn column, String value) {
-    return DataCell(
-      SizedBox(
-        width: _columnWidths[column],
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Text(value, maxLines: 1, overflow: TextOverflow.ellipsis),
+  Widget _buildTrackerRow(
+    BuildContext context,
+    TrackerInfo item,
+    MonitorTrackerStatus status,
+  ) {
+    return InkWell(
+      onTap: () => setState(() {
+        _selected = item;
+        _detailTab = 0;
+      }),
+      child: Container(
+        decoration: BoxDecoration(
+          color: _selected?.id == item.id
+              ? Theme.of(context).colorScheme.secondaryContainer
+              : null,
+          border: Border(
+            bottom: BorderSide(color: Theme.of(context).dividerColor),
+          ),
+        ),
+        child: Row(
+          children: [
+            _trackerCell(
+              MonitorSortColumn.status,
+              Center(child: _statusDot(context, status)),
+            ),
+            _trackerTextCell(MonitorSortColumn.date, monitorClock(item.start)),
+            _trackerClientCell(item),
+            _trackerTextCell(MonitorSortColumn.rule, monitorRuleName(item)),
+            _trackerTextCell(MonitorSortColumn.policy, monitorPolicyName(item)),
+            _trackerTextCell(
+              MonitorSortColumn.upload,
+              monitorBytes(item.upload),
+            ),
+            _trackerTextCell(
+              MonitorSortColumn.download,
+              monitorBytes(item.download),
+            ),
+            _trackerTextCell(
+              MonitorSortColumn.duration,
+              monitorDuration(item.start),
+            ),
+            _trackerCell(
+              MonitorSortColumn.method,
+              Align(
+                alignment: Alignment.centerLeft,
+                child: _methodChip(context, monitorMethodName(item)),
+              ),
+            ),
+            _trackerTextCell(MonitorSortColumn.address, monitorAddress(item)),
+          ],
         ),
       ),
     );
   }
 
-  DataCell _idDataCell(
-    BuildContext context,
-    TrackerInfo item,
-    MonitorTrackerStatus status,
-  ) {
+  Widget _trackerCell(MonitorSortColumn column, Widget child) => SizedBox(
+    width: _columnWidths[column],
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: child,
+    ),
+  );
+
+  Widget _trackerTextCell(MonitorSortColumn column, String value) =>
+      _trackerCell(
+        column,
+        Text(value, maxLines: 1, overflow: TextOverflow.ellipsis),
+      );
+
+  Widget _trackerClientCell(TrackerInfo item) => _trackerCell(
+    MonitorSortColumn.client,
+    Row(
+      children: [
+        if (system.isMacOS) ...[
+          ProcessIcon(
+            process: item.metadata.process,
+            processPath: item.metadata.processPath,
+            size: 18,
+          ),
+          const SizedBox(width: 6),
+        ],
+        Expanded(
+          child: Text(
+            monitorClientName(item),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _statusDot(BuildContext context, MonitorTrackerStatus status) {
     final color = switch (status) {
       MonitorTrackerStatus.error => Colors.red,
       MonitorTrackerStatus.active => Colors.amber,
       MonitorTrackerStatus.finished => Colors.green,
       MonitorTrackerStatus.other => Theme.of(context).colorScheme.outline,
     };
-    return DataCell(
-      SizedBox(
-        width: _columnWidths[MonitorSortColumn.id],
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Row(
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-              ),
-              const SizedBox(width: 7),
-              Expanded(
-                child: Text(
-                  monitorShortId(item.id),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
+    final label = switch (status) {
+      MonitorTrackerStatus.error => '错误',
+      MonitorTrackerStatus.active => '活动',
+      MonitorTrackerStatus.finished => '结束',
+      MonitorTrackerStatus.other => '其他',
+    };
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        label: label,
+        child: Container(
+          width: 9,
+          height: 9,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
       ),
     );
@@ -914,76 +1040,120 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
   }
 
   Widget _buildDnsTable(BuildContext context) {
-    final entries = <String, TrackerInfo>{};
-    for (final item in [..._requests, ..._connections]) {
+    final runtimeEntries = <String, TrackerInfo>{};
+    for (final item in _allTrackers) {
       final host = item.metadata.host.trim();
       if (host.isEmpty || monitorDnsAddress(item).isEmpty) continue;
-      final previous = entries[host];
+      final previous = runtimeEntries[host];
       if (previous == null || item.start.isAfter(previous.start)) {
-        entries[host] = item;
+        runtimeEntries[host] = item;
       }
     }
-    final items = entries.values.where((item) {
-      final type = monitorDnsType(item);
-      return (_sidebarFilter == '全部' || _sidebarFilter == type) &&
-          _matchesQuery([
-            item.metadata.host,
-            monitorDnsAddress(item),
-            item.metadata.dnsMode?.name,
-          ]);
-    }).toList()..sort((a, b) => b.start.compareTo(a.start));
+    final entries = [
+      ..._dnsSources,
+      ...runtimeEntries.values.map(
+        (item) => MonitorDnsEntry(
+          source: '运行时',
+          category: monitorDnsMode(item),
+          name: item.metadata.host,
+          value: monitorDnsAddress(item),
+          detail: item.metadata.network.toUpperCase(),
+          lastActivity: monitorClock(item.start),
+        ),
+      ),
+    ];
+    final items =
+        entries.where((item) {
+          return (_sidebarFilter == '全部' ||
+                  _sidebarFilter == monitorDnsFilterValue(item)) &&
+              _matchesQuery([
+                item.source,
+                item.category,
+                item.name,
+                item.value,
+                item.detail,
+                item.lastActivity,
+              ]);
+        }).toList()..sort((a, b) {
+          final source = a.source.compareTo(b.source);
+          if (source != 0) return source;
+          final category = a.category.compareTo(b.category);
+          return category != 0 ? category : a.name.compareTo(b.name);
+        });
     return _simpleTable(
-      columns: const ['域名', '解析地址', '模式', '最后请求'],
-      rows: items.map((item) {
-        return [
-          item.metadata.host,
-          monitorDnsAddress(item),
-          item.metadata.dnsMode?.name ?? '未知',
-          monitorClock(item.start),
-        ];
-      }).toList(),
+      columns: const ['来源', 'Mihomo 分类', '名称 / 域名', '值 / 解析地址', '说明', '最后活动'],
+      widths: const [80, 190, 260, 320, 160, 100],
+      rows: items
+          .map(
+            (item) => [
+              item.source,
+              item.category,
+              item.name,
+              item.value,
+              item.detail,
+              item.lastActivity,
+            ],
+          )
+          .toList(),
     );
   }
 
   Widget _buildDevicesTable(BuildContext context) {
     final entries = <String, List<TrackerInfo>>{};
-    for (final item in [..._requests, ..._connections]) {
-      final client = monitorClientName(item).trim();
-      if (client.isEmpty) continue;
-      entries.putIfAbsent(client, () => []).add(item);
+    for (final item in _allTrackers) {
+      entries.putIfAbsent(monitorDeviceKey(item), () => []).add(item);
     }
     final activeIds = _connections.map((item) => item.id).toSet();
     final items = entries.entries.where((entry) {
       final trackers = entry.value;
+      final source = monitorDeviceSource(trackers.first);
       final visible = switch (_sidebarFilter) {
-        '已分配' => trackers.any((item) => item.metadata.sourceIP.isNotEmpty),
-        '未指派' => trackers.every((item) => item.metadata.sourceIP.isEmpty),
-        '代理' => trackers.any(
-          (item) => item.chains.any((chain) => chain != 'DIRECT'),
-        ),
-        '网关' => trackers.any((item) => item.chains.contains('DIRECT')),
-        '无' => trackers.every((item) => item.chains.isEmpty),
-        '已启用' => trackers.any((item) => activeIds.contains(item.id)),
-        '不活跃' => trackers.every((item) => !activeIds.contains(item.id)),
+        '本机进程' || '网络来源' || '未识别' => source == _sidebarFilter,
+        '活动' => trackers.any((item) => activeIds.contains(item.id)),
+        '历史' => trackers.any((item) => !activeIds.contains(item.id)),
         _ => true,
       };
-      final item = trackers.last;
+      final item = trackers.reduce(
+        (current, next) => next.start.isAfter(current.start) ? next : current,
+      );
       return visible &&
           _matchesQuery([
             entry.key,
+            source,
             item.metadata.sourceIP,
+            item.metadata.network,
             item.metadata.processPath,
           ]);
-    });
+    }).toList()..sort((a, b) => a.key.compareTo(b.key));
     return _simpleTable(
-      columns: const ['客户端', '来源地址', '进程路径', '请求数'],
+      columns: const ['来源', '进程 / 客户端', '来源地址', '网络协议', '活动', '历史', '进程路径'],
+      widths: const [100, 180, 180, 100, 70, 70, 520],
       rows: items.map((entry) {
-        final item = entry.value.last;
+        final trackers = entry.value;
+        final item = trackers.reduce(
+          (current, next) => next.start.isAfter(current.start) ? next : current,
+        );
+        final sources = trackers
+            .map((item) => item.metadata.sourceIP.trim())
+            .where((value) => value.isNotEmpty)
+            .toSet()
+            .join(', ');
+        final networks = trackers
+            .map((item) => item.metadata.network.trim().toUpperCase())
+            .where((value) => value.isNotEmpty)
+            .toSet()
+            .join(', ');
+        final active = trackers
+            .where((item) => activeIds.contains(item.id))
+            .length;
         return [
+          monitorDeviceSource(item),
           entry.key,
-          item.metadata.sourceIP,
+          sources,
+          networks,
+          active.toString(),
+          (trackers.length - active).toString(),
           item.metadata.processPath,
-          entry.value.length.toString(),
         ];
       }).toList(),
     );
@@ -992,37 +1162,71 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
   Widget _simpleTable({
     required List<String> columns,
     required List<List<String>> rows,
+    required List<double> widths,
   }) {
-    return SingleChildScrollView(
-      child: SizedBox(
-        width: double.infinity,
-        child: DataTable(
-          columns: [
-            for (final column in columns) DataColumn(label: Text(column)),
-          ],
-          rows: [
-            for (final row in rows)
-              DataRow(cells: [for (final value in row) DataCell(Text(value))]),
-          ],
+    assert(columns.length == widths.length);
+    final tableWidth = widths.fold<double>(0, (sum, width) => sum + width);
+    Widget row(List<String> values, {bool header = false}) => Row(
+      children: [
+        for (var index = 0; index < values.length; index++)
+          SizedBox(
+            width: widths[index],
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                values[index],
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: header
+                    ? const TextStyle(fontWeight: FontWeight.w600)
+                    : null,
+              ),
+            ),
+          ),
+      ],
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: SizedBox(
+          width: tableWidth < constraints.maxWidth
+              ? constraints.maxWidth
+              : tableWidth,
+          height: constraints.maxHeight,
+          child: Column(
+            children: [
+              SizedBox(height: 42, child: row(columns, header: true)),
+              const Divider(height: 1),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: rows.length,
+                  itemExtent: 42,
+                  itemBuilder: (context, index) => RepaintBoundary(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Theme.of(context).dividerColor,
+                          ),
+                        ),
+                      ),
+                      child: row(rows[index]),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildTraffic(BuildContext context) {
-    final all = [..._requests, ..._connections];
-    final upload = all.fold<int>(0, (sum, item) => sum + item.upload);
-    final download = all.fold<int>(0, (sum, item) => sum + item.download);
+    final all = _allTrackers;
     final byGroup = <String, int>{};
     for (final item in all) {
-      final key = switch (_sidebarFilter) {
-        '进程' => monitorClientName(item),
-        '网络适配器' => item.metadata.network.toUpperCase(),
-        '设备' => item.metadata.sourceIP,
-        '主机名' => item.metadata.host,
-        _ => monitorPolicyName(item),
-      };
-      if (key.isEmpty) continue;
+      final key = monitorTrafficGroupValue(item, _sidebarFilter);
       byGroup.update(
         key,
         (value) => value + item.upload + item.download,
@@ -1032,43 +1236,61 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
     final groups =
         byGroup.entries.where((entry) => _matchesQuery([entry.key])).toList()
           ..sort((a, b) => b.value.compareTo(a.value));
-    return ListView(
+    return ListView.builder(
       padding: const EdgeInsets.all(20),
-      children: [
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            _metricCard(context, '总上传', monitorBytes(upload), Icons.upload),
-            _metricCard(context, '总下载', monitorBytes(download), Icons.download),
-            _metricCard(
-              context,
-              '记录数',
-              all.length.toString(),
-              Icons.receipt_long,
-            ),
-            _metricCard(
-              context,
-              '活动连接',
-              _connections.length.toString(),
-              Icons.link,
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        Text(
-          '$_sidebarFilter流量',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        for (final entry in groups.take(20))
-          ListTile(
-            dense: true,
-            leading: const Icon(Icons.apps_outlined),
-            title: Text(entry.key),
-            trailing: Text(monitorBytes(entry.value)),
-          ),
-      ],
+      itemCount: groups.length + 1,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _metricCard(
+                    context,
+                    '实时上传',
+                    '${monitorBytes(_trafficUp)}/s',
+                    Icons.upload,
+                  ),
+                  _metricCard(
+                    context,
+                    '实时下载',
+                    '${monitorBytes(_trafficDown)}/s',
+                    Icons.download,
+                  ),
+                  _metricCard(
+                    context,
+                    '内核累计上传',
+                    monitorBytes(_totalTrafficUp),
+                    Icons.upload_outlined,
+                  ),
+                  _metricCard(
+                    context,
+                    '内核累计下载',
+                    monitorBytes(_totalTrafficDown),
+                    Icons.download_outlined,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Text(
+                '$_sidebarFilter（连接样本）',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+            ],
+          );
+        }
+        final entry = groups[index - 1];
+        return ListTile(
+          dense: true,
+          leading: const Icon(Icons.data_usage_outlined),
+          title: Text(entry.key),
+          trailing: Text(monitorBytes(entry.value)),
+        );
+      },
     );
   }
 
@@ -1105,8 +1327,8 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
     final query = _query.toLowerCase().trim();
     final logs = _logs
         .where((log) {
-          final type = monitorLogLevelLabel(log.level);
-          return (_sidebarFilter == '全部' || _sidebarFilter == type) &&
+          final level = log.level.toLowerCase();
+          return (_sidebarFilter == '全部' || _sidebarFilter == level) &&
               (query.isEmpty ||
                   '${log.dateTime} ${log.level} ${log.payload}'
                       .toLowerCase()

@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 
 enum MonitorPage { requests, connections, dns, devices, traffic, logs }
 
-enum MonitorClientMode { client, host }
+enum MonitorTrackerFacet { process, source, target, network, rule, outbound }
 
 enum MonitorTrackerStatus { error, active, finished, other }
 
@@ -13,19 +13,39 @@ typedef MonitorSidebarSection = ({String title, List<String> items});
 
 const monitorStaticSidebarSections = <MonitorPage, List<MonitorSidebarSection>>{
   MonitorPage.dns: [
-    (title: '类型', items: ['全部', '本地', '系统', '动态']),
+    (
+      title: 'Mihomo 配置',
+      items: [
+        '全部',
+        '配置 · default-nameserver',
+        '配置 · nameserver',
+        '配置 · fallback',
+        '配置 · proxy-server-nameserver',
+        '配置 · direct-nameserver',
+        '配置 · nameserver-policy',
+      ],
+    ),
+    (title: 'Hosts', items: ['配置 · hosts', '系统 · hosts']),
+    (
+      title: '运行时解析',
+      items: [
+        '运行时 · fake-ip',
+        '运行时 · redir-host',
+        '运行时 · hosts',
+        '运行时 · normal',
+        '运行时 · 未知',
+      ],
+    ),
   ],
   MonitorPage.devices: [
-    (title: '', items: ['全部']),
-    (title: '静态 IP 地址', items: ['已分配', '未指派']),
-    (title: '接管模式', items: ['网关', '代理', '无']),
-    (title: '活跃状态', items: ['已启用', '不活跃']),
+    (title: 'Mihomo 来源', items: ['全部', '本机进程', '网络来源', '未识别']),
+    (title: '连接状态', items: ['活动', '历史']),
   ],
   MonitorPage.traffic: [
-    (title: '类型', items: ['策略', '进程', '网络适配器', '设备', '主机名']),
+    (title: '聚合字段', items: ['出站链', '规则类型', '进程', '来源地址', '网络协议', '目标主机']),
   ],
   MonitorPage.logs: [
-    (title: '级别', items: ['全部', '错误', '警告', '信息', '调试', '静默']),
+    (title: 'Mihomo 日志级别', items: ['全部', 'error', 'warning', 'info', 'debug']),
   ],
 };
 
@@ -41,8 +61,14 @@ class NetworkMonitorSnapshotReader {
   Future<Map<String, Object?>> read({
     required List<TrackerInfo> requests,
     required List<Log> logs,
+    bool includeTraffic = false,
   }) async {
-    final connections = await clashCore.getConnections();
+    final connectionsFuture = clashCore.getConnections();
+    final connections = await connectionsFuture;
+    final traffic = includeTraffic ? await clashCore.getTraffic() : null;
+    final totalTraffic = includeTraffic
+        ? await clashCore.getTotalTraffic()
+        : null;
     final now = DateTime.now();
     final elapsed = now.difference(_previousConnectionsAt ?? now);
     final current = <String, TrackerInfo>{};
@@ -65,6 +91,13 @@ class NetworkMonitorSnapshotReader {
       'requests': requests.map(_trackerToJson).toList(),
       'connections': withSpeed.map(_trackerToJson).toList(),
       'logs': logs.map((log) => log.toJson()).toList(),
+      if (traffic != null)
+        'traffic': {'up': traffic.up.value, 'down': traffic.down.value},
+      if (totalTraffic != null)
+        'totalTraffic': {
+          'up': totalTraffic.up.value,
+          'down': totalTraffic.down.value,
+        },
     };
   }
 
@@ -77,7 +110,7 @@ class NetworkMonitorSnapshotReader {
 }
 
 enum MonitorSortColumn {
-  id,
+  status,
   date,
   client,
   rule,
@@ -98,17 +131,21 @@ class MonitorSortState {
 
   MonitorSortState toggle(MonitorSortColumn next) {
     if (column == next) return MonitorSortState(next, !ascending);
-    return MonitorSortState(next, next == MonitorSortColumn.id);
+    return MonitorSortState(next, next == MonitorSortColumn.status);
   }
 }
 
 int compareMonitorTrackers(
   TrackerInfo a,
   TrackerInfo b,
-  MonitorSortState sort,
-) {
+  MonitorSortState sort, [
+  Set<String> activeIds = const {},
+]) {
   final result = switch (sort.column) {
-    MonitorSortColumn.id => a.id.compareTo(b.id),
+    MonitorSortColumn.status => monitorTrackerStatus(
+      a,
+      activeIds,
+    ).index.compareTo(monitorTrackerStatus(b, activeIds).index),
     MonitorSortColumn.date => a.start.compareTo(b.start),
     MonitorSortColumn.client => monitorClientName(
       a,
@@ -134,14 +171,93 @@ String monitorClientName(TrackerInfo item) {
       : item.metadata.sourceIP;
 }
 
+String monitorTrackerFacetLabel(MonitorTrackerFacet facet) => switch (facet) {
+  MonitorTrackerFacet.process => '进程',
+  MonitorTrackerFacet.source => '来源地址',
+  MonitorTrackerFacet.target => '目标地址',
+  MonitorTrackerFacet.network => '网络协议',
+  MonitorTrackerFacet.rule => '规则类型',
+  MonitorTrackerFacet.outbound => '出站链',
+};
+
+String monitorTrackerFacetValue(TrackerInfo item, MonitorTrackerFacet facet) =>
+    switch (facet) {
+      MonitorTrackerFacet.process =>
+        item.metadata.process.trim().isEmpty
+            ? '未知进程'
+            : item.metadata.process.trim(),
+      MonitorTrackerFacet.source =>
+        item.metadata.sourceIP.trim().isEmpty
+            ? '未知来源'
+            : item.metadata.sourceIP.trim(),
+      MonitorTrackerFacet.target => monitorTargetName(item),
+      MonitorTrackerFacet.network =>
+        item.metadata.network.trim().isEmpty
+            ? '未知协议'
+            : item.metadata.network.trim().toUpperCase(),
+      MonitorTrackerFacet.rule =>
+        item.rule.trim().isEmpty ? '未匹配规则' : item.rule.trim(),
+      MonitorTrackerFacet.outbound =>
+        monitorPolicyName(item).isEmpty ? '无出站链' : monitorPolicyName(item),
+    };
+
+String monitorTargetName(TrackerInfo item) {
+  final host = item.metadata.host.trim();
+  if (host.isNotEmpty) return host;
+  final address = item.metadata.destinationIP.trim();
+  return address.isEmpty ? '未知目标' : address;
+}
+
+String monitorDeviceSource(TrackerInfo item) {
+  if (item.metadata.process.trim().isNotEmpty) return '本机进程';
+  if (item.metadata.sourceIP.trim().isNotEmpty) return '网络来源';
+  return '未识别';
+}
+
+String monitorDeviceKey(TrackerInfo item) {
+  final process = item.metadata.process.trim();
+  if (process.isNotEmpty) return process;
+  final source = item.metadata.sourceIP.trim();
+  return source.isEmpty ? '未识别' : source;
+}
+
+String monitorTrafficGroupValue(TrackerInfo item, String dimension) =>
+    switch (dimension) {
+      '规则类型' => item.rule.trim().isEmpty ? '未匹配规则' : item.rule.trim(),
+      '进程' => monitorTrackerFacetValue(item, MonitorTrackerFacet.process),
+      '来源地址' => monitorTrackerFacetValue(item, MonitorTrackerFacet.source),
+      '网络协议' => monitorTrackerFacetValue(item, MonitorTrackerFacet.network),
+      '目标主机' => monitorTargetName(item),
+      _ => monitorTrackerFacetValue(item, MonitorTrackerFacet.outbound),
+    };
+
 String monitorRuleName(TrackerInfo item) {
   return [item.rule, item.rulePayload].where((e) => e.isNotEmpty).join(' ');
 }
 
 String monitorPolicyName(TrackerInfo item) => item.chains
-    .map((value) => value.replaceAll(RegExp(r'\s+'), ' ').trim())
+    .map((value) => monitorCompactWhitespace(value))
     .where((value) => value.isNotEmpty)
     .join(' → ');
+
+String monitorCompactWhitespace(String value) => value
+    .replaceAll(
+      RegExp(r'[\s\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000\uFEFF]+'),
+      ' ',
+    )
+    .trim();
+
+bool monitorIsInternalTracker(TrackerInfo item) {
+  final metadata = item.metadata;
+  if (metadata.process.trim().isNotEmpty ||
+      metadata.processPath.trim().isNotEmpty) {
+    return false;
+  }
+  final source = metadata.sourceIP.trim();
+  final port = metadata.sourcePort.trim();
+  return (source.isEmpty || source == '0.0.0.0' || source == '::') &&
+      (port.isEmpty || port == '0');
+}
 
 MonitorTrackerStatus monitorTrackerStatus(
   TrackerInfo item,
@@ -158,23 +274,157 @@ MonitorTrackerStatus monitorTrackerStatus(
   return MonitorTrackerStatus.other;
 }
 
-String monitorDnsType(TrackerInfo item) => switch (item.metadata.dnsMode) {
-  DnsMode.hosts => '本地',
-  DnsMode.fakeIp || DnsMode.redirHost => '动态',
-  DnsMode.normal || null => '系统',
+String monitorDnsMode(TrackerInfo item) => switch (item.metadata.dnsMode) {
+  DnsMode.hosts => 'hosts',
+  DnsMode.fakeIp => 'fake-ip',
+  DnsMode.redirHost => 'redir-host',
+  DnsMode.normal => 'normal',
+  null => '未知',
 };
 
 String monitorDnsAddress(TrackerInfo item) =>
     item.metadata.destinationIP.trim();
 
-String monitorLogLevelLabel(String level) => switch (level.toLowerCase()) {
-  'error' => '错误',
-  'warning' => '警告',
-  'info' => '信息',
-  'debug' => '调试',
-  'silent' => '静默',
-  _ => '信息',
-};
+@immutable
+class MonitorDnsEntry {
+  final String source;
+  final String category;
+  final String name;
+  final String value;
+  final String detail;
+  final String lastActivity;
+
+  const MonitorDnsEntry({
+    required this.source,
+    required this.category,
+    required this.name,
+    required this.value,
+    required this.detail,
+    this.lastActivity = '',
+  });
+
+  factory MonitorDnsEntry.fromJson(Object? value) {
+    final map = normalizeMonitorMap(value);
+    return MonitorDnsEntry(
+      source: map['source']?.toString() ?? '',
+      category: map['category']?.toString() ?? '',
+      name: map['name']?.toString() ?? '',
+      value: map['value']?.toString() ?? '',
+      detail: map['detail']?.toString() ?? '',
+      lastActivity: map['lastActivity']?.toString() ?? '',
+    );
+  }
+
+  Map<String, Object?> toJson() => {
+    'source': source,
+    'category': category,
+    'name': name,
+    'value': value,
+    'detail': detail,
+    'lastActivity': lastActivity,
+  };
+}
+
+List<MonitorDnsEntry> monitorConfiguredDnsEntries(
+  Map<String, dynamic> rawConfig,
+  String systemHosts,
+) {
+  final entries = <MonitorDnsEntry>[];
+  final dns = rawConfig['dns'];
+  if (dns is Map) {
+    const sections = <String, String>{
+      'default-nameserver': '引导 DNS',
+      'nameserver': '主 DNS',
+      'fallback': '备用 DNS',
+      'proxy-server-nameserver': '代理节点 DNS',
+      'direct-nameserver': '直连 DNS',
+    };
+    for (final section in sections.entries) {
+      for (final value in _monitorStringValues(dns[section.key])) {
+        entries.add(
+          MonitorDnsEntry(
+            source: '配置',
+            category: section.key,
+            name: section.value,
+            value: value,
+            detail: '当前生效配置',
+          ),
+        );
+      }
+    }
+    final policies = dns['nameserver-policy'];
+    if (policies is Map) {
+      for (final policy in policies.entries) {
+        for (final value in _monitorStringValues(policy.value)) {
+          entries.add(
+            MonitorDnsEntry(
+              source: '配置',
+              category: 'nameserver-policy',
+              name: policy.key.toString(),
+              value: value,
+              detail: '域名策略',
+            ),
+          );
+        }
+      }
+    }
+  }
+  final hosts = rawConfig['hosts'];
+  if (hosts is Map) {
+    for (final host in hosts.entries) {
+      for (final value in _monitorStringValues(host.value)) {
+        entries.add(
+          MonitorDnsEntry(
+            source: '配置',
+            category: 'hosts',
+            name: host.key.toString(),
+            value: value,
+            detail: '当前生效配置',
+          ),
+        );
+      }
+    }
+  }
+  entries.addAll(monitorSystemHostsEntries(systemHosts));
+  return entries;
+}
+
+List<MonitorDnsEntry> monitorSystemHostsEntries(String content) {
+  final entries = <MonitorDnsEntry>[];
+  for (final rawLine in content.split('\n')) {
+    final line = rawLine.split('#').first.trim();
+    if (line.isEmpty) continue;
+    final parts = line.split(RegExp(r'\s+'));
+    if (parts.length < 2) continue;
+    for (final host in parts.skip(1)) {
+      entries.add(
+        MonitorDnsEntry(
+          source: '系统',
+          category: 'hosts',
+          name: host,
+          value: parts.first,
+          detail: '/etc/hosts',
+        ),
+      );
+    }
+  }
+  return entries;
+}
+
+String monitorDnsFilterValue(MonitorDnsEntry item) =>
+    '${item.source} · ${item.category}';
+
+List<String> _monitorStringValues(Object? value) {
+  if (value == null) return const [];
+  if (value is Iterable) {
+    return value
+        .expand(_monitorStringValues)
+        .where((item) => item.isNotEmpty)
+        .toList();
+  }
+  final text = monitorCompactWhitespace(value.toString());
+  return text.isEmpty ? const [] : [text];
+}
 
 String monitorMethodName(TrackerInfo item) {
   if (item.metadata.destinationPort == '443') return 'HTTPS';
@@ -222,8 +472,6 @@ class MonitorLog {
     );
   }
 }
-
-String monitorShortId(String id) => id.length <= 8 ? id : id.substring(0, 8);
 
 String monitorClock(DateTime value) {
   value = value.toLocal();

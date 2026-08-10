@@ -86,11 +86,13 @@
 - 桌面导航以一个“网络面板”入口替换原“请求 / 连接 / 日志”三个页签；托盘菜单在“虚拟网卡”上方提供相同入口并以上下分割线隔开。点击后以同一可执行文件的 `--network-panel` 参数启动独立进程，在 Dock/任务栏使用基于 Bettbox 原图标逐像素保留、仅于右下角叠加蓝色网络波形徽标的专属图标；关闭面板不影响 Bettbox，Bettbox 正常退出或主进程管道断开时会关闭面板。
 - 独立进程不初始化 Mihomo、单例锁或托盘，通过 `ExternalControl` 现有本地 UDS/TCP 通道读取主进程请求、连接和日志并执行清理/断连操作；请求与日志变更使用持久订阅连接主动通知。移除 `desktop_multi_window` 和子引擎全插件重复注册，避免 `tray_manager` 全局事件通道被子窗口覆盖。
 - Android 在“更多”中提供“网络面板”入口，并以内嵌页面复用同一套数据和交互，不加载桌面多窗口能力。
-- 面板集成最近请求、活动连接、DNS、设备、流量统计和日志；支持按客户端或主机名筛选、全文搜索、点击全部表头切换升降序，以及拖拽表头分隔线调整列宽。
-- 顶栏搜索框与页签统一垂直居中；最近请求和活动连接复用客户端/主机名侧栏，DNS、设备、流量统计和日志分别使用对应的类型、地址/接管/活跃状态、统计维度和真实日志级别侧栏。
-- 请求和连接列表移除复选框列，按错误、活动、结束和其他状态显示红、黄、绿、灰圆点；日期按本机时区显示，策略链连续空白被压缩。列表的水平与垂直滚动相互独立并裁剪在内容区，展开底部详情时不再发生表格穿透或错位。
-- DNS 数据只保留带有效目标 IP 的最新域名记录，并按 `hosts / normal / fake-ip、redir-host` 映射为本地、系统和动态；设备数据过滤空客户端；日志按 Mihomo 的 `error / warning / info / debug / silent` 级别进行真实筛选。
-- 请求与日志由主窗口收到新数据后主动推送刷新；活动连接受 Mihomo 快照接口限制，仅在连接页可见时每 250 ms 更新，其他页面每 5 秒兜底同步。
+- 面板集成最近请求、活动连接、DNS、设备、流量统计和日志；最近请求与活动连接直接按 Mihomo `TrackerInfo` 的 `process / sourceIP / host|destinationIP / network / rule / chains` 动态分类，并支持全文搜索、全部表头升降序和拖拽列宽。macOS 通过原生 `NSWorkspace` 按进程路径读取 App 图标，并在进程侧栏、连接表和详情中复用显示。
+- 顶栏搜索框与页签统一垂直居中；设备页只按内核可确认的进程、来源地址和活动/历史状态分类，不再套用 Surge 的静态 IP、网关或接管模式；日志侧栏直接使用 Mihomo 实际事件级别 `error / warning / info / debug`，不展示不会产生记录的 `silent` 配置状态。
+- 请求和连接列表不展示内部 ID，状态列仅按错误、活动、结束和其他状态显示红、黄、绿、灰圆点；日期按本机时区显示，策略链中的 ASCII 与 Unicode 连续空白统一压缩。无进程且无来源地址的 Mihomo 内部连接被过滤，真实客户端的 `REJECT` 规则命中继续保留。
+- 请求、连接、DNS 和设备表使用固定行高 `ListView.builder` 惰性创建可见行，不再由 `DataTable` 一次性构建全部历史记录；水平与垂直滚动相互独立并裁剪在内容区，展开底部详情时不发生表格穿透或错位。
+- DNS 由 `GlobalState.patchRawConfig` 读取当前生效配置，按 `default-nameserver / nameserver / fallback / proxy-server-nameserver / direct-nameserver / nameserver-policy / hosts` 原始配置键分类；系统 Hosts 读取 `/etc/hosts`，运行时解析按 `dnsMode` 的 `fake-ip / redir-host / hosts / normal` 分类并仅保留带有效目标 IP 的最新记录。
+- 流量页调用 Mihomo `getTraffic / getTotalTraffic` 展示实时和累计上传下载；最近完成请求与活动连接去重后只承担出站链、规则类型、进程、来源地址、网络协议和目标主机的样本聚合，不再将 1024 条环形历史记录求和作为总流量。
+- 请求与日志由主窗口收到新数据后主动推送，面板将事件刷新限制为最多每 250 ms 一次；活动连接受 Mihomo 快照接口限制，仅在连接页可见时每 250 ms 更新，流量页按内核统计周期每秒更新，其他页面每 5 秒兜底同步。
 - 选中请求或连接后展开底部详情，展示通用信息、计时与日志，以及请求/响应报头和正文页签；Mihomo 未提供 HTTP 原文时明确显示不可用，不伪造抓包数据。
 - 面板进程不跟踪来源应用，关闭时不调用任何应用激活 API；除 Bettbox 主进程负责启动和退出面板进程外，Dock、Cmd+Tab、窗口层级和关闭后的前台选择均由 macOS 按两个普通独立 App 处理。
 - 面板代码位于 `lib/views/network_monitor.dart`、`lib/views/network_monitor_detail.dart` 和 `lib/views/network_monitor_data.dart`，进程与 IPC 生命周期位于 `lib/common/window.dart`、`lib/common/external_control.dart`，桌面/Android 导航与托盘入口位于 `lib/common/navigation.dart`、`lib/views/network_monitor_navigation.dart` 和 `lib/common/tray.dart`；排序、列宽、状态、时区、DNS 与入口回归测试位于 `test/views/network_monitor_test.dart`，独立进程入口覆盖 macOS、Windows 和 Linux。
