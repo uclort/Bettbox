@@ -330,7 +330,11 @@ func (p *Proxy) urlTest(ctx context.Context, url string, expectedStatus utils.In
 	}()
 
 	stage = "create-request"
-	req, err := http.NewRequest(http.MethodHead, url, nil)
+	method := http.MethodHead
+	if strings.HasPrefix(strings.ToLower(url), "http://") {
+		method = http.MethodGet
+	}
+	req, err := http.NewRequest(method, url, nil)
 	if err != nil {
 		return
 	}
@@ -364,7 +368,7 @@ func (p *Proxy) urlTest(ctx context.Context, url string, expectedStatus utils.In
 
 	defer client.CloseIdleConnections()
 
-	stage = "http-head"
+	stage = "http-" + strings.ToLower(method)
 	resp, err := client.Do(req)
 
 	if err != nil {
@@ -373,9 +377,9 @@ func (p *Proxy) urlTest(ctx context.Context, url string, expectedStatus utils.In
 
 	_ = resp.Body.Close()
 
-	// HTTP 测速端点常被代理线路劫持或主动断开复用连接，不能发送第二次 HEAD。
+	// HTTP 测速端点常被代理线路劫持或主动断开复用连接，不能发送第二次请求。
 	if unifiedDelay && strings.HasPrefix(strings.ToLower(url), "https://") {
-		stage = "second-http-head"
+		stage = "second-http-" + strings.ToLower(method)
 		second := time.Now()
 		var ignoredErr error
 		var secondResp *http.Response

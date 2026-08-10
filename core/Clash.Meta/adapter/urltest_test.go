@@ -106,13 +106,15 @@ func TestURLTestKeepsSharedRequestForRemainingCaller(t *testing.T) {
 	}
 }
 
-func TestURLTestDoesNotRepeatHeadForHTTPUnifiedDelay(t *testing.T) {
+func TestURLTestUsesSingleGETForHTTPUnifiedDelay(t *testing.T) {
 	adapter.UnifiedDelay.Store(true)
 	t.Cleanup(func() { adapter.UnifiedDelay.Store(false) })
 
 	var requests atomic.Int32
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+	var method atomic.Value
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		requests.Add(1)
+		method.Store(req.Method)
 		w.WriteHeader(http.StatusNoContent)
 	}))
 	t.Cleanup(server.Close)
@@ -125,5 +127,8 @@ func TestURLTestDoesNotRepeatHeadForHTTPUnifiedDelay(t *testing.T) {
 	}
 	if got := requests.Load(); got != 1 {
 		t.Fatalf("request count = %d, want 1", got)
+	}
+	if got := method.Load(); got != http.MethodGet {
+		t.Fatalf("request method = %v, want GET", got)
 	}
 }

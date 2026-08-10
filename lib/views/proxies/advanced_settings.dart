@@ -139,7 +139,7 @@ class _NodeExclusionDialogState extends ConsumerState<_NodeExclusionDialog> {
 class _ConcurrencyLimitItem extends ConsumerWidget {
   const _ConcurrencyLimitItem();
 
-  static const _options = [8, 16, 32];
+  static const _options = [8, 16];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

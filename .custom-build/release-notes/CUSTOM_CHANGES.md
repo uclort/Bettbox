@@ -45,6 +45,7 @@
 - 生效期间当前网络服务只使用 `223.5.5.5`，避免 DHCP DNS 优先绕过 Mihomo。
 - 停止、退出或下次启动检测到残留状态时，恢复启用前的 DNS；启用前没有自定义 DNS 时恢复为系统自动获取。
 - 启动 TUN 前检测其他 VPN 遗留的 `1.0.0.0/8` utun 路由；发现冲突时保持 TUN 关闭并提示接口，避免核心以 `file exists` 失败。
+- macOS TUN 关闭竞态产生 `ENOTSOCK` 时按标准关闭处理并退出旧批量读协程，避免 `batch read packet` 日志风暴、核心与界面 CPU 满载以及后续连接受影响。代码位于 `core/Clash.Meta/listener/sing_tun/server_notwindows.go`，回归测试为同目录 `server_notwindows_test.go`。
 
 ### macOS 菜单栏与托盘
 
@@ -63,10 +64,10 @@
 - 节点测速结果使用独立右对齐列，菜单宽度同时为节点名称和结果预留空间。
 - 当前策略组测速时显示“⚡ 测速中...”，并保持不可重复点击。
 - 标签页模式下其他策略组正在测速时，当前策略组的测速按钮保持原有外观；点击后提示正在测速的策略组名称，避免无反馈。
-- 所有平台和测速入口共用全局并发池，排队不计入单节点超时；默认并发 16、上限 32，失败任务统一结束加载并释放队列，避免秒出超时、永久转圈和结果跳变。
+- 所有平台和测速入口共用全局并发池，排队不计入单节点超时；默认与上限均为 16，旧配置中的 32 自动收敛为 16，避免批量测速压垮共享入口后随机丢失节点；失败任务统一结束加载并释放队列。
 - Mihomo 在配置代际切换时显式关闭旧 Proxy Provider，立即取消旧健康检查和拉取任务，避免覆盖安装或首次启动时新旧 Provider 同时测速。
 - Mihomo 按实际节点、测试地址及期望状态复用同一个在途 URLTest，Provider 健康检查与 Bettbox 主动测速不会再并发重复请求同一节点；每个等待者保留自己的 deadline，Provider 的短超时不会终止仍由前台等待的共享任务，最后一个等待者退出时才取消；不设置固定缓存窗口。
-- 默认测速地址使用 `https://www.gstatic.com/generate_204`，避免明文 HTTP HEAD 被线路中间设备直接断开；用户显式覆盖为 HTTP 时，`unified-delay` 仍只发送一次 HEAD。
+- 默认测速地址使用 `https://www.gstatic.com/generate_204`；用户显式覆盖为 HTTP 时改用一次标准 GET，避免线路中间设备随机断开 HEAD，且不增加失败重试或结果缓存；HTTPS 保持原测速逻辑。
 - Provider 后台健康检查失败不会再向页面广播失败状态；主动测速仍会明确写入成功或失败终态，避免更新后首次运行时未测速节点先显示“检测失败”。
 - 开启“覆写测速链接”时，核心同时覆盖策略组和 Provider 健康检查 URL，避免同一节点被两个测速地址产生的结果互相覆盖。
 - 节点测速增加端到端诊断日志：Dart 批次、桥接排队和 Mihomo 网络阶段共享 request ID，Provider 健康检查另带 batch ID；失败时记录解析、拨号、请求构造、TLS、HTTP、状态校验阶段、context、错误类型、耗时和节点来源。测试 URL 的账号、查询参数与 fragment 会脱敏，日志不包含节点密码。代码位于 `lib/clash/core.dart`、`lib/clash/interface.dart`、`lib/views/proxies/common.dart`、`core/hub.go`、`core/Clash.Meta/adapter/adapter.go`、`core/Clash.Meta/tunnel/tunnel.go` 和私有 custom-mihomo 对应路径；回归测试为 `core/Clash.Meta/adapter/patch_test.go`、`adapter/urltest_test.go` 与 `tunnel/provider_lifecycle_test.go`。

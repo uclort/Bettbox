@@ -26,7 +26,7 @@ final defaultTextScaleFactor =
     WidgetsBinding.instance.platformDispatcher.textScaleFactor;
 const httpTimeoutDuration = Duration(seconds: 10);
 const defaultDelayTestConcurrencyLimit = 16;
-const maxDelayTestConcurrencyLimit = 32;
+const maxDelayTestConcurrencyLimit = 16;
 
 int normalizeDelayTestConcurrency(int value) {
   return value.clamp(1, maxDelayTestConcurrencyLimit);
