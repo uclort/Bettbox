@@ -25,7 +25,8 @@ import (
 var UnifiedDelay = atomic.NewBool(false)
 
 const (
-	defaultHistoriesNum = 10
+	defaultHistoriesNum       = 10
+	urlTestSuccessReuseWindow = time.Second
 )
 
 type internalProxyState struct {
@@ -206,7 +207,17 @@ func (g *urlTestGroup) Do(ctx context.Context, key string, fn func(context.Conte
 			call.delay, call.err = fn(call.ctx)
 			g.mu.Lock()
 			if g.calls[key] == call {
-				delete(g.calls, key)
+				if call.err == nil {
+					time.AfterFunc(urlTestSuccessReuseWindow, func() {
+						g.mu.Lock()
+						if g.calls[key] == call {
+							delete(g.calls, key)
+						}
+						g.mu.Unlock()
+					})
+				} else {
+					delete(g.calls, key)
+				}
 			}
 			close(call.done)
 			call.cancel()

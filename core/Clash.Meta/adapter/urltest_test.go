@@ -57,6 +57,57 @@ func TestURLTestSharesConcurrentNodeRequest(t *testing.T) {
 	}
 }
 
+func TestURLTestReusesJustCompletedSuccess(t *testing.T) {
+	adapter.UnifiedDelay.Store(false)
+	t.Cleanup(func() { adapter.UnifiedDelay.Store(false) })
+
+	var requests atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		requests.Add(1)
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	t.Cleanup(server.Close)
+
+	proxy := adapter.NewProxy(outbound.NewDirect())
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	for i := 0; i < 2; i++ {
+		if _, err := proxy.URLTest(ctx, server.URL, nil); err != nil {
+			t.Fatalf("URLTest failed: %v", err)
+		}
+	}
+	if got := requests.Load(); got != 1 {
+		t.Fatalf("request count = %d, want 1", got)
+	}
+}
+
+func TestURLTestDoesNotReuseFailure(t *testing.T) {
+	adapter.UnifiedDelay.Store(false)
+	t.Cleanup(func() { adapter.UnifiedDelay.Store(false) })
+
+	var requests atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		if requests.Add(1) == 1 {
+			panic(http.ErrAbortHandler)
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	t.Cleanup(server.Close)
+
+	proxy := adapter.NewProxy(outbound.NewDirect())
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	if _, err := proxy.URLTest(ctx, server.URL, nil); err == nil {
+		t.Fatal("first URLTest unexpectedly succeeded")
+	}
+	if _, err := proxy.URLTest(ctx, server.URL, nil); err != nil {
+		t.Fatalf("second URLTest failed: %v", err)
+	}
+	if got := requests.Load(); got != 2 {
+		t.Fatalf("request count = %d, want 2", got)
+	}
+}
+
 func TestURLTestKeepsSharedRequestForRemainingCaller(t *testing.T) {
 	adapter.UnifiedDelay.Store(false)
 	t.Cleanup(func() { adapter.UnifiedDelay.Store(false) })
