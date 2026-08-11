@@ -311,9 +311,13 @@ extension TunExt on Tun {
     String? fakeIpRangeV6,
   }) {
     if (system.isDesktop) {
+      final realStack = system.isMacOS && stack == TunStack.system
+          ? TunStack.mixed
+          : stack;
       if (bypassPrivateRoute) {
         return copyWith(
           autoRoute: true,
+          stack: realStack,
           routeAddress: [],
           routeExcludeAddress: [
             '127.0.0.0/8',
@@ -329,6 +333,7 @@ extension TunExt on Tun {
       }
       return copyWith(
         autoRoute: true,
+        stack: realStack,
         routeAddress: [],
         routeExcludeAddress: [],
       );
@@ -545,11 +550,7 @@ abstract class ParsedRule with _$ParsedRule {
         (item) => item.value == raw,
         orElse: () => RuleAction.MATCH,
       );
-      return ParsedRule(
-        ruleAction: action,
-        noResolve: noResolve,
-        src: src,
-      );
+      return ParsedRule(ruleAction: action, noResolve: noResolve, src: src);
     }
 
     final actionStr = raw.substring(0, firstComma).trim();
@@ -614,9 +615,10 @@ abstract class ParsedRule with _$ParsedRule {
 extension ParsedRuleExt on ParsedRule {
   String get value {
     if (ruleAction == RuleAction.MATCH) {
-      return [ruleAction.value, ruleTarget]
-          .where((e) => e != null && e.isNotEmpty)
-          .join(',');
+      return [
+        ruleAction.value,
+        ruleTarget,
+      ].where((e) => e != null && e.isNotEmpty).join(',');
     }
     final target = ruleAction == RuleAction.SUB_RULE ? subRule : ruleTarget;
     final main = ruleAction == RuleAction.RULE_SET ? ruleProvider : content;

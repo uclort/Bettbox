@@ -894,7 +894,7 @@ as String,
 /// @nodoc
 mixin _$TrackerInfo {
 
- String get id; int get upload; int get download; DateTime get start; Metadata get metadata; List<String> get chains; String get rule; String get rulePayload; int? get downloadSpeed; int? get uploadSpeed;
+ String get id; int get upload; int get download; DateTime get start; Metadata get metadata; List<String> get chains; String get rule; String get rulePayload; String get outboundLocalAddress; String get outboundRemoteAddress; List<Map<String, Object?>> get trace; int? get downloadSpeed; int? get uploadSpeed;
 /// Create a copy of TrackerInfo
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -907,16 +907,16 @@ $TrackerInfoCopyWith<TrackerInfo> get copyWith => _$TrackerInfoCopyWithImpl<Trac
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TrackerInfo&&(identical(other.id, id) || other.id == id)&&(identical(other.upload, upload) || other.upload == upload)&&(identical(other.download, download) || other.download == download)&&(identical(other.start, start) || other.start == start)&&(identical(other.metadata, metadata) || other.metadata == metadata)&&const DeepCollectionEquality().equals(other.chains, chains)&&(identical(other.rule, rule) || other.rule == rule)&&(identical(other.rulePayload, rulePayload) || other.rulePayload == rulePayload)&&(identical(other.downloadSpeed, downloadSpeed) || other.downloadSpeed == downloadSpeed)&&(identical(other.uploadSpeed, uploadSpeed) || other.uploadSpeed == uploadSpeed));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TrackerInfo&&(identical(other.id, id) || other.id == id)&&(identical(other.upload, upload) || other.upload == upload)&&(identical(other.download, download) || other.download == download)&&(identical(other.start, start) || other.start == start)&&(identical(other.metadata, metadata) || other.metadata == metadata)&&const DeepCollectionEquality().equals(other.chains, chains)&&(identical(other.rule, rule) || other.rule == rule)&&(identical(other.rulePayload, rulePayload) || other.rulePayload == rulePayload)&&(identical(other.outboundLocalAddress, outboundLocalAddress) || other.outboundLocalAddress == outboundLocalAddress)&&(identical(other.outboundRemoteAddress, outboundRemoteAddress) || other.outboundRemoteAddress == outboundRemoteAddress)&&const DeepCollectionEquality().equals(other.trace, trace)&&(identical(other.downloadSpeed, downloadSpeed) || other.downloadSpeed == downloadSpeed)&&(identical(other.uploadSpeed, uploadSpeed) || other.uploadSpeed == uploadSpeed));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,upload,download,start,metadata,const DeepCollectionEquality().hash(chains),rule,rulePayload,downloadSpeed,uploadSpeed);
+int get hashCode => Object.hash(runtimeType,id,upload,download,start,metadata,const DeepCollectionEquality().hash(chains),rule,rulePayload,outboundLocalAddress,outboundRemoteAddress,const DeepCollectionEquality().hash(trace),downloadSpeed,uploadSpeed);
 
 @override
 String toString() {
-  return 'TrackerInfo(id: $id, upload: $upload, download: $download, start: $start, metadata: $metadata, chains: $chains, rule: $rule, rulePayload: $rulePayload, downloadSpeed: $downloadSpeed, uploadSpeed: $uploadSpeed)';
+  return 'TrackerInfo(id: $id, upload: $upload, download: $download, start: $start, metadata: $metadata, chains: $chains, rule: $rule, rulePayload: $rulePayload, outboundLocalAddress: $outboundLocalAddress, outboundRemoteAddress: $outboundRemoteAddress, trace: $trace, downloadSpeed: $downloadSpeed, uploadSpeed: $uploadSpeed)';
 }
 
 
@@ -927,7 +927,7 @@ abstract mixin class $TrackerInfoCopyWith<$Res>  {
   factory $TrackerInfoCopyWith(TrackerInfo value, $Res Function(TrackerInfo) _then) = _$TrackerInfoCopyWithImpl;
 @useResult
 $Res call({
- String id, int upload, int download, DateTime start, Metadata metadata, List<String> chains, String rule, String rulePayload, int? downloadSpeed, int? uploadSpeed
+ String id, int upload, int download, DateTime start, Metadata metadata, List<String> chains, String rule, String rulePayload, String outboundLocalAddress, String outboundRemoteAddress, List<Map<String, Object?>> trace, int? downloadSpeed, int? uploadSpeed
 });
 
 
@@ -944,7 +944,7 @@ class _$TrackerInfoCopyWithImpl<$Res>
 
 /// Create a copy of TrackerInfo
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? upload = null,Object? download = null,Object? start = null,Object? metadata = null,Object? chains = null,Object? rule = null,Object? rulePayload = null,Object? downloadSpeed = freezed,Object? uploadSpeed = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? upload = null,Object? download = null,Object? start = null,Object? metadata = null,Object? chains = null,Object? rule = null,Object? rulePayload = null,Object? outboundLocalAddress = null,Object? outboundRemoteAddress = null,Object? trace = null,Object? downloadSpeed = freezed,Object? uploadSpeed = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,upload: null == upload ? _self.upload : upload // ignore: cast_nullable_to_non_nullable
@@ -954,7 +954,10 @@ as DateTime,metadata: null == metadata ? _self.metadata : metadata // ignore: ca
 as Metadata,chains: null == chains ? _self.chains : chains // ignore: cast_nullable_to_non_nullable
 as List<String>,rule: null == rule ? _self.rule : rule // ignore: cast_nullable_to_non_nullable
 as String,rulePayload: null == rulePayload ? _self.rulePayload : rulePayload // ignore: cast_nullable_to_non_nullable
-as String,downloadSpeed: freezed == downloadSpeed ? _self.downloadSpeed : downloadSpeed // ignore: cast_nullable_to_non_nullable
+as String,outboundLocalAddress: null == outboundLocalAddress ? _self.outboundLocalAddress : outboundLocalAddress // ignore: cast_nullable_to_non_nullable
+as String,outboundRemoteAddress: null == outboundRemoteAddress ? _self.outboundRemoteAddress : outboundRemoteAddress // ignore: cast_nullable_to_non_nullable
+as String,trace: null == trace ? _self.trace : trace // ignore: cast_nullable_to_non_nullable
+as List<Map<String, Object?>>,downloadSpeed: freezed == downloadSpeed ? _self.downloadSpeed : downloadSpeed // ignore: cast_nullable_to_non_nullable
 as int?,uploadSpeed: freezed == uploadSpeed ? _self.uploadSpeed : uploadSpeed // ignore: cast_nullable_to_non_nullable
 as int?,
   ));
@@ -1050,10 +1053,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  int upload,  int download,  DateTime start,  Metadata metadata,  List<String> chains,  String rule,  String rulePayload,  int? downloadSpeed,  int? uploadSpeed)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  int upload,  int download,  DateTime start,  Metadata metadata,  List<String> chains,  String rule,  String rulePayload,  String outboundLocalAddress,  String outboundRemoteAddress,  List<Map<String, Object?>> trace,  int? downloadSpeed,  int? uploadSpeed)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TrackerInfo() when $default != null:
-return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,_that.chains,_that.rule,_that.rulePayload,_that.downloadSpeed,_that.uploadSpeed);case _:
+return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,_that.chains,_that.rule,_that.rulePayload,_that.outboundLocalAddress,_that.outboundRemoteAddress,_that.trace,_that.downloadSpeed,_that.uploadSpeed);case _:
   return orElse();
 
 }
@@ -1071,10 +1074,10 @@ return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  int upload,  int download,  DateTime start,  Metadata metadata,  List<String> chains,  String rule,  String rulePayload,  int? downloadSpeed,  int? uploadSpeed)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  int upload,  int download,  DateTime start,  Metadata metadata,  List<String> chains,  String rule,  String rulePayload,  String outboundLocalAddress,  String outboundRemoteAddress,  List<Map<String, Object?>> trace,  int? downloadSpeed,  int? uploadSpeed)  $default,) {final _that = this;
 switch (_that) {
 case _TrackerInfo():
-return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,_that.chains,_that.rule,_that.rulePayload,_that.downloadSpeed,_that.uploadSpeed);case _:
+return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,_that.chains,_that.rule,_that.rulePayload,_that.outboundLocalAddress,_that.outboundRemoteAddress,_that.trace,_that.downloadSpeed,_that.uploadSpeed);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1091,10 +1094,10 @@ return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  int upload,  int download,  DateTime start,  Metadata metadata,  List<String> chains,  String rule,  String rulePayload,  int? downloadSpeed,  int? uploadSpeed)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  int upload,  int download,  DateTime start,  Metadata metadata,  List<String> chains,  String rule,  String rulePayload,  String outboundLocalAddress,  String outboundRemoteAddress,  List<Map<String, Object?>> trace,  int? downloadSpeed,  int? uploadSpeed)?  $default,) {final _that = this;
 switch (_that) {
 case _TrackerInfo() when $default != null:
-return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,_that.chains,_that.rule,_that.rulePayload,_that.downloadSpeed,_that.uploadSpeed);case _:
+return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,_that.chains,_that.rule,_that.rulePayload,_that.outboundLocalAddress,_that.outboundRemoteAddress,_that.trace,_that.downloadSpeed,_that.uploadSpeed);case _:
   return null;
 
 }
@@ -1106,7 +1109,7 @@ return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,
 @JsonSerializable()
 
 class _TrackerInfo implements TrackerInfo {
-  const _TrackerInfo({required this.id, this.upload = 0, this.download = 0, required this.start, required this.metadata, required final  List<String> chains, required this.rule, required this.rulePayload, this.downloadSpeed, this.uploadSpeed}): _chains = chains;
+  const _TrackerInfo({required this.id, this.upload = 0, this.download = 0, required this.start, required this.metadata, required final  List<String> chains, required this.rule, required this.rulePayload, this.outboundLocalAddress = '', this.outboundRemoteAddress = '', final  List<Map<String, Object?>> trace = const [], this.downloadSpeed, this.uploadSpeed}): _chains = chains,_trace = trace;
   factory _TrackerInfo.fromJson(Map<String, dynamic> json) => _$TrackerInfoFromJson(json);
 
 @override final  String id;
@@ -1123,6 +1126,15 @@ class _TrackerInfo implements TrackerInfo {
 
 @override final  String rule;
 @override final  String rulePayload;
+@override@JsonKey() final  String outboundLocalAddress;
+@override@JsonKey() final  String outboundRemoteAddress;
+ final  List<Map<String, Object?>> _trace;
+@override@JsonKey() List<Map<String, Object?>> get trace {
+  if (_trace is EqualUnmodifiableListView) return _trace;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_trace);
+}
+
 @override final  int? downloadSpeed;
 @override final  int? uploadSpeed;
 
@@ -1139,16 +1151,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TrackerInfo&&(identical(other.id, id) || other.id == id)&&(identical(other.upload, upload) || other.upload == upload)&&(identical(other.download, download) || other.download == download)&&(identical(other.start, start) || other.start == start)&&(identical(other.metadata, metadata) || other.metadata == metadata)&&const DeepCollectionEquality().equals(other._chains, _chains)&&(identical(other.rule, rule) || other.rule == rule)&&(identical(other.rulePayload, rulePayload) || other.rulePayload == rulePayload)&&(identical(other.downloadSpeed, downloadSpeed) || other.downloadSpeed == downloadSpeed)&&(identical(other.uploadSpeed, uploadSpeed) || other.uploadSpeed == uploadSpeed));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TrackerInfo&&(identical(other.id, id) || other.id == id)&&(identical(other.upload, upload) || other.upload == upload)&&(identical(other.download, download) || other.download == download)&&(identical(other.start, start) || other.start == start)&&(identical(other.metadata, metadata) || other.metadata == metadata)&&const DeepCollectionEquality().equals(other._chains, _chains)&&(identical(other.rule, rule) || other.rule == rule)&&(identical(other.rulePayload, rulePayload) || other.rulePayload == rulePayload)&&(identical(other.outboundLocalAddress, outboundLocalAddress) || other.outboundLocalAddress == outboundLocalAddress)&&(identical(other.outboundRemoteAddress, outboundRemoteAddress) || other.outboundRemoteAddress == outboundRemoteAddress)&&const DeepCollectionEquality().equals(other._trace, _trace)&&(identical(other.downloadSpeed, downloadSpeed) || other.downloadSpeed == downloadSpeed)&&(identical(other.uploadSpeed, uploadSpeed) || other.uploadSpeed == uploadSpeed));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,upload,download,start,metadata,const DeepCollectionEquality().hash(_chains),rule,rulePayload,downloadSpeed,uploadSpeed);
+int get hashCode => Object.hash(runtimeType,id,upload,download,start,metadata,const DeepCollectionEquality().hash(_chains),rule,rulePayload,outboundLocalAddress,outboundRemoteAddress,const DeepCollectionEquality().hash(_trace),downloadSpeed,uploadSpeed);
 
 @override
 String toString() {
-  return 'TrackerInfo(id: $id, upload: $upload, download: $download, start: $start, metadata: $metadata, chains: $chains, rule: $rule, rulePayload: $rulePayload, downloadSpeed: $downloadSpeed, uploadSpeed: $uploadSpeed)';
+  return 'TrackerInfo(id: $id, upload: $upload, download: $download, start: $start, metadata: $metadata, chains: $chains, rule: $rule, rulePayload: $rulePayload, outboundLocalAddress: $outboundLocalAddress, outboundRemoteAddress: $outboundRemoteAddress, trace: $trace, downloadSpeed: $downloadSpeed, uploadSpeed: $uploadSpeed)';
 }
 
 
@@ -1159,7 +1171,7 @@ abstract mixin class _$TrackerInfoCopyWith<$Res> implements $TrackerInfoCopyWith
   factory _$TrackerInfoCopyWith(_TrackerInfo value, $Res Function(_TrackerInfo) _then) = __$TrackerInfoCopyWithImpl;
 @override @useResult
 $Res call({
- String id, int upload, int download, DateTime start, Metadata metadata, List<String> chains, String rule, String rulePayload, int? downloadSpeed, int? uploadSpeed
+ String id, int upload, int download, DateTime start, Metadata metadata, List<String> chains, String rule, String rulePayload, String outboundLocalAddress, String outboundRemoteAddress, List<Map<String, Object?>> trace, int? downloadSpeed, int? uploadSpeed
 });
 
 
@@ -1176,7 +1188,7 @@ class __$TrackerInfoCopyWithImpl<$Res>
 
 /// Create a copy of TrackerInfo
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? upload = null,Object? download = null,Object? start = null,Object? metadata = null,Object? chains = null,Object? rule = null,Object? rulePayload = null,Object? downloadSpeed = freezed,Object? uploadSpeed = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? upload = null,Object? download = null,Object? start = null,Object? metadata = null,Object? chains = null,Object? rule = null,Object? rulePayload = null,Object? outboundLocalAddress = null,Object? outboundRemoteAddress = null,Object? trace = null,Object? downloadSpeed = freezed,Object? uploadSpeed = freezed,}) {
   return _then(_TrackerInfo(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,upload: null == upload ? _self.upload : upload // ignore: cast_nullable_to_non_nullable
@@ -1186,7 +1198,10 @@ as DateTime,metadata: null == metadata ? _self.metadata : metadata // ignore: ca
 as Metadata,chains: null == chains ? _self._chains : chains // ignore: cast_nullable_to_non_nullable
 as List<String>,rule: null == rule ? _self.rule : rule // ignore: cast_nullable_to_non_nullable
 as String,rulePayload: null == rulePayload ? _self.rulePayload : rulePayload // ignore: cast_nullable_to_non_nullable
-as String,downloadSpeed: freezed == downloadSpeed ? _self.downloadSpeed : downloadSpeed // ignore: cast_nullable_to_non_nullable
+as String,outboundLocalAddress: null == outboundLocalAddress ? _self.outboundLocalAddress : outboundLocalAddress // ignore: cast_nullable_to_non_nullable
+as String,outboundRemoteAddress: null == outboundRemoteAddress ? _self.outboundRemoteAddress : outboundRemoteAddress // ignore: cast_nullable_to_non_nullable
+as String,trace: null == trace ? _self._trace : trace // ignore: cast_nullable_to_non_nullable
+as List<Map<String, Object?>>,downloadSpeed: freezed == downloadSpeed ? _self.downloadSpeed : downloadSpeed // ignore: cast_nullable_to_non_nullable
 as int?,uploadSpeed: freezed == uploadSpeed ? _self.uploadSpeed : uploadSpeed // ignore: cast_nullable_to_non_nullable
 as int?,
   ));

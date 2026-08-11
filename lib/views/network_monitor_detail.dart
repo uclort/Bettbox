@@ -108,6 +108,9 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
               children: [
                 if (system.isMacOS)
                   ProcessIcon(
+                    key: ValueKey(
+                      '${item.metadata.process}\n${item.metadata.processPath}',
+                    ),
                     process: item.metadata.process,
                     processPath: item.metadata.processPath,
                     size: 28,
@@ -178,10 +181,26 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
               '下载：${monitorBytes(item.download)}',
               '实时：↑${monitorBytes(item.uploadSpeed ?? 0)}/s  ↓${monitorBytes(item.downloadSpeed ?? 0)}/s',
             ]),
-            _infoCard(context, '规则与策略', [
-              '规则：${monitorRuleName(item)}',
-              '策略：${monitorPolicyName(item)}',
-            ], width: 250),
+            _infoCard(
+              context,
+              '规则与策略',
+              ['规则：${monitorRuleName(item)}'],
+              width: 250,
+              children: [
+                Row(
+                  children: [
+                    const Text('策略：'),
+                    Expanded(
+                      child: _compactMonitorText(
+                        monitorPolicyName(item),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
             _ipInfoCard(context, item),
             _infoCard(context, '进程', [
               '名称：${monitorClientName(item)}',
@@ -196,36 +215,38 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
   }
 
   Widget _ipInfoCard(BuildContext context, TrackerInfo item) {
-    final remoteIP = monitorRemoteIP(item);
-    final metadataRegion = item.metadata.destinationGeoIP.join(' ');
+    final remoteAddress = monitorOutboundRemoteAddress(item);
+    final remoteIP = monitorSocketHost(remoteAddress);
+    final targetIP = monitorTargetIP(item);
+    final targetRegion = item.metadata.destinationGeoIP.join(' ');
     final dnsMode = monitorDnsMode(item);
 
-    Widget buildCard(String region) {
+    Widget buildCard(String remoteRegion) {
       final lines = <String>[
         if (item.metadata.sourceIP.isNotEmpty)
-          '入站源 IP：${monitorEndpoint(item.metadata.sourceIP, item.metadata.sourcePort)}',
-        if (item.metadata.host.isNotEmpty)
-          '目标域名：${monitorEndpoint(item.metadata.host, item.metadata.destinationPort)}',
-        if (remoteIP.isNotEmpty)
-          '出站远端 IP：${monitorEndpoint(remoteIP, item.metadata.destinationPort)}',
-        if (item.metadata.destinationIP.isNotEmpty &&
-            item.metadata.destinationIP != remoteIP)
-          '${dnsMode == 'fake-ip' ? 'Fake-IP' : '内核目标 IP'}：${monitorEndpoint(item.metadata.destinationIP, item.metadata.destinationPort)}',
+          '客户端地址：${monitorEndpoint(item.metadata.sourceIP, item.metadata.sourcePort)}',
+        if (monitorAddress(item).isNotEmpty) '目标地址：${monitorAddress(item)}',
+        if (targetIP.isNotEmpty && item.metadata.host.isNotEmpty)
+          '${dnsMode == 'fake-ip' ? '内核目标（Fake-IP）' : '目标 IP'}：${monitorEndpoint(targetIP, item.metadata.destinationPort)}',
+        if (monitorOutboundLocalAddress(item).isNotEmpty)
+          '出站地址：${monitorOutboundLocalAddress(item)}',
+        if (remoteAddress.isNotEmpty)
+          '远端地址（${monitorIsDirect(item) ? '直连目标' : '代理节点'}）：$remoteAddress',
         if (item.metadata.dnsMode != null) 'DNS 模式：$dnsMode',
         if (item.metadata.sourceGeoIP.isNotEmpty)
-          '入站地区：${item.metadata.sourceGeoIP.join(' ')}',
+          '客户端地区：${item.metadata.sourceGeoIP.join(' ')}',
         if (item.metadata.sourceIPASN.isNotEmpty)
-          '入站 ASN：${item.metadata.sourceIPASN}',
-        if (region.isNotEmpty) '出站地区：$region',
+          '客户端 ASN：${item.metadata.sourceIPASN}',
+        if (targetRegion.isNotEmpty) '目标地区：$targetRegion',
         if (item.metadata.destinationIPASN.isNotEmpty)
-          '出站 ASN：${item.metadata.destinationIPASN}',
+          '目标 ASN：${item.metadata.destinationIPASN}',
+        if (remoteRegion.isNotEmpty && remoteRegion != targetRegion)
+          '远端地区：$remoteRegion',
       ];
       return _infoCard(context, 'IP 地址', lines, width: 300);
     }
 
-    if (remoteIP.isEmpty || metadataRegion.isNotEmpty) {
-      return buildCard(metadataRegion);
-    }
+    if (remoteIP.isEmpty) return buildCard('');
     return FutureBuilder<String>(
       future: _lookupCountryCode(remoteIP),
       builder: (_, snapshot) => buildCard(snapshot.data ?? ''),
@@ -233,12 +254,35 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
   }
 
   Widget _buildMihomoFlow(BuildContext context, TrackerInfo item) {
+    final trace = monitorConnectionTrace(item);
+    if (trace.isNotEmpty) {
+      return ListView(
+        padding: const EdgeInsets.all(12),
+        children: [
+          for (final event in trace)
+            _flowStep(
+              context,
+              _traceIcon(event.stage),
+              event.title,
+              [
+                monitorTraceClock(event.timestamp),
+                event.detail,
+              ].where((value) => value.isNotEmpty).join(' · '),
+              color: switch (event.status) {
+                'error' => Colors.red,
+                'pending' => Colors.amber,
+                _ => Theme.of(context).colorScheme.primary,
+              },
+            ),
+        ],
+      );
+    }
+
     final source = monitorEndpoint(
       item.metadata.sourceIP,
       item.metadata.sourcePort,
     );
-    final remoteIP = monitorRemoteIP(item);
-    final remote = monitorEndpoint(remoteIP, item.metadata.destinationPort);
+    final remote = monitorOutboundRemoteAddress(item);
     final dnsMode = monitorDnsMode(item);
     final destinationIP = item.metadata.destinationIP.trim();
     final logs = _logs.where((log) => monitorLogBelongsToTracker(log, item));
@@ -265,8 +309,8 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
           title: '规则匹配',
           value: monitorRuleName(item),
         ),
-      if (monitorPolicyName(item).isNotEmpty)
-        (icon: Icons.alt_route, title: '出站路径', value: monitorPolicyName(item)),
+      if (monitorPolicyChain(item).isNotEmpty)
+        (icon: Icons.alt_route, title: '出站路径', value: monitorPolicyChain(item)),
       if (remote.isNotEmpty)
         (
           icon: Icons.link,
@@ -282,12 +326,12 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
           _flowStep(context, step.icon, step.title, step.value),
         if (logs.isNotEmpty) ...[
           const Divider(height: 24),
-          Text('当前请求内核日志', style: Theme.of(context).textTheme.labelLarge),
+          Text('兼容内核记录', style: Theme.of(context).textTheme.labelLarge),
           const SizedBox(height: 8),
           for (final log in logs)
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
-              child: SelectableText(
+              child: _compactMonitorText(
                 '${log.dateTime} [${log.level}] ${log.payload}',
               ),
             ),
@@ -300,30 +344,44 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
     BuildContext context,
     IconData icon,
     String title,
-    String value,
-  ) {
+    String value, {
+    Color? color,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
+          Icon(
+            icon,
+            size: 18,
+            color: color ?? Theme.of(context).colorScheme.primary,
+          ),
           const SizedBox(width: 10),
           SizedBox(
             width: 72,
             child: Text(title, style: Theme.of(context).textTheme.labelMedium),
           ),
-          Expanded(child: SelectableText(value)),
+          Expanded(child: _compactMonitorText(value)),
         ],
       ),
     );
   }
+
+  IconData _traceIcon(String stage) => switch (stage) {
+    'dns' => Icons.dns_outlined,
+    'rule' => Icons.rule_outlined,
+    'outbound' => Icons.alt_route,
+    'connect' => Icons.link,
+    _ => Icons.input,
+  };
 
   Widget _infoCard(
     BuildContext context,
     String title,
     List<String> lines, {
     double width = 180,
+    List<Widget> children = const [],
   }) {
     return Container(
       width: width,
@@ -339,6 +397,7 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
           const SizedBox(height: 4),
           for (final line in lines)
             Text(line, maxLines: 1, overflow: TextOverflow.ellipsis),
+          ...children,
         ],
       ),
     );

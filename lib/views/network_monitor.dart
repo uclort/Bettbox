@@ -722,6 +722,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
         item != null &&
         system.isMacOS) {
       return ProcessIcon(
+        key: ValueKey('${item.metadata.process}\n${item.metadata.processPath}'),
         process: item.metadata.process,
         processPath: item.metadata.processPath,
         size: 20,
@@ -821,7 +822,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
     final activeIds = _connections.map((item) => item.id).toSet();
     final columns = <(String, MonitorSortColumn)>[
       ('状态', MonitorSortColumn.status),
-      ('日期', MonitorSortColumn.date),
+      ('时间', MonitorSortColumn.date),
       ('客户端', MonitorSortColumn.client),
       ('规则', MonitorSortColumn.rule),
       ('策略', MonitorSortColumn.policy),
@@ -1072,25 +1073,37 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
   }
 
   Widget _trackerPolicyCell(TrackerInfo item) {
-    final parts = monitorPolicyName(item).split(' ');
     return _trackerCell(
       MonitorSortColumn.policy,
-      Text.rich(
-        TextSpan(
-          children: [
-            for (var index = 0; index < parts.length; index++) ...[
-              if (index > 0)
-                const WidgetSpan(
-                  alignment: PlaceholderAlignment.middle,
-                  child: SizedBox(width: 4),
-                ),
-              TextSpan(text: parts[index]),
-            ],
-          ],
-        ),
+      _compactMonitorText(
+        monitorPolicyName(item),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
+    );
+  }
+
+  Widget _compactMonitorText(
+    String value, {
+    int? maxLines,
+    TextOverflow? overflow,
+  }) {
+    final parts = monitorCompactWhitespace(value).split(' ');
+    return Text.rich(
+      TextSpan(
+        children: [
+          for (var index = 0; index < parts.length; index++) ...[
+            if (index > 0)
+              const WidgetSpan(
+                alignment: PlaceholderAlignment.middle,
+                child: SizedBox(width: 4),
+              ),
+            TextSpan(text: parts[index]),
+          ],
+        ],
+      ),
+      maxLines: maxLines,
+      overflow: overflow,
     );
   }
 
@@ -1100,6 +1113,9 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
       children: [
         if (system.isMacOS) ...[
           ProcessIcon(
+            key: ValueKey(
+              '${item.metadata.process}\n${item.metadata.processPath}',
+            ),
             process: item.metadata.process,
             processPath: item.metadata.processPath,
             size: 18,

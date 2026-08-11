@@ -53,6 +53,11 @@ void main() {
       'active': false,
     });
 
+    await subject.update(trayState: active, force: true);
+    expect(calls.lastWhere((call) => call.method == 'setActive').arguments, {
+      'active': true,
+    });
+
     await subject.update(
       trayState: active.copyWith(tunEnable: false, systemProxy: true),
       force: true,

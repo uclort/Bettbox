@@ -68,17 +68,17 @@ class ExternalControl {
         .transform(const LineSplitter())
         .listen(
           (line) => unawaited(_handleLine(socket, line)),
-          onDone: () => _networkMonitorSubscribers.remove(socket),
-          onError: (_) => _networkMonitorSubscribers.remove(socket),
+          onDone: () => _closeSocket(socket),
+          onError: (_) => _closeSocket(socket),
         );
   }
 
   static Future<void> _handleLine(Socket socket, String line) async {
-    if (!line.trimLeft().startsWith('{')) {
-      _handleCommand(line);
-      return;
-    }
     try {
+      if (!line.trimLeft().startsWith('{')) {
+        _handleCommand(line);
+        return;
+      }
       final message = jsonDecode(line) as Map<String, dynamic>;
       final method = message['method'] as String;
       if (method == 'networkMonitor.subscribe') {
@@ -92,7 +92,20 @@ class ExternalControl {
       socket.writeln(jsonEncode({'ok': true, 'result': result}));
     } catch (error) {
       socket.writeln(jsonEncode({'ok': false, 'error': error.toString()}));
+    } finally {
+      if (!_networkMonitorSubscribers.contains(socket)) {
+        try {
+          await socket.flush();
+        } finally {
+          _closeSocket(socket);
+        }
+      }
     }
+  }
+
+  static void _closeSocket(Socket socket) {
+    _networkMonitorSubscribers.remove(socket);
+    socket.destroy();
   }
 
   static Future<void> stop() async {

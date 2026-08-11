@@ -235,14 +235,24 @@ String monitorRuleName(TrackerInfo item) {
   return [item.rule, item.rulePayload].where((e) => e.isNotEmpty).join(' ');
 }
 
-String monitorPolicyName(TrackerInfo item) => item.chains
-    .map((value) => monitorCompactWhitespace(value))
+List<String> monitorPolicyParts(TrackerInfo item) => item.chains
+    .map(monitorCompactWhitespace)
     .where((value) => value.isNotEmpty)
-    .join(' → ');
+    .toList();
+
+String monitorPolicyName(TrackerInfo item) {
+  final policies = monitorPolicyParts(item);
+  return policies.isEmpty ? '' : policies.first;
+}
+
+String monitorPolicyChain(TrackerInfo item) =>
+    monitorPolicyParts(item).join(' → ');
 
 String monitorCompactWhitespace(String value) => value
     .replaceAll(
-      RegExp(r'[\s\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000\uFEFF]+'),
+      RegExp(
+        r'[\s\u00A0\u1680\u2000-\u200B\u200E\u200F\u202A-\u202F\u205F\u2060-\u206F\u3000\uFEFF]+',
+      ),
       ' ',
     )
     .trim();
@@ -481,10 +491,68 @@ class MonitorLog {
   }
 }
 
-String monitorRemoteIP(TrackerInfo item) {
-  final remote = item.metadata.remoteDestination.trim();
-  return remote.isNotEmpty ? remote : item.metadata.destinationIP.trim();
+@immutable
+class MonitorConnectionTraceEvent {
+  final int timestamp;
+  final String stage;
+  final String title;
+  final String detail;
+  final String status;
+
+  const MonitorConnectionTraceEvent({
+    required this.timestamp,
+    required this.stage,
+    required this.title,
+    required this.detail,
+    required this.status,
+  });
+
+  factory MonitorConnectionTraceEvent.fromJson(Map<String, Object?> map) =>
+      MonitorConnectionTraceEvent(
+        timestamp: (map['timestamp'] as num?)?.toInt() ?? 0,
+        stage: map['stage']?.toString() ?? '',
+        title: monitorCompactWhitespace(map['title']?.toString() ?? ''),
+        detail: monitorCompactWhitespace(map['detail']?.toString() ?? ''),
+        status: map['status']?.toString() ?? '',
+      );
 }
+
+List<MonitorConnectionTraceEvent> monitorConnectionTrace(TrackerInfo item) =>
+    item.trace.map(MonitorConnectionTraceEvent.fromJson).toList();
+
+String monitorTraceClock(int timestamp) {
+  if (timestamp <= 0) return '';
+  final value = DateTime.fromMillisecondsSinceEpoch(timestamp).toLocal();
+  String two(int value) => value.toString().padLeft(2, '0');
+  return '${two(value.hour)}:${two(value.minute)}:${two(value.second)}.${value.millisecond.toString().padLeft(3, '0')}';
+}
+
+String monitorTargetIP(TrackerInfo item) => item.metadata.destinationIP.trim();
+
+String monitorOutboundLocalAddress(TrackerInfo item) =>
+    item.outboundLocalAddress.trim();
+
+String monitorOutboundRemoteAddress(TrackerInfo item) {
+  final socketAddress = item.outboundRemoteAddress.trim();
+  return socketAddress.isNotEmpty
+      ? socketAddress
+      : item.metadata.remoteDestination.trim();
+}
+
+String monitorSocketHost(String address) {
+  address = address.trim();
+  if (address.startsWith('[')) {
+    final end = address.indexOf(']');
+    return end > 1 ? address.substring(1, end) : address;
+  }
+  final separator = address.lastIndexOf(':');
+  return separator > 0 && address.indexOf(':') == separator
+      ? address.substring(0, separator)
+      : address;
+}
+
+bool monitorIsDirect(TrackerInfo item) =>
+    monitorPolicyName(item).toUpperCase() == 'DIRECT';
 
 bool monitorLogBelongsToTracker(MonitorLog log, TrackerInfo item) {
   final payload = log.payload.toLowerCase();
@@ -498,9 +566,13 @@ bool monitorLogBelongsToTracker(MonitorLog log, TrackerInfo item) {
   if (source.isEmpty || !payload.contains(source)) return false;
   final targetHost = item.metadata.host.trim().isNotEmpty
       ? item.metadata.host
-      : monitorRemoteIP(item);
+      : item.metadata.destinationIP;
   final targets =
-      {targetHost, item.metadata.destinationIP, monitorRemoteIP(item)}
+      {
+            targetHost,
+            item.metadata.destinationIP,
+            monitorSocketHost(monitorOutboundRemoteAddress(item)),
+          }
           .map(
             (target) => monitorEndpoint(target, item.metadata.destinationPort),
           )

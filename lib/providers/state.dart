@@ -204,6 +204,7 @@ TrayState trayState(Ref ref) {
   final groups = ref.watch(currentGroupsStateProvider).value;
   final brightness = ref.watch(systemBrightnessProvider);
   final vpnProps = ref.watch(vpnSettingProvider);
+  final realTunEnable = ref.watch(realTunEnableProvider);
 
   final selectedMap = ref.watch(selectedMapProvider);
 
@@ -214,7 +215,7 @@ TrayState trayState(Ref ref) {
     port: clashConfig.mixedPort,
     autoLaunch: appSetting.autoLaunch,
     systemProxy: networkProps.systemProxy,
-    tunEnable: clashConfig.tun.enable,
+    tunEnable: realTunEnable,
     isStart: isStart,
     locale: appSetting.locale,
     brightness: brightness,

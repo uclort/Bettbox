@@ -426,6 +426,7 @@ class AppController {
       }
     } else {
       await globalState.handleStop();
+      _ref.read(realTunEnableProvider.notifier).value = false;
       clashCore.resetTraffic();
       _ref.read(trafficsProvider.notifier).clear();
       _ref.read(totalTrafficProvider.notifier).value = Traffic();
@@ -1925,10 +1926,14 @@ class AppController {
     final isRunning = system.isMacOS
         ? globalState.isStart
         : _ref.read(runTimeProvider.notifier).isStart;
-    if (shouldRun != isRunning) {
-      await updateStatus(shouldRun);
-    } else if (isRunning) {
-      await updateClashConfig();
+    try {
+      if (shouldRun != isRunning) {
+        await updateStatus(shouldRun);
+      } else if (isRunning) {
+        await updateClashConfig();
+      }
+    } finally {
+      await updateTray(false, false, true);
     }
   }
 
@@ -1948,7 +1953,11 @@ class AppController {
     final isRunning = system.isMacOS
         ? globalState.isStart
         : _ref.read(runTimeProvider.notifier).isStart;
-    if (shouldRun != isRunning) await updateStatus(shouldRun);
+    try {
+      if (shouldRun != isRunning) await updateStatus(shouldRun);
+    } finally {
+      await updateTray(false, false, true);
+    }
   }
 
   Future<List<Package>> getPackages({bool forceRefresh = false}) async {

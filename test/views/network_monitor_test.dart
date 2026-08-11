@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:bett_box/common/navigation.dart';
 import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/models.dart';
@@ -14,6 +16,9 @@ TrackerInfo _tracker({
   Metadata? metadata,
   List<String> chains = const ['代理'],
   String rule = 'MATCH',
+  String outboundLocalAddress = '',
+  String outboundRemoteAddress = '',
+  List<Map<String, Object?>> trace = const [],
 }) {
   return TrackerInfo(
     id: id,
@@ -23,6 +28,9 @@ TrackerInfo _tracker({
     chains: chains,
     rule: rule,
     rulePayload: '',
+    outboundLocalAddress: outboundLocalAddress,
+    outboundRemoteAddress: outboundRemoteAddress,
+    trace: trace,
   );
 }
 
@@ -31,6 +39,9 @@ void main() {
     const channel = MethodChannel('app');
     const processPath =
         '/Applications/Bettbox-Icon-Dedup-Test.app/Contents/MacOS/Test';
+    final icon = base64Decode(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAEAQH/CFoLAAAAAElFTkSuQmCC',
+    );
     var processIconCalls = 0;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (call) async {
@@ -38,6 +49,7 @@ void main() {
               (call.arguments as Map)['processPath'] == processPath) {
             processIconCalls++;
             await Future<void>.delayed(const Duration(milliseconds: 10));
+            return icon;
           }
           return null;
         });
@@ -59,6 +71,40 @@ void main() {
     await tester.pump(const Duration(milliseconds: 20));
 
     expect(processIconCalls, 1);
+  });
+
+  testWidgets('首次读取不到进程图标时当前组件自动重试', (tester) async {
+    const channel = MethodChannel('app');
+    const processPath =
+        '/Applications/Bettbox-Icon-Retry-Test.app/Contents/MacOS/Test';
+    final icon = base64Decode(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAEAQH/CFoLAAAAAElFTkSuQmCC',
+    );
+    var calls = 0;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          if (call.method != 'getPackageIcon' ||
+              (call.arguments as Map)['processPath'] != processPath) {
+            return null;
+          }
+          calls++;
+          return calls == 1 ? null : icon;
+        });
+    addTearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null),
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: ProcessIcon(process: 'Test', processPath: processPath),
+      ),
+    );
+    await tester.pump();
+    expect(find.byIcon(Icons.apps_outlined), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 130));
+    expect(calls, 2);
   });
 
   testWidgets('复用进程图标组件时立即清除上一行图标', (tester) async {
@@ -91,6 +137,9 @@ void main() {
     expect(find.byKey(const ValueKey('Test\n$oldPath')), findsNothing);
     expect(find.byKey(const ValueKey('Test\n$newPath')), findsOneWidget);
     expect(find.byIcon(Icons.apps_outlined), findsOneWidget);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 130));
+    await tester.pump();
   });
 
   test('导航使用统一网络面板替换旧请求、连接和日志入口', () {
@@ -191,7 +240,7 @@ void main() {
     expect(monitorTrackerStatus(other, const {}), MonitorTrackerStatus.other);
   });
 
-  test('时间按本机时区显示，策略名称压缩连续空白', () {
+  test('时间按本机时区显示，列表只显示最终策略并保留完整链路', () {
     final utc = DateTime.utc(2026, 8, 10, 5, 42, 54);
     final local = utc.toLocal();
     String two(int value) => value.toString().padLeft(2, '0');
@@ -206,10 +255,25 @@ void main() {
           id: 'policy',
           process: 'A',
           upload: 0,
-          chains: const ['OWO-🇺🇸\u3000 US\u00a0 DMIT   CORONA'],
+          chains: const [
+            'OWO-🇺🇸\u3000 US\u00a0 DMIT   CORONA',
+            'Fallback',
+            'Global',
+          ],
         ),
       ),
       'OWO-🇺🇸 US DMIT CORONA',
+    );
+    expect(
+      monitorPolicyChain(
+        _tracker(
+          id: 'policy-chain',
+          process: 'A',
+          upload: 0,
+          chains: const ['节点', 'Fallback', 'Global'],
+        ),
+      ),
+      '节点 → Fallback → Global',
     );
   });
 
@@ -226,6 +290,7 @@ void main() {
         destinationPort: '443',
         remoteDestination: '69.63.197.145',
       ),
+      outboundRemoteAddress: '69.63.197.145:443',
     );
     const current = MonitorLog(
       level: 'info',
@@ -240,9 +305,40 @@ void main() {
           '[TCP] 198.18.0.1:63247(codex) --> chatgpt.com:443 match RuleSet(ai)',
     );
 
-    expect(monitorRemoteIP(selected), '69.63.197.145');
+    expect(monitorOutboundRemoteAddress(selected), '69.63.197.145:443');
     expect(monitorLogBelongsToTracker(current, selected), isTrue);
     expect(monitorLogBelongsToTracker(other, selected), isFalse);
+  });
+
+  test('连接地址与结构化链路按 Mihomo 字段映射', () {
+    final selected = _tracker(
+      id: 'selected',
+      process: 'codex',
+      upload: 0,
+      metadata: const Metadata(process: 'codex', destinationIP: '198.18.0.1'),
+      chains: const ['代理节点', '自动选择'],
+      outboundLocalAddress: '192.168.0.2:52000',
+      outboundRemoteAddress: '69.63.197.145:443',
+      trace: const [
+        {
+          'timestamp': 1786352400123,
+          'stage': 'dns',
+          'title': '查询  A',
+          'detail': 'example.com  ·  1.1.1.1',
+          'status': 'pending',
+        },
+      ],
+    );
+
+    expect(monitorTargetIP(selected), '198.18.0.1');
+    expect(monitorOutboundLocalAddress(selected), '192.168.0.2:52000');
+    expect(monitorOutboundRemoteAddress(selected), '69.63.197.145:443');
+    expect(monitorSocketHost('[2001:db8::1]:443'), '2001:db8::1');
+    expect(monitorConnectionTrace(selected).single.title, '查询 A');
+    expect(
+      monitorConnectionTrace(selected).single.detail,
+      'example.com · 1.1.1.1',
+    );
   });
 
   test('DNS 模式与有效解析地址按 Mihomo 元数据映射', () {
@@ -386,7 +482,7 @@ void main() {
     );
     expect(
       monitorTrackerFacetValue(item, MonitorTrackerFacet.outbound),
-      'Proxy → GLOBAL',
+      'Proxy',
     );
   });
 

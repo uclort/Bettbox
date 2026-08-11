@@ -295,12 +295,14 @@ class TunStackItem extends ConsumerWidget {
         options: TunStack.values,
         textBuilder: (value) => value.name,
         onChanged: (value) async {
-          if (value == null) {
-            return;
-          }
+          if (value == null || value == stack) return;
           ref
               .read(patchClashConfigProvider.notifier)
               .updateState((state) => state.copyWith.tun(stack: value));
+          if (system.isDesktop) {
+            await globalState.appController.restartCore();
+            return;
+          }
           await _handleNetworkConfigChange(ref);
         },
         title: appLocalizations.stackMode,

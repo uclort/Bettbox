@@ -86,6 +86,13 @@ _TrackerInfo _$TrackerInfoFromJson(Map<String, dynamic> json) => _TrackerInfo(
   chains: (json['chains'] as List<dynamic>).map((e) => e as String).toList(),
   rule: json['rule'] as String,
   rulePayload: json['rulePayload'] as String,
+  outboundLocalAddress: json['outboundLocalAddress'] as String? ?? '',
+  outboundRemoteAddress: json['outboundRemoteAddress'] as String? ?? '',
+  trace:
+      (json['trace'] as List<dynamic>?)
+          ?.map((e) => e as Map<String, dynamic>)
+          .toList() ??
+      const [],
   downloadSpeed: (json['downloadSpeed'] as num?)?.toInt(),
   uploadSpeed: (json['uploadSpeed'] as num?)?.toInt(),
 );
@@ -100,6 +107,9 @@ Map<String, dynamic> _$TrackerInfoToJson(_TrackerInfo instance) =>
       'chains': instance.chains,
       'rule': instance.rule,
       'rulePayload': instance.rulePayload,
+      'outboundLocalAddress': instance.outboundLocalAddress,
+      'outboundRemoteAddress': instance.outboundRemoteAddress,
+      'trace': instance.trace,
       'downloadSpeed': instance.downloadSpeed,
       'uploadSpeed': instance.uploadSpeed,
     };

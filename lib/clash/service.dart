@@ -20,6 +20,8 @@ class ClashService extends ClashHandlerInterface {
 
   Completer<Socket> socketCompleter = Completer();
 
+  Socket? _activeSocket;
+
   bool isStarting = false;
   bool _isDestroying = false;
 
@@ -78,6 +80,7 @@ class ClashService extends ClashHandlerInterface {
         serverCompleter.complete(server);
         await for (final socket in server) {
           await _destroySocket();
+          _activeSocket = socket;
           socketCompleter.complete(socket);
 
           socket
@@ -91,6 +94,7 @@ class ClashService extends ClashHandlerInterface {
                   commonPrint.log('Frame decode error: $error');
                 },
                 onDone: () {
+                  _handleSocketClosed(socket);
                   commonPrint.log('Socket connection closed');
                 },
               );
@@ -138,19 +142,18 @@ class ClashService extends ClashHandlerInterface {
 
     await _destroySocket();
 
-    process?.kill();
-    if (process != null) {
-      await process!.exitCode.timeout(
+    final previousProcess = process;
+    process = null;
+    previousProcess?.kill();
+    if (previousProcess != null) {
+      await previousProcess.exitCode.timeout(
         const Duration(seconds: 2),
         onTimeout: () {
-          process?.kill(ProcessSignal.sigkill);
+          previousProcess.kill(ProcessSignal.sigkill);
           return -1;
         },
       );
     }
-    process = null;
-
-    socketCompleter = Completer();
 
     final serverSocket = await serverCompleter.future;
 
@@ -176,7 +179,8 @@ class ClashService extends ClashHandlerInterface {
         if (started) {
           await _waitForCoreReady();
           isStarting = false;
-          if (system.isWindows && globalState.config.appSetting.enableHighPriority) {
+          if (system.isWindows &&
+              globalState.config.appSetting.enableHighPriority) {
             unawaited(
               helperClient
                   .setProcessPriority(
@@ -197,14 +201,36 @@ class ClashService extends ClashHandlerInterface {
       }
     }
 
-    process = await Process.start(appPath.corePath, [
+    final coreProcess = await Process.start(appPath.corePath, [
       arg,
     ], environment: environment);
-    process?.stdout.listen((_) {});
-    process?.stderr.listen((e) {
+    process = coreProcess;
+    coreProcess.stdout.listen((_) {});
+    var lastCoreError = '';
+    coreProcess.stderr.listen((e) {
       final error = utf8.decode(e);
-      if (error.isNotEmpty) commonPrint.log(error);
+      if (error.isNotEmpty) {
+        lastCoreError = error.trim();
+        commonPrint.log(error);
+      }
     });
+    unawaited(
+      coreProcess.exitCode.then((exitCode) {
+        if (!identical(process, coreProcess) ||
+            _isDestroying ||
+            globalState.isExiting) {
+          return;
+        }
+        process = null;
+        final socket = _activeSocket;
+        if (socket != null) _handleSocketClosed(socket);
+        commonPrint.log(
+          'BettboxCore 异常退出（代码 $exitCode）'
+          '${lastCoreError.isEmpty ? '' : ': $lastCoreError'}',
+        );
+        globalState.showNotifier('BettboxCore 异常退出（代码 $exitCode），请查看日志');
+      }),
+    );
     await _waitForCoreReady();
     isStarting = false;
     if (system.isWindows && globalState.config.appSetting.enableHighPriority) {
@@ -246,6 +272,7 @@ class ClashService extends ClashHandlerInterface {
       final frame = FrameCodec.encode(message);
       socket.add(frame);
     } on SocketException catch (e) {
+      _handleSocketClosed(socket);
       if (_isDestroying || globalState.isExiting || isStarting) {
         commonPrint.log(
           'Ignored message send on closed socket during transition: $e',
@@ -254,6 +281,7 @@ class ClashService extends ClashHandlerInterface {
       }
       rethrow;
     } on StateError catch (e) {
+      _handleSocketClosed(socket);
       if (_isDestroying || globalState.isExiting || isStarting) {
         commonPrint.log(
           'Ignored message send on closed socket during transition: $e',
@@ -274,11 +302,16 @@ class ClashService extends ClashHandlerInterface {
   }
 
   Future<void> _destroySocket() async {
-    if (socketCompleter.isCompleted) {
-      final lastSocket = await socketCompleter.future;
-      await lastSocket.close();
-      socketCompleter = Completer();
-    }
+    final socket = _activeSocket;
+    _activeSocket = null;
+    if (socketCompleter.isCompleted) socketCompleter = Completer();
+    await socket?.close();
+  }
+
+  void _handleSocketClosed(Socket socket) {
+    if (!identical(_activeSocket, socket)) return;
+    _activeSocket = null;
+    if (socketCompleter.isCompleted) socketCompleter = Completer();
   }
 
   @override
