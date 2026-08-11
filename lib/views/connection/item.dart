@@ -216,22 +216,25 @@ Future<Uint8List?> _getPackageIcon(String process, String processPath) {
   if (_iconCache.containsKey(cacheKey)) {
     return Future.value(_iconCache[cacheKey]);
   }
-  return _iconLoads[cacheKey] ??= () async {
-    var icon = await app.getPackageIcon(process, processPath: processPath);
-    if (icon == null && system.isMacOS) {
-      await Future<void>.delayed(const Duration(milliseconds: 120));
-      icon = await app.getPackageIcon(
-        process,
-        processPath: processPath,
-        forceRefresh: true,
-      );
-    }
-    if (icon == null && !system.isMacOS) {
-      return _getDefaultPackageIcon();
-    }
-    if (icon != null) _addToIconCache(cacheKey, icon);
-    return icon;
-  }().whenComplete(() => _iconLoads.remove(cacheKey));
+  return _iconLoads[cacheKey] ??=
+      () async {
+        var icon = await app.getPackageIcon(process, processPath: processPath);
+        if (icon == null && system.isMacOS) {
+          await Future<void>.delayed(const Duration(milliseconds: 120));
+          icon = await app.getPackageIcon(
+            process,
+            processPath: processPath,
+            forceRefresh: true,
+          );
+        }
+        if (icon == null && !system.isMacOS) {
+          return _getDefaultPackageIcon();
+        }
+        if (icon != null) _addToIconCache(cacheKey, icon);
+        return icon;
+      }().whenComplete(() {
+        _iconLoads.remove(cacheKey);
+      });
 }
 
 Future<Uint8List?> _getDefaultPackageIcon() {

@@ -74,7 +74,7 @@ void main() {
     expect(processIconCalls, 1);
   });
 
-  testWidgets('首次读取不到进程图标时当前组件自动重试', (tester) async {
+  testWidgets('首屏进程图标稍后可用时无需滚动即可替换占位图', (tester) async {
     const channel = MethodChannel('app');
     const processPath =
         '/Applications/Bettbox-Icon-Retry-Test.app/Contents/MacOS/Test';
@@ -105,7 +105,11 @@ void main() {
     expect(find.byIcon(Icons.apps_outlined), findsOneWidget);
 
     await tester.pump(const Duration(milliseconds: 130));
+    await tester.pumpAndSettle();
+
     expect(calls, 2);
+    expect(find.byIcon(Icons.apps_outlined), findsNothing);
+    expect(find.byType(Image), findsOneWidget);
   });
 
   testWidgets('macOS 无进程路径时仍交给原生层按进程名查找图标', (tester) async {
