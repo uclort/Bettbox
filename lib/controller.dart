@@ -2071,10 +2071,12 @@ class AppController {
         null;
   }
 
-  Future<List<int>> backupData() async {
+  Future<List<int>> backupData({bool sharedOnly = false}) async {
     final homeDirPath = await appPath.homeDirPath;
     final profilesPath = await appPath.profilesPath;
-    final configJson = globalState.config.toJson();
+    final configJson = sharedOnly
+        ? webDavSharedConfigJson(globalState.config)
+        : globalState.config.toJson();
 
     // Get valid profile IDs
     final validProfileIds = globalState.config.profiles
@@ -2099,7 +2101,8 @@ class AppController {
       // Add marker file
       final markerData = json.encode({
         'app': 'Bettbox',
-        'version': '1.0',
+        'version': '2.0',
+        'scope': sharedOnly ? 'shared-config' : 'full',
         'timestamp': DateTime.now().millisecondsSinceEpoch,
       });
       final markerBytes = utf8.encode(markerData);
@@ -2150,7 +2153,8 @@ class AppController {
         }
 
         // Add current active subscription Providers
-        if (currentProfileId != null &&
+        if (!sharedOnly &&
+            currentProfileId != null &&
             validProfileIds.contains(currentProfileId)) {
           final providersDir = Directory(
             join(profilesPath, 'providers', currentProfileId),
@@ -2212,12 +2216,17 @@ class AppController {
 
   Future<void> _processRecoveryArchive(
     Future<Archive> Function() getArchive,
-    RecoveryOption recoveryOption,
-  ) async {
+    RecoveryOption recoveryOption, {
+    bool sharedOnly = false,
+  }) async {
     try {
       final archive = await getArchive();
       commonPrint.log('Archive decoded: ${archive.files.length} files');
-      await _recoveryFromArchive(archive, recoveryOption);
+      await _recoveryFromArchive(
+        archive,
+        recoveryOption,
+        sharedOnly: sharedOnly,
+      );
     } catch (e) {
       commonPrint.log('Recovery failed: $e');
       throw 'Backup file is corrupted or invalid: $e';
@@ -2227,8 +2236,9 @@ class AppController {
   /// Restore data from bytes
   Future<void> recoveryData(
     List<int> data,
-    RecoveryOption recoveryOption,
-  ) async {
+    RecoveryOption recoveryOption, {
+    bool sharedOnly = false,
+  }) async {
     commonPrint.log('Starting recovery from bytes: ${data.length} bytes');
     await _processRecoveryArchive(
       () => Isolate.run<Archive>(() {
@@ -2236,6 +2246,7 @@ class AppController {
         return zipDecoder.decodeBytes(data);
       }),
       recoveryOption,
+      sharedOnly: sharedOnly,
     );
   }
 
@@ -2270,8 +2281,9 @@ class AppController {
   /// Unified recovery entry: check marker and dispatch to recovery logic
   Future<void> _recoveryFromArchive(
     Archive archive,
-    RecoveryOption recoveryOption,
-  ) async {
+    RecoveryOption recoveryOption, {
+    bool sharedOnly = false,
+  }) async {
     if (archive.files.isEmpty) {
       throw 'Backup file is empty or corrupted';
     }
@@ -2285,10 +2297,20 @@ class AppController {
 
     if (hasBettboxMarker) {
       // Bettbox backup
-      await _recoveryBettboxBackup(archive, recoveryOption, homeDirPath);
+      await _recoveryBettboxBackup(
+        archive,
+        recoveryOption,
+        homeDirPath,
+        sharedOnly: sharedOnly,
+      );
     } else {
       // Legacy backup
-      await _recoveryLegacyBackup(archive, recoveryOption, homeDirPath);
+      await _recoveryLegacyBackup(
+        archive,
+        recoveryOption,
+        homeDirPath,
+        sharedOnly: sharedOnly,
+      );
     }
   }
 
@@ -2296,8 +2318,9 @@ class AppController {
   Future<void> _recoveryBettboxBackup(
     Archive archive,
     RecoveryOption recoveryOption,
-    String homeDirPath,
-  ) async {
+    String homeDirPath, {
+    bool sharedOnly = false,
+  }) async {
     // Separate config and profile files
     final configs = archive.files
         .where(
@@ -2327,6 +2350,7 @@ class AppController {
 
     // Restore profile files to disk
     for (final profile in profiles) {
+      if (sharedOnly && profile.name.contains('/providers/')) continue;
       final filePath = join(homeDirPath, profile.name);
       final file = File(filePath);
       await file.create(recursive: true);
@@ -2334,15 +2358,20 @@ class AppController {
     }
 
     // Apply recovery logic
-    _recovery(tempConfig, recoveryOption);
+    if (sharedOnly) {
+      _recoveryWebDavShared(tempConfig, recoveryOption);
+    } else {
+      _recovery(tempConfig, recoveryOption);
+    }
   }
 
   /// Restore legacy
   Future<void> _recoveryLegacyBackup(
     Archive archive,
     RecoveryOption recoveryOption,
-    String homeDirPath,
-  ) async {
+    String homeDirPath, {
+    bool sharedOnly = false,
+  }) async {
     // Separate config and profile files
     final configs = archive.files
         .where((item) => item.name.endsWith('.json'))
@@ -2480,7 +2509,11 @@ class AppController {
     }
 
     // Apply limited recovery
-    _recoveryLimited(limitedConfig, recoveryOption);
+    _recoveryLimited(
+      limitedConfig,
+      recoveryOption,
+      restorePlatformSettings: !sharedOnly,
+    );
 
     // Show recovery result message
     _showRecoveryResultMessage(profiles, extractedFromDatabase);
@@ -2573,14 +2606,18 @@ class AppController {
   }
 
   /// Partial restore
-  void _recoveryLimited(Config config, RecoveryOption recoveryOption) {
+  void _recoveryLimited(
+    Config config,
+    RecoveryOption recoveryOption, {
+    bool restorePlatformSettings = true,
+  }) {
     final profiles = config.profiles;
 
     // Restore subscriptions
     _restoreProfiles(profiles);
 
     // Android: restore app list
-    if (system.isAndroid) {
+    if (restorePlatformSettings && system.isAndroid) {
       _ref
           .read(vpnSettingProvider.notifier)
           .updateState(
@@ -2590,6 +2627,23 @@ class AppController {
     }
 
     // Ensure current profile exists
+    _ensureCurrentProfile(profiles);
+  }
+
+  void _recoveryWebDavShared(Config config, RecoveryOption recoveryOption) {
+    final profiles = mergeWebDavProfiles(
+      config.profiles,
+      _ref.read(profilesProvider),
+    );
+    _restoreProfiles(profiles);
+
+    if (recoveryOption != RecoveryOption.onlyProfiles) {
+      _ref.read(scriptStateProvider.notifier).value = mergeWebDavScripts(
+        config.scriptProps,
+        _ref.read(scriptStateProvider),
+      );
+    }
+
     _ensureCurrentProfile(profiles);
   }
 

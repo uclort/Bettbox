@@ -231,24 +231,7 @@ Color _monitorStatusColor(BuildContext context, MonitorTrackerStatus status) =>
     };
 
 TextSpan _monitorCompactTextSpan(String value, {TextStyle? style}) {
-  final parts = monitorCompactWhitespace(value).split(' ');
-  return TextSpan(
-    style: style,
-    children: [
-      for (var index = 0; index < parts.length; index++) ...[
-        if (index > 0)
-          const TextSpan(
-            text: ' ',
-            style: TextStyle(
-              fontFamily: 'HarmonyOS_Sans',
-              letterSpacing: 0,
-              wordSpacing: 0,
-            ),
-          ),
-        TextSpan(text: parts[index]),
-      ],
-    ],
-  );
+  return TextSpan(text: monitorCompactWhitespace(value), style: style);
 }
 
 Widget _compactMonitorText(

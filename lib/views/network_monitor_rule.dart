@@ -455,7 +455,6 @@ class _MonitorRuleDialogState extends State<_MonitorRuleDialog> {
                   ],
                   builder: (context, controller, child) => TextField(
                     controller: _policyController,
-                    style: const TextStyle(letterSpacing: 0, wordSpacing: 0),
                     decoration: InputDecoration(
                       labelText: '策略',
                       hintText: '选择策略组、策略，或手动填写',

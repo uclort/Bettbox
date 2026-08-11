@@ -8,6 +8,12 @@
 - `LATEST_CHANGES.md` 只记录相较上一自定义 Release 的增量，不能替代本文件。
 - 未经用户明确要求，不创建 Pull Request。
 
+### WebDAV 配置同步边界
+
+- WebDAV 使用现有 ZIP 备份格式的 `shared-config` 范围，只写入订阅配置与 `ScriptProps.scripts`；配置内的覆写规则、脚本使用开关和分组开关随订阅配置同步。配置 YAML 文件继续同步，但不再打包当前配置的 Provider 派生缓存。
+- `currentProfileId`、`ScriptProps.currentId`、配置内的 `currentGroupName / selectedMap / unfoldSet` 均为本机选择状态，不写入共享包；恢复时按配置 ID 合并回本机状态。App、DAV 凭据、主题、窗口、托盘、热键、代理/TUN、访问控制、界面样式、测速过滤和超时等设置全部保持平台独立。
+- 本地导出与导入仍使用原有完整备份语义。WebDAV 读取历史完整包时也只应用共享配置字段，代码位于 `lib/controller.dart`、`lib/models/config.dart` 与 `lib/views/backup_and_recovery.dart`，回归测试位于 `test/models/webdav_shared_config_test.dart`。
+
 ### 私有覆写脚本
 
 - 本地文件为 `scripts/uclort-desktop.js`。脚本包含私有订阅地址，因此不提交到公开 Bettbox 仓库；完整版本保存在私有 custom-mihomo 仓库同路径下，当前同步提交为 `2dfb268`。远端 Sub-Store 使用文件 API 更新 `fx.js`，更新后必须重新读取并与本地文件逐字节校验。
@@ -93,7 +99,7 @@
 - Android 在“更多”中提供“网络面板”入口，并以内嵌页面复用同一套数据和交互，不加载桌面多窗口能力。
 - 面板集成最近请求、活动连接、DNS、设备、流量统计、日志和独立 Sub-Store 管理标签；最近请求与活动连接直接按 Mihomo `TrackerInfo` 的 `process / sourceIP / host|destinationIP / network / rule / chains` 动态分类，并支持全文搜索、全部表头升降序和拖拽列宽，手动列宽写入本机偏好并在下次打开时恢复。macOS 通过原生 `NSWorkspace` 按进程路径读取 App 图标，并在进程侧栏、连接表和详情中复用显示；侧栏优先挑选有效 App 路径，惰性列表复用行时按新路径重置旧图标。同一路径的并发图标请求会合并，原生端只编码 64×64 PNG，避免面板打开时因重复全尺寸图标转换而卡死。
 - 顶栏搜索框与页签统一垂直居中；设备页只按内核可确认的进程、来源地址和活动/历史状态分类，不再套用 Surge 的静态 IP、网关或接管模式；日志侧栏直接使用 Mihomo 实际事件级别 `error / warning / info / debug`，不展示不会产生记录的 `silent` 配置状态。
-- 请求和连接列表不展示内部 ID，状态按 Mihomo 活动快照、真实出站 socket、`REJECT` 和链路终态区分为红色失败/拦截、黄色建立中、蓝色已连接、绿色已结束及灰色未知。“日期”列改为“时间”并按本机时区显示，规则类型使用独立灰色标签与规则参数区分，策略列只显示最终策略，完整策略链仅在详情展示；策略文本连续空白统一压缩，并以固定像素间隔规避旗帜 Emoji 字体回退产生的大空格。无进程且无来源地址的 Mihomo 内部连接被过滤，真实客户端的 `REJECT` 规则命中继续保留。
+- 请求和连接列表不展示内部 ID，状态按 Mihomo 活动快照、真实出站 socket、`REJECT` 和链路终态区分为红色失败/拦截、黄色建立中、蓝色已连接、绿色已结束及灰色未知。“日期”列改为“时间”并按本机时区显示，规则类型使用独立灰色标签与规则参数区分，策略列只显示最终策略，完整策略链仅在详情展示；策略文本连续空白统一压缩。内置 HarmonyOS Sans 字体补齐标准 U+0020 空格字形，从字体根源统一修复列表、详情、输入框及其他全局文本的异常大词间距，不再在各组件中拆分文本或硬编码间隔。无进程且无来源地址的 Mihomo 内部连接被过滤，真实客户端的 `REJECT` 规则命中继续保留。
 - 请求、连接、DNS 和设备表使用固定行高 `ListView.builder` 惰性创建可见行，不再由 `DataTable` 一次性构建全部历史记录；水平与垂直滚动相互独立并裁剪在内容区，展开底部详情时不发生表格穿透或错位。
 - DNS 由 `GlobalState.patchRawConfig` 读取当前生效配置，按 `default-nameserver / nameserver / fallback / proxy-server-nameserver / direct-nameserver / nameserver-policy / hosts` 原始配置键分类；系统 Hosts 读取 `/etc/hosts`，运行时解析按 `dnsMode` 的 `fake-ip / redir-host / hosts / normal` 分类并仅保留带有效目标 IP 的最新记录。
 - DNS 页通过 `flushDnsCache` 同时调用内核 DNS 缓存与 Fake-IP 映射清理；连接链路遇到 `dns_cache` 事件时显示“DNS 缓存命中（本次未发起 DNS 查询）”，标题列根据实际最长步骤文案动态限宽。

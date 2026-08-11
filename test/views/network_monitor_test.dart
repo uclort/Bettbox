@@ -36,6 +36,30 @@ TrackerInfo _tracker({
 }
 
 void main() {
+  testWidgets('HarmonyOS Sans 使用正常宽度的空格字形', (tester) async {
+    final loader = FontLoader('HarmonyOS_Sans_Test')
+      ..addFont(rootBundle.load('assets/fonts/HarmonyOS_Sans_SC_Regular.ttf'));
+    await loader.load();
+
+    double width(String value) {
+      final painter = TextPainter(
+        text: TextSpan(
+          text: value,
+          style: const TextStyle(
+            fontFamily: 'HarmonyOS_Sans_Test',
+            fontSize: 20,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      return painter.width;
+    }
+
+    final spaceWidth = width('A B') - width('AB');
+    expect(spaceWidth, greaterThan(1));
+    expect(spaceWidth, lessThan(10));
+  });
+
   testWidgets('相同进程图标的并发请求只调用一次原生接口', (tester) async {
     const channel = MethodChannel('app');
     const processPath =

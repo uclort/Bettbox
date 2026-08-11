@@ -27,7 +27,9 @@ class BackupAndRecovery extends ConsumerWidget {
   Future<void> _backupOnWebDAV(DAVClient client) async {
     final res = await globalState.appController.safeRun<bool>(
       () async {
-        final backupData = await globalState.appController.backupData();
+        final backupData = await globalState.appController.backupData(
+          sharedOnly: true,
+        );
         return await client.backup(Uint8List.fromList(backupData));
       },
       needLoading: true,
@@ -49,7 +51,11 @@ class BackupAndRecovery extends ConsumerWidget {
     final res = await globalState.appController.safeRun<bool>(
       () async {
         final data = await client.recovery();
-        await globalState.appController.recoveryData(data, recoveryOption);
+        await globalState.appController.recoveryData(
+          data,
+          recoveryOption,
+          sharedOnly: true,
+        );
         return true;
       },
       needLoading: true,

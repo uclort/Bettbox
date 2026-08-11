@@ -418,3 +418,39 @@ extension ConfigExt on Config {
     return profiles.getProfile(currentProfileId);
   }
 }
+
+Map<String, Object?> webDavSharedConfigJson(Config config) {
+  return {
+    'profiles': config.profiles
+        .map(
+          (profile) => profile.copyWith(
+            currentGroupName: null,
+            selectedMap: const {},
+            unfoldSet: const {},
+          ),
+        )
+        .toList(),
+    'scriptProps': config.scriptProps.copyWith(currentId: null),
+  };
+}
+
+List<Profile> mergeWebDavProfiles(List<Profile> incoming, List<Profile> local) {
+  final localById = {for (final profile in local) profile.id: profile};
+  return incoming.map((profile) {
+    final localProfile = localById[profile.id];
+    if (localProfile == null) return profile;
+    return profile.copyWith(
+      currentGroupName: localProfile.currentGroupName,
+      selectedMap: localProfile.selectedMap,
+      unfoldSet: localProfile.unfoldSet,
+    );
+  }).toList();
+}
+
+ScriptProps mergeWebDavScripts(ScriptProps incoming, ScriptProps local) {
+  final currentId =
+      incoming.scripts.any((script) => script.id == local.currentId)
+      ? local.currentId
+      : null;
+  return incoming.copyWith(currentId: currentId);
+}
