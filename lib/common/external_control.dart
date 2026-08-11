@@ -149,7 +149,11 @@ class ExternalControl {
     }
   }
 
-  static Future<Object?> request(String method, [Object? arguments]) async {
+  static Future<Object?> request(
+    String method, [
+    Object? arguments,
+    Duration timeout = const Duration(seconds: 5),
+  ]) async {
     final socket = await _connect();
     try {
       socket.writeln(jsonEncode({'method': method, 'arguments': arguments}));
@@ -159,7 +163,7 @@ class ExternalControl {
           .transform(utf8.decoder)
           .transform(const LineSplitter())
           .first
-          .timeout(const Duration(seconds: 5));
+          .timeout(timeout);
       final response = jsonDecode(line) as Map<String, dynamic>;
       if (response['ok'] != true) {
         throw StateError(response['error']?.toString() ?? '网络面板请求失败');

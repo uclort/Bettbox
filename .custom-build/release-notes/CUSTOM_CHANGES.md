@@ -10,12 +10,14 @@
 
 ### 私有覆写脚本
 
-- 本地文件为 `scripts/uclort-desktop.js`。脚本包含私有订阅地址，因此不提交到公开 Bettbox 仓库；完整版本保存在私有 custom-mihomo 仓库同路径下，修改时必须同步两份并对照本节。远端 Sub-Store 使用文件 API 更新 `fx.js`，更新后必须重新读取并与本地文件逐字节校验。
-- `latencyTestUrl` 是唯一测速地址，默认 `http://www.gstatic.com/generate_204`；OwO、源 HTTP/File Provider、脚本生成的 Inline Provider 和所有策略组均从该变量读取。Bettbox 开启“覆写测速链接”时由客户端配置入口统一覆盖策略组与 Provider。
-- 保留源节点和源 Provider，过滤套餐/流量提示节点，为源节点增加 `FC - ` 前缀并按美国、日本、香港及倍率排序；首选地区与其他节点分别转为 Inline Provider。
+- 本地文件为 `scripts/uclort-desktop.js`。脚本包含私有订阅地址，因此不提交到公开 Bettbox 仓库；完整版本保存在私有 custom-mihomo 仓库同路径下，当前同步提交为 `2dfb268`。远端 Sub-Store 使用文件 API 更新 `fx.js`，更新后必须重新读取并与本地文件逐字节校验。
+- 固定自定义规则统一放在脚本顶部的 JSON 字符串数组 `BETTBOX_CUSTOM_RULES`，带开关的 CC 内网、抓包和 Emby 规则集中由 `buildCustomRules()` 生成；网络面板通过 Sub-Store `/api/wholeFile/:name` 读取该数组，支持新增、修改、删除和拖动排序。保存前重新读取最新脚本，再通过 `/api/file/:name` 仅替换该变量，不覆盖其他脚本改动；变量缺失、格式错误或新增规则重复时不写入远端文件。
+- `latencyTestUrl` 是唯一测速地址，默认 `https://g.cn/generate_204`；OwO、源 HTTP/File Provider、脚本生成的 Inline Provider 和所有策略组均从该变量读取。Bettbox 开启“覆写测速链接”时由客户端配置入口统一覆盖策略组与 Provider。
+- 保留源节点和源 Provider，过滤套餐/流量提示节点，为源节点增加 `FC-` 前缀并按美国、日本、香港及倍率排序；首选地区与其他节点分别转为 Inline Provider。
 - 重建 Global、地区、Apple、Emby、抓包、CC 内网和 Fallback 分组及规则；新加坡、台湾不生成地区组。
 - `CC-intranet-en5` 使用 `dns-follow-interface: true` 和 `allow-other-interface: true`；内网域名仅维护一份路由清单，固定 hosts 保留为注释回退。
 - DNS 使用 Fake-IP、国内外分流和源节点域名策略；源 hosts 只在唯一 `proxy-server-nameserver` 指向 `dns.listen` 时改写节点服务器地址，不写回最终配置；域名与公共 DNS 匹配忽略大小写，DNS 的 `#DIRECT` 后缀会保留。
+- 脚本生成的 TUN 配置固定使用 `mixed` 栈，与 macOS 客户端的实际运行映射一致。
 - 修改后至少运行 `node --check scripts/uclort-desktop.js`，并执行脚本断言确认所有带 URL 的策略组和所有 Provider 健康检查均使用 `latencyTestUrl`。
 
 ### Mihomo：direct proxy 跟随接口 DNS
@@ -95,7 +97,9 @@
 - 请求、连接、DNS 和设备表使用固定行高 `ListView.builder` 惰性创建可见行，不再由 `DataTable` 一次性构建全部历史记录；水平与垂直滚动相互独立并裁剪在内容区，展开底部详情时不发生表格穿透或错位。
 - DNS 由 `GlobalState.patchRawConfig` 读取当前生效配置，按 `default-nameserver / nameserver / fallback / proxy-server-nameserver / direct-nameserver / nameserver-policy / hosts` 原始配置键分类；系统 Hosts 读取 `/etc/hosts`，运行时解析按 `dnsMode` 的 `fake-ip / redir-host / hosts / normal` 分类并仅保留带有效目标 IP 的最新记录。
 - DNS 页通过 `flushDnsCache` 同时调用内核 DNS 缓存与 Fake-IP 映射清理；连接链路遇到 `dns_cache` 事件时显示“DNS 缓存命中（本次未发起 DNS 查询）”，标题列根据实际最长步骤文案动态限宽。
-- 最近请求与活动连接的右键菜单在 `lib/views/network_monitor_rule.dart` 提供“生成规则”对话框，支持域名、IP CIDR、进程名/路径、端口与网络类型；规则类型仅能下拉选择，匹配内容和策略可编辑，策略可从当前策略组/节点列表替换并复制最终 Clash/Mihomo 文本。
+- 最近请求与活动连接的右键菜单在 `lib/views/network_monitor_rule.dart` 提供“生成规则”对话框，支持域名、IP CIDR、进程名/路径、端口与网络类型；规则类型仅能下拉选择，匹配内容和策略可编辑，策略可从当前策略组/节点列表替换并复制最终 Clash/Mihomo 文本。生成结果可直接加入当前配置的“附加原始规则 / 覆盖原始规则”，无需自动开启覆写；重复规则二次确认后才继续添加。Sub-Store 入口既可将新规则补充至 `BETTBOX_CUSTOM_RULES` 顶部，也可读取后修改、删除和拖动排序；文件地址与 API Key/路径前缀仅在成功后写入本机最近 10 条历史，输入框本身只编辑、右侧箭头才展开历史。
+- `monitorCompactWhitespace` 是面板策略名的唯一规范化入口，`monitorRulePolicies`、`monitorGeneratedRule`、列表、详情与规则预览共用该结果，避免配置中的 Unicode/连续空白在不同页面反复出现。策略编辑改为 `TextField + MenuAnchor`，输入区不自动弹菜单，只有右侧箭头控制展开。
+- 结构化 Mihomo 链路的步骤标题、毫秒时间戳和事件内容使用独立列，内容多行换行保持自身左边界对齐。
 - 流量页调用 Mihomo `getTraffic / getTotalTraffic` 展示实时和累计上传下载；最近完成请求与活动连接去重后只承担出站链、规则类型、进程、来源地址、网络协议和目标主机的样本聚合，不再将 1024 条环形历史记录求和作为总流量。
 - 请求与日志由主窗口收到新数据后主动推送，面板将事件刷新限制为最多每 250 ms 一次；活动连接受 Mihomo 快照接口限制，仅在连接页可见时每 250 ms 更新，流量页按内核统计周期每秒更新，其他页面每 5 秒兜底同步。
 - Mihomo 在连接加入和离开时均回传同一连接 ID，Bettbox 请求记录按 ID 原位更新，最近请求页收到事件后立即刷新活动/完成状态，不再依赖 250 ms 主动快照；独立进程订阅通知显式刷新 socket，避免状态事件延迟到 5 秒兜底刷新。该页展示的是 Mihomo 连接而非 HTTPS 内部请求，浏览器复用 HTTP/2 或 QUIC 连接时不会新增记录。

@@ -342,11 +342,9 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
                   context,
                   _traceIcon(event.stage),
                   monitorTraceDisplayTitle(event),
-                  [
-                    monitorTraceClock(event.timestamp),
-                    monitorTraceDisplayDetail(event),
-                  ].where((value) => value.isNotEmpty).join(' · '),
+                  monitorTraceDisplayDetail(event),
                   titleWidth: titleWidth,
+                  leading: monitorTraceClock(event.timestamp),
                   color: switch (event.status) {
                     'error' => Colors.red,
                     'pending' => Colors.amber,
@@ -446,6 +444,7 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
     String value, {
     Color? color,
     required double titleWidth,
+    String leading = '',
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -467,6 +466,10 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
               style: Theme.of(context).textTheme.labelMedium,
             ),
           ),
+          if (leading.isNotEmpty) ...[
+            SizedBox(width: 112, child: Text(leading, maxLines: 1)),
+            const SizedBox(width: 8),
+          ],
           Expanded(child: _compactMonitorText(value)),
         ],
       ),

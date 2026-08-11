@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:bett_box/clash/clash.dart';
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/common/external_control.dart';
+import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/models.dart';
 import 'package:bett_box/providers/providers.dart';
 import 'package:bett_box/state.dart';
@@ -18,6 +19,187 @@ import 'network_monitor_data.dart';
 
 part 'network_monitor_detail.dart';
 part 'network_monitor_rule.dart';
+
+const _monitorSubStoreUrlsKey = 'network_monitor_sub_store_urls';
+const _monitorSubStoreApiKeysKey = 'network_monitor_sub_store_api_keys';
+
+Future<Map<String, Object?>> _addMonitorOverrideRule(
+  WidgetRef ref,
+  Map<String, Object?> arguments,
+) async {
+  final value = arguments['rule']?.toString().trim() ?? '';
+  if (value.isEmpty) throw StateError('规则不能为空');
+  final type = arguments['type'] == OverrideRuleType.override.name
+      ? OverrideRuleType.override
+      : OverrideRuleType.added;
+  final force = arguments['force'] == true;
+  final profileId = ref.read(currentProfileIdProvider);
+  final profile = ref.read(profilesProvider).getProfile(profileId);
+  if (profileId == null || profile == null) throw StateError('当前没有可用配置');
+
+  var rule = profile.overrideData.rule;
+  var rules = type == OverrideRuleType.override
+      ? [...rule.overrideRules]
+      : [...rule.addedRules];
+  if (type == OverrideRuleType.override && rules.isEmpty) {
+    final raw = await globalState.getProfileConfig(profileId);
+    rules = [...ClashConfigSnippet.fromJson(raw).rule];
+  }
+  final duplicate = rules.any((item) => item.value.trim() == value);
+  if (duplicate && !force) return {'duplicate': true};
+  rules.insert(0, Rule.value(value));
+  rule = type == OverrideRuleType.override
+      ? rule.copyWith(type: type, overrideRules: rules)
+      : rule.copyWith(type: type, addedRules: rules);
+  ref
+      .read(profilesProvider.notifier)
+      .updateProfile(
+        profileId,
+        (item) =>
+            item.copyWith(overrideData: item.overrideData.copyWith(rule: rule)),
+      );
+  globalState.appController.setupClashConfigDebounce();
+  return {'duplicate': duplicate, 'added': true};
+}
+
+Future<Map<String, Object?>> _monitorSubStoreHistory() async {
+  final prefs = await preferences.sharedPreferencesCompleter.future;
+  return {
+    'urls': prefs?.getStringList(_monitorSubStoreUrlsKey) ?? const <String>[],
+    'keys':
+        prefs?.getStringList(_monitorSubStoreApiKeysKey) ?? const <String>[],
+  };
+}
+
+Future<void> _saveMonitorSubStoreHistory(String url, String apiKey) async {
+  final prefs = await preferences.sharedPreferencesCompleter.future;
+  if (prefs == null) return;
+  List<String> updated(String key, String value) {
+    final values = prefs.getStringList(key) ?? <String>[];
+    values.remove(value);
+    values.insert(0, value);
+    return values.take(10).toList();
+  }
+
+  await prefs.setStringList(
+    _monitorSubStoreUrlsKey,
+    updated(_monitorSubStoreUrlsKey, url),
+  );
+  await prefs.setStringList(
+    _monitorSubStoreApiKeysKey,
+    updated(_monitorSubStoreApiKeysKey, apiKey),
+  );
+}
+
+Future<String> _monitorHttpBody(HttpClientResponse response) =>
+    response.transform(utf8.decoder).join();
+
+String _monitorSubStoreError(String body, int statusCode) {
+  try {
+    final data = normalizeMonitorMap(jsonDecode(body));
+    final error = normalizeMonitorMap(data['error'] ?? const {});
+    return error['message']?.toString() ?? 'HTTP $statusCode';
+  } catch (_) {
+    return 'HTTP $statusCode';
+  }
+}
+
+Future<String> _readMonitorSubStoreScript(String url, String apiKey) async {
+  final client = HttpClient()..connectionTimeout = const Duration(seconds: 10);
+  try {
+    final response = await (await client.getUrl(
+      monitorSubStoreFileApiUri(url, apiKey, wholeFile: true),
+    )).close();
+    final body = await _monitorHttpBody(response);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw StateError(_monitorSubStoreError(body, response.statusCode));
+    }
+    final payload = normalizeMonitorMap(jsonDecode(body));
+    final file = normalizeMonitorMap(payload['data'] ?? const {});
+    return file['content']?.toString() ??
+        (throw StateError('Sub-Store 文件响应缺少 content'));
+  } finally {
+    client.close(force: true);
+  }
+}
+
+Future<void> _writeMonitorSubStoreScript(
+  String url,
+  String apiKey,
+  String script,
+) async {
+  final client = HttpClient()..connectionTimeout = const Duration(seconds: 10);
+  try {
+    final request = await client.patchUrl(
+      monitorSubStoreFileApiUri(url, apiKey, wholeFile: false),
+    );
+    request.headers.contentType = ContentType.json;
+    request.write(jsonEncode({'content': script}));
+    final response = await request.close();
+    final body = await _monitorHttpBody(response);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw StateError(_monitorSubStoreError(body, response.statusCode));
+    }
+  } finally {
+    client.close(force: true);
+  }
+}
+
+Future<Map<String, Object?>> _appendMonitorSubStoreRule(
+  Map<String, Object?> arguments,
+) async {
+  final url = arguments['url']?.toString().trim() ?? '';
+  final apiKey = arguments['apiKey']?.toString().trim() ?? '';
+  final rule = arguments['rule']?.toString().trim() ?? '';
+  if (url.isEmpty || apiKey.isEmpty || rule.isEmpty) {
+    throw StateError('文件地址、API Key 和规则不能为空');
+  }
+  final script = await _readMonitorSubStoreScript(url, apiKey);
+  await _writeMonitorSubStoreScript(
+    url,
+    apiKey,
+    monitorAppendSubStoreRule(script, rule),
+  );
+  await _saveMonitorSubStoreHistory(url, apiKey);
+  return {'added': true};
+}
+
+Future<Map<String, Object?>> _readMonitorSubStoreRules(
+  Map<String, Object?> arguments,
+) async {
+  final url = arguments['url']?.toString().trim() ?? '';
+  final apiKey = arguments['apiKey']?.toString().trim() ?? '';
+  if (url.isEmpty || apiKey.isEmpty) {
+    throw StateError('文件地址和 API Key 不能为空');
+  }
+  final rules = monitorReadSubStoreRules(
+    await _readMonitorSubStoreScript(url, apiKey),
+  );
+  await _saveMonitorSubStoreHistory(url, apiKey);
+  return {'rules': rules};
+}
+
+Future<Map<String, Object?>> _replaceMonitorSubStoreRules(
+  Map<String, Object?> arguments,
+) async {
+  final url = arguments['url']?.toString().trim() ?? '';
+  final apiKey = arguments['apiKey']?.toString().trim() ?? '';
+  final rules = (arguments['rules'] as List? ?? const [])
+      .map((item) => item.toString().trim())
+      .toList();
+  if (url.isEmpty || apiKey.isEmpty) {
+    throw StateError('文件地址和 API Key 不能为空');
+  }
+  if (rules.any((rule) => rule.isEmpty)) throw StateError('规则不能为空');
+  final latest = await _readMonitorSubStoreScript(url, apiKey);
+  await _writeMonitorSubStoreScript(
+    url,
+    apiKey,
+    monitorReplaceSubStoreRules(latest, rules),
+  );
+  await _saveMonitorSubStoreHistory(url, apiKey);
+  return {'updated': true};
+}
 
 String _monitorStatusLabel(MonitorTrackerStatus status) => switch (status) {
   MonitorTrackerStatus.failed => '失败',
@@ -39,6 +221,37 @@ Color _monitorStatusColor(BuildContext context, MonitorTrackerStatus status) =>
         context,
       ).colorScheme.outlineVariant,
     };
+
+TextSpan _monitorCompactTextSpan(String value, {TextStyle? style}) {
+  final parts = monitorCompactWhitespace(value).split(' ');
+  return TextSpan(
+    style: style,
+    children: [
+      for (var index = 0; index < parts.length; index++) ...[
+        if (index > 0)
+          const TextSpan(
+            text: ' ',
+            style: TextStyle(
+              fontFamily: 'HarmonyOS_Sans',
+              letterSpacing: 0,
+              wordSpacing: 0,
+            ),
+          ),
+        TextSpan(text: parts[index]),
+      ],
+    ],
+  );
+}
+
+Widget _compactMonitorText(
+  String value, {
+  int? maxLines,
+  TextOverflow? overflow,
+}) => Text.rich(
+  _monitorCompactTextSpan(value),
+  maxLines: maxLines,
+  overflow: overflow,
+);
 
 Future<void> openNetworkMonitorWindow() => networkMonitorProcess.open();
 
@@ -167,6 +380,16 @@ class _NetworkMonitorHostState extends ConsumerState<NetworkMonitorHost> {
             '';
       case 'rulePolicies':
         return monitorRulePolicies(ref.read(groupsProvider));
+      case 'addOverrideRule':
+        return _addMonitorOverrideRule(ref, normalizeMonitorMap(arguments));
+      case 'subStoreRuleHistory':
+        return _monitorSubStoreHistory();
+      case 'appendSubStoreRule':
+        return _appendMonitorSubStoreRule(normalizeMonitorMap(arguments));
+      case 'readSubStoreRules':
+        return _readMonitorSubStoreRules(normalizeMonitorMap(arguments));
+      case 'replaceSubStoreRules':
+        return _replaceMonitorSubStoreRules(normalizeMonitorMap(arguments));
       case 'flushDnsCache':
         return await clashCore.flushDnsCache() && await clashCore.flushFakeIP();
       case 'clearRequests':
@@ -1166,30 +1389,6 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-    );
-  }
-
-  Widget _compactMonitorText(
-    String value, {
-    int? maxLines,
-    TextOverflow? overflow,
-  }) {
-    final parts = monitorCompactWhitespace(value).split(' ');
-    return Text.rich(
-      TextSpan(
-        children: [
-          for (var index = 0; index < parts.length; index++) ...[
-            if (index > 0)
-              const WidgetSpan(
-                alignment: PlaceholderAlignment.middle,
-                child: SizedBox(width: 4),
-              ),
-            TextSpan(text: parts[index]),
-          ],
-        ],
-      ),
-      maxLines: maxLines,
-      overflow: overflow,
     );
   }
 

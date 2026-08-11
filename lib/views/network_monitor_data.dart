@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:bett_box/clash/clash.dart';
 import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/models.dart';
@@ -20,6 +22,87 @@ enum MonitorRuleType {
   destinationPort,
   sourcePort,
   network,
+}
+
+const monitorSubStoreRulesVariable = 'BETTBOX_CUSTOM_RULES';
+
+Uri monitorSubStoreFileApiUri(
+  String address,
+  String apiKey, {
+  required bool wholeFile,
+}) {
+  final uri = Uri.parse(address.trim());
+  if (!uri.hasScheme || !{'http', 'https'}.contains(uri.scheme)) {
+    throw const FormatException('Sub-Store 文件地址必须是 HTTP(S) URL');
+  }
+  final segments = [...uri.pathSegments];
+  final apiIndex = segments.indexOf('api');
+  if (apiIndex < 0 ||
+      apiIndex + 2 >= segments.length ||
+      !{'file', 'wholeFile'}.contains(segments[apiIndex + 1])) {
+    throw const FormatException('文件地址必须包含 /api/file/文件名');
+  }
+  final keySegments = apiKey
+      .trim()
+      .split('/')
+      .where((part) => part.isNotEmpty)
+      .toList();
+  final prefix = segments.take(apiIndex).toList();
+  final hasKey =
+      keySegments.isEmpty ||
+      (prefix.length >= keySegments.length &&
+          listEquals(
+            prefix.sublist(prefix.length - keySegments.length),
+            keySegments,
+          ));
+  if (!hasKey) segments.insertAll(apiIndex, keySegments);
+  final resolvedApiIndex = segments.indexOf('api');
+  segments[resolvedApiIndex + 1] = wholeFile ? 'wholeFile' : 'file';
+  return uri.replace(pathSegments: segments);
+}
+
+RegExpMatch _monitorSubStoreRulesMatch(String script) {
+  final match = RegExp(
+    'const\\s+$monitorSubStoreRulesVariable\\s*=\\s*\\[(.*?)\\];',
+    dotAll: true,
+  ).firstMatch(script);
+  if (match == null) {
+    throw StateError('脚本缺少 $monitorSubStoreRulesVariable 变量');
+  }
+  return match;
+}
+
+List<String> monitorReadSubStoreRules(String script) {
+  final body = _monitorSubStoreRulesMatch(script).group(1)!.trim();
+  if (body.isEmpty) return [];
+  final json = '[${body.replaceFirst(RegExp(r',\s*$'), '')}]';
+  try {
+    final decoded = jsonDecode(json);
+    if (decoded is! List || decoded.any((item) => item is! String)) {
+      throw const FormatException();
+    }
+    return decoded.cast<String>();
+  } catch (_) {
+    throw StateError('$monitorSubStoreRulesVariable 必须使用 JSON 字符串数组');
+  }
+}
+
+String monitorReplaceSubStoreRules(String script, List<String> rules) {
+  final match = _monitorSubStoreRulesMatch(script);
+  final newline = script.contains('\r\n') ? '\r\n' : '\n';
+  final content = rules.map((rule) => '  ${jsonEncode(rule)},').join(newline);
+  final replacement =
+      'const $monitorSubStoreRulesVariable = [$newline'
+      '${content.isEmpty ? '' : '$content$newline'}];';
+  return script.replaceRange(match.start, match.end, replacement);
+}
+
+String monitorAppendSubStoreRule(String script, String rule) {
+  final rules = monitorReadSubStoreRules(script);
+  if (rules.contains(rule)) {
+    throw StateError('该固定规则已存在');
+  }
+  return monitorReplaceSubStoreRules(script, [rule, ...rules]);
 }
 
 extension MonitorRuleSourceExt on MonitorRuleSource {
@@ -71,10 +154,10 @@ List<MonitorRuleType> monitorRuleTypes(MonitorRuleSource source) =>
 
 Map<String, Object?> monitorRulePolicies(List<Group> groups) {
   final groupNames = groups
-      .map((group) => group.name.trim())
+      .map((group) => monitorCompactWhitespace(group.name))
       .where((name) => name.isNotEmpty);
   final proxyNames = groups.expand(
-    (group) => group.all.map((proxy) => proxy.name.trim()),
+    (group) => group.all.map((proxy) => monitorCompactWhitespace(proxy.name)),
   );
   return {
     'groups': (groupNames.toSet().toList()..sort()),
@@ -126,7 +209,7 @@ String monitorGeneratedRule(
   bool noResolve = false,
 }) {
   value = value.trim();
-  policy = policy.trim();
+  policy = monitorCompactWhitespace(policy);
   if (value.isEmpty || policy.isEmpty) return '';
   return [
     type.clashName,

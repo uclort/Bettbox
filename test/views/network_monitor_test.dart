@@ -316,22 +316,94 @@ void main() {
       'IP-CIDR,1.1.1.1/32,DIRECT,no-resolve',
     );
     expect(monitorGeneratedRule(MonitorRuleType.domain, '', 'DIRECT'), isEmpty);
+    expect(
+      monitorGeneratedRule(
+        MonitorRuleType.domain,
+        'example.com',
+        'OWO-🇺🇸\u3000 US\u00a0 DMIT   CORONA',
+      ),
+      'DOMAIN,example.com,OWO-🇺🇸 US DMIT CORONA',
+    );
   });
 
   test('规则策略选项合并策略组和节点并去重', () {
     final options = monitorRulePolicies(const [
       Group(
-        name: '自动选择',
+        name: '自动\u3000选择',
         type: GroupType.Selector,
         all: [
-          Proxy(name: '节点 A', type: 'ss'),
-          Proxy(name: '节点 A', type: 'ss'),
+          Proxy(name: '节点\u00a0 A', type: 'ss'),
+          Proxy(name: '节点   A', type: 'ss'),
         ],
       ),
     ]);
 
-    expect(options['groups'], ['自动选择']);
+    expect(options['groups'], ['自动 选择']);
     expect(options['proxies'], ['节点 A']);
+  });
+
+  test('Sub-Store 文件 API 地址补齐 key 并切换 wholeFile 接口', () {
+    expect(
+      monitorSubStoreFileApiUri(
+        'https://sub.example.com/api/file/fx.js',
+        'secret-path',
+        wholeFile: true,
+      ).toString(),
+      'https://sub.example.com/secret-path/api/wholeFile/fx.js',
+    );
+    expect(
+      monitorSubStoreFileApiUri(
+        'https://sub.example.com/secret-path/api/file/fx.js',
+        'secret-path',
+        wholeFile: false,
+      ).toString(),
+      'https://sub.example.com/secret-path/api/file/fx.js',
+    );
+  });
+
+  test('Sub-Store 固定规则只向专用变量顶部添加一次', () {
+    const script = '''
+const BETTBOX_CUSTOM_RULES = [
+  "DOMAIN,old.example,DIRECT",
+];
+''';
+    final updated = monitorAppendSubStoreRule(
+      script,
+      'DOMAIN,new.example,Global',
+    );
+
+    expect(
+      updated.indexOf('DOMAIN,new.example,Global'),
+      lessThan(updated.indexOf('DOMAIN,old.example,DIRECT')),
+    );
+    expect(
+      () => monitorAppendSubStoreRule(updated, 'DOMAIN,new.example,Global'),
+      throwsStateError,
+    );
+  });
+
+  test('Sub-Store 自定义规则可读取、修改、删除和排序', () {
+    const script = '''
+const before = true;
+const BETTBOX_CUSTOM_RULES = [
+  "DOMAIN,first.example,DIRECT",
+  "DOMAIN,second.example,Global",
+];
+const after = true;
+''';
+
+    expect(monitorReadSubStoreRules(script), [
+      'DOMAIN,first.example,DIRECT',
+      'DOMAIN,second.example,Global',
+    ]);
+    final updated = monitorReplaceSubStoreRules(script, [
+      'DOMAIN,second.example,DIRECT',
+    ]);
+
+    expect(monitorReadSubStoreRules(updated), ['DOMAIN,second.example,DIRECT']);
+    expect(updated, contains('const before = true;'));
+    expect(updated, contains('const after = true;'));
+    expect(updated, isNot(contains('first.example')));
   });
 
   test('DNS 缓存命中明确说明本次没有发起查询', () {
