@@ -20,6 +20,11 @@ on:
         required: false
         default: false
         type: boolean
+      android_only:
+        description: 只构建并发布 Android arm64-v8a
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -248,9 +253,15 @@ jobs:
         shell: bash
         env:
           MACOS_ARM64_ONLY: ${{ inputs.macos_arm64_only || false }}
+          ANDROID_ONLY: ${{ inputs.android_only || false }}
         run: |
           set -euo pipefail
-          if [[ "${MACOS_ARM64_ONLY}" == "true" ]]; then
+          if [[ "${MACOS_ARM64_ONLY}" == "true" && "${ANDROID_ONLY}" == "true" ]]; then
+            echo "macos_arm64_only 与 android_only 不能同时启用。" >&2
+            exit 1
+          elif [[ "${ANDROID_ONLY}" == "true" ]]; then
+            include='[{"name":"Android Pixel 6a (arm64-v8a)","platform":"android","arch":"arm64","os":"ubuntu-24.04","artifact":"Bettbox-Android-arm64-v8a"}]'
+          elif [[ "${MACOS_ARM64_ONLY}" == "true" ]]; then
             include='[{"name":"macOS Apple Silicon","platform":"macos","arch":"arm64","os":"macos-15","artifact":"Bettbox-macOS-arm64"}]'
           else
             include='[{"name":"Android Pixel 6a (arm64-v8a)","platform":"android","arch":"arm64","os":"ubuntu-24.04","artifact":"Bettbox-Android-arm64-v8a"},{"name":"Windows x64","platform":"windows","arch":"amd64","os":"windows-2022","artifact":"Bettbox-Windows-x64"},{"name":"macOS Apple Silicon","platform":"macos","arch":"arm64","os":"macos-15","artifact":"Bettbox-macOS-arm64"},{"name":"macOS Intel","platform":"macos","arch":"amd64","os":"macos-15","artifact":"Bettbox-macOS-amd64"}]'
