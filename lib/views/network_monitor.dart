@@ -11,11 +11,33 @@ import 'package:bett_box/state.dart';
 import 'package:bett_box/views/connection/item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'network_monitor_data.dart';
 
 part 'network_monitor_detail.dart';
+
+String _monitorStatusLabel(MonitorTrackerStatus status) => switch (status) {
+  MonitorTrackerStatus.failed => '失败',
+  MonitorTrackerStatus.blocked => '已拦截',
+  MonitorTrackerStatus.connecting => '建立中',
+  MonitorTrackerStatus.connected => '已连接',
+  MonitorTrackerStatus.closed => '已关闭',
+  MonitorTrackerStatus.unknown => '未知',
+};
+
+Color _monitorStatusColor(BuildContext context, MonitorTrackerStatus status) =>
+    switch (status) {
+      MonitorTrackerStatus.failed => Colors.red,
+      MonitorTrackerStatus.blocked => Colors.deepOrange,
+      MonitorTrackerStatus.connecting => Colors.amber,
+      MonitorTrackerStatus.connected => Colors.blue,
+      MonitorTrackerStatus.closed => Theme.of(context).colorScheme.outline,
+      MonitorTrackerStatus.unknown => Theme.of(
+        context,
+      ).colorScheme.outlineVariant,
+    };
 
 Future<void> openNetworkMonitorWindow() => networkMonitorProcess.open();
 
@@ -257,6 +279,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
   String? _error;
   final _trackerVerticalController = ScrollController();
   final _trackerHorizontalController = ScrollController();
+  final _detailScrollController = ScrollController();
   final Map<String, Future<String>> _countryCodes = {};
   final Map<MonitorSortColumn, double> _columnWidths = {
     MonitorSortColumn.status: 64,
@@ -350,6 +373,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
     _eventRefreshTimer?.cancel();
     _trackerVerticalController.dispose();
     _trackerHorizontalController.dispose();
+    _detailScrollController.dispose();
     super.dispose();
   }
 
@@ -1177,18 +1201,9 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
   );
 
   Widget _statusDot(BuildContext context, MonitorTrackerStatus status) {
-    final color = switch (status) {
-      MonitorTrackerStatus.error => Colors.red,
-      MonitorTrackerStatus.active => Colors.amber,
-      MonitorTrackerStatus.finished => Colors.green,
-      MonitorTrackerStatus.other => Theme.of(context).colorScheme.outline,
-    };
-    final label = switch (status) {
-      MonitorTrackerStatus.error => '错误',
-      MonitorTrackerStatus.active => '活动',
-      MonitorTrackerStatus.finished => '结束',
-      MonitorTrackerStatus.other => '其他',
-    };
+    final color = _monitorStatusColor(context, status);
+    final label = _monitorStatusLabel(status);
+    final unknown = status == MonitorTrackerStatus.unknown;
     return Tooltip(
       message: label,
       child: Semantics(
@@ -1196,7 +1211,11 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
         child: Container(
           width: 9,
           height: 9,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          decoration: BoxDecoration(
+            color: unknown ? Colors.transparent : color,
+            shape: BoxShape.circle,
+            border: unknown ? Border.all(color: color) : null,
+          ),
         ),
       ),
     );

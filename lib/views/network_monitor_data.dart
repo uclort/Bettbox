@@ -7,7 +7,14 @@ enum MonitorPage { requests, connections, dns, devices, traffic, logs }
 
 enum MonitorTrackerFacet { process, source, target, network, rule, outbound }
 
-enum MonitorTrackerStatus { error, active, finished, other }
+enum MonitorTrackerStatus {
+  failed,
+  blocked,
+  connecting,
+  connected,
+  closed,
+  unknown,
+}
 
 typedef MonitorSidebarSection = ({String title, List<String> items});
 
@@ -306,15 +313,33 @@ MonitorTrackerStatus monitorTrackerStatus(
   TrackerInfo item,
   Set<String> activeIds,
 ) {
-  if (activeIds.contains(item.id)) return MonitorTrackerStatus.active;
   final result = '${item.rule} ${item.chains.join(' ')}'.toUpperCase();
-  if (result.contains('REJECT')) return MonitorTrackerStatus.error;
+  if (result.contains('REJECT')) return MonitorTrackerStatus.blocked;
+  final trace = monitorConnectionTrace(item);
+  final established =
+      monitorOutboundRemoteAddress(item).isNotEmpty ||
+      item.upload > 0 ||
+      item.download > 0 ||
+      trace.any(
+        (event) =>
+            event.stage == 'connect' &&
+            event.status != 'pending' &&
+            event.status != 'error',
+      );
+  if (activeIds.contains(item.id)) {
+    return established
+        ? MonitorTrackerStatus.connected
+        : MonitorTrackerStatus.connecting;
+  }
+  if (trace.isNotEmpty && trace.last.status == 'error') {
+    return MonitorTrackerStatus.failed;
+  }
   if (item.id.isNotEmpty &&
       (item.metadata.host.isNotEmpty ||
           item.metadata.destinationIP.isNotEmpty)) {
-    return MonitorTrackerStatus.finished;
+    return MonitorTrackerStatus.closed;
   }
-  return MonitorTrackerStatus.other;
+  return MonitorTrackerStatus.unknown;
 }
 
 String monitorDnsMode(TrackerInfo item) => switch (item.metadata.dnsMode) {

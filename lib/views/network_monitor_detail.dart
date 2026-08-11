@@ -55,18 +55,8 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
       item,
       _connections.map((item) => item.id).toSet(),
     );
-    final statusColor = switch (status) {
-      MonitorTrackerStatus.error => Colors.red,
-      MonitorTrackerStatus.active => Colors.amber,
-      MonitorTrackerStatus.finished => Colors.green,
-      MonitorTrackerStatus.other => Theme.of(context).colorScheme.outline,
-    };
-    final statusLabel = switch (status) {
-      MonitorTrackerStatus.error => '错误',
-      MonitorTrackerStatus.active => '活跃',
-      MonitorTrackerStatus.finished => '已完成',
-      MonitorTrackerStatus.other => '其他',
-    };
+    final statusColor = _monitorStatusColor(context, status);
+    final statusLabel = _monitorStatusLabel(status);
     const tabs = ['通用', 'Mihomo 链路'];
     final maxHeight = (MediaQuery.sizeOf(context).height * .65)
         .clamp(220.0, 620.0)
@@ -102,39 +92,52 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-            child: Row(
-              children: [
-                if (system.isMacOS)
-                  ProcessIcon(
-                    key: ValueKey(
-                      '${item.metadata.process}\n${item.metadata.processPath}',
-                    ),
-                    process: item.metadata.process,
-                    processPath: item.metadata.processPath,
-                    size: 28,
-                  )
-                else
-                  const Icon(Icons.apps, size: 28),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        monitorClientName(item),
-                        style: Theme.of(context).textTheme.titleMedium,
+          SelectionArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+              child: Row(
+                children: [
+                  if (system.isMacOS)
+                    ProcessIcon(
+                      key: ValueKey(
+                        '${item.metadata.process}\n${item.metadata.processPath}',
                       ),
-                      Text(monitorAddress(item)),
-                    ],
+                      process: item.metadata.process,
+                      processPath: item.metadata.processPath,
+                      size: 28,
+                    )
+                  else
+                    const Icon(Icons.apps, size: 28),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          monitorClientName(item),
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        Text(monitorAddress(item)),
+                      ],
+                    ),
                   ),
-                ),
-                Chip(
-                  avatar: Icon(Icons.circle, size: 10, color: statusColor),
-                  label: Text(statusLabel),
-                ),
-              ],
+                  IconButton(
+                    tooltip: '复制详情',
+                    onPressed: () => _copyDetail(context, item, statusLabel),
+                    icon: const Icon(Icons.copy_outlined, size: 19),
+                  ),
+                  Chip(
+                    avatar: Icon(
+                      status == MonitorTrackerStatus.unknown
+                          ? Icons.circle_outlined
+                          : Icons.circle,
+                      size: 10,
+                      color: statusColor,
+                    ),
+                    label: Text(statusLabel),
+                  ),
+                ],
+              ),
             ),
           ),
           SizedBox(
@@ -165,50 +168,83 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
 
   Widget _buildDetailBody(BuildContext context, TrackerInfo item) {
     if (_detailTab == 0) {
-      return SingleChildScrollView(
-        padding: const EdgeInsets.all(12),
-        child: Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            _infoCard(context, '连接', [
-              '方法：${monitorMethodName(item)}',
-              '网络：${item.metadata.network}',
-              '时长：${monitorDuration(item.start)}',
-            ]),
-            _infoCard(context, '流量', [
-              '上传：${monitorBytes(item.upload)}',
-              '下载：${monitorBytes(item.download)}',
-              '实时：↑${monitorBytes(item.uploadSpeed ?? 0)}/s  ↓${monitorBytes(item.downloadSpeed ?? 0)}/s',
-            ]),
-            _infoCard(
-              context,
-              '规则与策略',
-              ['规则：${monitorRuleName(item)}'],
-              width: 250,
-              children: [
-                Row(
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final connection = _infoCard(context, '连接', [
+            '方法：${monitorMethodName(item)}',
+            '网络：${item.metadata.network}',
+            '时长：${monitorDuration(item.start)}',
+          ]);
+          final traffic = _infoCard(context, '流量', [
+            '上传：${monitorBytes(item.upload)}',
+            '下载：${monitorBytes(item.download)}',
+            '实时：↑${monitorBytes(item.uploadSpeed ?? 0)}/s  ↓${monitorBytes(item.downloadSpeed ?? 0)}/s',
+          ]);
+          final rule = _infoCard(
+            context,
+            '规则与策略',
+            ['规则：${monitorRuleName(item)}'],
+            monospace: true,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('策略：'),
+                  Expanded(child: _compactMonitorText(monitorPolicyName(item))),
+                ],
+              ),
+            ],
+          );
+          final summary = constraints.maxWidth >= 760
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('策略：'),
-                    Expanded(
-                      child: _compactMonitorText(
-                        monitorPolicyName(item),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
+                    Expanded(child: connection),
+                    const SizedBox(width: 8),
+                    Expanded(child: traffic),
+                    const SizedBox(width: 8),
+                    Expanded(flex: 2, child: rule),
                   ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    connection,
+                    const SizedBox(height: 8),
+                    traffic,
+                    const SizedBox(height: 8),
+                    rule,
+                  ],
+                );
+          return SelectionArea(
+            child: Scrollbar(
+              controller: _detailScrollController,
+              thumbVisibility: true,
+              interactive: true,
+              child: SingleChildScrollView(
+                controller: _detailScrollController,
+                padding: const EdgeInsets.fromLTRB(12, 12, 20, 12),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      summary,
+                      const SizedBox(height: 8),
+                      _ipInfoCard(context, item),
+                      const SizedBox(height: 8),
+                      _infoCard(context, '进程', [
+                        '名称：${monitorClientName(item)}',
+                        if (item.metadata.processPath.isNotEmpty)
+                          '路径：${item.metadata.processPath}',
+                      ], monospace: true),
+                    ],
+                  ),
                 ),
-              ],
+              ),
             ),
-            _ipInfoCard(context, item),
-            _infoCard(context, '进程', [
-              '名称：${monitorClientName(item)}',
-              if (item.metadata.processPath.isNotEmpty)
-                '路径：${item.metadata.processPath}',
-            ], width: 320),
-          ],
-        ),
+          );
+        },
       );
     }
     return _buildMihomoFlow(context, item);
@@ -243,7 +279,7 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
         if (remoteRegion.isNotEmpty && remoteRegion != targetRegion)
           '远端地区：$remoteRegion',
       ];
-      return _infoCard(context, 'IP 地址', lines, width: 420, wrapLines: true);
+      return _infoCard(context, 'IP 地址', lines, monospace: true);
     }
 
     if (remoteIP.isEmpty) return buildCard('');
@@ -256,25 +292,33 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
   Widget _buildMihomoFlow(BuildContext context, TrackerInfo item) {
     final trace = monitorConnectionTrace(item);
     if (trace.isNotEmpty) {
-      return ListView(
-        padding: const EdgeInsets.all(12),
-        children: [
-          for (final event in trace)
-            _flowStep(
-              context,
-              _traceIcon(event.stage),
-              event.title,
-              [
-                monitorTraceClock(event.timestamp),
-                event.detail,
-              ].where((value) => value.isNotEmpty).join(' · '),
-              color: switch (event.status) {
-                'error' => Colors.red,
-                'pending' => Colors.amber,
-                _ => Theme.of(context).colorScheme.primary,
-              },
-            ),
-        ],
+      return SelectionArea(
+        child: Scrollbar(
+          controller: _detailScrollController,
+          thumbVisibility: true,
+          interactive: true,
+          child: ListView(
+            controller: _detailScrollController,
+            padding: const EdgeInsets.fromLTRB(12, 12, 20, 12),
+            children: [
+              for (final event in trace)
+                _flowStep(
+                  context,
+                  _traceIcon(event.stage),
+                  event.title,
+                  [
+                    monitorTraceClock(event.timestamp),
+                    event.detail,
+                  ].where((value) => value.isNotEmpty).join(' · '),
+                  color: switch (event.status) {
+                    'error' => Colors.red,
+                    'pending' => Colors.amber,
+                    _ => Theme.of(context).colorScheme.primary,
+                  },
+                ),
+            ],
+          ),
+        ),
       );
     }
 
@@ -319,24 +363,32 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
               '$remote · ${monitorClock(item.start)} · ${monitorDuration(item.start)}',
         ),
     ];
-    return ListView(
-      padding: const EdgeInsets.all(12),
-      children: [
-        for (final step in steps)
-          _flowStep(context, step.icon, step.title, step.value),
-        if (logs.isNotEmpty) ...[
-          const Divider(height: 24),
-          Text('兼容内核记录', style: Theme.of(context).textTheme.labelLarge),
-          const SizedBox(height: 8),
-          for (final log in logs)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: _compactMonitorText(
-                '${log.dateTime} [${log.level}] ${log.payload}',
-              ),
-            ),
-        ],
-      ],
+    return SelectionArea(
+      child: Scrollbar(
+        controller: _detailScrollController,
+        thumbVisibility: true,
+        interactive: true,
+        child: ListView(
+          controller: _detailScrollController,
+          padding: const EdgeInsets.fromLTRB(12, 12, 20, 12),
+          children: [
+            for (final step in steps)
+              _flowStep(context, step.icon, step.title, step.value),
+            if (logs.isNotEmpty) ...[
+              const Divider(height: 24),
+              Text('兼容内核记录', style: Theme.of(context).textTheme.labelLarge),
+              const SizedBox(height: 8),
+              for (final log in logs)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: _compactMonitorText(
+                    '${log.dateTime} [${log.level}] ${log.payload}',
+                  ),
+                ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 
@@ -380,12 +432,11 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
     BuildContext context,
     String title,
     List<String> lines, {
-    double width = 180,
-    bool wrapLines = false,
+    bool monospace = false,
     List<Widget> children = const [],
   }) {
     return Container(
-      width: width,
+      width: double.infinity,
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerLow,
@@ -399,14 +450,48 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
           for (final line in lines)
             Text(
               line,
-              maxLines: wrapLines ? null : 1,
-              overflow: wrapLines
-                  ? TextOverflow.visible
-                  : TextOverflow.ellipsis,
+              style: monospace
+                  ? const TextStyle(fontFamily: 'monospace')
+                  : null,
             ),
           ...children,
         ],
       ),
     );
+  }
+
+  Future<void> _copyDetail(
+    BuildContext context,
+    TrackerInfo item,
+    String statusLabel,
+  ) async {
+    final lines = <String>[
+      '状态：$statusLabel',
+      '客户端：${monitorClientName(item)}',
+      '目标：${monitorAddress(item)}',
+      '方法：${monitorMethodName(item)}',
+      '网络：${item.metadata.network}',
+      '时长：${monitorDuration(item.start)}',
+      '上传：${monitorBytes(item.upload)}',
+      '下载：${monitorBytes(item.download)}',
+      '规则：${monitorRuleName(item)}',
+      '策略：${monitorPolicyName(item)}',
+      if (item.metadata.sourceIP.isNotEmpty)
+        '客户端地址：${monitorEndpoint(item.metadata.sourceIP, item.metadata.sourcePort)}',
+      if (monitorTargetIP(item).isNotEmpty)
+        '内核目标：${monitorEndpoint(monitorTargetIP(item), item.metadata.destinationPort)}',
+      if (monitorOutboundLocalAddress(item).isNotEmpty)
+        '出站地址：${monitorOutboundLocalAddress(item)}',
+      if (monitorOutboundRemoteAddress(item).isNotEmpty)
+        '远端地址：${monitorOutboundRemoteAddress(item)}',
+      'DNS 模式：${monitorDnsMode(item)}',
+      if (item.metadata.processPath.isNotEmpty)
+        '进程路径：${item.metadata.processPath}',
+    ];
+    await Clipboard.setData(ClipboardData(text: lines.join('\n')));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('详情已复制')));
   }
 }

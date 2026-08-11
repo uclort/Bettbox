@@ -240,35 +240,60 @@ void main() {
     expect(monitorResizedColumnWidth(580, 40), 600);
   });
 
-  test('状态点按错误、活动、结束和其他映射', () {
-    final active = _tracker(id: 'active', process: 'A', upload: 0);
+  test('连接状态按建立、连接、关闭、拦截、失败和未知映射', () {
+    final connecting = _tracker(id: 'connecting', process: 'A', upload: 0);
+    final connected = _tracker(
+      id: 'connected',
+      process: 'B',
+      upload: 0,
+      outboundRemoteAddress: '1.1.1.1:443',
+    );
     final rejected = _tracker(
       id: 'rejected',
-      process: 'B',
+      process: 'C',
       upload: 0,
       chains: const ['REJECT'],
     );
-    final finished = _tracker(
-      id: 'finished',
-      process: 'C',
+    final failed = _tracker(
+      id: 'failed',
+      process: 'D',
       upload: 0,
-      metadata: const Metadata(process: 'C', host: 'example.com'),
+      metadata: const Metadata(process: 'D', host: 'failed.example'),
+      trace: const [
+        {
+          'stage': 'connect',
+          'title': '建立出站',
+          'detail': 'connection refused',
+          'status': 'error',
+        },
+      ],
     );
-    final other = _tracker(id: 'other', process: 'D', upload: 0);
+    final closed = _tracker(
+      id: 'closed',
+      process: 'E',
+      upload: 0,
+      metadata: const Metadata(process: 'E', host: 'example.com'),
+    );
+    final unknown = _tracker(id: 'unknown', process: 'F', upload: 0);
 
     expect(
-      monitorTrackerStatus(active, {'active'}),
-      MonitorTrackerStatus.active,
+      monitorTrackerStatus(connecting, {'connecting'}),
+      MonitorTrackerStatus.connecting,
+    );
+    expect(
+      monitorTrackerStatus(connected, {'connected'}),
+      MonitorTrackerStatus.connected,
     );
     expect(
       monitorTrackerStatus(rejected, const {}),
-      MonitorTrackerStatus.error,
+      MonitorTrackerStatus.blocked,
     );
+    expect(monitorTrackerStatus(failed, const {}), MonitorTrackerStatus.failed);
+    expect(monitorTrackerStatus(closed, const {}), MonitorTrackerStatus.closed);
     expect(
-      monitorTrackerStatus(finished, const {}),
-      MonitorTrackerStatus.finished,
+      monitorTrackerStatus(unknown, const {}),
+      MonitorTrackerStatus.unknown,
     );
-    expect(monitorTrackerStatus(other, const {}), MonitorTrackerStatus.other);
   });
 
   test('时间按本机时区显示，列表只显示最终策略并保留完整链路', () {
