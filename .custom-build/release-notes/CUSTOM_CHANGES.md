@@ -47,7 +47,7 @@
 - 生效期间当前网络服务只使用 `223.5.5.5`，避免 DHCP DNS 优先绕过 Mihomo。
 - 停止、退出或下次启动检测到残留状态时，恢复启用前的 DNS；启用前没有自定义 DNS 时恢复为系统自动获取。
 - 启动 TUN 前检测其他 VPN 遗留的 `1.0.0.0/8` utun 路由；发现冲突时保持 TUN 关闭并提示接口，避免核心以 `file exists` 失败。
-- macOS TUN 关闭竞态产生 `ENOTSOCK` 时按标准关闭处理并退出旧批量读协程，避免 `batch read packet` 日志风暴、核心与界面 CPU 满载以及后续连接受影响。代码位于 `core/Clash.Meta/listener/sing_tun/server_notwindows.go`，回归测试为同目录 `server_notwindows_test.go`。
+- macOS TUN 关闭竞态产生 `ENOTSOCK` 时按标准关闭处理并退出旧批量读协程，避免 `batch read packet` 日志风暴、核心与界面 CPU 满载以及后续连接受影响；关闭感知包装器同时保留 Mixed/GVisor 所需的 `GVisorTun` 方法集，避免 Mixed 建栈时核心崩溃。代码位于 `core/Clash.Meta/listener/sing_tun/server_notwindows.go` 与 `server_notwindows_gvisor.go`，回归测试为同目录 `server_notwindows_test.go` 和 `server_notwindows_gvisor_test.go`。
 
 ### macOS 菜单栏与托盘
 

@@ -47,7 +47,7 @@
 - 移除“自动设置系统 DNS”开关；macOS 开启 TUN 时自动托管系统 DNS，关闭 TUN 或停止应用时自动恢复。
 - 旧配置中的开关字段不再生效，避免关闭 DNS 托管后出现 TUN 流量异常。
 - macOS 启动 TUN 前检测其他 VPN 遗留的 `1.0.0.0/8` 路由；发现冲突时保持 TUN 关闭并提示对应接口，避免直接启动失败。
-- 修复 macOS 关闭旧 TUN 时 `ENOTSOCK` 未被识别为关闭，导致 `batch read packet` 无限刷屏、核心与界面 CPU 满载的问题。
+- 修复 macOS 关闭旧 TUN 时 `ENOTSOCK` 未被识别为关闭，导致 `batch read packet` 无限刷屏、核心与界面 CPU 满载的问题；关闭感知包装器保留 Mixed/GVisor 方法集，修复选择 `mixed` 后核心崩溃、界面继而报 `Broken pipe` 且无法联网的问题。
 
 ### 节点测速
 
