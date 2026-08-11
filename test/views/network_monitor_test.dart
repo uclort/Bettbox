@@ -386,6 +386,7 @@ const BETTBOX_CUSTOM_RULES = [
     const script = '''
 const before = true;
 const BETTBOX_CUSTOM_RULES = [
+  // 说明：保留的首条规则
   "DOMAIN,first.example,DIRECT",
   "DOMAIN,second.example,Global",
 ];
@@ -393,14 +394,17 @@ const after = true;
 ''';
 
     expect(monitorReadSubStoreRules(script), [
-      'DOMAIN,first.example,DIRECT',
-      'DOMAIN,second.example,Global',
+      (rule: 'DOMAIN,first.example,DIRECT', note: '保留的首条规则'),
+      (rule: 'DOMAIN,second.example,Global', note: ''),
     ]);
     final updated = monitorReplaceSubStoreRules(script, [
-      'DOMAIN,second.example,DIRECT',
+      (rule: 'DOMAIN,second.example,DIRECT', note: '修改后\n的说明'),
     ]);
 
-    expect(monitorReadSubStoreRules(updated), ['DOMAIN,second.example,DIRECT']);
+    expect(monitorReadSubStoreRules(updated), [
+      (rule: 'DOMAIN,second.example,DIRECT', note: '修改后 的说明'),
+    ]);
+    expect(updated, contains('// 说明：修改后 的说明'));
     expect(updated, contains('const before = true;'));
     expect(updated, contains('const after = true;'));
     expect(updated, isNot(contains('first.example')));
@@ -628,6 +632,8 @@ const after = true;
       'info',
       'debug',
     ]);
+    expect(MonitorPage.values.last, MonitorPage.subStore);
+    expect(monitorDefaultSidebarFilter(MonitorPage.subStore), isEmpty);
   });
 
   test('请求和连接分类直接使用 Mihomo TrackerInfo 字段', () {

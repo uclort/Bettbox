@@ -5,7 +5,15 @@ import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/models.dart';
 import 'package:flutter/foundation.dart';
 
-enum MonitorPage { requests, connections, dns, devices, traffic, logs }
+enum MonitorPage {
+  requests,
+  connections,
+  dns,
+  devices,
+  traffic,
+  logs,
+  subStore,
+}
 
 enum MonitorRuleSource { domain, ip, process, transport }
 
@@ -25,6 +33,8 @@ enum MonitorRuleType {
 }
 
 const monitorSubStoreRulesVariable = 'BETTBOX_CUSTOM_RULES';
+
+typedef MonitorSubStoreRule = ({String rule, String note});
 
 Uri monitorSubStoreFileApiUri(
   String address,
@@ -72,25 +82,43 @@ RegExpMatch _monitorSubStoreRulesMatch(String script) {
   return match;
 }
 
-List<String> monitorReadSubStoreRules(String script) {
+List<MonitorSubStoreRule> monitorReadSubStoreRules(String script) {
   final body = _monitorSubStoreRulesMatch(script).group(1)!.trim();
   if (body.isEmpty) return [];
-  final json = '[${body.replaceFirst(RegExp(r',\s*$'), '')}]';
-  try {
-    final decoded = jsonDecode(json);
-    if (decoded is! List || decoded.any((item) => item is! String)) {
-      throw const FormatException();
+  final rules = <MonitorSubStoreRule>[];
+  var note = '';
+  for (final rawLine in const LineSplitter().convert(body)) {
+    final line = rawLine.trim();
+    if (line.isEmpty) continue;
+    if (line.startsWith('//')) {
+      if (line.startsWith('// 说明：')) note = line.substring(6).trim();
+      continue;
     }
-    return decoded.cast<String>();
-  } catch (_) {
-    throw StateError('$monitorSubStoreRulesVariable 必须使用 JSON 字符串数组');
+    try {
+      final decoded = jsonDecode(line.replaceFirst(RegExp(r',\s*$'), ''));
+      if (decoded is! String) throw const FormatException();
+      rules.add((rule: decoded, note: note));
+      note = '';
+    } catch (_) {
+      throw StateError('$monitorSubStoreRulesVariable 必须每行使用一条 JSON 字符串规则');
+    }
   }
+  return rules;
 }
 
-String monitorReplaceSubStoreRules(String script, List<String> rules) {
+String monitorReplaceSubStoreRules(
+  String script,
+  List<MonitorSubStoreRule> rules,
+) {
   final match = _monitorSubStoreRulesMatch(script);
   final newline = script.contains('\r\n') ? '\r\n' : '\n';
-  final content = rules.map((rule) => '  ${jsonEncode(rule)},').join(newline);
+  final content = rules
+      .map((item) {
+        final note = item.note.replaceAll(RegExp(r'\s+'), ' ').trim();
+        final rule = '  ${jsonEncode(item.rule)},';
+        return note.isEmpty ? rule : '  // 说明：$note$newline$rule';
+      })
+      .join(newline);
   final replacement =
       'const $monitorSubStoreRulesVariable = [$newline'
       '${content.isEmpty ? '' : '$content$newline'}];';
@@ -99,10 +127,13 @@ String monitorReplaceSubStoreRules(String script, List<String> rules) {
 
 String monitorAppendSubStoreRule(String script, String rule) {
   final rules = monitorReadSubStoreRules(script);
-  if (rules.contains(rule)) {
+  if (rules.any((item) => item.rule == rule)) {
     throw StateError('该固定规则已存在');
   }
-  return monitorReplaceSubStoreRules(script, [rule, ...rules]);
+  return monitorReplaceSubStoreRules(script, [
+    (rule: rule, note: ''),
+    ...rules,
+  ]);
 }
 
 extension MonitorRuleSourceExt on MonitorRuleSource {

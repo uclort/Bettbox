@@ -176,7 +176,11 @@ Future<Map<String, Object?>> _readMonitorSubStoreRules(
     await _readMonitorSubStoreScript(url, apiKey),
   );
   await _saveMonitorSubStoreHistory(url, apiKey);
-  return {'rules': rules};
+  return {
+    'rules': [
+      for (final item in rules) {'rule': item.rule, 'note': item.note},
+    ],
+  };
 }
 
 Future<Map<String, Object?>> _replaceMonitorSubStoreRules(
@@ -184,13 +188,17 @@ Future<Map<String, Object?>> _replaceMonitorSubStoreRules(
 ) async {
   final url = arguments['url']?.toString().trim() ?? '';
   final apiKey = arguments['apiKey']?.toString().trim() ?? '';
-  final rules = (arguments['rules'] as List? ?? const [])
-      .map((item) => item.toString().trim())
-      .toList();
+  final rules = (arguments['rules'] as List? ?? const []).map((item) {
+    final value = normalizeMonitorMap(item);
+    return (
+      rule: value['rule']?.toString().trim() ?? '',
+      note: value['note']?.toString().trim() ?? '',
+    );
+  }).toList();
   if (url.isEmpty || apiKey.isEmpty) {
     throw StateError('文件地址和 API Key 不能为空');
   }
-  if (rules.any((rule) => rule.isEmpty)) throw StateError('规则不能为空');
+  if (rules.any((item) => item.rule.isEmpty)) throw StateError('规则不能为空');
   final latest = await _readMonitorSubStoreScript(url, apiKey);
   await _writeMonitorSubStoreScript(
     url,
@@ -831,7 +839,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
               children: [
                 if (_error != null) _buildError(context),
                 Expanded(child: _buildPage(context)),
-                _buildActionBar(context),
+                if (_page != MonitorPage.subStore) _buildActionBar(context),
                 if (_selected != null) _buildDetail(context),
               ],
             );
@@ -840,7 +848,9 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
                 _buildTopBar(context),
                 const Divider(height: 1),
                 Expanded(
-                  child: constraints.maxWidth < 720
+                  child:
+                      constraints.maxWidth < 720 ||
+                          _page == MonitorPage.subStore
                       ? content
                       : Row(
                           children: [
@@ -866,6 +876,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
       MonitorPage.devices: '设备',
       MonitorPage.traffic: '流量统计',
       MonitorPage.logs: '日志',
+      MonitorPage.subStore: 'Sub-Store',
     };
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -920,7 +931,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
                   ),
                 ),
               ),
-              if (constraints.maxWidth >= 900)
+              if (constraints.maxWidth >= 900 && _page != MonitorPage.subStore)
                 Align(
                   alignment: Alignment.center,
                   child: SizedBox(
@@ -1116,6 +1127,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
       MonitorPage.devices => _buildDevicesTable(context),
       MonitorPage.traffic => _buildTraffic(context),
       MonitorPage.logs => _buildLogs(context),
+      MonitorPage.subStore => _buildSubStorePage(context),
     };
   }
 

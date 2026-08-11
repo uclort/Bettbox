@@ -1,6 +1,10 @@
 part of 'network_monitor.dart';
 
 extension _NetworkMonitorRuleGenerator on _NetworkMonitorViewState {
+  Widget _buildSubStorePage(BuildContext context) {
+    return _MonitorSubStorePanel(runAction: _runRuleAction);
+  }
+
   Future<void> _showTrackerContextMenu(
     BuildContext context,
     TrackerInfo item,
@@ -262,7 +266,7 @@ class _MonitorRuleDialogState extends State<_MonitorRuleDialog> {
             segments: const [
               ButtonSegment(
                 value: OverrideRuleType.added,
-                label: Text('附加原始规则'),
+                label: Text('附加到原始规则'),
               ),
               ButtonSegment(
                 value: OverrideRuleType.override,
@@ -338,66 +342,27 @@ class _MonitorRuleDialogState extends State<_MonitorRuleDialog> {
   }
 
   Future<void> _appendSubStore() async {
-    try {
-      final history = normalizeMonitorMap(
-        await widget.runAction('subStoreRuleHistory', null) ?? const {},
-      );
-      if (!mounted) return;
-      final input =
-          await showDialog<({String url, String apiKey, bool manage})>(
-            context: context,
-            builder: (_) => _MonitorSubStoreDialog(
-              urls: (history['urls'] as List? ?? const [])
-                  .map((item) => item.toString())
-                  .toList(),
-              apiKeys: (history['keys'] as List? ?? const [])
-                  .map((item) => item.toString())
-                  .toList(),
-            ),
-          );
-      if (input == null || !mounted) return;
-      setState(() => _saving = true);
-      var message = '已补充到 Sub-Store 固定规则顶部';
-      if (input.manage) {
-        final result = normalizeMonitorMap(
-          await widget.runAction('readSubStoreRules', {
-                'url': input.url,
-                'apiKey': input.apiKey,
-              }) ??
-              const {},
-        );
-        if (!mounted) return;
-        final rules = await showDialog<List<String>>(
-          context: context,
-          builder: (_) => _MonitorSubStoreRulesDialog(
-            rules: (result['rules'] as List? ?? const [])
-                .map((item) => item.toString())
-                .toList(),
+    final added = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        child: SizedBox(
+          width: 820,
+          height: 620,
+          child: _MonitorSubStorePanel(
+            runAction: widget.runAction,
+            appendRule: _rule,
+            onClose: () => Navigator.pop(dialogContext, false),
+            onAppended: () => Navigator.pop(dialogContext, true),
           ),
-        );
-        if (rules == null || !mounted) return;
-        await widget.runAction('replaceSubStoreRules', {
-          'url': input.url,
-          'apiKey': input.apiKey,
-          'rules': rules,
-        });
-        message = '已更新 Sub-Store 自定义规则';
-      } else {
-        await widget.runAction('appendSubStoreRule', {
-          'url': input.url,
-          'apiKey': input.apiKey,
-          'rule': _rule,
-        });
-      }
-      if (mounted) {
-        final messenger = ScaffoldMessenger.maybeOf(context);
-        Navigator.pop(context);
-        messenger?.showSnackBar(SnackBar(content: Text(message)));
-      }
-    } catch (error) {
-      await _showError(error);
-    } finally {
-      if (mounted) setState(() => _saving = false);
+        ),
+      ),
+    );
+    if (added == true && mounted) {
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      Navigator.pop(context);
+      messenger?.showSnackBar(
+        const SnackBar(content: Text('已补充到 Sub-Store 固定规则顶部')),
+      );
     }
   }
 
@@ -572,36 +537,190 @@ class _MonitorRuleDialogState extends State<_MonitorRuleDialog> {
   }
 }
 
-class _MonitorSubStoreDialog extends StatefulWidget {
-  final List<String> urls;
-  final List<String> apiKeys;
+class _MonitorSubStorePanel extends StatefulWidget {
+  final Future<Object?> Function(String method, Object? arguments) runAction;
+  final String? appendRule;
+  final VoidCallback? onClose;
+  final VoidCallback? onAppended;
 
-  const _MonitorSubStoreDialog({required this.urls, required this.apiKeys});
+  const _MonitorSubStorePanel({
+    required this.runAction,
+    this.appendRule,
+    this.onClose,
+    this.onAppended,
+  });
 
   @override
-  State<_MonitorSubStoreDialog> createState() => _MonitorSubStoreDialogState();
+  State<_MonitorSubStorePanel> createState() => _MonitorSubStorePanelState();
 }
 
-class _MonitorSubStoreDialogState extends State<_MonitorSubStoreDialog> {
-  late final TextEditingController _urlController;
-  late final TextEditingController _keyController;
+class _MonitorSubStorePanelState extends State<_MonitorSubStorePanel> {
+  final _urlController = TextEditingController();
+  final _keyController = TextEditingController();
+  var _urls = <String>[];
+  var _apiKeys = <String>[];
+  List<({TextEditingController rule, TextEditingController note})>?
+  _ruleControllers;
+  String? _busyMessage;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _urlController = TextEditingController(
-      text: widget.urls.isEmpty ? '' : widget.urls.first,
-    );
-    _keyController = TextEditingController(
-      text: widget.apiKeys.isEmpty ? '' : widget.apiKeys.first,
-    );
+    unawaited(_loadHistory());
   }
 
   @override
   void dispose() {
     _urlController.dispose();
     _keyController.dispose();
+    _disposeRules();
     super.dispose();
+  }
+
+  void _disposeRules() {
+    for (final item in _ruleControllers ?? const []) {
+      item.rule.dispose();
+      item.note.dispose();
+    }
+  }
+
+  Future<void> _loadHistory() async {
+    try {
+      final history = normalizeMonitorMap(
+        await widget.runAction('subStoreRuleHistory', null) ?? const {},
+      );
+      if (!mounted) return;
+      setState(() {
+        _urls = (history['urls'] as List? ?? const [])
+            .map((item) => item.toString())
+            .toList();
+        _apiKeys = (history['keys'] as List? ?? const [])
+            .map((item) => item.toString())
+            .toList();
+        if (_urlController.text.isEmpty && _urls.isNotEmpty) {
+          _urlController.text = _urls.first;
+        }
+        if (_keyController.text.isEmpty && _apiKeys.isNotEmpty) {
+          _keyController.text = _apiKeys.first;
+        }
+      });
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    }
+  }
+
+  ({String url, String apiKey})? _credentials() {
+    final url = _urlController.text.trim();
+    final apiKey = _keyController.text.trim();
+    if (url.isEmpty || apiKey.isEmpty) {
+      setState(() => _error = '请填写 Sub-Store 文件地址和 API Key');
+      return null;
+    }
+    return (url: url, apiKey: apiKey);
+  }
+
+  Future<void> _readRules() async {
+    final credentials = _credentials();
+    if (credentials == null) return;
+    setState(() {
+      _busyMessage = '正在读取 Sub-Store 自定义规则…';
+      _error = null;
+    });
+    try {
+      final result = normalizeMonitorMap(
+        await widget.runAction('readSubStoreRules', {
+              'url': credentials.url,
+              'apiKey': credentials.apiKey,
+            }) ??
+            const {},
+      );
+      if (!mounted) return;
+      _disposeRules();
+      setState(() {
+        _ruleControllers = (result['rules'] as List? ?? const []).map((item) {
+          final value = normalizeMonitorMap(item);
+          return (
+            rule: TextEditingController(text: value['rule']?.toString() ?? ''),
+            note: TextEditingController(text: value['note']?.toString() ?? ''),
+          );
+        }).toList();
+      });
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    } finally {
+      if (mounted) setState(() => _busyMessage = null);
+    }
+  }
+
+  Future<void> _appendRule() async {
+    final credentials = _credentials();
+    if (credentials == null || widget.appendRule == null) return;
+    setState(() {
+      _busyMessage = '正在补充 Sub-Store 自定义规则…';
+      _error = null;
+    });
+    try {
+      await widget.runAction('appendSubStoreRule', {
+        'url': credentials.url,
+        'apiKey': credentials.apiKey,
+        'rule': widget.appendRule,
+      });
+      if (mounted) widget.onAppended?.call();
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    } finally {
+      if (mounted) setState(() => _busyMessage = null);
+    }
+  }
+
+  void _backToCredentials() {
+    _disposeRules();
+    setState(() {
+      _ruleControllers = null;
+      _error = null;
+    });
+  }
+
+  Future<void> _saveRules() async {
+    final credentials = _credentials();
+    if (credentials == null) return;
+    final rules = _ruleControllers!
+        .map(
+          (item) => {
+            'rule': item.rule.text.trim(),
+            'note': item.note.text.trim(),
+          },
+        )
+        .toList();
+    if (rules.any((item) => item['rule']!.isEmpty)) {
+      setState(() => _error = '规则不能为空，不需要的规则请点击删除');
+      return;
+    }
+    if (rules.map((item) => item['rule']).toSet().length != rules.length) {
+      setState(() => _error = '存在重复规则');
+      return;
+    }
+    setState(() {
+      _busyMessage = '正在保存 Sub-Store 自定义规则…';
+      _error = null;
+    });
+    try {
+      await widget.runAction('replaceSubStoreRules', {
+        'url': credentials.url,
+        'apiKey': credentials.apiKey,
+        'rules': rules,
+      });
+      if (!mounted) return;
+      _backToCredentials();
+      ScaffoldMessenger.maybeOf(
+        context,
+      )?.showSnackBar(const SnackBar(content: Text('已更新 Sub-Store 自定义规则')));
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    } finally {
+      if (mounted) setState(() => _busyMessage = null);
+    }
   }
 
   Widget _historyField({
@@ -646,202 +765,221 @@ class _MonitorSubStoreDialogState extends State<_MonitorSubStoreDialog> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Sub-Store 自定义规则'),
-      content: SizedBox(
-        width: 620,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _historyField(
-              label: 'Sub-Store 文件地址（/api/file/文件名）',
-              textController: _urlController,
-              values: widget.urls,
-              keyboardType: TextInputType.url,
-            ),
-            const SizedBox(height: 12),
-            _historyField(
-              label: 'Sub-Store API Key / 路径前缀',
-              textController: _keyController,
-              values: widget.apiKeys,
-            ),
-            const SizedBox(height: 14),
-            Text(
-              '注意：Sub-Store 覆写脚本必须包含 const '
-              '$monitorSubStoreRulesVariable = [...]，否则无法读取、修改或补充，规则也不会生效。',
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-            const SizedBox(height: 8),
-            const Text('成功使用后，文件地址和 API Key 会仅保存在本机历史记录中。'),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('取消'),
-        ),
-        OutlinedButton(
-          onPressed: () {
-            final url = _urlController.text.trim();
-            final apiKey = _keyController.text.trim();
-            if (url.isEmpty || apiKey.isEmpty) return;
-            Navigator.pop(context, (url: url, apiKey: apiKey, manage: true));
-          },
-          child: const Text('读取并管理'),
-        ),
-        FilledButton(
-          onPressed: () {
-            final url = _urlController.text.trim();
-            final apiKey = _keyController.text.trim();
-            if (url.isEmpty || apiKey.isEmpty) return;
-            Navigator.pop(context, (url: url, apiKey: apiKey, manage: false));
-          },
-          child: const Text('确认补充'),
-        ),
-      ],
-    );
-  }
-}
-
-class _MonitorSubStoreRulesDialog extends StatefulWidget {
-  final List<String> rules;
-
-  const _MonitorSubStoreRulesDialog({required this.rules});
-
-  @override
-  State<_MonitorSubStoreRulesDialog> createState() =>
-      _MonitorSubStoreRulesDialogState();
-}
-
-class _MonitorSubStoreRulesDialogState
-    extends State<_MonitorSubStoreRulesDialog> {
-  late final List<TextEditingController> _controllers;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _controllers = widget.rules
-        .map((rule) => TextEditingController(text: rule))
-        .toList();
-  }
-
-  @override
-  void dispose() {
-    for (final controller in _controllers) {
-      controller.dispose();
-    }
-    super.dispose();
-  }
-
-  void _save() {
-    final rules = _controllers
-        .map((controller) => controller.text.trim())
-        .toList();
-    if (rules.any((rule) => rule.isEmpty)) {
-      setState(() => _error = '规则不能为空，不需要的规则请点击删除');
-      return;
-    }
-    if (rules.toSet().length != rules.length) {
-      setState(() => _error = '存在重复规则');
-      return;
-    }
-    Navigator.pop(context, rules);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('管理 Sub-Store 自定义规则'),
-      content: SizedBox(
-        width: 760,
-        height: 480,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text('拖动可调整匹配顺序，保存后将按当前顺序写回脚本。'),
-            const SizedBox(height: 12),
-            Expanded(
-              child: _controllers.isEmpty
-                  ? const Center(child: Text('暂无固定自定义规则'))
-                  : ReorderableListView.builder(
-                      buildDefaultDragHandles: false,
-                      itemCount: _controllers.length,
-                      onReorderItem: (oldIndex, newIndex) {
-                        setState(() {
-                          final item = _controllers.removeAt(oldIndex);
-                          _controllers.insert(newIndex, item);
-                        });
-                      },
-                      itemBuilder: (context, index) {
-                        final controller = _controllers[index];
-                        return Padding(
-                          key: ObjectKey(controller),
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Row(
-                            children: [
-                              ReorderableDragStartListener(
-                                index: index,
-                                child: const Padding(
-                                  padding: EdgeInsets.all(8),
-                                  child: Icon(Icons.drag_indicator),
-                                ),
-                              ),
-                              Expanded(
-                                child: TextField(
-                                  controller: controller,
-                                  minLines: 1,
-                                  maxLines: 3,
-                                  style: const TextStyle(
-                                    fontFamily: 'monospace',
-                                  ),
-                                  decoration: InputDecoration(
-                                    labelText: '规则 ${index + 1}',
-                                    border: const OutlineInputBorder(),
-                                  ),
-                                ),
-                              ),
-                              IconButton(
-                                tooltip: '删除规则',
-                                onPressed: () {
-                                  setState(() {
-                                    _controllers.removeAt(index);
-                                    controller.dispose();
-                                    _error = null;
-                                  });
-                                },
-                                icon: const Icon(Icons.delete_outline),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-            ),
-            if (_error != null) ...[
-              const SizedBox(height: 8),
+  Widget _buildCredentials(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
               Text(
-                _error!,
+                'Sub-Store 自定义规则',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 24),
+              _historyField(
+                label: 'Sub-Store 文件地址（/api/file/文件名）',
+                textController: _urlController,
+                values: _urls,
+                keyboardType: TextInputType.url,
+              ),
+              const SizedBox(height: 14),
+              _historyField(
+                label: 'Sub-Store API Key',
+                textController: _keyController,
+                values: _apiKeys,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                '注意：Sub-Store 覆写脚本必须包含 const '
+                '$monitorSubStoreRulesVariable = [...]，否则无法读取、修改或补充，规则也不会生效。',
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
+              const SizedBox(height: 8),
+              const Text('成功使用后，文件地址和 API Key 会仅保存在本机历史记录中。'),
+              if (_error != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  _error!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ],
+              const SizedBox(height: 24),
+              Wrap(
+                alignment: WrapAlignment.end,
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  if (widget.onClose != null)
+                    TextButton(
+                      onPressed: widget.onClose,
+                      child: const Text('取消'),
+                    ),
+                  OutlinedButton(
+                    onPressed: _readRules,
+                    child: const Text('读取并管理'),
+                  ),
+                  if (widget.appendRule != null)
+                    FilledButton(
+                      onPressed: _appendRule,
+                      child: const Text('确认补充'),
+                    ),
+                ],
+              ),
             ],
-          ],
+          ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('取消'),
+    );
+  }
+
+  Widget _buildRules(BuildContext context) {
+    final controllers = _ruleControllers!;
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            '管理 Sub-Store 自定义规则',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 10),
+          const Text('拖动可调整匹配顺序，保存后将按当前顺序写回脚本。'),
+          const SizedBox(height: 20),
+          Expanded(
+            child: controllers.isEmpty
+                ? const Center(child: Text('暂无固定自定义规则'))
+                : ReorderableListView.builder(
+                    padding: const EdgeInsets.only(top: 8, right: 4),
+                    buildDefaultDragHandles: false,
+                    itemCount: controllers.length,
+                    onReorderItem: (oldIndex, newIndex) {
+                      setState(() {
+                        final item = controllers.removeAt(oldIndex);
+                        controllers.insert(newIndex, item);
+                      });
+                    },
+                    itemBuilder: (context, index) {
+                      final item = controllers[index];
+                      return Padding(
+                        key: ObjectKey(item.rule),
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Row(
+                          children: [
+                            ReorderableDragStartListener(
+                              index: index,
+                              child: const Padding(
+                                padding: EdgeInsets.all(8),
+                                child: Icon(Icons.drag_indicator),
+                              ),
+                            ),
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  TextField(
+                                    controller: item.rule,
+                                    minLines: 1,
+                                    maxLines: 3,
+                                    style: const TextStyle(
+                                      fontFamily: 'monospace',
+                                    ),
+                                    decoration: InputDecoration(
+                                      labelText: '规则 ${index + 1}',
+                                      border: const OutlineInputBorder(),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  TextField(
+                                    controller: item.note,
+                                    minLines: 1,
+                                    maxLines: 2,
+                                    decoration: const InputDecoration(
+                                      labelText: '说明（可选）',
+                                      hintText: '例如：1Password 直连，避免同步异常',
+                                      border: OutlineInputBorder(),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: '删除规则',
+                              onPressed: () {
+                                setState(() {
+                                  controllers.removeAt(index);
+                                  item.rule.dispose();
+                                  item.note.dispose();
+                                  _error = null;
+                                });
+                              },
+                              icon: const Icon(Icons.delete_outline),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _error!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ],
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: _backToCredentials,
+                child: const Text('取消'),
+              ),
+              const SizedBox(width: 8),
+              FilledButton.icon(
+                onPressed: _saveRules,
+                icon: const Icon(Icons.save_outlined, size: 18),
+                label: const Text('保存修改'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        IgnorePointer(
+          ignoring: _busyMessage != null,
+          child: _ruleControllers == null
+              ? _buildCredentials(context)
+              : _buildRules(context),
         ),
-        FilledButton.icon(
-          onPressed: _save,
-          icon: const Icon(Icons.save_outlined, size: 18),
-          label: const Text('保存修改'),
-        ),
+        if (_busyMessage != null)
+          Positioned.fill(
+            child: ColoredBox(
+              color: Theme.of(
+                context,
+              ).colorScheme.surface.withValues(alpha: .88),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Text(_busyMessage!),
+                  ],
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
