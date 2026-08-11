@@ -135,6 +135,6 @@
 ### 自定义构建与发布
 
 - Release 保留本包相较上游的完整功能说明，并单独列出相较上一自定义 Release 的上游同步与自定义增量。
-- `custom-build.yml` 的手动触发支持仅构建并发布 macOS Apple Silicon，或仅构建并发布 Android arm64-v8a；单平台模式只创建对应 Action 任务与 Release 资产，不消耗其他平台构建资源，两个选项不能同时启用。
+- `custom-build.yml` 的手动触发支持仅构建并发布 macOS Apple Silicon，或仅构建并发布 Android arm64-v8a；单平台模式只创建对应 Action 任务与 Release 资产，不消耗其他平台构建资源，两个选项不能同时启用，Android 单平台发布跳过桌面应用内更新源生成。
 - 自定义应用代码发生变化但没有补充增量说明时拒绝发布，避免 Release 内容与安装包不一致。
 - 自定义应用代码发生变化但没有同步完整改动总账时同样拒绝发布。

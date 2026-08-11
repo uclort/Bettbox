@@ -981,6 +981,7 @@ jobs:
             --notes-file "${notes_file}"
 
       - name: 更新桌面应用内更新源
+        if: ${{ !inputs.android_only }}
         shell: bash
         env:
           RELEASE_TAG: ${{ needs.inspect.outputs.release_tag }}
