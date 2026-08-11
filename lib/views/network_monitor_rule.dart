@@ -1,5 +1,12 @@
 part of 'network_monitor.dart';
 
+Widget _compactMonitorDialogText(Widget child) =>
+    MediaQuery.withClampedTextScaling(
+      minScaleFactor: .9,
+      maxScaleFactor: .9,
+      child: child,
+    );
+
 extension _NetworkMonitorRuleGenerator on _NetworkMonitorViewState {
   Widget _buildSubStorePage(BuildContext context) {
     return _MonitorSubStorePanel(runAction: _runRuleAction);
@@ -218,6 +225,40 @@ class _MonitorRuleDialogState extends State<_MonitorRuleDialog> {
     );
   }
 
+  Future<void> _showPolicyPicker() async {
+    final value = await showModalBottomSheet<String>(
+      context: context,
+      useSafeArea: true,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) => _compactMonitorDialogText(
+        SizedBox(
+          height: MediaQuery.sizeOf(context).height * .72,
+          child: Column(
+            children: [
+              Text('选择策略', style: Theme.of(context).textTheme.titleMedium),
+              const Divider(),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: _policyEntries.length,
+                  itemBuilder: (context, index) {
+                    final entry = _policyEntries[index];
+                    return ListTile(
+                      dense: true,
+                      title: _compactMonitorText(entry.label),
+                      onTap: () => Navigator.pop(context, entry.value),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (value != null) _selectPolicy(value);
+  }
+
   void _selectSource(MonitorRuleSource source) {
     final type = monitorRuleTypes(source).first;
     setState(() {
@@ -375,165 +416,171 @@ class _MonitorRuleDialogState extends State<_MonitorRuleDialog> {
   @override
   Widget build(BuildContext context) {
     final address = monitorAddress(widget.item);
-    return Dialog(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 720, maxHeight: 720),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text('生成规则', style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 6),
-                Text('${monitorClientName(widget.item)} · $address'),
-                const SizedBox(height: 18),
-                SegmentedButton<MonitorRuleSource>(
-                  segments: [
-                    for (final source in MonitorRuleSource.values)
-                      ButtonSegment(value: source, label: Text(source.label)),
-                  ],
-                  selected: {_source},
-                  onSelectionChanged: (value) => _selectSource(value.first),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<MonitorRuleType>(
-                  initialValue: _type,
-                  decoration: const InputDecoration(
-                    labelText: '规则类型',
-                    border: OutlineInputBorder(),
+    return _compactMonitorDialogText(
+      Dialog(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720, maxHeight: 720),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text('生成规则', style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 6),
+                  Text('${monitorClientName(widget.item)} · $address'),
+                  const SizedBox(height: 18),
+                  SegmentedButton<MonitorRuleSource>(
+                    segments: [
+                      for (final source in MonitorRuleSource.values)
+                        ButtonSegment(value: source, label: Text(source.label)),
+                    ],
+                    selected: {_source},
+                    onSelectionChanged: (value) => _selectSource(value.first),
                   ),
-                  items: [
-                    for (final type in monitorRuleTypes(_source))
-                      DropdownMenuItem(
-                        value: type,
-                        child: Text(type.clashName),
-                      ),
-                  ],
-                  onChanged: _selectType,
-                ),
-                const SizedBox(height: 12),
-                if (_source == MonitorRuleSource.process) ...[
-                  TextField(
-                    controller: _processController,
-                    decoration: InputDecoration(
-                      labelText: _type == MonitorRuleType.processNameRegex
-                          ? '进程名称 / 正则'
-                          : '进程名称',
-                      border: const OutlineInputBorder(),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<MonitorRuleType>(
+                    initialValue: _type,
+                    decoration: const InputDecoration(
+                      labelText: '规则类型',
+                      border: OutlineInputBorder(),
                     ),
+                    items: [
+                      for (final type in monitorRuleTypes(_source))
+                        DropdownMenuItem(
+                          value: type,
+                          child: Text(type.clashName),
+                        ),
+                    ],
+                    onChanged: _selectType,
                   ),
                   const SizedBox(height: 12),
-                  TextField(
-                    controller: _processPathController,
-                    decoration: const InputDecoration(
-                      labelText: '进程路径',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ] else
-                  TextField(
-                    controller: _valueController,
-                    decoration: const InputDecoration(
-                      labelText: '匹配内容',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                if (_type.supportsNoResolve)
-                  CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
-                    value: _noResolve,
-                    title: const Text('no-resolve'),
-                    subtitle: const Text('匹配时不额外解析域名'),
-                    onChanged: (value) =>
-                        setState(() => _noResolve = value ?? false),
-                  ),
-                const SizedBox(height: 12),
-                MenuAnchor(
-                  menuChildren: [
-                    for (final entry in _policyEntries)
-                      MenuItemButton(
-                        onPressed: () => _selectPolicy(entry.value),
-                        child: _compactMonitorText(entry.label),
-                      ),
-                  ],
-                  builder: (context, controller, child) => TextField(
-                    controller: _policyController,
-                    decoration: InputDecoration(
-                      labelText: '策略',
-                      hintText: '选择策略组、策略，或手动填写',
-                      border: const OutlineInputBorder(),
-                      suffixIcon: IconButton(
-                        tooltip: '选择策略',
-                        onPressed: () => controller.isOpen
-                            ? controller.close()
-                            : controller.open(),
-                        icon: const Icon(Icons.arrow_drop_down),
+                  if (_source == MonitorRuleSource.process) ...[
+                    TextField(
+                      controller: _processController,
+                      decoration: InputDecoration(
+                        labelText: _type == MonitorRuleType.processNameRegex
+                            ? '进程名称 / 正则'
+                            : '进程名称',
+                        border: const OutlineInputBorder(),
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '已根据当前连接自动填充，所有输入内容均可手动修改',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: 16),
-                Text('最终规则', style: Theme.of(context).textTheme.titleSmall),
-                const SizedBox(height: 6),
-                Container(
-                  constraints: const BoxConstraints(minHeight: 96),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerLow,
-                    border: Border.all(color: Theme.of(context).dividerColor),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: SelectableText.rich(
-                    _monitorCompactTextSpan(
-                      _rule.isEmpty ? '请填写匹配内容和策略' : _rule,
-                      style: const TextStyle(fontFamily: 'monospace'),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _processPathController,
+                      decoration: const InputDecoration(
+                        labelText: '进程路径',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ] else
+                    TextField(
+                      controller: _valueController,
+                      decoration: const InputDecoration(
+                        labelText: '匹配内容',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  if (_type.supportsNoResolve)
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: _noResolve,
+                      title: const Text('no-resolve'),
+                      subtitle: const Text('匹配时不额外解析域名'),
+                      onChanged: (value) =>
+                          setState(() => _noResolve = value ?? false),
+                    ),
+                  const SizedBox(height: 12),
+                  MenuAnchor(
+                    menuChildren: [
+                      for (final entry in _policyEntries)
+                        MenuItemButton(
+                          onPressed: () => _selectPolicy(entry.value),
+                          child: _compactMonitorText(entry.label),
+                        ),
+                    ],
+                    builder: (context, controller, child) => TextField(
+                      controller: _policyController,
+                      decoration: InputDecoration(
+                        labelText: '策略',
+                        hintText: '选择策略组、策略，或手动填写',
+                        border: const OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                          tooltip: '选择策略',
+                          onPressed: system.isAndroid
+                              ? _showPolicyPicker
+                              : () => controller.isOpen
+                                    ? controller.close()
+                                    : controller.open(),
+                          icon: const Icon(Icons.arrow_drop_down),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 18),
-                Wrap(
-                  alignment: WrapAlignment.end,
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('取消'),
+                  const SizedBox(height: 6),
+                  Text(
+                    '已根据当前连接自动填充，所有输入内容均可手动修改',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 16),
+                  Text('最终规则', style: Theme.of(context).textTheme.titleSmall),
+                  const SizedBox(height: 6),
+                  Container(
+                    constraints: const BoxConstraints(minHeight: 96),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainerLow,
+                      border: Border.all(color: Theme.of(context).dividerColor),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    OutlinedButton.icon(
-                      onPressed: _rule.isEmpty || _saving ? null : _addOverride,
-                      icon: const Icon(Icons.playlist_add, size: 18),
-                      label: const Text('添加覆写'),
+                    child: SelectableText.rich(
+                      _monitorCompactTextSpan(
+                        _rule.isEmpty ? '请填写匹配内容和策略' : _rule,
+                        style: const TextStyle(fontFamily: 'monospace'),
+                      ),
                     ),
-                    OutlinedButton.icon(
-                      onPressed: _rule.isEmpty || _saving
-                          ? null
-                          : _appendSubStore,
-                      icon: const Icon(Icons.cloud_upload_outlined, size: 18),
-                      label: const Text('补充至 Sub-Store'),
-                    ),
-                    FilledButton.icon(
-                      onPressed: _rule.isEmpty || _saving
-                          ? null
-                          : () async {
-                              await Clipboard.setData(
-                                ClipboardData(text: _rule),
-                              );
-                              if (context.mounted) Navigator.pop(context);
-                            },
-                      icon: const Icon(Icons.copy_outlined, size: 18),
-                      label: const Text('复制规则'),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 18),
+                  Wrap(
+                    alignment: WrapAlignment.end,
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('取消'),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: _rule.isEmpty || _saving
+                            ? null
+                            : _addOverride,
+                        icon: const Icon(Icons.playlist_add, size: 18),
+                        label: const Text('添加覆写'),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: _rule.isEmpty || _saving
+                            ? null
+                            : _appendSubStore,
+                        icon: const Icon(Icons.cloud_upload_outlined, size: 18),
+                        label: const Text('补充至 Sub-Store'),
+                      ),
+                      FilledButton.icon(
+                        onPressed: _rule.isEmpty || _saving
+                            ? null
+                            : () async {
+                                await Clipboard.setData(
+                                  ClipboardData(text: _rule),
+                                );
+                                if (context.mounted) Navigator.pop(context);
+                              },
+                        icon: const Icon(Icons.copy_outlined, size: 18),
+                        label: const Text('复制规则'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -1005,14 +1052,18 @@ class _MonitorSubStorePanelState extends State<_MonitorSubStorePanel> {
           ),
       ],
     );
-    if (!widget.fitDialogContent) return content;
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 180),
-      curve: Curves.easeOut,
-      child: SizedBox(
-        height: _ruleControllers == null ? (_error == null ? 430 : 480) : 620,
-        child: content,
-      ),
-    );
+    final panel = !widget.fitDialogContent
+        ? content
+        : AnimatedSize(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
+            child: SizedBox(
+              height: _ruleControllers == null
+                  ? (_error == null ? 430 : 480)
+                  : 620,
+              child: content,
+            ),
+          );
+    return _compactMonitorDialogText(panel);
   }
 }

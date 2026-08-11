@@ -424,31 +424,11 @@ extension _NetworkMonitorMobile on _NetworkMonitorViewState {
                 onPressed: () => _update(() => _selected = null),
                 icon: const Icon(Icons.arrow_back),
               ),
-              ProcessIcon(
-                key: ValueKey(
-                  '${item.metadata.process}\n${item.metadata.processPath}',
-                ),
-                process: item.metadata.process,
-                processPath: item.metadata.processPath,
-                size: 32,
-              ),
-              const SizedBox(width: 8),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      monitorClientName(item),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      monitorAddress(item),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
+                child: Text(
+                  monitorAddress(item),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               PopupMenuButton<String>(
