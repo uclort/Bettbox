@@ -86,14 +86,16 @@
 
 ### 桌面网络面板
 
-- 桌面导航以一个“网络面板”入口替换原“请求 / 连接 / 日志”三个页签；托盘菜单在“虚拟网卡”上方提供相同入口并以上下分割线隔开。点击后以同一可执行文件的 `--network-panel` 参数启动独立进程，在 Dock/任务栏使用基于 Bettbox 原图标逐像素保留、仅于右下角叠加蓝色网络波形徽标的专属图标；关闭面板不影响 Bettbox，Bettbox 正常退出或主进程管道断开时会关闭面板。
+- 桌面导航以一个“面板”入口替换原“请求 / 连接 / 日志”三个页签；托盘菜单仍使用“网络面板”文案。点击后以同一可执行文件的 `--network-panel` 参数启动独立进程，在 Dock/任务栏使用基于 Bettbox 原图标逐像素保留、仅于右下角叠加蓝色网络波形徽标的专属图标；关闭面板不影响 Bettbox，Bettbox 正常退出或主进程管道断开时会关闭面板。
 - 独立进程不初始化 Mihomo、单例锁或托盘，通过 `ExternalControl` 现有本地 UDS/TCP 通道读取主进程请求、连接和日志并执行清理/断连操作；请求与日志变更使用持久订阅连接主动通知，一次性请求在响应刷新后由服务端立即关闭 socket，避免面板刷新持续泄漏文件描述符。移除 `desktop_multi_window` 和子引擎全插件重复注册，避免 `tray_manager` 全局事件通道被子窗口覆盖。
 - Android 在“更多”中提供“网络面板”入口，并以内嵌页面复用同一套数据和交互，不加载桌面多窗口能力。
 - 面板集成最近请求、活动连接、DNS、设备、流量统计和日志；最近请求与活动连接直接按 Mihomo `TrackerInfo` 的 `process / sourceIP / host|destinationIP / network / rule / chains` 动态分类，并支持全文搜索、全部表头升降序和拖拽列宽，手动列宽写入本机偏好并在下次打开时恢复。macOS 通过原生 `NSWorkspace` 按进程路径读取 App 图标，并在进程侧栏、连接表和详情中复用显示；侧栏优先挑选有效 App 路径，惰性列表复用行时按新路径重置旧图标。同一路径的并发图标请求会合并，原生端只编码 64×64 PNG，避免面板打开时因重复全尺寸图标转换而卡死。
 - 顶栏搜索框与页签统一垂直居中；设备页只按内核可确认的进程、来源地址和活动/历史状态分类，不再套用 Surge 的静态 IP、网关或接管模式；日志侧栏直接使用 Mihomo 实际事件级别 `error / warning / info / debug`，不展示不会产生记录的 `silent` 配置状态。
-- 请求和连接列表不展示内部 ID，状态按 Mihomo 活动快照、真实出站 socket、`REJECT` 和链路终态区分为红色失败、橙色已拦截、黄色建立中、蓝色已连接、灰色已关闭及灰色空心未知；颜色表达 socket 生命周期而非是否正在传输，悬停显示明确文案。“日期”列改为“时间”并按本机时区显示，规则类型使用独立灰色标签与规则参数区分，策略列只显示最终策略，完整策略链仅在详情展示；策略文本连续空白统一压缩，并以固定像素间隔规避旗帜 Emoji 字体回退产生的大空格。无进程且无来源地址的 Mihomo 内部连接被过滤，真实客户端的 `REJECT` 规则命中继续保留。
+- 请求和连接列表不展示内部 ID，状态按 Mihomo 活动快照、真实出站 socket、`REJECT` 和链路终态区分为红色失败/拦截、黄色建立中、蓝色已连接、绿色已结束及灰色未知。“日期”列改为“时间”并按本机时区显示，规则类型使用独立灰色标签与规则参数区分，策略列只显示最终策略，完整策略链仅在详情展示；策略文本连续空白统一压缩，并以固定像素间隔规避旗帜 Emoji 字体回退产生的大空格。无进程且无来源地址的 Mihomo 内部连接被过滤，真实客户端的 `REJECT` 规则命中继续保留。
 - 请求、连接、DNS 和设备表使用固定行高 `ListView.builder` 惰性创建可见行，不再由 `DataTable` 一次性构建全部历史记录；水平与垂直滚动相互独立并裁剪在内容区，展开底部详情时不发生表格穿透或错位。
 - DNS 由 `GlobalState.patchRawConfig` 读取当前生效配置，按 `default-nameserver / nameserver / fallback / proxy-server-nameserver / direct-nameserver / nameserver-policy / hosts` 原始配置键分类；系统 Hosts 读取 `/etc/hosts`，运行时解析按 `dnsMode` 的 `fake-ip / redir-host / hosts / normal` 分类并仅保留带有效目标 IP 的最新记录。
+- DNS 页通过 `flushDnsCache` 同时调用内核 DNS 缓存与 Fake-IP 映射清理；连接链路遇到 `dns_cache` 事件时显示“DNS 缓存命中（本次未发起 DNS 查询）”，标题列根据实际最长步骤文案动态限宽。
+- 最近请求与活动连接的右键菜单在 `lib/views/network_monitor_rule.dart` 提供“生成规则”对话框，支持域名、IP CIDR、进程名/路径、端口与网络类型；规则类型仅能下拉选择，匹配内容和策略可编辑，策略可从当前策略组/节点列表替换并复制最终 Clash/Mihomo 文本。
 - 流量页调用 Mihomo `getTraffic / getTotalTraffic` 展示实时和累计上传下载；最近完成请求与活动连接去重后只承担出站链、规则类型、进程、来源地址、网络协议和目标主机的样本聚合，不再将 1024 条环形历史记录求和作为总流量。
 - 请求与日志由主窗口收到新数据后主动推送，面板将事件刷新限制为最多每 250 ms 一次；活动连接受 Mihomo 快照接口限制，仅在连接页可见时每 250 ms 更新，流量页按内核统计周期每秒更新，其他页面每 5 秒兜底同步。
 - Mihomo 在连接加入和离开时均回传同一连接 ID，Bettbox 请求记录按 ID 原位更新，最近请求页收到事件后立即刷新活动/完成状态，不再依赖 250 ms 主动快照；独立进程订阅通知显式刷新 socket，避免状态事件延迟到 5 秒兜底刷新。该页展示的是 Mihomo 连接而非 HTTPS 内部请求，浏览器复用 HTTP/2 或 QUIC 连接时不会新增记录。
@@ -101,7 +103,7 @@
 - 选中请求或连接后展开底部详情，顶部拖拽手柄可调整面板高度。通用页使用占满详情视口的响应式布局，地址和进程信息独占整行，所有长文本自动换行且可框选复制；显式滚动条固定在面板最右侧，并提供复制详情按钮。信息区分客户端地址、目标地址、内核 Fake-IP、实际出站本地地址和直连目标/代理节点远端地址，GeoIP/ASN 仅在 TrackerInfo 或现有核心 GeoIP 查询返回值时显示。原“计时 & 日志”改为“Mihomo 链路”，链路文字同样支持选择复制，并优先展示 custom-mihomo 随当前连接返回的 DNS 逐服务器尝试/成功/失败、规则匹配、策略链和真实 socket 建立事件，旧内核才退回源端口与目标精确关联日志；Mihomo 不提供的 HTTP 请求/响应报头和正文页签已移除。
 - custom-mihomo 的连接级链路上下文位于 `source/constant/connection_trace.go`，DNS、规则和出站事件接入 `source/dns` 与 `source/tunnel`，`source/tunnel/statistic/tracker.go` 将 `trace / outboundLocalAddress / outboundRemoteAddress` 随 TrackerInfo 返回；回归测试位于 `source/constant/connection_trace_test.go` 及相关 Go 包测试。
 - 面板进程不跟踪来源应用，关闭时不调用任何应用激活 API；除 Bettbox 主进程负责启动和退出面板进程外，Dock、Cmd+Tab、窗口层级和关闭后的前台选择均由 macOS 按两个普通独立 App 处理。
-- 面板代码位于 `lib/views/network_monitor.dart`、`lib/views/network_monitor_detail.dart` 和 `lib/views/network_monitor_data.dart`，进程与 IPC 生命周期位于 `lib/common/window.dart`、`lib/common/external_control.dart`，桌面/Android 导航与托盘入口位于 `lib/common/navigation.dart`、`lib/views/network_monitor_navigation.dart` 和 `lib/common/tray.dart`；排序、列宽、状态、时区、DNS 与入口回归测试位于 `test/views/network_monitor_test.dart`，独立进程入口覆盖 macOS、Windows 和 Linux。
+- 面板代码位于 `lib/views/network_monitor.dart`、`lib/views/network_monitor_detail.dart`、`lib/views/network_monitor_data.dart` 和 `lib/views/network_monitor_rule.dart`，进程与 IPC 生命周期位于 `lib/common/window.dart`、`lib/common/external_control.dart`，桌面/Android 导航与托盘入口位于 `lib/common/navigation.dart`、`lib/views/network_monitor_navigation.dart` 和 `lib/common/tray.dart`；排序、列宽、状态、时区、DNS 与入口回归测试位于 `test/views/network_monitor_test.dart`，独立进程入口覆盖 macOS、Windows 和 Linux。
 
 ### 统一启停交互
 

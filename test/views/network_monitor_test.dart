@@ -194,6 +194,7 @@ void main() {
       containsAll([NavigationItemMode.desktop, NavigationItemMode.more]),
     );
     expect(monitor.modes, isNot(contains(NavigationItemMode.mobile)));
+    expect(PageLabel.networkMonitor.localizedName, '面板');
   });
 
   test('表头重复点击切换方向，切换列使用合理默认方向', () {
@@ -293,6 +294,59 @@ void main() {
     expect(
       monitorTrackerStatus(unknown, const {}),
       MonitorTrackerStatus.unknown,
+    );
+  });
+
+  test('规则生成支持固定类型、手动策略和 no-resolve', () {
+    expect(
+      monitorGeneratedRule(
+        MonitorRuleType.domainSuffix,
+        'chatgpt.com',
+        '自定义策略',
+      ),
+      'DOMAIN-SUFFIX,chatgpt.com,自定义策略',
+    );
+    expect(
+      monitorGeneratedRule(
+        MonitorRuleType.ipCidr,
+        '1.1.1.1/32',
+        'DIRECT',
+        noResolve: true,
+      ),
+      'IP-CIDR,1.1.1.1/32,DIRECT,no-resolve',
+    );
+    expect(monitorGeneratedRule(MonitorRuleType.domain, '', 'DIRECT'), isEmpty);
+  });
+
+  test('规则策略选项合并策略组和节点并去重', () {
+    final options = monitorRulePolicies(const [
+      Group(
+        name: '自动选择',
+        type: GroupType.Selector,
+        all: [
+          Proxy(name: '节点 A', type: 'ss'),
+          Proxy(name: '节点 A', type: 'ss'),
+        ],
+      ),
+    ]);
+
+    expect(options['groups'], ['自动选择']);
+    expect(options['proxies'], ['节点 A']);
+  });
+
+  test('DNS 缓存命中明确说明本次没有发起查询', () {
+    const event = MonitorConnectionTraceEvent(
+      timestamp: 1,
+      stage: 'dns_cache',
+      title: '缓存命中',
+      detail: 'example.com → 1.1.1.1',
+      status: 'success',
+    );
+
+    expect(monitorTraceDisplayTitle(event), 'DNS 缓存命中');
+    expect(
+      monitorTraceDisplayDetail(event),
+      'example.com → 1.1.1.1 · 本次未发起 DNS 查询',
     );
   });
 

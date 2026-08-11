@@ -17,23 +17,24 @@ import 'package:window_manager/window_manager.dart';
 import 'network_monitor_data.dart';
 
 part 'network_monitor_detail.dart';
+part 'network_monitor_rule.dart';
 
 String _monitorStatusLabel(MonitorTrackerStatus status) => switch (status) {
   MonitorTrackerStatus.failed => '失败',
   MonitorTrackerStatus.blocked => '已拦截',
   MonitorTrackerStatus.connecting => '建立中',
   MonitorTrackerStatus.connected => '已连接',
-  MonitorTrackerStatus.closed => '已关闭',
+  MonitorTrackerStatus.closed => '已结束',
   MonitorTrackerStatus.unknown => '未知',
 };
 
 Color _monitorStatusColor(BuildContext context, MonitorTrackerStatus status) =>
     switch (status) {
       MonitorTrackerStatus.failed => Colors.red,
-      MonitorTrackerStatus.blocked => Colors.deepOrange,
+      MonitorTrackerStatus.blocked => Colors.red,
       MonitorTrackerStatus.connecting => Colors.amber,
       MonitorTrackerStatus.connected => Colors.blue,
-      MonitorTrackerStatus.closed => Theme.of(context).colorScheme.outline,
+      MonitorTrackerStatus.closed => Colors.green,
       MonitorTrackerStatus.unknown => Theme.of(
         context,
       ).colorScheme.outlineVariant,
@@ -164,6 +165,10 @@ class _NetworkMonitorHostState extends ConsumerState<NetworkMonitorHost> {
               arguments as String,
             ))?.countryCode ??
             '';
+      case 'rulePolicies':
+        return monitorRulePolicies(ref.read(groupsProvider));
+      case 'flushDnsCache':
+        return await clashCore.flushDnsCache() && await clashCore.flushFakeIP();
       case 'clearRequests':
         ref.read(requestsProvider.notifier).clearRequests();
         return true;
@@ -468,7 +473,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
     }
   }
 
-  Future<void> _invoke(String method, [Object? arguments]) async {
+  Future<bool> _invoke(String method, [Object? arguments]) async {
     try {
       if (widget.embedded) {
         switch (method) {
@@ -480,13 +485,20 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
             clashCore.closeConnection(arguments as String);
           case 'closeConnections':
             await clashCore.closeConnections();
+          case 'flushDnsCache':
+            if (!await clashCore.flushDnsCache() ||
+                !await clashCore.flushFakeIP()) {
+              throw StateError('清除 DNS 缓存失败');
+            }
         }
       } else {
         await ExternalControl.request(method, arguments);
       }
       await _refresh();
+      return true;
     } catch (error) {
       if (mounted) setState(() => _error = '操作失败：$error');
+      return false;
     }
   }
 
@@ -625,7 +637,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
 
   Widget _buildTopBar(BuildContext context) {
     const labels = {
-      MonitorPage.requests: '最近的请求',
+      MonitorPage.requests: '最近请求',
       MonitorPage.connections: '活动连接',
       MonitorPage.dns: 'DNS',
       MonitorPage.devices: '设备',
@@ -1040,6 +1052,8 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
     MonitorTrackerStatus status,
   ) {
     return InkWell(
+      onSecondaryTapDown: (details) =>
+          _showTrackerContextMenu(context, item, details),
       onTap: () => setState(() {
         _selected = item;
         _detailTab = 0;
@@ -1088,6 +1102,11 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
       ),
     );
   }
+
+  void _selectTracker(TrackerInfo item) => setState(() {
+    _selected = item;
+    _detailTab = 0;
+  });
 
   Widget _trackerCell(MonitorSortColumn column, Widget child) => SizedBox(
     width: _columnWidths[column],

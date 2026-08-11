@@ -5,6 +5,137 @@ import 'package:flutter/foundation.dart';
 
 enum MonitorPage { requests, connections, dns, devices, traffic, logs }
 
+enum MonitorRuleSource { domain, ip, process, transport }
+
+enum MonitorRuleType {
+  domain,
+  domainSuffix,
+  domainKeyword,
+  ipCidr,
+  ipCidr6,
+  sourceIpCidr,
+  processName,
+  processPath,
+  processNameRegex,
+  destinationPort,
+  sourcePort,
+  network,
+}
+
+extension MonitorRuleSourceExt on MonitorRuleSource {
+  String get label => switch (this) {
+    MonitorRuleSource.domain => '域名',
+    MonitorRuleSource.ip => 'IP',
+    MonitorRuleSource.process => '进程',
+    MonitorRuleSource.transport => '端口 / 网络',
+  };
+}
+
+extension MonitorRuleTypeExt on MonitorRuleType {
+  String get clashName => switch (this) {
+    MonitorRuleType.domain => 'DOMAIN',
+    MonitorRuleType.domainSuffix => 'DOMAIN-SUFFIX',
+    MonitorRuleType.domainKeyword => 'DOMAIN-KEYWORD',
+    MonitorRuleType.ipCidr => 'IP-CIDR',
+    MonitorRuleType.ipCidr6 => 'IP-CIDR6',
+    MonitorRuleType.sourceIpCidr => 'SRC-IP-CIDR',
+    MonitorRuleType.processName => 'PROCESS-NAME',
+    MonitorRuleType.processPath => 'PROCESS-PATH',
+    MonitorRuleType.processNameRegex => 'PROCESS-NAME-REGEX',
+    MonitorRuleType.destinationPort => 'DST-PORT',
+    MonitorRuleType.sourcePort => 'SRC-PORT',
+    MonitorRuleType.network => 'NETWORK',
+  };
+
+  MonitorRuleSource get source => switch (this) {
+    MonitorRuleType.domain ||
+    MonitorRuleType.domainSuffix ||
+    MonitorRuleType.domainKeyword => MonitorRuleSource.domain,
+    MonitorRuleType.ipCidr ||
+    MonitorRuleType.ipCidr6 ||
+    MonitorRuleType.sourceIpCidr => MonitorRuleSource.ip,
+    MonitorRuleType.processName ||
+    MonitorRuleType.processPath ||
+    MonitorRuleType.processNameRegex => MonitorRuleSource.process,
+    _ => MonitorRuleSource.transport,
+  };
+
+  bool get supportsNoResolve =>
+      this == MonitorRuleType.ipCidr ||
+      this == MonitorRuleType.ipCidr6 ||
+      this == MonitorRuleType.sourceIpCidr;
+}
+
+List<MonitorRuleType> monitorRuleTypes(MonitorRuleSource source) =>
+    MonitorRuleType.values.where((type) => type.source == source).toList();
+
+Map<String, Object?> monitorRulePolicies(List<Group> groups) {
+  final groupNames = groups
+      .map((group) => group.name.trim())
+      .where((name) => name.isNotEmpty);
+  final proxyNames = groups.expand(
+    (group) => group.all.map((proxy) => proxy.name.trim()),
+  );
+  return {
+    'groups': (groupNames.toSet().toList()..sort()),
+    'proxies': (proxyNames.where((name) => name.isNotEmpty).toSet().toList()
+      ..sort()),
+  };
+}
+
+String monitorRuleDefaultValue(TrackerInfo item, MonitorRuleType type) {
+  String cidr(String value, int bits) {
+    value = monitorSocketHost(value);
+    if (value.isEmpty || value.contains('/')) return value;
+    return '$value/$bits';
+  }
+
+  final targetIp = monitorTargetIP(item);
+  final directIp = monitorIsDirect(item)
+      ? monitorSocketHost(monitorOutboundRemoteAddress(item))
+      : '';
+  return switch (type) {
+    MonitorRuleType.domain ||
+    MonitorRuleType.domainSuffix ||
+    MonitorRuleType.domainKeyword => item.metadata.host.trim(),
+    MonitorRuleType.ipCidr => cidr(
+      item.metadata.dnsMode == DnsMode.fakeIp ? directIp : targetIp,
+      32,
+    ),
+    MonitorRuleType.ipCidr6 => cidr(
+      targetIp.contains(':') ? targetIp : directIp,
+      128,
+    ),
+    MonitorRuleType.sourceIpCidr => cidr(
+      item.metadata.sourceIP,
+      item.metadata.sourceIP.contains(':') ? 128 : 32,
+    ),
+    MonitorRuleType.processName => item.metadata.process.trim(),
+    MonitorRuleType.processPath => item.metadata.processPath.trim(),
+    MonitorRuleType.processNameRegex => item.metadata.process.trim(),
+    MonitorRuleType.destinationPort => item.metadata.destinationPort.trim(),
+    MonitorRuleType.sourcePort => item.metadata.sourcePort.trim(),
+    MonitorRuleType.network => item.metadata.network.trim().toLowerCase(),
+  };
+}
+
+String monitorGeneratedRule(
+  MonitorRuleType type,
+  String value,
+  String policy, {
+  bool noResolve = false,
+}) {
+  value = value.trim();
+  policy = policy.trim();
+  if (value.isEmpty || policy.isEmpty) return '';
+  return [
+    type.clashName,
+    value,
+    policy,
+    if (noResolve && type.supportsNoResolve) 'no-resolve',
+  ].join(',');
+}
+
 enum MonitorTrackerFacet { process, source, target, network, rule, outbound }
 
 enum MonitorTrackerStatus {
@@ -577,6 +708,19 @@ class MonitorConnectionTraceEvent {
 
 List<MonitorConnectionTraceEvent> monitorConnectionTrace(TrackerInfo item) =>
     item.trace.map(MonitorConnectionTraceEvent.fromJson).toList();
+
+bool monitorTraceIsDnsCacheHit(MonitorConnectionTraceEvent event) =>
+    event.title == '缓存命中' ||
+    (event.stage.toLowerCase().contains('dns') &&
+        event.stage.toLowerCase().contains('cache'));
+
+String monitorTraceDisplayTitle(MonitorConnectionTraceEvent event) =>
+    monitorTraceIsDnsCacheHit(event) ? 'DNS 缓存命中' : event.title;
+
+String monitorTraceDisplayDetail(MonitorConnectionTraceEvent event) =>
+    monitorTraceIsDnsCacheHit(event)
+    ? '${event.detail}${event.detail.isEmpty ? '' : ' · '}本次未发起 DNS 查询'
+    : event.detail;
 
 String monitorTraceClock(int timestamp) {
   if (timestamp <= 0) return '';
