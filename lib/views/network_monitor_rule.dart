@@ -345,12 +345,13 @@ class _MonitorRuleDialogState extends State<_MonitorRuleDialog> {
     final added = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => Dialog(
+        clipBehavior: Clip.antiAlias,
         child: SizedBox(
           width: 820,
-          height: 620,
           child: _MonitorSubStorePanel(
             runAction: widget.runAction,
             appendRule: _rule,
+            fitDialogContent: true,
             onClose: () => Navigator.pop(dialogContext, false),
             onAppended: () => Navigator.pop(dialogContext, true),
           ),
@@ -540,12 +541,14 @@ class _MonitorRuleDialogState extends State<_MonitorRuleDialog> {
 class _MonitorSubStorePanel extends StatefulWidget {
   final Future<Object?> Function(String method, Object? arguments) runAction;
   final String? appendRule;
+  final bool fitDialogContent;
   final VoidCallback? onClose;
   final VoidCallback? onAppended;
 
   const _MonitorSubStorePanel({
     required this.runAction,
     this.appendRule,
+    this.fitDialogContent = false,
     this.onClose,
     this.onAppended,
   });
@@ -864,60 +867,76 @@ class _MonitorSubStorePanelState extends State<_MonitorSubStorePanel> {
                     },
                     itemBuilder: (context, index) {
                       final item = controllers[index];
-                      return Padding(
+                      return Card(
                         key: ObjectKey(item.rule),
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: Row(
-                          children: [
-                            ReorderableDragStartListener(
-                              index: index,
-                              child: const Padding(
-                                padding: EdgeInsets.all(8),
-                                child: Icon(Icons.drag_indicator),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        elevation: 0,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerLow,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          side: BorderSide(
+                            color: Theme.of(context).colorScheme.outlineVariant,
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 12,
+                          ),
+                          child: Row(
+                            children: [
+                              ReorderableDragStartListener(
+                                index: index,
+                                child: const Padding(
+                                  padding: EdgeInsets.all(8),
+                                  child: Icon(Icons.drag_indicator),
+                                ),
                               ),
-                            ),
-                            Expanded(
-                              child: Column(
-                                children: [
-                                  TextField(
-                                    controller: item.rule,
-                                    minLines: 1,
-                                    maxLines: 3,
-                                    style: const TextStyle(
-                                      fontFamily: 'monospace',
+                              Expanded(
+                                child: Column(
+                                  children: [
+                                    TextField(
+                                      controller: item.rule,
+                                      minLines: 1,
+                                      maxLines: 3,
+                                      style: const TextStyle(
+                                        fontFamily: 'monospace',
+                                      ),
+                                      decoration: InputDecoration(
+                                        labelText: '规则 ${index + 1}',
+                                        border: const OutlineInputBorder(),
+                                      ),
                                     ),
-                                    decoration: InputDecoration(
-                                      labelText: '规则 ${index + 1}',
-                                      border: const OutlineInputBorder(),
+                                    const SizedBox(height: 8),
+                                    TextField(
+                                      controller: item.note,
+                                      minLines: 1,
+                                      maxLines: 2,
+                                      decoration: const InputDecoration(
+                                        labelText: '说明（可选）',
+                                        hintText: '例如：1Password 直连，避免同步异常',
+                                        border: OutlineInputBorder(),
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  TextField(
-                                    controller: item.note,
-                                    minLines: 1,
-                                    maxLines: 2,
-                                    decoration: const InputDecoration(
-                                      labelText: '说明（可选）',
-                                      hintText: '例如：1Password 直连，避免同步异常',
-                                      border: OutlineInputBorder(),
-                                    ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                            IconButton(
-                              tooltip: '删除规则',
-                              onPressed: () {
-                                setState(() {
-                                  controllers.removeAt(index);
-                                  item.rule.dispose();
-                                  item.note.dispose();
-                                  _error = null;
-                                });
-                              },
-                              icon: const Icon(Icons.delete_outline),
-                            ),
-                          ],
+                              IconButton(
+                                tooltip: '删除规则',
+                                onPressed: () {
+                                  setState(() {
+                                    controllers.removeAt(index);
+                                    item.rule.dispose();
+                                    item.note.dispose();
+                                    _error = null;
+                                  });
+                                },
+                                icon: const Icon(Icons.delete_outline),
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     },
@@ -953,7 +972,7 @@ class _MonitorSubStorePanelState extends State<_MonitorSubStorePanel> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    final content = Stack(
       fit: StackFit.expand,
       children: [
         IgnorePointer(
@@ -964,10 +983,10 @@ class _MonitorSubStorePanelState extends State<_MonitorSubStorePanel> {
         ),
         if (_busyMessage != null)
           Positioned.fill(
-            child: ColoredBox(
+            child: Material(
               color: Theme.of(
                 context,
-              ).colorScheme.surface.withValues(alpha: .88),
+              ).colorScheme.surface.withValues(alpha: .92),
               child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -981,6 +1000,15 @@ class _MonitorSubStorePanelState extends State<_MonitorSubStorePanel> {
             ),
           ),
       ],
+    );
+    if (!widget.fitDialogContent) return content;
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOut,
+      child: SizedBox(
+        height: _ruleControllers == null ? (_error == null ? 430 : 480) : 620,
+        child: content,
+      ),
     );
   }
 }

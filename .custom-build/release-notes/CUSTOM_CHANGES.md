@@ -97,7 +97,7 @@
 - 请求、连接、DNS 和设备表使用固定行高 `ListView.builder` 惰性创建可见行，不再由 `DataTable` 一次性构建全部历史记录；水平与垂直滚动相互独立并裁剪在内容区，展开底部详情时不发生表格穿透或错位。
 - DNS 由 `GlobalState.patchRawConfig` 读取当前生效配置，按 `default-nameserver / nameserver / fallback / proxy-server-nameserver / direct-nameserver / nameserver-policy / hosts` 原始配置键分类；系统 Hosts 读取 `/etc/hosts`，运行时解析按 `dnsMode` 的 `fake-ip / redir-host / hosts / normal` 分类并仅保留带有效目标 IP 的最新记录。
 - DNS 页通过 `flushDnsCache` 同时调用内核 DNS 缓存与 Fake-IP 映射清理；连接链路遇到 `dns_cache` 事件时显示“DNS 缓存命中（本次未发起 DNS 查询）”，标题列根据实际最长步骤文案动态限宽。
-- 最近请求与活动连接的右键菜单在 `lib/views/network_monitor_rule.dart` 提供“生成规则”对话框，支持域名、IP CIDR、进程名/路径、端口与网络类型；规则类型仅能下拉选择，匹配内容和策略可编辑，策略可从当前策略组/节点列表替换并复制最终 Clash/Mihomo 文本。生成结果可直接加入当前配置的“附加到原始规则 / 覆盖原始规则”，无需自动开启覆写；重复规则二次确认后才继续添加。Sub-Store 入口既可将新规则补充至 `BETTBOX_CUSTOM_RULES` 顶部，也可读取后修改、删除和拖动排序；管理页每条规则支持可选说明，说明作为 JS 注释与规则同步读写。读取和保存期间在当前页展示 loading，读取成功原位切换到管理视图，管理取消则回到 Sub-Store 凭据页。文件地址与 API Key 仅在成功后写入本机最近 10 条历史，输入框本身只编辑、右侧箭头才展开历史。
+- 最近请求与活动连接的右键菜单在 `lib/views/network_monitor_rule.dart` 提供“生成规则”对话框，支持域名、IP CIDR、进程名/路径、端口与网络类型；规则类型仅能下拉选择，匹配内容和策略可编辑，策略可从当前策略组/节点列表替换并复制最终 Clash/Mihomo 文本。生成结果可直接加入当前配置的“附加到原始规则 / 覆盖原始规则”，无需自动开启覆写；重复规则二次确认后才继续添加。Sub-Store 入口既可将新规则补充至 `BETTBOX_CUSTOM_RULES` 顶部，也可读取后修改、删除和拖动排序；凭据态按内容使用较小高度，进入规则管理后动画展开，loading 由 Dialog 统一裁剪圆角。管理页每条规则使用独立边框卡片并支持可选说明，说明作为 JS 注释与规则同步读写；管理取消回到 Sub-Store 凭据页。文件地址与 API Key 仅在成功后写入本机最近 10 条历史，输入框本身只编辑、右侧箭头才展开历史。
 - `monitorCompactWhitespace` 是面板策略名的唯一规范化入口，`monitorRulePolicies`、`monitorGeneratedRule`、列表、详情与规则预览共用该结果，避免配置中的 Unicode/连续空白在不同页面反复出现。策略编辑改为 `TextField + MenuAnchor`，输入区不自动弹菜单，只有右侧箭头控制展开。
 - 结构化 Mihomo 链路的步骤标题、毫秒时间戳和事件内容使用独立列，内容多行换行保持自身左边界对齐。
 - 流量页调用 Mihomo `getTraffic / getTotalTraffic` 展示实时和累计上传下载；最近完成请求与活动连接去重后只承担出站链、规则类型、进程、来源地址、网络协议和目标主机的样本聚合，不再将 1024 条环形历史记录求和作为总流量。
