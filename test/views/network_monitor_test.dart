@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:bett_box/common/fixed.dart';
 import 'package:bett_box/common/navigation.dart';
 import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/models.dart';
@@ -104,6 +105,32 @@ void main() {
     expect(find.byIcon(Icons.apps_outlined), findsOneWidget);
 
     await tester.pump(const Duration(milliseconds: 130));
+    expect(calls, 2);
+  });
+
+  testWidgets('macOS 无进程路径时仍交给原生层按进程名查找图标', (tester) async {
+    const channel = MethodChannel('app');
+    const process = 'Bettbox-Running-App-Icon-Test';
+    var calls = 0;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          if (call.method == 'getPackageIcon' &&
+              (call.arguments as Map)['packageName'] == process &&
+              (call.arguments as Map)['processPath'] == '') {
+            calls++;
+          }
+          return null;
+        });
+    addTearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null),
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(home: ProcessIcon(process: process)),
+    );
+    await tester.pump(const Duration(milliseconds: 130));
+
     expect(calls, 2);
   });
 
@@ -483,6 +510,34 @@ void main() {
     expect(
       monitorTrackerFacetValue(item, MonitorTrackerFacet.outbound),
       'Proxy',
+    );
+  });
+
+  test('连接状态回传按 ID 更新同一条请求且复用已知 App 路径', () {
+    const appPath = '/Applications/ChatGPT.app/Contents/Resources/codex';
+    final completed = _tracker(id: 'completed', process: 'codex', upload: 1);
+    final active = _tracker(
+      id: 'active',
+      process: 'codex',
+      upload: 2,
+      metadata: const Metadata(process: 'codex', processPath: appPath),
+    );
+    final updated = active.copyWith(upload: 3);
+    final requests = FixedList<TrackerInfo>(10)
+      ..add(completed)
+      ..add(active)
+      ..addOrReplace(updated, (item) => item.id == updated.id);
+
+    final restored = monitorRestoreProcessPaths(requests.list);
+
+    expect(requests.length, 2);
+    expect(requests.list.singleWhere((item) => item.id == 'active').upload, 3);
+    expect(
+      restored
+          .singleWhere((item) => item.id == 'completed')
+          .metadata
+          .processPath,
+      appPath,
     );
   });
 

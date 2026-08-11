@@ -88,7 +88,7 @@ class NetworkMonitorHost extends ConsumerStatefulWidget {
 
 class _NetworkMonitorHostState extends ConsumerState<NetworkMonitorHost> {
   final _snapshotReader = NetworkMonitorSnapshotReader();
-  ProviderSubscription<TrackerInfo?>? _requestsSubscription;
+  ProviderSubscription<List<TrackerInfo>>? _requestsSubscription;
   ProviderSubscription<Log?>? _logsSubscription;
 
   @override
@@ -96,9 +96,7 @@ class _NetworkMonitorHostState extends ConsumerState<NetworkMonitorHost> {
     super.initState();
     ExternalControl.setNetworkMonitorHandler(_handleMethodCall);
     _requestsSubscription = ref.listenManual(
-      requestsProvider.select(
-        (state) => state.list.isEmpty ? null : state.list.last,
-      ),
+      requestsProvider.select((state) => state.list),
       (_, _) => unawaited(_notifyDataChanged()),
     );
     _logsSubscription = ref.listenManual(
@@ -110,7 +108,7 @@ class _NetworkMonitorHostState extends ConsumerState<NetworkMonitorHost> {
   }
 
   Future<void> _notifyDataChanged() async {
-    ExternalControl.notifyNetworkMonitorChanged();
+    await ExternalControl.notifyNetworkMonitorChanged();
   }
 
   @override
@@ -133,6 +131,10 @@ class _NetworkMonitorHostState extends ConsumerState<NetworkMonitorHost> {
     switch (method) {
       case 'snapshot':
         return _snapshot(includeTraffic: arguments == true);
+      case 'connectionsSnapshot':
+        return (await clashCore.getConnections())
+            .map(monitorTrackerToJson)
+            .toList();
       case 'dnsSnapshot':
         return _readMonitorDnsSnapshot(ref);
       case 'countryCode':
@@ -227,7 +229,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
   Timer? _trafficTimer;
   Timer? _eventRefreshTimer;
   StreamSubscription<void>? _networkMonitorSubscription;
-  ProviderSubscription<TrackerInfo?>? _requestsSubscription;
+  ProviderSubscription<List<TrackerInfo>>? _requestsSubscription;
   ProviderSubscription<Log?>? _logsSubscription;
   List<TrackerInfo> _requests = const [], _connections = const [];
   List<MonitorLog> _logs = const [];
@@ -249,6 +251,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
   int _detailTab = 0;
   double _detailHeight = 260;
   bool _loading = false;
+  bool _connectionsLoading = false;
   bool _dnsLoading = false;
   bool _refreshPending = false;
   String? _error;
@@ -274,9 +277,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
     unawaited(_restoreColumnWidths());
     if (widget.embedded) {
       _requestsSubscription = ref.listenManual(
-        requestsProvider.select(
-          (state) => state.list.isEmpty ? null : state.list.last,
-        ),
+        requestsProvider.select((state) => state.list),
         (_, _) => _handleDataChanged(),
       );
       _logsSubscription = ref.listenManual(
@@ -294,7 +295,9 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
       unawaited(_refresh());
     });
     _connectionsTimer = Timer.periodic(const Duration(milliseconds: 250), (_) {
-      if (_page == MonitorPage.connections) unawaited(_refresh());
+      if (_page == MonitorPage.connections) {
+        unawaited(_refreshConnections());
+      }
     });
     _trafficTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (_page == MonitorPage.traffic) unawaited(_refresh());
@@ -369,12 +372,18 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
             );
       if (!mounted || raw == null) return;
       final map = normalizeMonitorMap(raw);
-      final requests = (map['requests'] as List? ?? const [])
+      var requests = (map['requests'] as List? ?? const [])
           .map((item) => TrackerInfo.fromJson(normalizeMonitorMap(item)))
           .toList();
-      final connections = (map['connections'] as List? ?? const [])
+      var connections = (map['connections'] as List? ?? const [])
           .map((item) => TrackerInfo.fromJson(normalizeMonitorMap(item)))
           .toList();
+      final trackers = monitorRestoreProcessPaths([
+        ...requests,
+        ...connections,
+      ]);
+      requests = trackers.take(requests.length).toList();
+      connections = trackers.skip(requests.length).toList();
       final logs = (map['logs'] as List? ?? const [])
           .map(MonitorLog.fromJson)
           .toList();
@@ -388,6 +397,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
         _trafficDown = (traffic['down'] as num?)?.toInt() ?? 0;
         _totalTrafficUp = (totalTraffic['up'] as num?)?.toInt() ?? 0;
         _totalTrafficDown = (totalTraffic['down'] as num?)?.toInt() ?? 0;
+        _selected = monitorUpdatedSelection(_selected, requests, connections);
         _error = null;
       });
     } catch (error) {
@@ -398,6 +408,39 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
         _refreshPending = false;
         unawaited(_refresh());
       }
+    }
+  }
+
+  Future<void> _refreshConnections() async {
+    if (_connectionsLoading) return;
+    _connectionsLoading = true;
+    try {
+      final raw = widget.embedded
+          ? await clashCore.getConnections()
+          : await ExternalControl.request('connectionsSnapshot');
+      if (!mounted || raw == null) return;
+      final connections = widget.embedded
+          ? raw as List<TrackerInfo>
+          : (raw as List)
+                .map((item) => TrackerInfo.fromJson(normalizeMonitorMap(item)))
+                .toList();
+      final trackers = monitorRestoreProcessPaths([
+        ..._requests,
+        ...connections,
+      ]);
+      final resolvedConnections = trackers.skip(_requests.length).toList();
+      setState(() {
+        _connections = resolvedConnections;
+        _selected = monitorUpdatedSelection(
+          _selected,
+          _requests,
+          resolvedConnections,
+        );
+      });
+    } catch (error) {
+      if (mounted) setState(() => _error = '读取活动连接失败：$error');
+    } finally {
+      _connectionsLoading = false;
     }
   }
 

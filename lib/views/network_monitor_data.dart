@@ -88,8 +88,8 @@ class NetworkMonitorSnapshotReader {
     _previousConnections = current;
     _previousConnectionsAt = now;
     return {
-      'requests': requests.map(_trackerToJson).toList(),
-      'connections': withSpeed.map(_trackerToJson).toList(),
+      'requests': requests.map(monitorTrackerToJson).toList(),
+      'connections': withSpeed.map(monitorTrackerToJson).toList(),
       'logs': logs.map((log) => log.toJson()).toList(),
       if (traffic != null)
         'traffic': {'up': traffic.up.value, 'down': traffic.down.value},
@@ -100,14 +100,12 @@ class NetworkMonitorSnapshotReader {
         },
     };
   }
-
-  Map<String, Object?> _trackerToJson(TrackerInfo tracker) {
-    return <String, Object?>{
-      ...tracker.toJson(),
-      'metadata': tracker.metadata.toJson(),
-    };
-  }
 }
+
+Map<String, Object?> monitorTrackerToJson(TrackerInfo tracker) => {
+  ...tracker.toJson(),
+  'metadata': tracker.metadata.toJson(),
+};
 
 enum MonitorSortColumn {
   status,
@@ -169,6 +167,41 @@ String monitorClientName(TrackerInfo item) {
   return item.metadata.process.isNotEmpty
       ? item.metadata.process
       : item.metadata.sourceIP;
+}
+
+List<TrackerInfo> monitorRestoreProcessPaths(Iterable<TrackerInfo> trackers) {
+  final items = trackers.toList();
+  final paths = <String, String>{};
+  for (final item in items) {
+    final process = item.metadata.process.trim().toLowerCase();
+    final path = item.metadata.processPath.trim();
+    if (process.isEmpty || path.isEmpty) continue;
+    final current = paths[process] ?? '';
+    if (current.isEmpty ||
+        (!current.toLowerCase().contains('.app/') &&
+            path.toLowerCase().contains('.app/'))) {
+      paths[process] = path;
+    }
+  }
+  return items.map((item) {
+    if (item.metadata.processPath.trim().isNotEmpty) return item;
+    final path = paths[item.metadata.process.trim().toLowerCase()] ?? '';
+    return path.isEmpty
+        ? item
+        : item.copyWith(metadata: item.metadata.copyWith(processPath: path));
+  }).toList();
+}
+
+TrackerInfo? monitorUpdatedSelection(
+  TrackerInfo? selected,
+  Iterable<TrackerInfo> requests,
+  Iterable<TrackerInfo> connections,
+) {
+  if (selected == null) return null;
+  for (final item in [...requests, ...connections]) {
+    if (item.id == selected.id) return item;
+  }
+  return selected;
 }
 
 String monitorTrackerFacetLabel(MonitorTrackerFacet facet) => switch (facet) {

@@ -243,7 +243,7 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
         if (remoteRegion.isNotEmpty && remoteRegion != targetRegion)
           '远端地区：$remoteRegion',
       ];
-      return _infoCard(context, 'IP 地址', lines, width: 300);
+      return _infoCard(context, 'IP 地址', lines, width: 420, wrapLines: true);
     }
 
     if (remoteIP.isEmpty) return buildCard('');
@@ -381,6 +381,7 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
     String title,
     List<String> lines, {
     double width = 180,
+    bool wrapLines = false,
     List<Widget> children = const [],
   }) {
     return Container(
@@ -396,7 +397,13 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
           Text(title, style: Theme.of(context).textTheme.labelMedium),
           const SizedBox(height: 4),
           for (final line in lines)
-            Text(line, maxLines: 1, overflow: TextOverflow.ellipsis),
+            Text(
+              line,
+              maxLines: wrapLines ? null : 1,
+              overflow: wrapLines
+                  ? TextOverflow.visible
+                  : TextOverflow.ellipsis,
+            ),
           ...children,
         ],
       ),

@@ -96,6 +96,8 @@
 - DNS 由 `GlobalState.patchRawConfig` 读取当前生效配置，按 `default-nameserver / nameserver / fallback / proxy-server-nameserver / direct-nameserver / nameserver-policy / hosts` 原始配置键分类；系统 Hosts 读取 `/etc/hosts`，运行时解析按 `dnsMode` 的 `fake-ip / redir-host / hosts / normal` 分类并仅保留带有效目标 IP 的最新记录。
 - 流量页调用 Mihomo `getTraffic / getTotalTraffic` 展示实时和累计上传下载；最近完成请求与活动连接去重后只承担出站链、规则类型、进程、来源地址、网络协议和目标主机的样本聚合，不再将 1024 条环形历史记录求和作为总流量。
 - 请求与日志由主窗口收到新数据后主动推送，面板将事件刷新限制为最多每 250 ms 一次；活动连接受 Mihomo 快照接口限制，仅在连接页可见时每 250 ms 更新，流量页按内核统计周期每秒更新，其他页面每 5 秒兜底同步。
+- Mihomo 在连接加入和离开时均回传同一连接 ID，Bettbox 请求记录按 ID 原位更新，最近请求页收到事件后立即刷新活动/完成状态，不再依赖 250 ms 主动快照；独立进程订阅通知显式刷新 socket，避免状态事件延迟到 5 秒兜底刷新。该页展示的是 Mihomo 连接而非 HTTPS 内部请求，浏览器复用 HTTP/2 或 QUIC 连接时不会新增记录。
+- macOS 进程图标在 Mihomo 未返回进程路径时改由 `NSWorkspace.runningApplications` 按进程名读取运行中 App 图标；同一进程的历史记录会复用当前快照中优先选出的 `.app` 路径，修复首屏占位图标需要滚出再滚回才显示的问题。IP 信息卡取消单行省略并允许换行展示完整地址。
 - 选中请求或连接后展开底部详情，顶部拖拽手柄可调整面板高度。通用信息区分客户端地址、目标地址、内核 Fake-IP、实际出站本地地址和直连目标/代理节点远端地址，GeoIP/ASN 仅在 TrackerInfo 或现有核心 GeoIP 查询返回值时显示。原“计时 & 日志”改为“Mihomo 链路”，优先展示 custom-mihomo 随当前连接返回的 DNS 逐服务器尝试/成功/失败、规则匹配、策略链和真实 socket 建立事件，旧内核才退回源端口与目标精确关联日志；Mihomo 不提供的 HTTP 请求/响应报头和正文页签已移除。
 - custom-mihomo 的连接级链路上下文位于 `source/constant/connection_trace.go`，DNS、规则和出站事件接入 `source/dns` 与 `source/tunnel`，`source/tunnel/statistic/tracker.go` 将 `trace / outboundLocalAddress / outboundRemoteAddress` 随 TrackerInfo 返回；回归测试位于 `source/constant/connection_trace_test.go` 及相关 Go 包测试。
 - 面板进程不跟踪来源应用，关闭时不调用任何应用激活 API；除 Bettbox 主进程负责启动和退出面板进程外，Dock、Cmd+Tab、窗口层级和关闭后的前台选择均由 macOS 按两个普通独立 App 处理。

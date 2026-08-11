@@ -16,6 +16,16 @@ class FixedList<T> {
     _cachedList = null;
   }
 
+  void addOrReplace(T item, bool Function(T) matches) {
+    final index = _list.indexWhere(matches);
+    if (index == -1) {
+      add(item);
+      return;
+    }
+    _list[index] = item;
+    _cachedList = null;
+  }
+
   void clear() {
     _list.clear();
     _cachedList = null;

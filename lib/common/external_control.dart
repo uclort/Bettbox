@@ -84,6 +84,7 @@ class ExternalControl {
       if (method == 'networkMonitor.subscribe') {
         _networkMonitorSubscribers.add(socket);
         socket.writeln(jsonEncode({'event': 'ready'}));
+        await socket.flush();
         return;
       }
       final handler = _networkMonitorHandler;
@@ -198,14 +199,14 @@ class ExternalControl {
     _networkMonitorHandler = handler;
   }
 
-  static void notifyNetworkMonitorChanged() {
+  static Future<void> notifyNetworkMonitorChanged() async {
     final message = jsonEncode({'event': 'dataChanged'});
     for (final socket in _networkMonitorSubscribers.toList()) {
       try {
         socket.writeln(message);
+        await socket.flush();
       } catch (_) {
-        _networkMonitorSubscribers.remove(socket);
-        socket.destroy();
+        _closeSocket(socket);
       }
     }
   }

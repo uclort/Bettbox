@@ -75,7 +75,8 @@ class MainFlutterWindow: NSWindow {
             case "getPackageIcon":
                 let arguments = call.arguments as? [String: Any]
                 let processPath = arguments?["processPath"] as? String ?? ""
-                result(self.processIconData(processPath: processPath))
+                let processName = arguments?["packageName"] as? String ?? ""
+                result(self.processIconData(processPath: processPath, processName: processName))
             case "setLauncherIcon":
                 if let arguments = call.arguments as? [String: Any],
                    let useDarkIcon = arguments["useDarkIcon"] as? Bool {
@@ -125,11 +126,24 @@ class MainFlutterWindow: NSWindow {
         return true
     }
 
-    private func processIconData(processPath: String) -> FlutterStandardTypedData? {
+    private func processIconData(processPath: String, processName: String) -> FlutterStandardTypedData? {
         return autoreleasepool {
             let image: NSImage?
             if processPath.isEmpty {
-                image = NSApp.applicationIconImage
+                if processName.isEmpty {
+                    image = NSApp.applicationIconImage
+                } else {
+                    let application = NSWorkspace.shared.runningApplications.first { application in
+                        let names = [
+                            application.localizedName,
+                            application.executableURL?.lastPathComponent,
+                            application.bundleURL?.deletingPathExtension().lastPathComponent,
+                        ].compactMap { $0 }
+                        return names.contains { $0.caseInsensitiveCompare(processName) == .orderedSame }
+                    }
+                    let iconPath = application?.bundleURL?.path ?? application?.executableURL?.path
+                    image = iconPath.map { NSWorkspace.shared.icon(forFile: $0) }
+                }
             } else {
                 var iconPath = processPath
                 if let range = processPath.range(of: ".app/", options: .caseInsensitive) {

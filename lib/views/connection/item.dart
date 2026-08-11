@@ -209,7 +209,6 @@ class TrackerInfoItem extends ConsumerWidget {
 }
 
 Future<Uint8List?> _getPackageIcon(String process, String processPath) {
-  if (system.isMacOS && processPath.isEmpty) return Future.value();
   if (process.isEmpty && processPath.isEmpty) {
     return _getDefaultPackageIcon();
   }
