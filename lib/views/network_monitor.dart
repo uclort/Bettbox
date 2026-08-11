@@ -18,6 +18,7 @@ import 'package:window_manager/window_manager.dart';
 import 'network_monitor_data.dart';
 
 part 'network_monitor_detail.dart';
+part 'network_monitor_mobile.dart';
 part 'network_monitor_rule.dart';
 
 const _monitorSubStoreUrlsKey = 'network_monitor_sub_store_urls';
@@ -455,8 +456,15 @@ class _NetworkMonitorAppState extends State<NetworkMonitorApp>
 
 class NetworkMonitorView extends ConsumerStatefulWidget {
   final bool embedded;
+  final bool mobile;
+  final MonitorPage initialPage;
 
-  const NetworkMonitorView({super.key, this.embedded = false});
+  const NetworkMonitorView({
+    super.key,
+    this.embedded = false,
+    this.mobile = false,
+    this.initialPage = MonitorPage.requests,
+  });
 
   @override
   ConsumerState<NetworkMonitorView> createState() => _NetworkMonitorViewState();
@@ -516,6 +524,8 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
   @override
   void initState() {
     super.initState();
+    _page = widget.initialPage;
+    _sidebarFilter = monitorDefaultSidebarFilter(_page);
     unawaited(_restoreColumnWidths());
     if (widget.embedded) {
       _requestsSubscription = ref.listenManual(
@@ -533,6 +543,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
           .listen((_) => _handleDataChanged());
     }
     unawaited(_refresh());
+    if (_page == MonitorPage.dns) unawaited(_refreshDnsSources());
     _fallbackTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       unawaited(_refresh());
     });
@@ -814,6 +825,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.mobile) return _buildMobileMonitor(context);
     return Scaffold(
       body: SafeArea(
         child: LayoutBuilder(

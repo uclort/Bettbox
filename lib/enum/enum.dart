@@ -391,7 +391,7 @@ extension PageLabelExtension on PageLabel {
       case PageLabel.connections:
         return appLocalizations.navConnections;
       case PageLabel.networkMonitor:
-        return '面板';
+        return system.isAndroid ? '工具' : '面板';
     }
   }
 }
