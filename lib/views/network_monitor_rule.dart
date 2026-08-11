@@ -35,6 +35,11 @@ extension _NetworkMonitorRuleGenerator on _NetworkMonitorViewState {
       ],
     );
     if (action != 'generateRule' || !context.mounted) return;
+    await _showRuleDialog(context, item);
+  }
+
+  Future<void> _showRuleDialog(BuildContext context, TrackerInfo item) async {
+    _selectTracker(item);
     final policies = await _readRulePolicies();
     if (!context.mounted) return;
     await showDialog<void>(

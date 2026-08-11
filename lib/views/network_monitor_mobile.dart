@@ -451,11 +451,38 @@ extension _NetworkMonitorMobile on _NetworkMonitorViewState {
                   ],
                 ),
               ),
-              IconButton(
-                tooltip: '复制详情',
-                onPressed: () =>
-                    _copyDetail(context, item, _monitorStatusLabel(status)),
-                icon: const Icon(Icons.copy_outlined),
+              PopupMenuButton<String>(
+                tooltip: '更多操作',
+                icon: const Icon(Icons.more_vert),
+                onSelected: (value) async {
+                  if (value == 'generateRule') {
+                    await _showRuleDialog(context, item);
+                  } else if (value == 'copyDetail' && context.mounted) {
+                    await _copyDetail(
+                      context,
+                      item,
+                      _monitorStatusLabel(status),
+                    );
+                  }
+                },
+                itemBuilder: (context) => const [
+                  PopupMenuItem(
+                    value: 'generateRule',
+                    child: ListTile(
+                      leading: Icon(Icons.rule_outlined),
+                      title: Text('生成规则'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'copyDetail',
+                    child: ListTile(
+                      leading: Icon(Icons.copy_outlined),
+                      title: Text('复制详情'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
