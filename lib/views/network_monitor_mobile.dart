@@ -180,7 +180,12 @@ extension _NetworkMonitorMobile on _NetworkMonitorViewState {
         final policy = monitorPolicyName(item);
         return InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () => _openMobileTrackerDetail(context, item),
+          onSecondaryTapDown: widget.mobile
+              ? null
+              : (details) => _showTrackerContextMenu(context, item, details),
+          onTap: () => widget.mobile
+              ? _openMobileTrackerDetail(context, item)
+              : _selectTracker(item),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
             child: Row(
@@ -236,7 +241,11 @@ extension _NetworkMonitorMobile on _NetworkMonitorViewState {
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right),
+                Icon(
+                  widget.mobile
+                      ? Icons.chevron_right
+                      : Icons.vertical_align_bottom,
+                ),
               ],
             ),
           ),

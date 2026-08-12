@@ -367,62 +367,6 @@ Map<String, Object?> monitorTrackerToJson(TrackerInfo tracker) => {
   'metadata': tracker.metadata.toJson(),
 };
 
-enum MonitorSortColumn {
-  status,
-  date,
-  client,
-  rule,
-  policy,
-  upload,
-  download,
-  duration,
-  method,
-  address,
-}
-
-@immutable
-class MonitorSortState {
-  final MonitorSortColumn column;
-  final bool ascending;
-
-  const MonitorSortState(this.column, this.ascending);
-
-  MonitorSortState toggle(MonitorSortColumn next) {
-    if (column == next) return MonitorSortState(next, !ascending);
-    return MonitorSortState(next, next == MonitorSortColumn.status);
-  }
-}
-
-int compareMonitorTrackers(
-  TrackerInfo a,
-  TrackerInfo b,
-  MonitorSortState sort, [
-  Set<String> activeIds = const {},
-]) {
-  final result = switch (sort.column) {
-    MonitorSortColumn.status => monitorTrackerStatus(
-      a,
-      activeIds,
-    ).index.compareTo(monitorTrackerStatus(b, activeIds).index),
-    MonitorSortColumn.date => a.start.compareTo(b.start),
-    MonitorSortColumn.client => monitorClientName(
-      a,
-    ).compareTo(monitorClientName(b)),
-    MonitorSortColumn.rule => monitorRuleName(a).compareTo(monitorRuleName(b)),
-    MonitorSortColumn.policy => monitorPolicyName(
-      a,
-    ).compareTo(monitorPolicyName(b)),
-    MonitorSortColumn.upload => a.upload.compareTo(b.upload),
-    MonitorSortColumn.download => a.download.compareTo(b.download),
-    MonitorSortColumn.duration => a.start.compareTo(b.start),
-    MonitorSortColumn.method => monitorMethodName(
-      a,
-    ).compareTo(monitorMethodName(b)),
-    MonitorSortColumn.address => monitorAddress(a).compareTo(monitorAddress(b)),
-  };
-  return sort.ascending ? result : -result;
-}
-
 String monitorClientName(TrackerInfo item) {
   return item.metadata.process.isNotEmpty
       ? item.metadata.process
@@ -958,8 +902,4 @@ int monitorBytesPerSecond(int current, int previous, Duration elapsed) {
           Duration.microsecondsPerSecond /
           elapsed.inMicroseconds)
       .round();
-}
-
-double monitorResizedColumnWidth(double current, double delta) {
-  return (current + delta).clamp(48, 600);
 }

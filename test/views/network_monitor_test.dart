@@ -221,48 +221,12 @@ void main() {
     expect(PageLabel.networkMonitor.localizedName, '面板');
   });
 
-  test('表头重复点击切换方向，切换列使用合理默认方向', () {
-    const initial = MonitorSortState(MonitorSortColumn.date, false);
-
-    expect(initial.toggle(MonitorSortColumn.date).ascending, isTrue);
-    expect(initial.toggle(MonitorSortColumn.upload).ascending, isFalse);
-    expect(initial.toggle(MonitorSortColumn.status).ascending, isTrue);
-  });
-
-  test('连接列表按选定字段执行升序和降序', () {
-    final slow = _tracker(id: '1', process: 'A', upload: 1);
-    final fast = _tracker(id: '2', process: 'B', upload: 2);
-
-    expect(
-      compareMonitorTrackers(
-        slow,
-        fast,
-        const MonitorSortState(MonitorSortColumn.upload, true),
-      ),
-      lessThan(0),
-    );
-    expect(
-      compareMonitorTrackers(
-        slow,
-        fast,
-        const MonitorSortState(MonitorSortColumn.upload, false),
-      ),
-      greaterThan(0),
-    );
-  });
-
   test('连接流量按实际刷新间隔换算为每秒速率', () {
     expect(
       monitorBytesPerSecond(2048, 1024, const Duration(milliseconds: 250)),
       4096,
     );
     expect(monitorBytesPerSecond(1024, 2048, Duration.zero), 0);
-  });
-
-  test('拖拽表头调整列宽并限制极端宽度', () {
-    expect(monitorResizedColumnWidth(100, 20), 120);
-    expect(monitorResizedColumnWidth(60, -20), 48);
-    expect(monitorResizedColumnWidth(580, 40), 600);
   });
 
   test('连接状态按建立、连接、关闭、拦截、失败和未知映射', () {
