@@ -7,6 +7,15 @@ import 'package:re_highlight/re_highlight.dart';
 
 import '../LSP/lsp.dart';
 
+final List<String> _kEmojiFontFallback =
+    defaultTargetPlatform == TargetPlatform.windows
+        ? const ['Twemoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Roboto']
+        : defaultTargetPlatform == TargetPlatform.linux
+            ? const ['Twemoji', 'Noto Color Emoji', 'Roboto']
+            : defaultTargetPlatform == TargetPlatform.android
+                ? const ['Noto Color Emoji', 'Twemoji', 'Roboto']
+                : const ['Apple Color Emoji', 'Twemoji', 'Roboto'];
+
 class SemanticWordSpan {
   final int startChar;
   final int endChar;
@@ -54,7 +63,7 @@ class SyntaxHighlighter {
   late final Map<String, List<String>> _semanticMapping;
   static const int isolateThreshold = 500;
   static const int _cacheKeepMargin = 500;
-  static const int _maxLineCacheEntries = 6000;
+  static const int _maxLineCacheEntries = 5800;
   static const int _maxSpanCacheEntries = 8000;
   static const int _blockCommentLookbackLimit = 200;
   int get documentVersion => _documentVersion;
@@ -308,7 +317,9 @@ class SyntaxHighlighter {
 
   TextSpan? getLineSpan(int lineIndex, String lineText) {
     final getLineTextFn = getLineText;
-    final isSubstring = getLineTextFn != null && getLineTextFn(lineIndex).length != lineText.length;
+    final isSubstring =
+        getLineTextFn != null &&
+        getLineTextFn(lineIndex).length != lineText.length;
     if (isSubstring) {
       return _highlightLine(lineText);
     }
@@ -929,6 +940,7 @@ class SyntaxHighlighter {
       color: baseStyle?.color ?? editorTheme['root']?.color ?? Colors.black,
       fontSize: fontSize,
       fontFamily: fontFamily,
+      fontFamilyFallback: _kEmojiFontFallback,
       fontWeight: baseStyle?.fontWeight,
       fontStyle: baseStyle?.fontStyle,
     );
@@ -946,6 +958,7 @@ class SyntaxHighlighter {
       color: baseStyle?.color ?? editorTheme['root']?.color ?? Colors.black,
       fontSize: fontSize,
       fontFamily: fontFamily,
+      fontFamilyFallback: _kEmojiFontFallback,
       fontWeight: baseStyle?.fontWeight,
       fontStyle: baseStyle?.fontStyle,
     );

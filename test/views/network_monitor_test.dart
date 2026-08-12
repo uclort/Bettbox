@@ -197,27 +197,38 @@ void main() {
     await tester.pump();
   });
 
-  test('导航使用统一网络面板替换旧请求、连接和日志入口', () {
+  test('桌面保留面板，Android 网络功能作为工具页一级入口', () {
     final items = navigation.getItems(hasProxies: true);
     final labels = items.map((item) => item.label).toSet();
 
     expect(labels, contains(PageLabel.networkMonitor));
     expect(
-      labels.intersection({
+      labels,
+      containsAll({
         PageLabel.requests,
         PageLabel.connections,
+        PageLabel.dns,
+        PageLabel.devices,
+        PageLabel.traffic,
         PageLabel.logs,
+        PageLabel.subStore,
       }),
-      isEmpty,
     );
     final monitor = items.singleWhere(
       (item) => item.label == PageLabel.networkMonitor,
     );
-    expect(
-      monitor.modes,
-      containsAll([NavigationItemMode.desktop, NavigationItemMode.more]),
-    );
+    expect(monitor.modes, [NavigationItemMode.desktop]);
     expect(monitor.modes, isNot(contains(NavigationItemMode.mobile)));
+    expect(
+      items
+          .where((item) => item.label.isNetworkTool)
+          .every(
+            (item) =>
+                item.modes.length == 1 &&
+                item.modes.single == NavigationItemMode.more,
+          ),
+      isTrue,
+    );
     expect(PageLabel.networkMonitor.localizedName, '面板');
   });
 
@@ -412,6 +423,35 @@ const after = true;
       monitorTraceDisplayDetail(event),
       'example.com → 1.1.1.1 · 本次未发起 DNS 查询',
     );
+  });
+
+  test('代理节点 DNS 在链路和 DNS 缓存中与请求目标明确区分', () {
+    final selected = _tracker(
+      id: 'github',
+      process: 'gh',
+      upload: 0,
+      metadata: const Metadata(
+        process: 'gh',
+        host: 'github.com',
+        destinationPort: '443',
+      ),
+      trace: const [
+        {
+          'timestamp': 1786352400123,
+          'stage': 'dns',
+          'title': '缓存命中',
+          'detail': 'node.example.com → [1.1.1.1] A',
+          'status': 'success',
+        },
+      ],
+    );
+    final event = monitorConnectionTrace(selected).single;
+
+    expect(monitorTraceTitleForTracker(event, selected), '节点 DNS 缓存命中');
+    final dns = monitorRuntimeDnsEntries([selected]).single;
+    expect(dns.name, 'node.example.com');
+    expect(dns.category, '出站节点');
+    expect(dns.detail, '代理节点服务器 · DNS 缓存命中');
   });
 
   test('时间按本机时区显示，列表只显示最终策略并保留完整链路', () {

@@ -147,8 +147,16 @@ CoreState coreState(Ref ref) {
 
 @riverpod
 UpdateParams updateParams(Ref ref) {
-  final bypassPrivateRoute = ref.watch(
-    networkSettingProvider.select((state) => state.bypassPrivateRoute),
+  final (
+    :bypassPrivateRoute,
+    :realBypassPrivateRouteAddress,
+  ) = ref.watch(
+    networkSettingProvider.select(
+      (state) => (
+        bypassPrivateRoute: state.bypassPrivateRoute,
+        realBypassPrivateRouteAddress: state.realBypassPrivateRouteAddress,
+      ),
+    ),
   );
   return ref.watch(
     patchClashConfigProvider.select(
@@ -157,6 +165,7 @@ UpdateParams updateParams(Ref ref) {
           bypassPrivateRoute,
           fakeIpRange: state.dns.fakeIpRange,
           fakeIpRangeV6: state.dns.fakeIpRangeV6,
+          bypassPrivateRouteAddress: realBypassPrivateRouteAddress,
         ),
         allowLan: state.allowLan,
         findProcessMode: state.findProcessMode,
@@ -186,7 +195,7 @@ ProxyState proxyState(Ref ref) {
   return ProxyState(
     isStart: isStart,
     systemProxy: vm2.a,
-    bassDomain: vm2.b,
+    bypassDomain: vm2.b,
     port: mixedPort,
   );
 }

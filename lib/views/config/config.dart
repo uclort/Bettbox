@@ -59,12 +59,16 @@ class _ConfigViewState extends State<ConfigView> {
                         .updateState(
                           (state) => defaultVpnProps.copyWith(
                             accessControl: state.accessControl,
+                            enable: state.enable,
+                            systemProxy: state.systemProxy,
                           ),
                         );
                     ref
                         .read(patchClashConfigProvider.notifier)
                         .updateState(
-                          (state) => state.copyWith(tun: defaultTun),
+                          (state) => state.copyWith(
+                            tun: defaultTun.copyWith(enable: state.tun.enable),
+                          ),
                         );
                   },
                   tooltip: appLocalizations.reset,

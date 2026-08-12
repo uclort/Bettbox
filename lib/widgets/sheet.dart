@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import 'scaffold.dart';
 import 'side_sheet.dart';
+import 'text.dart';
 
 @immutable
 class SheetProps {
@@ -123,7 +124,7 @@ class AdaptiveSheetScaffold extends StatelessWidget {
           : true,
       centerTitle: bottomSheet,
       backgroundColor: backgroundColor,
-      title: Text(title),
+      title: EmojiText(title),
       actions: genActions([
         if (actions.isEmpty && sideSheet) CloseButton(),
         ...actions,

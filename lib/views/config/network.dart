@@ -508,24 +508,139 @@ class BypassDomainItem extends StatelessWidget {
 class BypassPrivateRouteItem extends ConsumerWidget {
   const BypassPrivateRouteItem({super.key});
 
+  void _showEditPage(BuildContext context, WidgetRef ref) {
+    showExtend(
+      context,
+      builder: (_, type) => AdaptiveSheetScaffold(
+        type: type,
+        title: appLocalizations.bypassPrivateRoute,
+        actions: [
+          Consumer(
+            builder: (_, ref, _) {
+              return IconButton(
+                onPressed: () async {
+                  final res = await globalState.showMessage(
+                    title: appLocalizations.reset,
+                    message: TextSpan(text: appLocalizations.resetTip),
+                  );
+                  if (res != true) return;
+                  ref
+                      .read(networkSettingProvider.notifier)
+                      .updateState(
+                        (state) => state.copyWith(
+                          bypassPrivateRouteAddress: system.isDesktop
+                              ? defaultDesktopBypassPrivateRouteAddress
+                              : defaultBypassPrivateRouteAddress,
+                        ),
+                      );
+                  await _handleNetworkConfigChange(ref);
+                },
+                tooltip: appLocalizations.reset,
+                icon: const Icon(Icons.replay),
+              );
+            },
+          ),
+        ],
+        body: Consumer(
+          builder: (_, ref, _) {
+            final bypassPrivateRouteAddress = ref.watch(
+              networkSettingProvider.select(
+                (state) => state.realBypassPrivateRouteAddress,
+              ),
+            );
+            return ListInputPage(
+              title: appLocalizations.bypassPrivateRoute,
+              items: bypassPrivateRouteAddress,
+              titleBuilder: (item) => Text(item),
+              onChange: (items) async {
+                ref
+                    .read(networkSettingProvider.notifier)
+                    .updateState(
+                      (state) => state.copyWith(
+                        bypassPrivateRouteAddress: List.from(items),
+                      ),
+                    );
+                await _handleNetworkConfigChange(ref);
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, ref) {
     final bypassPrivateRoute = ref.watch(
       networkSettingProvider.select((state) => state.bypassPrivateRoute),
     );
-    return ListItem.switchItem(
-      title: Text(appLocalizations.bypassPrivateRoute),
-      subtitle: Text(appLocalizations.bypassPrivateRouteDesc),
-      delegate: SwitchDelegate(
-        value: bypassPrivateRoute,
-        onChanged: (value) async {
-          ref
-              .read(networkSettingProvider.notifier)
-              .updateState(
-                (state) => state.copyWith(bypassPrivateRoute: value),
-              );
-          await _handleNetworkConfigChange(ref);
-        },
+    if (!system.isDesktop) {
+      return ListItem.switchItem(
+        title: Text(appLocalizations.bypassPrivateRoute),
+        subtitle: Text(appLocalizations.bypassPrivateRouteDesc),
+        delegate: SwitchDelegate(
+          value: bypassPrivateRoute,
+          onChanged: (value) async {
+            ref
+                .read(networkSettingProvider.notifier)
+                .updateState(
+                  (state) => state.copyWith(bypassPrivateRoute: value),
+                );
+            await _handleNetworkConfigChange(ref);
+          },
+        ),
+      );
+    }
+    return InkWell(
+      onTap: () => _showEditPage(context, ref),
+      child: Padding(
+        padding: const EdgeInsets.only(left: 16, right: 8, top: 12, bottom: 12),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    appLocalizations.bypassPrivateRoute,
+                    style: context.textTheme.titleMedium?.copyWith(
+                      color: context.colorScheme.onSurface,
+                    ),
+                  ),
+                  Text(
+                    appLocalizations.bypassPrivateRouteDesc,
+                    style: context.textTheme.bodyMedium?.copyWith(
+                      color: context.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            Container(
+              width: 1,
+              height: 32,
+              color: context.colorScheme.outlineVariant.withValues(
+                alpha: context.colorScheme.brightness == Brightness.light
+                    ? 0.6
+                    : 0.4,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Switch(
+              value: bypassPrivateRoute,
+              onChanged: (value) async {
+                ref
+                    .read(networkSettingProvider.notifier)
+                    .updateState(
+                      (state) => state.copyWith(bypassPrivateRoute: value),
+                    );
+                await _handleNetworkConfigChange(ref);
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

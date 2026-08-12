@@ -34,7 +34,7 @@ begin
   Result := (ResultCode = 0);
 end;
 
-procedure ForceKillProcesses;
+procedure ForceKillProcesses(IsUninstall: Boolean);
 var
   ResultCode: Integer;
   WaitCount: Integer;
@@ -57,7 +57,10 @@ begin
   { Try to elegantly exit the main app using --exit parameter }
   if FileExists(ExpandConstant('{app}\{{EXECUTABLE_NAME}}')) and IsProcessRunning('{{EXECUTABLE_NAME}}') then
   begin
-    WizardForm.StatusLabel.Caption := CustomMessage('ShuttingDownRunningApp');
+    if IsUninstall then
+      UninstallProgressForm.StatusLabel.Caption := CustomMessage('ShuttingDownRunningApp')
+    else
+      WizardForm.StatusLabel.Caption := CustomMessage('ShuttingDownRunningApp');
     Exec(ExpandConstant('{app}\{{EXECUTABLE_NAME}}'), '--exit', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 
     { Wait up to 4 seconds for the main app and core to exit }
@@ -227,7 +230,7 @@ begin
   if CurStep = ssInstall then
   begin
     { Let Inno Setup try CloseApplications first; force-kill any leftovers before files are copied. }
-    ForceKillProcesses;
+    ForceKillProcesses(False);
   end;
 
   if CurStep = ssPostInstall then
@@ -240,7 +243,7 @@ procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
   if CurUninstallStep = usUninstall then
   begin
-    ForceKillProcesses;
+    ForceKillProcesses(True);
     CleanWintunDevices;
   end;
   

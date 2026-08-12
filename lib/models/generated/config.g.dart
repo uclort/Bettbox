@@ -11,7 +11,7 @@ _AppSettingProps _$AppSettingPropsFromJson(Map<String, dynamic> json) =>
       locale: json['locale'] as String?,
       dashboardWidgets: json['dashboardWidgets'] == null
           ? defaultDashboardWidgets
-          : dashboardWidgetsSafeFormJson(json['dashboardWidgets'] as List?),
+          : dashboardWidgetsSafeFromJson(json['dashboardWidgets'] as List?),
       mobileDashboardWidgets: json['mobileDashboardWidgets'] == null
           ? defaultAndroidDashboardWidgets
           : mobileDashboardWidgetsSafeFromJson(
@@ -241,6 +241,12 @@ _NetworkProps _$NetworkPropsFromJson(Map<String, dynamic> json) =>
               .toList() ??
           defaultBypassDomain,
       bypassPrivateRoute: json['bypassPrivateRoute'] as bool? ?? true,
+      bypassPrivateRouteAddress:
+          (json['bypassPrivateRouteAddress'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+      autoSetSystemDns: json['autoSetSystemDns'] as bool? ?? true,
     );
 
 Map<String, dynamic> _$NetworkPropsToJson(_NetworkProps instance) =>
@@ -248,6 +254,8 @@ Map<String, dynamic> _$NetworkPropsToJson(_NetworkProps instance) =>
       'systemProxy': instance.systemProxy,
       'bypassDomain': instance.bypassDomain,
       'bypassPrivateRoute': instance.bypassPrivateRoute,
+      'bypassPrivateRouteAddress': instance.bypassPrivateRouteAddress,
+      'autoSetSystemDns': instance.autoSetSystemDns,
     };
 
 _ProxiesStyle _$ProxiesStyleFromJson(Map<String, dynamic> json) =>

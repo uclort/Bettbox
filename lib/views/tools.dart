@@ -201,7 +201,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
           subtitle: item.description != null
               ? Intl.message(item.description!)
               : null,
-          category: appLocalizations.more,
+          category: item.label.isNetworkTool ? '网络' : appLocalizations.more,
           leading: item.icon,
           onTap: (context, _) => _pushPage(
             context,
@@ -1329,23 +1329,26 @@ class _ToolViewState extends ConsumerState<ToolsView> {
     final searchResults = _query.isEmpty
         ? const <Widget>[]
         : _buildSearchResults(searchItems);
+    final networkItems = moreItems
+        .where((item) => item.label.isNetworkTool)
+        .toList();
+    final otherMoreItems = moreItems
+        .where((item) => !item.label.isNetworkTool)
+        .toList();
 
     final items = [
-      Consumer(
-        builder: (_, ref, _) {
-          final state = ref.watch(moreToolsSelectorStateProvider);
-          if (state.navigationItems.isEmpty) {
-            return Container();
-          }
-          return _buildModernSection(
-            context,
-            title: appLocalizations.more,
-            items: state.navigationItems
-                .map((item) => _buildNavigationMenuItem(item))
-                .toList(),
-          );
-        },
-      ),
+      if (networkItems.isNotEmpty)
+        _buildModernSection(
+          context,
+          title: '网络',
+          items: networkItems.map(_buildNavigationMenuItem).toList(),
+        ),
+      if (otherMoreItems.isNotEmpty)
+        _buildModernSection(
+          context,
+          title: appLocalizations.more,
+          items: otherMoreItems.map(_buildNavigationMenuItem).toList(),
+        ),
       _buildModernSection(
         context,
         title: appLocalizations.settings,

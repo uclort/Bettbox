@@ -242,6 +242,22 @@ class Windows {
           int Function(int hProcess, int dwPriorityClass)
         >('SetPriorityClass');
 
+    final setProcessInformation = kernel32
+        .lookupFunction<
+          Int32 Function(
+            IntPtr hProcess,
+            Int32 processInformationClass,
+            Pointer<Void> processInformation,
+            Uint32 processInformationSize,
+          ),
+          int Function(
+            int hProcess,
+            int processInformationClass,
+            Pointer<Void> processInformation,
+            int processInformationSize,
+          )
+        >('SetProcessInformation');
+
     final priorityClass = enable ? 0x00008000 : 0x00000020;
 
     final hProcess = getCurrentProcess();
@@ -254,6 +270,26 @@ class Windows {
     commonPrint.log(
       'Set current process priority to ${enable ? "above normal" : "normal"}',
     );
+
+    if (enable) {
+      final memoryPriorityInfo = calloc<Uint32>();
+      try {
+        memoryPriorityInfo.value = 5;
+        final memoryResult = setProcessInformation(
+          hProcess,
+          0,
+          memoryPriorityInfo.cast<Void>(),
+          sizeOf<Uint32>(),
+        );
+        if (memoryResult == 0) {
+          commonPrint.log('Set current process memory priority failed');
+        } else {
+          commonPrint.log('Set current process memory priority to normal');
+        }
+      } finally {
+        calloc.free(memoryPriorityInfo);
+      }
+    }
   }
 
   bool runas(String command, String arguments, {bool showWindow = false}) {

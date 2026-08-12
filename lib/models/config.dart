@@ -23,7 +23,16 @@ const defaultBypassDomain = [
   '172.17.*',
   '172.18.*',
   '172.19.*',
-  '172.2*',
+  '172.20.*',
+  '172.21.*',
+  '172.22.*',
+  '172.23.*',
+  '172.24.*',
+  '172.25.*',
+  '172.26.*',
+  '172.27.*',
+  '172.28.*',
+  '172.29.*',
   '172.30.*',
   '172.31.*',
   '192.168.*',
@@ -60,7 +69,7 @@ const List<DashboardWidget> defaultAndroidDashboardWidgets = [
   DashboardWidget.startButton,
 ];
 
-List<DashboardWidget> dashboardWidgetsSafeFormJson(
+List<DashboardWidget> dashboardWidgetsSafeFromJson(
   List<dynamic>? dashboardWidgets,
 ) {
   try {
@@ -108,7 +117,7 @@ abstract class AppSettingProps with _$AppSettingProps {
   const factory AppSettingProps({
     String? locale,
     @Default(defaultDashboardWidgets)
-    @JsonKey(fromJson: dashboardWidgetsSafeFormJson)
+    @JsonKey(fromJson: dashboardWidgetsSafeFromJson)
     List<DashboardWidget> dashboardWidgets,
     @Default(defaultAndroidDashboardWidgets)
     @JsonKey(fromJson: mobileDashboardWidgetsSafeFromJson)
@@ -147,7 +156,7 @@ abstract class AppSettingProps with _$AppSettingProps {
     if (json != null) {
       final oldWidgets = json['dashboardWidgets'];
       if (oldWidgets is List) {
-        final parsedOld = dashboardWidgetsSafeFormJson(oldWidgets);
+        final parsedOld = dashboardWidgetsSafeFromJson(oldWidgets);
         if (json['mobileDashboardWidgets'] == null) {
           props = props.copyWith(mobileDashboardWidgets: parsedOld);
         }
@@ -248,10 +257,21 @@ abstract class NetworkProps with _$NetworkProps {
     @Default(false) bool systemProxy,
     @Default(defaultBypassDomain) List<String> bypassDomain,
     @Default(true) bool bypassPrivateRoute,
+    @Default([]) List<String> bypassPrivateRouteAddress,
+    @Default(true) bool autoSetSystemDns,
   }) = _NetworkProps;
 
   factory NetworkProps.fromJson(Map<String, Object?>? json) =>
       json == null ? const NetworkProps() : _$NetworkPropsFromJson(json);
+}
+
+extension NetworkPropsExt on NetworkProps {
+  List<String> get realBypassPrivateRouteAddress {
+    if (bypassPrivateRouteAddress.isNotEmpty) return bypassPrivateRouteAddress;
+    return system.isDesktop
+        ? defaultDesktopBypassPrivateRouteAddress
+        : defaultBypassPrivateRouteAddress;
+  }
 }
 
 @freezed

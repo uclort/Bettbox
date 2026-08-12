@@ -73,6 +73,17 @@ const defaultBypassPrivateRouteAddress = [
   '2000::/3',
 ];
 
+const defaultDesktopBypassPrivateRouteAddress = [
+  '127.0.0.0/8',
+  '::1/128',
+  '10.0.0.0/8',
+  '172.16.0.0/12',
+  '192.168.0.0/16',
+  '169.254.0.0/16',
+  'fd00::/8',
+  'fe80::/10',
+];
+
 int? _parseInt(dynamic value) {
   if (value == null) return null;
   if (value is num) return value.toInt();
@@ -274,7 +285,7 @@ abstract class Tun with _$Tun {
     @Default(false) bool enable,
     @Default(tunDeviceName) String device,
     @JsonKey(name: 'auto-route') @Default(false) bool autoRoute,
-    @Default(TunStack.system) TunStack stack,
+    @Default(TunStack.mixed) TunStack stack,
     @JsonKey(name: 'dns-hijack') @Default(['any:53']) List<String> dnsHijack,
     @JsonKey(name: 'route-address') @Default([]) List<String> routeAddress,
     @JsonKey(name: 'route-exclude-address')
@@ -284,7 +295,7 @@ abstract class Tun with _$Tun {
     @JsonKey(name: 'disable-icmp-forwarding')
     @Default(true)
     bool disableIcmpForwarding,
-    @Default(4064) int mtu,
+    @Default(9000) int mtu,
     @JsonKey(name: 'endpoint-independent-nat')
     @Default(false)
     bool endpointIndependentNat,
@@ -309,6 +320,7 @@ extension TunExt on Tun {
     bool bypassPrivateRoute, {
     String? fakeIpRange,
     String? fakeIpRangeV6,
+    List<String>? bypassPrivateRouteAddress,
   }) {
     if (system.isDesktop) {
       final realStack = system.isMacOS && stack == TunStack.system
@@ -319,16 +331,9 @@ extension TunExt on Tun {
           autoRoute: true,
           stack: realStack,
           routeAddress: [],
-          routeExcludeAddress: [
-            '127.0.0.0/8',
-            '::1/128',
-            '10.0.0.0/8',
-            '172.16.0.0/12',
-            '192.168.0.0/16',
-            '169.254.0.0/16',
-            'fd00::/8',
-            'fe80::/10',
-          ],
+          routeExcludeAddress:
+              bypassPrivateRouteAddress ??
+              defaultDesktopBypassPrivateRouteAddress,
         );
       }
       return copyWith(
@@ -342,7 +347,9 @@ extension TunExt on Tun {
     if (bypassPrivateRoute) {
       return copyWith(
         autoRoute: true,
-        routeAddress: List<String>.from(defaultBypassPrivateRouteAddress),
+        routeAddress: List<String>.from(
+          bypassPrivateRouteAddress ?? defaultBypassPrivateRouteAddress,
+        ),
       );
     }
 

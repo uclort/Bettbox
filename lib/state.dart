@@ -582,6 +582,8 @@ class GlobalState {
         config.networkProps.bypassPrivateRoute,
         fakeIpRange: patchConfig.dns.fakeIpRange,
         fakeIpRangeV6: patchConfig.dns.fakeIpRangeV6,
+        bypassPrivateRouteAddress:
+            config.networkProps.realBypassPrivateRouteAddress,
       ),
     );
     rawConfig['external-controller'] = realPatchConfig.allowLan

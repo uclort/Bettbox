@@ -94,7 +94,7 @@
 
 ### 桌面网络面板
 
-- 桌面导航以一个“面板”入口替换原“请求 / 连接 / 日志”三个页签；托盘菜单仍使用“网络面板”文案。点击后以同一可执行文件的 `--network-panel` 参数启动独立进程，在 Dock/任务栏使用基于 Bettbox 原图标逐像素保留、仅于右下角叠加蓝色网络波形徽标的专属图标；关闭面板不影响 Bettbox，Bettbox 正常退出或主进程管道断开时会关闭面板。
+- 桌面导航以一个“面板”入口替换原“请求 / 连接 / 日志”三个页签；托盘菜单仍使用“网络面板”文案。Android 将最近请求、活动连接、DNS、设备、流量统计、日志和 Sub-Store 直接放在“网络”一级分组，不保留“工具 → 面板”二级目录。桌面点击入口后以同一可执行文件的 `--network-panel` 参数启动独立进程，在 Dock/任务栏使用基于 Bettbox 原图标逐像素保留、仅于右下角叠加蓝色网络波形徽标的专属图标；关闭面板不影响 Bettbox，Bettbox 正常退出或主进程管道断开时会关闭面板。
 - 独立进程不初始化 Mihomo、单例锁或托盘，通过 `ExternalControl` 现有本地 UDS/TCP 通道读取主进程请求、连接和日志并执行清理/断连操作；请求与日志变更使用持久订阅连接主动通知，一次性请求在响应刷新后由服务端立即关闭 socket，避免面板刷新持续泄漏文件描述符。移除 `desktop_multi_window` 和子引擎全插件重复注册，避免 `tray_manager` 全局事件通道被子窗口覆盖。
 - Android 在“更多”中以“工具”替换原“面板”入口，并以移动端目录分别进入最近请求、活动连接、DNS、设备、流量统计、日志和 Sub-Store；请求与连接点击后压入独立详情路由，系统返回手势只返回来源列表。macOS、Windows 和 Linux 的独立面板保留顶部页签、搜索与左侧 Mihomo 分类，内容区复用 Android 卡片页面，选中连接仍在底部展开可拖动详情并持久化高度，右键继续提供生成规则。两端共享数据映射、状态、规则生成与详情内容，继续复用主应用 Provider 或独立面板 IPC，不创建第二套数据服务。
 - 面板集成最近请求、活动连接、DNS、设备、流量统计、日志和独立 Sub-Store 管理标签；最近请求与活动连接直接按 Mihomo `TrackerInfo` 的 `process / sourceIP / host|destinationIP / network / rule / chains` 动态分类并支持全文搜索。Android 与 macOS/Windows/Linux 统一维护同一套卡片列表，旧桌面表格、表头排序和列宽持久化实现已删除；macOS 通过原生 `NSWorkspace` 按进程路径读取 App 图标，并在进程侧栏、连接列表和详情中复用显示。同一路径的并发图标请求会合并，原生端只编码 64×64 PNG，避免面板打开时因重复全尺寸图标转换而卡死。
@@ -110,7 +110,7 @@
 - 请求与日志由主窗口收到新数据后主动推送，面板将事件刷新限制为最多每 250 ms 一次；活动连接受 Mihomo 快照接口限制，仅在连接页可见时每 250 ms 更新，流量页按内核统计周期每秒更新，其他页面每 5 秒兜底同步。
 - Mihomo 在连接加入和离开时均回传同一连接 ID，Bettbox 请求记录按 ID 原位更新，最近请求页收到事件后立即刷新活动/完成状态，不再依赖 250 ms 主动快照；独立进程订阅通知显式刷新 socket，避免状态事件延迟到 5 秒兜底刷新。该页展示的是 Mihomo 连接而非 HTTPS 内部请求，浏览器复用 HTTP/2 或 QUIC 连接时不会新增记录。
 - macOS 进程图标在 Mihomo 未返回进程路径时改由 `NSWorkspace.runningApplications` 按进程名读取运行中 App 图标；同一进程的历史记录会复用当前快照中优先选出的 `.app` 路径。图标加载完成回调不会返回并自等待当前 Future，首屏可见组件能立即原位替换占位图，修复必须滚出再滚回才显示的问题。
-- 选中请求或连接后展开底部详情，顶部拖拽手柄可调整面板高度。通用页使用占满详情视口的响应式布局，地址和进程信息独占整行，所有长文本自动换行且可框选复制；显式滚动条固定在面板最右侧，并提供复制详情按钮。信息区分客户端地址、目标地址、内核 Fake-IP、实际出站本地地址和直连目标/代理节点远端地址，GeoIP/ASN 仅在 TrackerInfo 或现有核心 GeoIP 查询返回值时显示。原“计时 & 日志”改为“Mihomo 链路”，链路文字同样支持选择复制，并优先展示 custom-mihomo 随当前连接返回的 DNS 逐服务器尝试/成功/失败、规则匹配、策略链和真实 socket 建立事件，旧内核才退回源端口与目标精确关联日志；Mihomo 不提供的 HTTP 请求/响应报头和正文页签已移除。
+- 选中请求或连接后展开底部详情，顶部拖拽手柄可调整面板高度。通用页使用占满详情视口的响应式布局，地址和进程信息独占整行，所有长文本自动换行且可框选复制；显式滚动条固定在面板最右侧，并提供复制详情按钮。信息区分客户端地址、目标地址、内核 Fake-IP、实际出站本地地址和直连目标/代理服务器地址，GeoIP/ASN 仅在 TrackerInfo 或现有核心 GeoIP 查询返回值时显示。原“计时 & 日志”改为“Mihomo 链路”，链路固定先展示当前请求目标，目标域名与代理节点服务器的 DNS 事件分别标记为“目标 DNS / 节点 DNS”；链路中的节点 DNS 成功和缓存命中同步进入 DNS 页“运行缓存 / 出站节点”分类。链路文字支持选择复制，并优先展示 custom-mihomo 随当前连接返回的 DNS 逐服务器尝试/成功/失败、规则匹配、策略链和真实 socket 建立事件，旧内核才退回源端口与目标精确关联日志；Mihomo 不提供的 HTTP 请求/响应报头和正文页签已移除。
 - custom-mihomo 的连接级链路上下文位于 `source/constant/connection_trace.go`，DNS、规则和出站事件接入 `source/dns` 与 `source/tunnel`，`source/tunnel/statistic/tracker.go` 将 `trace / outboundLocalAddress / outboundRemoteAddress` 随 TrackerInfo 返回；回归测试位于 `source/constant/connection_trace_test.go` 及相关 Go 包测试。
 - 面板进程不跟踪来源应用，关闭时不调用任何应用激活 API；除 Bettbox 主进程负责启动和退出面板进程外，Dock、Cmd+Tab、窗口层级和关闭后的前台选择均由 macOS 按两个普通独立 App 处理。
 - 面板代码位于 `lib/views/network_monitor.dart`、`lib/views/network_monitor_detail.dart`、`lib/views/network_monitor_mobile.dart`、`lib/views/network_monitor_data.dart` 和 `lib/views/network_monitor_rule.dart`，进程与 IPC 生命周期位于 `lib/common/window.dart`、`lib/common/external_control.dart`，桌面/Android 导航与托盘入口位于 `lib/common/navigation.dart`、`lib/views/network_monitor_navigation.dart` 和 `lib/common/tray.dart`；状态、时区、DNS 与入口回归测试位于 `test/views/network_monitor_test.dart`，独立进程入口覆盖 macOS、Windows 和 Linux。

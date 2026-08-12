@@ -19,8 +19,8 @@ import 'package:re_highlight/styles/atom-one-light.dart';
 
 typedef EditorWidgetBuilder = Widget Function();
 
-const int _kLargeEditableLineThresholdMobile = 1500;
-const int _kLargeEditableLineThresholdDesktop = 2000;
+const int _kLargeEditableLineThresholdMobile = 5800;
+const int _kLargeEditableLineThresholdDesktop = 5800;
 const Duration _kFindFocusDelay = Duration(milliseconds: 500);
 const Duration _kMinBusyDuration = Duration(milliseconds: 600);
 

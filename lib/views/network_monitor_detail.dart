@@ -305,7 +305,7 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
         if (monitorOutboundLocalAddress(item).isNotEmpty)
           '出站地址：${monitorOutboundLocalAddress(item)}',
         if (remoteAddress.isNotEmpty)
-          '远端地址（${monitorIsDirect(item) ? '直连目标' : '代理节点'}）：$remoteAddress',
+          '${monitorIsDirect(item) ? '直连目标地址' : '代理服务器地址'}：$remoteAddress',
         if (item.metadata.dnsMode != null) 'DNS 模式：$dnsMode',
         if (item.metadata.sourceGeoIP.isNotEmpty)
           '客户端地区：${item.metadata.sourceGeoIP.join(' ')}',
@@ -330,10 +330,10 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
   Widget _buildMihomoFlow(BuildContext context, TrackerInfo item) {
     final trace = monitorConnectionTrace(item);
     if (trace.isNotEmpty) {
-      final titleWidth = _flowTitleWidth(
-        context,
-        trace.map(monitorTraceDisplayTitle),
-      );
+      final titleWidth = _flowTitleWidth(context, [
+        '请求目标',
+        ...trace.map((event) => monitorTraceTitleForTracker(event, item)),
+      ]);
       return SelectionArea(
         child: Scrollbar(
           controller: _detailScrollController,
@@ -343,11 +343,19 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
             controller: _detailScrollController,
             padding: const EdgeInsets.fromLTRB(12, 12, 20, 12),
             children: [
+              _flowStep(
+                context,
+                Icons.language,
+                '请求目标',
+                monitorAddress(item),
+                titleWidth: titleWidth,
+                leading: monitorClock(item.start),
+              ),
               for (final event in trace)
                 _flowStep(
                   context,
                   _traceIcon(event.stage),
-                  monitorTraceDisplayTitle(event),
+                  monitorTraceTitleForTracker(event, item),
                   monitorTraceDisplayDetail(event),
                   titleWidth: titleWidth,
                   leading: monitorTraceClock(event.timestamp),
@@ -561,7 +569,7 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
       if (monitorOutboundLocalAddress(item).isNotEmpty)
         '出站地址：${monitorOutboundLocalAddress(item)}',
       if (monitorOutboundRemoteAddress(item).isNotEmpty)
-        '远端地址：${monitorOutboundRemoteAddress(item)}',
+        '${monitorIsDirect(item) ? '直连目标地址' : '代理服务器地址'}：${monitorOutboundRemoteAddress(item)}',
       'DNS 模式：${monitorDnsMode(item)}',
       if (item.metadata.processPath.isNotEmpty)
         '进程路径：${item.metadata.processPath}',

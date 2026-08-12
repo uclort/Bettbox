@@ -366,6 +366,10 @@ enum PageLabel {
   resources,
   script,
   connections,
+  dns,
+  devices,
+  traffic,
+  subStore,
   networkMonitor,
 }
 
@@ -390,10 +394,29 @@ extension PageLabelExtension on PageLabel {
         return appLocalizations.script;
       case PageLabel.connections:
         return appLocalizations.navConnections;
+      case PageLabel.dns:
+        return 'DNS';
+      case PageLabel.devices:
+        return '设备';
+      case PageLabel.traffic:
+        return '流量统计';
+      case PageLabel.subStore:
+        return 'Sub-Store';
       case PageLabel.networkMonitor:
-        return system.isAndroid ? '工具' : '面板';
+        return '面板';
     }
   }
+
+  bool get isNetworkTool => switch (this) {
+    PageLabel.requests ||
+    PageLabel.connections ||
+    PageLabel.dns ||
+    PageLabel.devices ||
+    PageLabel.traffic ||
+    PageLabel.logs ||
+    PageLabel.subStore => true,
+    _ => false,
+  };
 }
 
 enum RuleAction {

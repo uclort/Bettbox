@@ -805,10 +805,81 @@ bool monitorTraceIsDnsCacheHit(MonitorConnectionTraceEvent event) =>
 String monitorTraceDisplayTitle(MonitorConnectionTraceEvent event) =>
     monitorTraceIsDnsCacheHit(event) ? 'DNS 缓存命中' : event.title;
 
+String monitorTraceTitleForTracker(
+  MonitorConnectionTraceEvent event,
+  TrackerInfo item,
+) {
+  final title = monitorTraceDisplayTitle(event);
+  if (event.stage != 'dns') return title;
+  final domain = monitorTraceDnsDomain(event);
+  final target = item.metadata.host.trim().toLowerCase();
+  if (domain.isEmpty || target.isEmpty) return title;
+  return domain.toLowerCase() == target ? '目标 $title' : '节点 $title';
+}
+
 String monitorTraceDisplayDetail(MonitorConnectionTraceEvent event) =>
     monitorTraceIsDnsCacheHit(event)
     ? '${event.detail}${event.detail.isEmpty ? '' : ' · '}本次未发起 DNS 查询'
     : event.detail;
+
+String monitorTraceDnsDomain(MonitorConnectionTraceEvent event) {
+  if (event.stage != 'dns') return '';
+  return event.detail.split(RegExp(r'\s*(?:→|·)\s*')).first.trim();
+}
+
+MonitorDnsEntry? monitorTraceDnsEntry(
+  MonitorConnectionTraceEvent event,
+  TrackerInfo item,
+) {
+  if (event.stage != 'dns' || event.status != 'success') return null;
+  final separator = event.detail.indexOf('→');
+  if (separator < 1) return null;
+  final domain = event.detail.substring(0, separator).trim();
+  final value = event.detail.substring(separator + 1).split(' · ').first.trim();
+  if (domain.isEmpty || value.isEmpty) return null;
+  final target = item.metadata.host.trim().toLowerCase();
+  final isTarget = target.isNotEmpty && domain.toLowerCase() == target;
+  return MonitorDnsEntry(
+    source: '运行缓存',
+    category: isTarget ? monitorDnsMode(item) : '出站节点',
+    name: domain,
+    value: value,
+    detail:
+        '${isTarget ? '目标域名' : '代理节点服务器'} · ${monitorTraceDisplayTitle(event)}',
+    lastActivity: monitorTraceClock(event.timestamp),
+  );
+}
+
+List<MonitorDnsEntry> monitorRuntimeDnsEntries(Iterable<TrackerInfo> items) {
+  final latest = <String, ({DateTime time, MonitorDnsEntry entry})>{};
+  for (final item in items) {
+    final host = item.metadata.host.trim();
+    final address = monitorDnsAddress(item);
+    if (host.isNotEmpty && address.isNotEmpty) {
+      latest[host.toLowerCase()] = (
+        time: item.start,
+        entry: MonitorDnsEntry(
+          source: '运行缓存',
+          category: monitorDnsMode(item),
+          name: host,
+          value: address,
+          detail: '目标域名 · ${item.metadata.network.toUpperCase()}',
+          lastActivity: monitorClock(item.start),
+        ),
+      );
+    }
+    for (final event in monitorConnectionTrace(item)) {
+      final entry = monitorTraceDnsEntry(event, item);
+      if (entry == null) continue;
+      final time = DateTime.fromMillisecondsSinceEpoch(event.timestamp);
+      final key = entry.name.toLowerCase();
+      if (latest[key] == null || time.isAfter(latest[key]!.time)) {
+        latest[key] = (time: time, entry: entry);
+      }
+    }
+  }
+  return latest.values.map((value) => value.entry).toList();
+}
 
 String monitorTraceClock(int timestamp) {
   if (timestamp <= 0) return '';

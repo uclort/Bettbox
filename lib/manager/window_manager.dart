@@ -179,8 +179,13 @@ class _WindowHeaderState extends ConsumerState<WindowHeader> {
   }
 
   Future<void> _initNotifier() async {
-    isMaximizedNotifier.value = await windowManager.isMaximized();
-    isPinNotifier.value = await windowManager.isAlwaysOnTop();
+    final isMaximized = await windowManager.isMaximized();
+    if (!mounted) return;
+    isMaximizedNotifier.value = isMaximized;
+
+    final isAlwaysOnTop = await windowManager.isAlwaysOnTop();
+    if (!mounted) return;
+    isPinNotifier.value = isAlwaysOnTop;
   }
 
   @override

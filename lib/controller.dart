@@ -1040,21 +1040,46 @@ class AppController {
         profilesToUpdate.add(profile);
       }
     }
-    if (profilesToUpdate.isEmpty) return;
-    for (final profile in profilesToUpdate) {
-      try {
-        commonPrint.log(
-          '[MissedUpdate] Updating profile: ${profile.label ?? profile.id}',
-        );
-        await updateProfile(profile, validate: false);
-      } catch (e) {
-        commonPrint.log(
-          '[MissedUpdate] Failed to update ${profile.label ?? profile.id}: ${e.formatError}',
-        );
+    if (profilesToUpdate.isNotEmpty) {
+      for (final profile in profilesToUpdate) {
+        try {
+          commonPrint.log(
+            '[MissedUpdate] Updating profile: ${profile.label ?? profile.id}',
+          );
+          await updateProfile(profile, validate: false);
+        } catch (e) {
+          commonPrint.log(
+            '[MissedUpdate] Failed to update ${profile.label ?? profile.id}: ${e.formatError}',
+          );
+        }
+        if (profilesToUpdate.length > 1) {
+          await Future.delayed(const Duration(seconds: 2));
+        }
       }
-      if (profilesToUpdate.length > 1) {
-        await Future.delayed(const Duration(seconds: 2));
+    }
+
+    await _checkAndUpdateMissedExternalProviders();
+  }
+
+  Future<void> _checkAndUpdateMissedExternalProviders() async {
+    try {
+      final providers = await clashCore.getExternalProviders();
+      if (providers.isEmpty) return;
+      final now = DateTime.now();
+      for (final provider in providers) {
+        if (provider.vehicleType.toUpperCase() != 'HTTP') continue;
+        if (provider.isUpdating) continue;
+        final isOverdue =
+            now.difference(provider.updateAt) > const Duration(hours: 1);
+        if (isOverdue) {
+          commonPrint.log(
+            '[MissedUpdate] Updating external provider: ${provider.name}',
+          );
+          await clashCore.updateExternalProvider(providerName: provider.name);
+        }
       }
+    } catch (e) {
+      commonPrint.log('[MissedUpdate] Failed to update external providers: $e');
     }
   }
 
