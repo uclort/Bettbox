@@ -305,7 +305,7 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
         if (monitorOutboundLocalAddress(item).isNotEmpty)
           '出站地址：${monitorOutboundLocalAddress(item)}',
         if (remoteAddress.isNotEmpty)
-          '${monitorIsDirect(item) ? '直连目标地址' : '代理服务器地址'}：$remoteAddress',
+          '${monitorIsDirect(item) ? '直连目标地址' : '代理入口地址'}：$remoteAddress',
         if (item.metadata.dnsMode != null) 'DNS 模式：$dnsMode',
         if (item.metadata.sourceGeoIP.isNotEmpty)
           '客户端地区：${item.metadata.sourceGeoIP.join(' ')}',
@@ -330,8 +330,10 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
   Widget _buildMihomoFlow(BuildContext context, TrackerInfo item) {
     final trace = monitorConnectionTrace(item);
     if (trace.isNotEmpty) {
+      final targetResolution = monitorTargetResolutionSummary(item);
       final titleWidth = _flowTitleWidth(context, [
         '请求目标',
+        if (targetResolution.isNotEmpty) '目标解析方式',
         ...trace.map((event) => monitorTraceTitleForTracker(event, item)),
       ]);
       return SelectionArea(
@@ -351,12 +353,21 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
                 titleWidth: titleWidth,
                 leading: monitorClock(item.start),
               ),
+              if (targetResolution.isNotEmpty)
+                _flowStep(
+                  context,
+                  Icons.dns_outlined,
+                  '目标解析方式',
+                  targetResolution,
+                  titleWidth: titleWidth,
+                  leading: monitorClock(item.start),
+                ),
               for (final event in trace)
                 _flowStep(
                   context,
                   _traceIcon(event.stage),
                   monitorTraceTitleForTracker(event, item),
-                  monitorTraceDisplayDetail(event),
+                  monitorTraceDetailForTracker(event, item),
                   titleWidth: titleWidth,
                   leading: monitorTraceClock(event.timestamp),
                   color: switch (event.status) {
@@ -569,7 +580,7 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
       if (monitorOutboundLocalAddress(item).isNotEmpty)
         '出站地址：${monitorOutboundLocalAddress(item)}',
       if (monitorOutboundRemoteAddress(item).isNotEmpty)
-        '${monitorIsDirect(item) ? '直连目标地址' : '代理服务器地址'}：${monitorOutboundRemoteAddress(item)}',
+        '${monitorIsDirect(item) ? '直连目标地址' : '代理入口地址'}：${monitorOutboundRemoteAddress(item)}',
       'DNS 模式：${monitorDnsMode(item)}',
       if (item.metadata.processPath.isNotEmpty)
         '进程路径：${item.metadata.processPath}',

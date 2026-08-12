@@ -454,6 +454,41 @@ const after = true;
     expect(dns.detail, '代理节点服务器 · DNS 缓存命中');
   });
 
+  test('代理请求明确展示目标解析边界并按选择顺序展示策略链', () {
+    final selected = _tracker(
+      id: 'openai',
+      process: 'CodexBar',
+      upload: 0,
+      metadata: const Metadata(
+        process: 'CodexBar',
+        host: 'status.openai.com',
+        destinationIP: '198.18.0.1',
+        destinationPort: '443',
+        dnsMode: DnsMode.fakeIp,
+      ),
+      chains: const ['FC-🇺🇸 美国高级 IEPL 专线 1', 'Global'],
+      trace: const [
+        {
+          'timestamp': 1786352400123,
+          'stage': 'outbound',
+          'title': '策略链',
+          'detail': 'FC-🇺🇸 美国高级 IEPL 专线 1 → Global',
+          'status': 'success',
+        },
+      ],
+    );
+    final event = monitorConnectionTrace(selected).single;
+
+    expect(
+      monitorTargetResolutionSummary(selected),
+      'status.openai.com → 198.18.0.1 · Fake-IP 映射，真实解析交由代理远端完成',
+    );
+    expect(
+      monitorTraceDetailForTracker(event, selected),
+      'Global → FC-🇺🇸 美国高级 IEPL 专线 1',
+    );
+  });
+
   test('时间按本机时区显示，列表只显示最终策略并保留完整链路', () {
     final utc = DateTime.utc(2026, 8, 10, 5, 42, 54);
     final local = utc.toLocal();
@@ -487,7 +522,7 @@ const after = true;
           chains: const ['节点', 'Fallback', 'Global'],
         ),
       ),
-      '节点 → Fallback → Global',
+      'Global → Fallback → 节点',
     );
   });
 

@@ -505,7 +505,7 @@ String monitorPolicyName(TrackerInfo item) {
 }
 
 String monitorPolicyChain(TrackerInfo item) =>
-    monitorPolicyParts(item).join(' → ');
+    monitorPolicyParts(item).reversed.join(' → ');
 
 String monitorCompactWhitespace(String value) => value
     .replaceAll(
@@ -810,6 +810,9 @@ String monitorTraceTitleForTracker(
   TrackerInfo item,
 ) {
   final title = monitorTraceDisplayTitle(event);
+  if (event.stage == 'connect' && event.title == '出站套接字') {
+    return monitorIsDirect(item) ? '直连目标套接字' : '代理入口套接字';
+  }
   if (event.stage != 'dns') return title;
   final domain = monitorTraceDnsDomain(event);
   final target = item.metadata.host.trim().toLowerCase();
@@ -821,6 +824,34 @@ String monitorTraceDisplayDetail(MonitorConnectionTraceEvent event) =>
     monitorTraceIsDnsCacheHit(event)
     ? '${event.detail}${event.detail.isEmpty ? '' : ' · '}本次未发起 DNS 查询'
     : event.detail;
+
+String monitorTraceDetailForTracker(
+  MonitorConnectionTraceEvent event,
+  TrackerInfo item,
+) => event.stage == 'outbound'
+    ? monitorPolicyChain(item)
+    : monitorTraceDisplayDetail(event);
+
+String monitorTargetResolutionSummary(TrackerInfo item) {
+  final host = item.metadata.host.trim();
+  if (host.isEmpty ||
+      monitorConnectionTrace(item).any(
+        (event) =>
+            event.stage == 'dns' &&
+            monitorTraceDnsDomain(event).toLowerCase() == host.toLowerCase(),
+      )) {
+    return '';
+  }
+  final targetIP = monitorTargetIP(item);
+  final target = targetIP.isEmpty ? host : '$host → $targetIP';
+  if (item.metadata.dnsMode == DnsMode.fakeIp) {
+    return monitorIsDirect(item)
+        ? '$target · Fake-IP 映射，直连阶段由 Mihomo 解析真实地址'
+        : '$target · Fake-IP 映射，真实解析交由代理远端完成';
+  }
+  if (targetIP.isNotEmpty) return '$target · ${monitorDnsMode(item)}';
+  return monitorIsDirect(item) ? '$host · 未取得本地解析结果' : '$host · 真实解析交由代理远端完成';
+}
 
 String monitorTraceDnsDomain(MonitorConnectionTraceEvent event) {
   if (event.stage != 'dns') return '';
