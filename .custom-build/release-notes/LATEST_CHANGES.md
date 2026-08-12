@@ -87,6 +87,7 @@
 
 ### 上游同步
 
+- 移除 `custom-sync.yml` 每天四次的定时触发，仅保留手动同步入口。
 - 同步 Bettbox 上游 `main` 的编辑器优化、README 整理和版本号更新。
 - 同步 AIsouler 覆写脚本 `7ca7733b` 中与当前结构有关的节点过滤边界、DNS 大小写匹配及 `#DIRECT` 后缀处理；`private_ip` 继续保持上游调整后的尾部直连顺序。
 
