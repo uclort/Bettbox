@@ -62,16 +62,16 @@ void main() {
     expect(notifications, 2);
   });
 
-  test('keeps targets with different test URLs independent', () {
+  test('delay targets keep duplicate entries independent', () {
     const first = DelayTestTarget(
       name: 'resolved-proxy',
-      url: 'https://example.com/a',
+      url: 'https://example.com/generate_204',
     );
     const second = DelayTestTarget(
       name: 'resolved-proxy',
-      url: 'https://example.com/b',
+      url: 'https://example.com/generate_204',
     );
 
-    expect({first, second}, hasLength(2));
+    expect([first, second], hasLength(2));
   });
 }

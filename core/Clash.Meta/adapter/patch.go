@@ -11,12 +11,10 @@ var UrlTestHook UrlTestCheck
 
 // BETTBOX-CUSTOM: correlate app and provider delay tests with network-stage diagnostics.
 type URLTestTrace struct {
-	ID               string
-	Source           string
-	BatchID          string
-	ConcurrencyLimit int
-	Background       bool
-	Timeout          time.Duration
+	ID      string
+	Source  string
+	BatchID string
+	Timeout time.Duration
 }
 
 type urlTestTraceContextKey struct{}

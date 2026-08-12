@@ -28,11 +28,7 @@ mixin ClashInterface {
 
   Future<Result<String>> convertAgeSecretKeyToPublicKey(String secretKey);
 
-  Future<String> asyncTestDelay(
-    String url,
-    String proxyName,
-    int concurrencyLimit,
-  );
+  Future<String> asyncTestDelay(String url, String proxyName);
 
   FutureOr<String> updateConfig(UpdateParams updateParams);
 
@@ -214,10 +210,7 @@ abstract class ClashHandlerInterface with ClashInterface {
 
   @override
   FutureOr<String> validateConfig(String data, {String? ageSecretKey}) {
-    final params = {
-      'data': data,
-      'age-secret-key': ageSecretKey ?? '',
-    };
+    final params = {'data': data, 'age-secret-key': ageSecretKey ?? ''};
     return invoke<String>(
       method: ActionMethod.validateConfig,
       data: json.encode(params),
@@ -226,10 +219,7 @@ abstract class ClashHandlerInterface with ClashInterface {
 
   @override
   FutureOr<String> decryptAgeConfig(String data, String ageSecretKey) {
-    final params = {
-      'data': data,
-      'age-secret-key': ageSecretKey,
-    };
+    final params = {'data': data, 'age-secret-key': ageSecretKey};
     return invoke<String>(
       method: ActionMethod.decryptAgeConfig,
       data: json.encode(params),
@@ -248,10 +238,7 @@ abstract class ClashHandlerInterface with ClashInterface {
 
   @override
   Future<Result> getConfig(String path, {String? ageSecretKey}) async {
-    final params = {
-      'path': path,
-      'age-secret-key': ageSecretKey ?? '',
-    };
+    final params = {'path': path, 'age-secret-key': ageSecretKey ?? ''};
     final res = await invoke<Result>(
       method: ActionMethod.getConfig,
       data: json.encode(params),
@@ -408,19 +395,14 @@ abstract class ClashHandlerInterface with ClashInterface {
   }
 
   @override
-  Future<String> asyncTestDelay(
-    String url,
-    String proxyName,
-    int concurrencyLimit,
-  ) {
-    const bridgeTimeout = Duration(minutes: 5);
+  Future<String> asyncTestDelay(String url, String proxyName) {
+    const bridgeTimeout = Duration(seconds: 12);
     final requestId = utils.uuidV4;
     final delayParams = {
       'request-id': requestId,
       'proxy-name': proxyName,
       'timeout': httpTimeoutDuration.inMilliseconds,
       'test-url': url,
-      'concurrency-limit': concurrencyLimit,
     };
     return invoke<String>(
       method: ActionMethod.asyncTestDelay,
@@ -470,14 +452,14 @@ abstract class ClashHandlerInterface with ClashInterface {
 
   @override
   Future<Map<String, String>> generateAgeKeyPair() async {
-    final res = await invoke<Map>(
-      method: ActionMethod.generateAgeKeyPair,
-    );
+    final res = await invoke<Map>(method: ActionMethod.generateAgeKeyPair);
     return res.map((key, value) => MapEntry(key.toString(), value.toString()));
   }
 
   @override
-  Future<Result<String>> convertAgeSecretKeyToPublicKey(String secretKey) async {
+  Future<Result<String>> convertAgeSecretKeyToPublicKey(
+    String secretKey,
+  ) async {
     final res = await invoke<Result>(
       method: ActionMethod.convertAgeSecretKeyToPublicKey,
       data: secretKey,

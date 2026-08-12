@@ -273,10 +273,9 @@ func handleAsyncTestDelay(paramsString string, fn func(string)) {
 			requestID, params.ProxyName, proxy.Name(), proxy.Type(), providerName, testUrl, params.Timeout, queueElapsed)
 		networkStarted := time.Now()
 		ctx = adapter.WithURLTestTrace(ctx, adapter.URLTestTrace{
-			ID:               requestID,
-			Source:           "bettbox-app",
-			ConcurrencyLimit: params.ConcurrencyLimit,
-			Timeout:          time.Millisecond * time.Duration(params.Timeout),
+			ID:      requestID,
+			Source:  "bettbox-app",
+			Timeout: time.Millisecond * time.Duration(params.Timeout),
 		})
 		delay, err := proxy.URLTest(ctx, testUrl, expectedStatus)
 		if err != nil || delay == 0 {

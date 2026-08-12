@@ -140,9 +140,8 @@ func (f *Fallback) Set(name string) error {
 	f.selected = name
 	if !p.AliveForTestUrl(f.testUrl) {
 		ctx := adapter.WithURLTestTrace(context.Background(), adapter.URLTestTrace{
-			Source:     "fallback-health-check",
-			Background: true,
-			Timeout:    5 * time.Second,
+			Source:  "fallback-health-check",
+			Timeout: 5 * time.Second,
 		})
 		expectedStatus, _ := utils.NewUnsignedRanges[uint16](f.expectedStatus)
 		_, _ = p.URLTest(ctx, f.testUrl, expectedStatus)

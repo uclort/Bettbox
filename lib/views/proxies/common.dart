@@ -37,14 +37,6 @@ class DelayTestTarget {
   final String url;
 
   const DelayTestTarget({required this.name, required this.url});
-
-  @override
-  bool operator ==(Object other) {
-    return other is DelayTestTarget && other.name == name && other.url == url;
-  }
-
-  @override
-  int get hashCode => Object.hash(name, url);
 }
 
 double get listHeaderHeight {
@@ -57,7 +49,8 @@ double getItemHeight(ProxyCardType proxyCardType) {
   final baseHeight =
       16 + measure.bodyMediumHeight * 2 + measure.bodySmallHeight + 8 + 4;
   return switch (proxyCardType) {
-    ProxyCardType.expand => baseHeight - measure.bodySmallHeight + measure.labelSmallHeight * 2 + 4,
+    ProxyCardType.expand =>
+      baseHeight - measure.bodySmallHeight + measure.labelSmallHeight * 2 + 4,
     ProxyCardType.shrink => baseHeight,
     ProxyCardType.min => baseHeight - measure.bodyMediumHeight,
   };
@@ -96,13 +89,7 @@ Future<Delay> _testProxyDelay(DelayTestTarget target) async {
 
   appController.setDelay(Delay(url: target.url, name: target.name, value: 0));
   try {
-    final result = await clashCore.getDelay(
-      target.url,
-      target.name,
-      concurrencyLimit: normalizeDelayTestConcurrency(
-        globalState.config.proxiesStyle.concurrencyLimit,
-      ),
-    );
+    final result = await clashCore.getDelay(target.url, target.name);
     final delay = Delay(
       url: target.url,
       name: target.name,
@@ -152,7 +139,7 @@ Future<void> delayTest(
   Future<void> runTest() async {
     final appController = globalState.appController;
     final stopwatch = Stopwatch()..start();
-    final targets = <DelayTestTarget>{};
+    final targets = <DelayTestTarget>[];
     for (final proxy in proxies) {
       if (_isNonTestableProxy(proxy)) {
         continue;
@@ -172,8 +159,7 @@ Future<void> delayTest(
 
     commonPrint.log(
       '[DELAY-TEST][BATCH] phase=start group="${groupName ?? ''}" '
-      'targets=${targets.length} concurrency='
-      '${normalizeDelayTestConcurrency(globalState.config.proxiesStyle.concurrencyLimit)}',
+      'targets=${targets.length} concurrency=unlimited',
     );
     final results = await Future.wait(
       targets.map((target) async {

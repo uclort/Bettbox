@@ -16,7 +16,6 @@ class ProxiesAdvancedSettings extends ConsumerWidget {
       children: generateSection(
         items: [
           const _NodeExclusionWithInverseItem(),
-          const _ConcurrencyLimitItem(),
           const _HealthCheckTimeoutItem(),
           const _DelayAnimationItem(),
         ],
@@ -68,13 +67,11 @@ class _NodeExclusionDialog extends ConsumerStatefulWidget {
   final String currentValue;
   final String? Function(String?)? validator;
 
-  const _NodeExclusionDialog({
-    required this.currentValue,
-    this.validator,
-  });
+  const _NodeExclusionDialog({required this.currentValue, this.validator});
 
   @override
-  ConsumerState<_NodeExclusionDialog> createState() => _NodeExclusionDialogState();
+  ConsumerState<_NodeExclusionDialog> createState() =>
+      _NodeExclusionDialogState();
 }
 
 class _NodeExclusionDialogState extends ConsumerState<_NodeExclusionDialog> {
@@ -131,38 +128,6 @@ class _NodeExclusionDialogState extends ConsumerState<_NodeExclusionDialog> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _ConcurrencyLimitItem extends ConsumerWidget {
-  const _ConcurrencyLimitItem();
-
-  static const _options = [8, 16];
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final concurrencyLimit = ref.watch(
-      proxiesStyleSettingProvider.select((state) => state.concurrencyLimit),
-    );
-
-    return ListItem<int>.options(
-      leading: const Icon(Icons.speed),
-      title: Text(appLocalizations.concurrencyLimit),
-      subtitle: Text(appLocalizations.concurrencyLimitDesc),
-      delegate: OptionsDelegate(
-        title: appLocalizations.concurrencyLimit,
-        options: _options,
-        value: normalizeDelayTestConcurrency(concurrencyLimit),
-        textBuilder: (value) => '$value',
-        onChanged: (value) {
-          if (value != null) {
-            ref.read(proxiesStyleSettingProvider.notifier).updateState(
-                  (state) => state.copyWith(concurrencyLimit: value),
-                );
-          }
-        },
       ),
     );
   }
@@ -239,9 +204,9 @@ class _DelayAnimationItem extends ConsumerWidget {
         textBuilder: (value) => _getTextForDelayAnimation(value),
         onChanged: (value) {
           if (value != null) {
-            ref.read(proxiesStyleSettingProvider.notifier).updateState(
-                  (state) => state.copyWith(delayAnimation: value),
-                );
+            ref
+                .read(proxiesStyleSettingProvider.notifier)
+                .updateState((state) => state.copyWith(delayAnimation: value));
           }
         },
       ),

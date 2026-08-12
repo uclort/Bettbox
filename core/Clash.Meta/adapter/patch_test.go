@@ -7,7 +7,7 @@ import (
 )
 
 func TestURLTestTraceAndLogURL(t *testing.T) {
-	want := URLTestTrace{ID: "request", Source: "test", BatchID: "batch", ConcurrencyLimit: 8, Background: true, Timeout: 5 * time.Second}
+	want := URLTestTrace{ID: "request", Source: "test", BatchID: "batch", Timeout: 5 * time.Second}
 	got := URLTestTraceFromContext(WithURLTestTrace(context.Background(), want))
 	if got != want {
 		t.Fatalf("trace mismatch: got %+v, want %+v", got, want)

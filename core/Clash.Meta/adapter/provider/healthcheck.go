@@ -8,7 +8,6 @@ import (
 
 	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/common/atomic"
-	"github.com/metacubex/mihomo/common/singleflight"
 	"github.com/metacubex/mihomo/common/utils"
 	C "github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/log"
@@ -39,7 +38,6 @@ type HealthCheck struct {
 	expectedStatus utils.IntRanges[uint16]
 	lastTouch      atomic.TypedValue[time.Time]
 	timeout        time.Duration
-	checkGroup     singleflight.Group[struct{}]
 }
 
 func (hc *HealthCheck) process() {
@@ -66,7 +64,6 @@ func (hc *HealthCheck) setProxies(proxies []C.Proxy) {
 	hc.mu.Lock()
 	hc.proxies = proxies
 	hc.mu.Unlock()
-	hc.checkGroup.Forget("health-check")
 }
 
 func (hc *HealthCheck) getProxies() []C.Proxy {
@@ -136,26 +133,22 @@ func (hc *HealthCheck) check() {
 		return
 	}
 
-	_, _, _ = hc.checkGroup.Do("health-check", func() (struct{}, error) {
-		id := utils.NewUUIDV4().String()
-		log.Debugln("Start New Health Checking {%s}", id)
-		b := new(errgroup.Group)
-		b.SetLimit(10)
+	id := utils.NewUUIDV4().String()
+	log.Debugln("Start New Health Checking {%s}", id)
+	b := new(errgroup.Group)
 
-		// execute default health check
-		option := &extraOption{filters: nil, expectedStatus: hc.expectedStatus}
-		hc.execute(b, proxies, hc.url, id, option)
+	// execute default health check
+	option := &extraOption{filters: nil, expectedStatus: hc.expectedStatus}
+	hc.execute(b, proxies, hc.url, id, option)
 
-		// execute extra health check
-		if len(hc.extra) != 0 {
-			for url, option := range hc.extra {
-				hc.execute(b, proxies, url, id, option)
-			}
+	// execute extra health check
+	if len(hc.extra) != 0 {
+		for url, option := range hc.extra {
+			hc.execute(b, proxies, url, id, option)
 		}
-		_ = b.Wait()
-		log.Debugln("Finish A Health Checking {%s}", id)
-		return struct{}{}, nil
-	})
+	}
+	_ = b.Wait()
+	log.Debugln("Finish A Health Checking {%s}", id)
 }
 
 func (hc *HealthCheck) execute(b *errgroup.Group, proxies []C.Proxy, url, uid string, option *extraOption) {
@@ -190,11 +183,10 @@ func (hc *HealthCheck) execute(b *errgroup.Group, proxies []C.Proxy, url, uid st
 		p := proxy
 		b.Go(func() error {
 			ctx := adapter.WithURLTestTrace(hc.ctx, adapter.URLTestTrace{
-				ID:         utils.NewUUIDV4().String(),
-				Source:     "provider-health-check",
-				BatchID:    uid,
-				Background: true,
-				Timeout:    hc.timeout,
+				ID:      utils.NewUUIDV4().String(),
+				Source:  "provider-health-check",
+				BatchID: uid,
+				Timeout: hc.timeout,
 			})
 			log.Debugln("Health Checking, proxy: %s, url: %s, id: {%s}", p.Name(), url, uid)
 			_, _ = p.URLTest(ctx, url, expectedStatus)
