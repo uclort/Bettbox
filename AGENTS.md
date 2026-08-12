@@ -1,6 +1,7 @@
 # Bettbox 仓库协作约束
 
 - 始终使用中文沟通。
+- `appshubcc/Bettbox` 仅用作上游代码同步源；推送、GitHub Actions、Release、标签、运行查询及其他 GitHub 操作一律显式指定 `uclort/Bettbox`，不得依赖 `gh` 的默认仓库推断。
 - 除非用户明确要求，否则不得创建 Pull Request。
 - 同步或融合 Bettbox、Mihomo、Snell 上游代码前，必须完整阅读 `.custom-build/release-notes/CUSTOM_CHANGES.md`。
 - 修改 Bettbox 自定义代码、custom-mihomo 或本地覆写脚本后，必须同步更新 `.custom-build/release-notes/CUSTOM_CHANGES.md`；本次发布增量另写入 `LATEST_CHANGES.md`。
