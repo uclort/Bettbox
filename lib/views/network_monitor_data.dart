@@ -250,7 +250,15 @@ String monitorGeneratedRule(
   ].join(',');
 }
 
-enum MonitorTrackerFacet { process, source, target, network, rule, outbound }
+enum MonitorTrackerFacet {
+  process,
+  source,
+  target,
+  network,
+  rule,
+  outbound,
+  status,
+}
 
 enum MonitorTrackerStatus {
   failed,
@@ -279,13 +287,13 @@ const monitorStaticSidebarSections = <MonitorPage, List<MonitorSidebarSection>>{
     ),
     (title: 'Hosts', items: ['配置 · hosts', '系统 · hosts']),
     (
-      title: '运行时解析',
+      title: '运行缓存',
       items: [
-        '运行时 · fake-ip',
-        '运行时 · redir-host',
-        '运行时 · hosts',
-        '运行时 · normal',
-        '运行时 · 未知',
+        '运行缓存 · fake-ip',
+        '运行缓存 · redir-host',
+        '运行缓存 · hosts',
+        '运行缓存 · normal',
+        '运行缓存 · 未知',
       ],
     ),
   ],
@@ -463,27 +471,49 @@ String monitorTrackerFacetLabel(MonitorTrackerFacet facet) => switch (facet) {
   MonitorTrackerFacet.network => '网络协议',
   MonitorTrackerFacet.rule => '规则类型',
   MonitorTrackerFacet.outbound => '出站链',
+  MonitorTrackerFacet.status => '状态',
 };
 
-String monitorTrackerFacetValue(TrackerInfo item, MonitorTrackerFacet facet) =>
-    switch (facet) {
-      MonitorTrackerFacet.process =>
-        item.metadata.process.trim().isEmpty
-            ? '未知进程'
-            : item.metadata.process.trim(),
-      MonitorTrackerFacet.source =>
-        item.metadata.sourceIP.trim().isEmpty
-            ? '未知来源'
-            : item.metadata.sourceIP.trim(),
-      MonitorTrackerFacet.target => monitorTargetName(item),
-      MonitorTrackerFacet.network =>
-        item.metadata.network.trim().isEmpty
-            ? '未知协议'
-            : item.metadata.network.trim().toUpperCase(),
-      MonitorTrackerFacet.rule =>
-        item.rule.trim().isEmpty ? '未匹配规则' : item.rule.trim(),
-      MonitorTrackerFacet.outbound =>
-        monitorPolicyName(item).isEmpty ? '无出站链' : monitorPolicyName(item),
+String monitorTrackerFacetValue(
+  TrackerInfo item,
+  MonitorTrackerFacet facet, [
+  Set<String> activeIds = const {},
+]) => switch (facet) {
+  MonitorTrackerFacet.process =>
+    item.metadata.process.trim().isEmpty
+        ? '未知进程'
+        : item.metadata.process.trim(),
+  MonitorTrackerFacet.source =>
+    item.metadata.sourceIP.trim().isEmpty
+        ? '未知来源'
+        : item.metadata.sourceIP.trim(),
+  MonitorTrackerFacet.target => monitorTargetName(item),
+  MonitorTrackerFacet.network =>
+    item.metadata.network.trim().isEmpty
+        ? '未知协议'
+        : item.metadata.network.trim().toUpperCase(),
+  MonitorTrackerFacet.rule =>
+    item.rule.trim().isEmpty ? '未匹配规则' : item.rule.trim(),
+  MonitorTrackerFacet.outbound =>
+    monitorPolicyName(item).isEmpty ? '无出站链' : monitorPolicyName(item),
+  MonitorTrackerFacet.status => switch (monitorTrackerStatus(item, activeIds)) {
+    MonitorTrackerStatus.failed => '失败',
+    MonitorTrackerStatus.blocked => '已拦截',
+    MonitorTrackerStatus.connecting => '建立中',
+    MonitorTrackerStatus.connected => '已连接',
+    MonitorTrackerStatus.closed => '已结束',
+    MonitorTrackerStatus.unknown => '未知',
+  },
+};
+
+bool monitorDnsMatchesFilter(MonitorDnsEntry item, String filter) =>
+    switch (filter) {
+      '' || '全部' => true,
+      '配置 DNS' => item.source == '配置' && item.category != 'hosts',
+      'Hosts' => item.category == 'hosts',
+      '运行缓存' => item.source == '运行缓存',
+      'Fake-IP' => item.source == '运行缓存' && item.category == 'fake-ip',
+      _ => filter == monitorDnsFilterValue(item),
     };
 
 String monitorTargetName(TrackerInfo item) {

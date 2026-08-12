@@ -220,17 +220,20 @@ String _monitorStatusLabel(MonitorTrackerStatus status) => switch (status) {
   MonitorTrackerStatus.unknown => '未知',
 };
 
-Color _monitorStatusColor(BuildContext context, MonitorTrackerStatus status) =>
-    switch (status) {
-      MonitorTrackerStatus.failed => Colors.red,
-      MonitorTrackerStatus.blocked => Colors.red,
-      MonitorTrackerStatus.connecting => Colors.amber,
-      MonitorTrackerStatus.connected => Colors.blue,
-      MonitorTrackerStatus.closed => Colors.green,
-      MonitorTrackerStatus.unknown => Theme.of(
-        context,
-      ).colorScheme.outlineVariant,
-    };
+Color _monitorStatusColor(BuildContext context, MonitorTrackerStatus status) {
+  final dark = Theme.of(context).brightness == Brightness.dark;
+  return switch (status) {
+    MonitorTrackerStatus.failed || MonitorTrackerStatus.blocked =>
+      dark ? const Color(0xFFFF6B6B) : const Color(0xFFB42318),
+    MonitorTrackerStatus.connecting =>
+      dark ? const Color(0xFFFFC247) : const Color(0xFF8A5700),
+    MonitorTrackerStatus.connected =>
+      dark ? const Color(0xFF64B5F6) : const Color(0xFF146CB8),
+    MonitorTrackerStatus.closed =>
+      dark ? const Color(0xFF69D17D) : const Color(0xFF237A3B),
+    MonitorTrackerStatus.unknown => Theme.of(context).colorScheme.outline,
+  };
+}
 
 TextSpan _monitorCompactTextSpan(String value, {TextStyle? style}) {
   return TextSpan(text: monitorCompactWhitespace(value), style: style);
@@ -450,7 +453,7 @@ class _NetworkMonitorAppState extends State<NetworkMonitorApp>
         ),
         fontFamily: 'HarmonyOS_Sans',
       ),
-      home: const NetworkMonitorToolsView(embedded: false),
+      home: const NetworkMonitorView(),
     );
   }
 }
@@ -592,6 +595,7 @@ class NetworkMonitorView extends ConsumerStatefulWidget {
 
 class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
   static const _columnWidthPreferencePrefix = 'networkMonitor.columnWidth.';
+  static const _detailHeightPreferenceKey = 'networkMonitor.detailHeight';
   final _snapshotReader = NetworkMonitorSnapshotReader();
   Timer? _fallbackTimer;
   Timer? _connectionsTimer;
@@ -619,6 +623,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
   int _totalTrafficDown = 0;
   int _detailTab = 0;
   double _detailHeight = 260;
+  DateTime? _dnsCacheClearedAt;
   bool _loading = false;
   bool _connectionsLoading = false;
   bool _dnsLoading = false;
@@ -646,7 +651,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
     super.initState();
     _page = widget.initialPage;
     _sidebarFilter = monitorDefaultSidebarFilter(_page);
-    unawaited(_restoreColumnWidths());
+    unawaited(_restorePreferences());
     if (widget.embedded) {
       _requestsSubscription = ref.listenManual(
         requestsProvider.select((state) => state.list),
@@ -687,7 +692,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
 
   void _update(VoidCallback change) => setState(change);
 
-  Future<void> _restoreColumnWidths() async {
+  Future<void> _restorePreferences() async {
     final prefs = await preferences.sharedPreferencesCompleter.future;
     if (!mounted || prefs == null) return;
     final saved = <MonitorSortColumn, double>{};
@@ -699,7 +704,13 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
         saved[column] = monitorResizedColumnWidth(width, 0);
       }
     }
-    if (saved.isNotEmpty) setState(() => _columnWidths.addAll(saved));
+    final detailHeight = prefs.getDouble(_detailHeightPreferenceKey);
+    if (saved.isNotEmpty || detailHeight != null) {
+      setState(() {
+        _columnWidths.addAll(saved);
+        if (detailHeight != null) _detailHeight = detailHeight;
+      });
+    }
   }
 
   void _saveColumnWidth(MonitorSortColumn column) {
@@ -709,6 +720,13 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
         '$_columnWidthPreferencePrefix${column.name}',
         _columnWidths[column]!,
       );
+    }());
+  }
+
+  void _saveDetailHeight() {
+    unawaited(() async {
+      final prefs = await preferences.sharedPreferencesCompleter.future;
+      await prefs?.setDouble(_detailHeightPreferenceKey, _detailHeight);
     }());
   }
 
@@ -906,7 +924,11 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
     final activeIds = _connections.map((item) => item.id).toSet();
     final filtered = _pageTrackers.where((item) {
       if (monitorIsInternalTracker(item)) return false;
-      final sideValue = monitorTrackerFacetValue(item, _trackerFacet);
+      final sideValue = monitorTrackerFacetValue(
+        item,
+        _trackerFacet,
+        activeIds,
+      );
       if (_trackerFilter != null && sideValue != _trackerFilter) return false;
       if (query.isEmpty) return true;
       return [
@@ -925,9 +947,10 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
 
   Map<String, TrackerInfo> get _sidebarTrackers {
     final values = <String, TrackerInfo>{};
+    final activeIds = _connections.map((item) => item.id).toSet();
     for (final item in _pageTrackers) {
       if (monitorIsInternalTracker(item)) continue;
-      final value = monitorTrackerFacetValue(item, _trackerFacet);
+      final value = monitorTrackerFacetValue(item, _trackerFacet, activeIds);
       if (value.isEmpty) continue;
       final currentPath = values[value]?.metadata.processPath ?? '';
       final nextPath = item.metadata.processPath;
@@ -942,6 +965,39 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
       values.entries.toList()..sort((a, b) => a.key.compareTo(b.key)),
     );
   }
+
+  List<MonitorDnsEntry> get _runtimeDnsEntries {
+    final latest = <String, TrackerInfo>{};
+    for (final item in _allTrackers) {
+      if (_dnsCacheClearedAt != null &&
+          !item.start.isAfter(_dnsCacheClearedAt!)) {
+        continue;
+      }
+      final host = item.metadata.host.trim();
+      if (host.isEmpty || monitorDnsAddress(item).isEmpty) continue;
+      final previous = latest[host];
+      if (previous == null || item.start.isAfter(previous.start)) {
+        latest[host] = item;
+      }
+    }
+    return latest.values
+        .map(
+          (item) => MonitorDnsEntry(
+            source: '运行缓存',
+            category: monitorDnsMode(item),
+            name: item.metadata.host,
+            value: monitorDnsAddress(item),
+            detail: item.metadata.network.toUpperCase(),
+            lastActivity: monitorClock(item.start),
+          ),
+        )
+        .toList();
+  }
+
+  List<MonitorDnsEntry> get _dnsEntries => [
+    ..._dnsSources,
+    ..._runtimeDnsEntries,
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -1163,6 +1219,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
       MonitorTrackerFacet.network => Icons.swap_horiz_outlined,
       MonitorTrackerFacet.rule => Icons.rule_outlined,
       MonitorTrackerFacet.outbound => Icons.alt_route_outlined,
+      MonitorTrackerFacet.status => Icons.circle_outlined,
     };
     return Icon(icon, size: 18);
   }
@@ -1211,16 +1268,28 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Material(
-        color: selected
-            ? Theme.of(context).colorScheme.secondaryContainer
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
+        color: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: selected
+              ? BorderSide(color: Theme.of(context).colorScheme.primary)
+              : BorderSide.none,
+        ),
         child: ListTile(
           dense: true,
           minTileHeight: 38,
           contentPadding: const EdgeInsets.symmetric(horizontal: 8),
           leading: leading,
-          title: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+          title: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: selected
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
           onTap: onTap,
         ),
       ),
@@ -1580,32 +1649,9 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
   }
 
   Widget _buildDnsTable(BuildContext context) {
-    final runtimeEntries = <String, TrackerInfo>{};
-    for (final item in _allTrackers) {
-      final host = item.metadata.host.trim();
-      if (host.isEmpty || monitorDnsAddress(item).isEmpty) continue;
-      final previous = runtimeEntries[host];
-      if (previous == null || item.start.isAfter(previous.start)) {
-        runtimeEntries[host] = item;
-      }
-    }
-    final entries = [
-      ..._dnsSources,
-      ...runtimeEntries.values.map(
-        (item) => MonitorDnsEntry(
-          source: '运行时',
-          category: monitorDnsMode(item),
-          name: item.metadata.host,
-          value: monitorDnsAddress(item),
-          detail: item.metadata.network.toUpperCase(),
-          lastActivity: monitorClock(item.start),
-        ),
-      ),
-    ];
     final items =
-        entries.where((item) {
-          return (_sidebarFilter == '全部' ||
-                  _sidebarFilter == monitorDnsFilterValue(item)) &&
+        _dnsEntries.where((item) {
+          return monitorDnsMatchesFilter(item, _sidebarFilter) &&
               _matchesQuery([
                 item.source,
                 item.category,

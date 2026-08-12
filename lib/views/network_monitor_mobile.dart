@@ -2,15 +2,137 @@ part of 'network_monitor.dart';
 
 extension _NetworkMonitorMobile on _NetworkMonitorViewState {
   Widget _buildMobileMonitor(BuildContext context) {
-    if (_selected != null) return _buildMobileDetail(context, _selected!);
     return Column(
       children: [
         if (_error != null) _buildError(context),
         if (_page != MonitorPage.subStore) _buildMobileSearch(context),
+        if (_page != MonitorPage.subStore) _buildMobileFilters(context),
         Expanded(child: _buildMobilePage(context)),
         if (_page != MonitorPage.subStore) _buildMobileActions(context),
       ],
     );
+  }
+
+  Widget _buildMobileFilters(BuildContext context) {
+    if (_page == MonitorPage.requests || _page == MonitorPage.connections) {
+      return SizedBox(
+        height: 44,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+          children: [
+            _mobileFilterChip(
+              context,
+              label: '全部',
+              selected: _trackerFilter == null,
+              onSelected: () => _update(() => _trackerFilter = null),
+            ),
+            for (final facet in MonitorTrackerFacet.values)
+              _mobileFilterChip(
+                context,
+                label: facet == _trackerFacet && _trackerFilter != null
+                    ? '${monitorTrackerFacetLabel(facet)} · $_trackerFilter'
+                    : monitorTrackerFacetLabel(facet),
+                selected: facet == _trackerFacet && _trackerFilter != null,
+                onSelected: () => _showMobileTrackerFilter(context, facet),
+              ),
+          ],
+        ),
+      );
+    }
+    final filters = switch (_page) {
+      MonitorPage.dns => const ['全部', '配置 DNS', 'Hosts', '运行缓存', 'Fake-IP'],
+      _ =>
+        (monitorStaticSidebarSections[_page] ?? const [])
+            .expand((section) => section.items)
+            .toSet()
+            .toList(),
+    };
+    if (filters.isEmpty) return const SizedBox.shrink();
+    return SizedBox(
+      height: 44,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+        children: [
+          for (final filter in filters)
+            _mobileFilterChip(
+              context,
+              label: filter,
+              selected: _sidebarFilter == filter,
+              onSelected: () => _update(() => _sidebarFilter = filter),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _mobileFilterChip(
+    BuildContext context, {
+    required String label,
+    required bool selected,
+    required VoidCallback onSelected,
+  }) {
+    final colors = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: FilterChip(
+        label: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 180),
+          child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+        ),
+        selected: selected,
+        showCheckmark: selected,
+        checkmarkColor: colors.primary,
+        selectedColor: Colors.transparent,
+        backgroundColor: Colors.transparent,
+        side: BorderSide(color: selected ? colors.primary : colors.outline),
+        labelStyle: TextStyle(
+          color: selected ? colors.primary : colors.onSurface,
+        ),
+        onSelected: (_) => onSelected(),
+      ),
+    );
+  }
+
+  Future<void> _showMobileTrackerFilter(
+    BuildContext context,
+    MonitorTrackerFacet facet,
+  ) async {
+    final activeIds = _connections.map((item) => item.id).toSet();
+    final values =
+        _pageTrackers
+            .where((item) => !monitorIsInternalTracker(item))
+            .map((item) => monitorTrackerFacetValue(item, facet, activeIds))
+            .where((value) => value.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
+    final selected = await showModalBottomSheet<String?>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            ListTile(
+              title: Text('全部${monitorTrackerFacetLabel(facet)}'),
+              onTap: () => Navigator.pop(context, ''),
+            ),
+            for (final value in values)
+              ListTile(
+                title: Text(value),
+                onTap: () => Navigator.pop(context, value),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || selected == null) return;
+    _update(() {
+      _trackerFacet = facet;
+      _trackerFilter = selected.isEmpty ? null : selected;
+    });
   }
 
   Widget _buildMobileSearch(BuildContext context) {
@@ -58,7 +180,7 @@ extension _NetworkMonitorMobile on _NetworkMonitorViewState {
         final policy = monitorPolicyName(item);
         return InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () => _selectTracker(item),
+          onTap: () => _openMobileTrackerDetail(context, item),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
             child: Row(
@@ -127,8 +249,9 @@ extension _NetworkMonitorMobile on _NetworkMonitorViewState {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: .14),
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color),
       ),
       child: Text(
         label,
@@ -138,35 +261,15 @@ extension _NetworkMonitorMobile on _NetworkMonitorViewState {
   }
 
   List<MonitorDnsEntry> get _mobileDnsEntries {
-    final runtime = <String, TrackerInfo>{};
-    for (final item in _allTrackers) {
-      final host = item.metadata.host.trim();
-      if (host.isEmpty || monitorDnsAddress(item).isEmpty) continue;
-      final previous = runtime[host];
-      if (previous == null || item.start.isAfter(previous.start)) {
-        runtime[host] = item;
-      }
-    }
-    return [
-      ..._dnsSources,
-      ...runtime.values.map(
-        (item) => MonitorDnsEntry(
-          source: '运行时',
-          category: monitorDnsMode(item),
-          name: item.metadata.host,
-          value: monitorDnsAddress(item),
-          detail: item.metadata.network.toUpperCase(),
-          lastActivity: monitorClock(item.start),
-        ),
-      ),
-    ].where((item) {
-      return _matchesQuery([
-        item.source,
-        item.category,
-        item.name,
-        item.value,
-        item.detail,
-      ]);
+    return _dnsEntries.where((item) {
+      return monitorDnsMatchesFilter(item, _sidebarFilter) &&
+          _matchesQuery([
+            item.source,
+            item.category,
+            item.name,
+            item.value,
+            item.detail,
+          ]);
     }).toList();
   }
 
@@ -175,8 +278,22 @@ extension _NetworkMonitorMobile on _NetworkMonitorViewState {
     if (items.isEmpty) return const Center(child: Text('暂无 DNS 数据'));
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
-      itemCount: items.length,
+      itemCount: items.length + 1,
       itemBuilder: (context, index) {
+        if (index == 0) {
+          return Card.filled(
+            child: ListTile(
+              leading: const Icon(Icons.cached),
+              title: Text('当前可见运行缓存 ${_runtimeDnsEntries.length} 条'),
+              subtitle: const Text('清除后，下次访问将由 Mihomo 重新解析'),
+              trailing: TextButton(
+                onPressed: () => _clearDnsCache(context),
+                child: const Text('清除'),
+              ),
+            ),
+          );
+        }
+        index--;
         final item = items[index];
         return Card.filled(
           child: ListTile(
@@ -201,6 +318,26 @@ extension _NetworkMonitorMobile on _NetworkMonitorViewState {
     );
   }
 
+  void _openMobileTrackerDetail(BuildContext context, TrackerInfo item) {
+    _detailTab = 0;
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (routeContext) => StatefulBuilder(
+          builder: (routeContext, updateRoute) => Scaffold(
+            body: SafeArea(
+              child: _buildMobileDetail(
+                routeContext,
+                item,
+                onBack: () => Navigator.pop(routeContext),
+                onTabChanged: (index) => updateRoute(() => _detailTab = index),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildMobileDevices(BuildContext context) {
     final activeIds = _connections.map((item) => item.id).toSet();
     final grouped = <String, List<TrackerInfo>>{};
@@ -209,11 +346,19 @@ extension _NetworkMonitorMobile on _NetworkMonitorViewState {
     }
     final entries = grouped.entries.where((entry) {
       final item = entry.value.first;
-      return _matchesQuery([
-        entry.key,
-        item.metadata.sourceIP,
-        item.metadata.processPath,
-      ]);
+      final source = monitorDeviceSource(item);
+      final visible = switch (_sidebarFilter) {
+        '本机进程' || '网络来源' || '未识别' => source == _sidebarFilter,
+        '活动' => entry.value.any((item) => activeIds.contains(item.id)),
+        '历史' => entry.value.any((item) => !activeIds.contains(item.id)),
+        _ => true,
+      };
+      return visible &&
+          _matchesQuery([
+            entry.key,
+            item.metadata.sourceIP,
+            item.metadata.processPath,
+          ]);
     }).toList()..sort((a, b) => a.key.compareTo(b.key));
     if (entries.isEmpty) return const Center(child: Text('暂无设备数据'));
     return ListView.builder(
@@ -261,7 +406,7 @@ extension _NetworkMonitorMobile on _NetworkMonitorViewState {
   Widget _buildMobileTraffic(BuildContext context) {
     final groups = <String, int>{};
     for (final item in _allTrackers) {
-      final key = monitorTrafficGroupValue(item, '出站链');
+      final key = monitorTrafficGroupValue(item, _sidebarFilter);
       groups.update(
         key,
         (value) => value + item.upload + item.download,
@@ -286,7 +431,10 @@ extension _NetworkMonitorMobile on _NetworkMonitorViewState {
           ],
         ),
         const SizedBox(height: 8),
-        Text('按出站策略统计', style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          '按$_sidebarFilter统计',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         for (final entry in entries)
           ListTile(
             leading: const Icon(Icons.data_usage_outlined),
@@ -317,10 +465,11 @@ extension _NetworkMonitorMobile on _NetworkMonitorViewState {
     final query = _query.toLowerCase().trim();
     final logs = _logs
         .where((log) {
-          return query.isEmpty ||
-              '${log.dateTime} ${log.level} ${log.payload}'
-                  .toLowerCase()
-                  .contains(query);
+          return (_sidebarFilter == '全部' || log.level == _sidebarFilter) &&
+              (query.isEmpty ||
+                  '${log.dateTime} ${log.level} ${log.payload}'
+                      .toLowerCase()
+                      .contains(query));
         })
         .toList()
         .reversed
@@ -407,7 +556,12 @@ extension _NetworkMonitorMobile on _NetworkMonitorViewState {
     );
   }
 
-  Widget _buildMobileDetail(BuildContext context, TrackerInfo item) {
+  Widget _buildMobileDetail(
+    BuildContext context,
+    TrackerInfo item, {
+    VoidCallback? onBack,
+    ValueChanged<int>? onTabChanged,
+  }) {
     final status = monitorTrackerStatus(
       item,
       _connections.map((item) => item.id).toSet(),
@@ -421,7 +575,7 @@ extension _NetworkMonitorMobile on _NetworkMonitorViewState {
             children: [
               IconButton(
                 tooltip: '返回列表',
-                onPressed: () => _update(() => _selected = null),
+                onPressed: onBack ?? () => Navigator.maybePop(context),
                 icon: const Icon(Icons.arrow_back),
               ),
               Expanded(
@@ -478,14 +632,37 @@ extension _NetworkMonitorMobile on _NetworkMonitorViewState {
               ),
               const Spacer(),
               for (var index = 0; index < tabs.length; index++)
-                TextButton(
-                  onPressed: () => _update(() => _detailTab = index),
-                  style: TextButton.styleFrom(
-                    backgroundColor: _detailTab == index
-                        ? Theme.of(context).colorScheme.primaryContainer
-                        : null,
+                InkWell(
+                  onTap: () =>
+                      (onTabChanged ??
+                      (value) => _update(() => _detailTab = value))(index),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: _detailTab == index
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.transparent,
+                          width: 3,
+                        ),
+                      ),
+                    ),
+                    child: Text(
+                      tabs[index],
+                      style: TextStyle(
+                        color: _detailTab == index
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).colorScheme.onSurface,
+                        fontWeight: _detailTab == index
+                            ? FontWeight.w600
+                            : null,
+                      ),
+                    ),
                   ),
-                  child: Text(tabs[index]),
                 ),
             ],
           ),

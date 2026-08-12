@@ -639,7 +639,7 @@ const after = true;
         '配置 · nameserver',
         '配置 · hosts',
         '系统 · hosts',
-        '运行时 · fake-ip',
+        '运行缓存 · fake-ip',
       ]),
     );
     expect(
@@ -696,6 +696,40 @@ const after = true;
       monitorTrackerFacetValue(item, MonitorTrackerFacet.outbound),
       'Proxy',
     );
+    expect(
+      monitorTrackerFacetValue(item, MonitorTrackerFacet.status, {'facet'}),
+      '建立中',
+    );
+  });
+
+  test('DNS 移动分类能区分配置、Hosts 和运行缓存', () {
+    const configured = MonitorDnsEntry(
+      source: '配置',
+      category: 'nameserver',
+      name: '主 DNS',
+      value: '1.1.1.1',
+      detail: '',
+    );
+    const hosts = MonitorDnsEntry(
+      source: '系统',
+      category: 'hosts',
+      name: 'localhost',
+      value: '127.0.0.1',
+      detail: '',
+    );
+    const runtime = MonitorDnsEntry(
+      source: '运行缓存',
+      category: 'fake-ip',
+      name: 'example.com',
+      value: '198.18.0.1',
+      detail: '',
+    );
+
+    expect(monitorDnsMatchesFilter(configured, '配置 DNS'), isTrue);
+    expect(monitorDnsMatchesFilter(hosts, 'Hosts'), isTrue);
+    expect(monitorDnsMatchesFilter(runtime, '运行缓存'), isTrue);
+    expect(monitorDnsMatchesFilter(runtime, 'Fake-IP'), isTrue);
+    expect(monitorDnsMatchesFilter(configured, 'Fake-IP'), isFalse);
   });
 
   test('连接状态回传按 ID 更新同一条请求且复用已知 App 路径', () {

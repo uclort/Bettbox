@@ -30,7 +30,7 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
             TextButton.icon(
               onPressed: () => _clearDnsCache(context),
               icon: const Icon(Icons.cleaning_services_outlined, size: 18),
-              label: const Text('清除 DNS 缓存'),
+              label: Text('清除 DNS 缓存（${_runtimeDnsEntries.length}）'),
             ),
           TextButton.icon(
             onPressed: _reload,
@@ -60,7 +60,10 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('清除 DNS 缓存'),
-        content: const Text('将同时清除运行中的 DNS 结果和 Fake-IP 映射，下次访问会重新解析。'),
+        content: Text(
+          '将同时清除 Mihomo 运行中的 DNS 结果和 Fake-IP 映射。'
+          '\n面板当前可见 ${_runtimeDnsEntries.length} 条，下次访问会重新解析。',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -75,6 +78,7 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
     );
     if (confirmed != true || !context.mounted) return;
     if (await _invoke('flushDnsCache') && context.mounted) {
+      _update(() => _dnsCacheClearedAt = DateTime.now());
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('DNS 缓存已清除')));
@@ -109,6 +113,8 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
                       .toDouble();
                 });
               },
+              onVerticalDragEnd: (_) => _saveDetailHeight(),
+              onVerticalDragCancel: _saveDetailHeight,
               child: SizedBox(
                 height: 8,
                 child: Center(
