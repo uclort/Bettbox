@@ -507,6 +507,11 @@ String monitorPolicyName(TrackerInfo item) {
 String monitorPolicyChain(TrackerInfo item) =>
     monitorPolicyParts(item).reversed.join(' → ');
 
+String monitorRouteChain(TrackerInfo item) => [
+  monitorCompactWhitespace(monitorRuleName(item)),
+  ...monitorPolicyParts(item).reversed,
+].where((value) => value.isNotEmpty).join(' → ');
+
 String monitorCompactWhitespace(String value) => value
     .replaceAll(
       RegExp(
@@ -810,6 +815,7 @@ String monitorTraceTitleForTracker(
   TrackerInfo item,
 ) {
   final title = monitorTraceDisplayTitle(event);
+  if (event.stage == 'outbound') return '完整策略链';
   if (event.stage == 'connect' && event.title == '出站套接字') {
     return monitorIsDirect(item) ? '直连目标套接字' : '代理入口套接字';
   }
@@ -829,7 +835,7 @@ String monitorTraceDetailForTracker(
   MonitorConnectionTraceEvent event,
   TrackerInfo item,
 ) => event.stage == 'outbound'
-    ? monitorPolicyChain(item)
+    ? monitorRouteChain(item)
     : monitorTraceDisplayDetail(event);
 
 String monitorTargetResolutionSummary(TrackerInfo item) {

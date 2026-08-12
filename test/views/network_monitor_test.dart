@@ -17,6 +17,7 @@ TrackerInfo _tracker({
   Metadata? metadata,
   List<String> chains = const ['代理'],
   String rule = 'MATCH',
+  String rulePayload = '',
   String outboundLocalAddress = '',
   String outboundRemoteAddress = '',
   List<Map<String, Object?>> trace = const [],
@@ -28,7 +29,7 @@ TrackerInfo _tracker({
     metadata: metadata ?? Metadata(process: process),
     chains: chains,
     rule: rule,
-    rulePayload: '',
+    rulePayload: rulePayload,
     outboundLocalAddress: outboundLocalAddress,
     outboundRemoteAddress: outboundRemoteAddress,
     trace: trace,
@@ -454,7 +455,7 @@ const after = true;
     expect(dns.detail, '代理节点服务器 · DNS 缓存命中');
   });
 
-  test('代理请求明确展示目标解析边界并按选择顺序展示策略链', () {
+  test('代理请求从命中规则开始展示完整策略链', () {
     final selected = _tracker(
       id: 'openai',
       process: 'CodexBar',
@@ -467,6 +468,8 @@ const after = true;
         dnsMode: DnsMode.fakeIp,
       ),
       chains: const ['FC-🇺🇸 美国高级 IEPL 专线 1', 'Global'],
+      rule: 'RuleSet',
+      rulePayload: 'ai',
       trace: const [
         {
           'timestamp': 1786352400123,
@@ -485,8 +488,9 @@ const after = true;
     );
     expect(
       monitorTraceDetailForTracker(event, selected),
-      'Global → FC-🇺🇸 美国高级 IEPL 专线 1',
+      'RuleSet ai → Global → FC-🇺🇸 美国高级 IEPL 专线 1',
     );
+    expect(monitorTraceTitleForTracker(event, selected), '完整策略链');
   });
 
   test('时间按本机时区显示，列表只显示最终策略并保留完整链路', () {

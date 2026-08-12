@@ -407,14 +407,8 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
         )
       else if (destinationIP.isNotEmpty)
         (icon: Icons.language, title: '目标识别', value: destinationIP),
-      if (monitorRuleName(item).isNotEmpty)
-        (
-          icon: Icons.rule_outlined,
-          title: '规则匹配',
-          value: monitorRuleName(item),
-        ),
-      if (monitorPolicyChain(item).isNotEmpty)
-        (icon: Icons.alt_route, title: '出站路径', value: monitorPolicyChain(item)),
+      if (monitorRouteChain(item).isNotEmpty)
+        (icon: Icons.alt_route, title: '完整策略链', value: monitorRouteChain(item)),
       if (remote.isNotEmpty)
         (
           icon: Icons.link,
