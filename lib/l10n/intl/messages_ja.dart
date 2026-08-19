@@ -155,6 +155,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "bind": MessageLookupByLibrary.simpleMessage("連携"),
     "blacklist": MessageLookupByLibrary.simpleMessage("ブラックリスト"),
     "blacklistMode": MessageLookupByLibrary.simpleMessage("ブラックリストモード"),
+    "blockComment": MessageLookupByLibrary.simpleMessage("コメント"),
     "bypassDomain": MessageLookupByLibrary.simpleMessage("バイパスドメイン"),
     "bypassDomainDesc": MessageLookupByLibrary.simpleMessage("システムプロキシ有効時のみ適用"),
     "bypassPrivateRoute": MessageLookupByLibrary.simpleMessage(

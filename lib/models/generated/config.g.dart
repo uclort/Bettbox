@@ -288,7 +288,7 @@ _ProxiesStyle _$ProxiesStyleFromJson(Map<String, dynamic> json) =>
           const {},
       concurrencyLimit:
           (json['concurrencyLimit'] as num?)?.toInt() ??
-          defaultDelayTestConcurrencyLimit,
+          250,
       showHiddenItems: json['showHiddenItems'] as bool? ?? false,
     );
 

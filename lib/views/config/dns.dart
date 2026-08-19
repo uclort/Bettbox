@@ -1,5 +1,6 @@
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/enum/enum.dart';
+import 'package:bett_box/models/models.dart';
 import 'package:bett_box/providers/config.dart';
 import 'package:bett_box/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -215,19 +216,21 @@ class FakeIpRangeV6Item extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    final fakeIpRangeV6 = ref.watch(
-      patchClashConfigProvider.select((state) => state.dns.fakeIpRangeV6),
+    final (dns, ipv6) = ref.watch(
+      patchClashConfigProvider.select((state) => (state.dns, state.ipv6)),
     );
+    final fakeIpRangeV6 = dns.fakeIpRangeV6;
+    final displaySubtitle = fakeIpRangeV6.isNotEmpty
+        ? fakeIpRangeV6
+        : dns.effectiveFakeIpRangeV6(ipv6Enabled: ipv6);
+
     return ListItem.input(
       title: Text(appLocalizations.fakeipRangeV6),
-      subtitle: Text(fakeIpRangeV6),
+      subtitle: Text(displaySubtitle),
       delegate: InputDelegate(
         title: appLocalizations.fakeipRangeV6,
         value: fakeIpRangeV6,
         validator: (value) {
-          if (value == null || value.isEmpty) {
-            return appLocalizations.emptyTip(appLocalizations.fakeipRangeV6);
-          }
           return null;
         },
         onChanged: (String? value) {

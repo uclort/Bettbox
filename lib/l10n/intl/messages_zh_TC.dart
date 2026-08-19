@@ -40,7 +40,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m9(label) => "${label}必須為數字";
 
-  static String m10(label) => "${label} 必須在 1024 到 49151 之間, 0為關閉";
+  static String m10(label) => "${label} 必須在 1024 到 49151 之間，0 為關閉";
 
   static String m11(statusCode) =>
       "配置導入失敗，請檢查網路狀況或嘗試重置訂閱連結( HTTP錯誤代碼: ${statusCode} )";
@@ -62,11 +62,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "about": MessageLookupByLibrary.simpleMessage("關於"),
     "accessControl": MessageLookupByLibrary.simpleMessage("存取控制"),
     "accessControlAllowDesc": MessageLookupByLibrary.simpleMessage(
-      "只允許選取的應用程式進入 VPN",
+      "只允許選取的應用進入 VPN",
     ),
     "accessControlDesc": MessageLookupByLibrary.simpleMessage("設定應用存取黑白名單"),
     "accessControlNotAllowDesc": MessageLookupByLibrary.simpleMessage(
-      "選取的應用程式將被排除在VPN之外",
+      "選取的應用將被排除在 VPN 之外",
     ),
     "account": MessageLookupByLibrary.simpleMessage("帳號"),
     "action": MessageLookupByLibrary.simpleMessage("操作"),
@@ -80,8 +80,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "addTunnel": MessageLookupByLibrary.simpleMessage("新增轉發"),
     "addedOriginRules": MessageLookupByLibrary.simpleMessage("附加到原始規則"),
     "address": MessageLookupByLibrary.simpleMessage("地址"),
-    "addressHelp": MessageLookupByLibrary.simpleMessage("WebDAV 伺服器地址"),
-    "addressTip": MessageLookupByLibrary.simpleMessage("請輸入有效的 WebDAV 地址"),
+    "addressHelp": MessageLookupByLibrary.simpleMessage("WebDAV 伺服器位址"),
+    "addressTip": MessageLookupByLibrary.simpleMessage("請輸入有效的 WebDAV 位址"),
     "adminAutoLaunch": MessageLookupByLibrary.simpleMessage("管理員自啟動"),
     "adminAutoLaunchDesc": MessageLookupByLibrary.simpleMessage(
       "使用管理員模式開機自動啟動",
@@ -89,22 +89,22 @@ class MessageLookup extends MessageLookupByLibrary {
     "advancedSettings": MessageLookupByLibrary.simpleMessage("進階設定"),
     "ageKeyGenerateTitle": MessageLookupByLibrary.simpleMessage("Age Key 生成"),
     "ageKeyPairGeneratedSuccess": MessageLookupByLibrary.simpleMessage(
-      "已生成X25519密鑰對, 請妥善保存",
+      "已生成 X25519 金鑰對，請妥善保存",
     ),
     "agePrivateKeyLabel": MessageLookupByLibrary.simpleMessage("Age 私鑰"),
     "agePrivateKeyRequired": MessageLookupByLibrary.simpleMessage(
-      "請先輸入正確的Age 私鑰",
+      "請先輸入正確的 Age 私鑰",
     ),
     "agePublicKeyLabel": MessageLookupByLibrary.simpleMessage("Age 公鑰"),
     "ageSecretKeyInvalidValidationDesc": MessageLookupByLibrary.simpleMessage(
-      "請輸入有效的 Age 私鑰 (必須以 AGE-SECRET-KEY- 開頭)",
+      "請輸入有效的 Age 私鑰（必須以 AGE-SECRET-KEY- 開頭）",
     ),
-    "ageSecretKeyOptional": MessageLookupByLibrary.simpleMessage("Age 私鑰 (可選)"),
+    "ageSecretKeyOptional": MessageLookupByLibrary.simpleMessage("Age 私鑰（可選）"),
     "ago": MessageLookupByLibrary.simpleMessage("前"),
     "agree": MessageLookupByLibrary.simpleMessage("同意"),
     "allApps": MessageLookupByLibrary.simpleMessage("所有應用程式"),
     "allowBypass": MessageLookupByLibrary.simpleMessage("允許繞過 VPN"),
-    "allowBypassDesc": MessageLookupByLibrary.simpleMessage("開啟後部分應用程式可繞過 VPN"),
+    "allowBypassDesc": MessageLookupByLibrary.simpleMessage("開啟後部分應用可繞過 VPN"),
     "allowLan": MessageLookupByLibrary.simpleMessage("區域網路代理"),
     "allowLanDesc": MessageLookupByLibrary.simpleMessage("允許透過區域網路存取代理"),
     "alreadyInWhitelist": MessageLookupByLibrary.simpleMessage("目前應用程式已在白名單內"),
@@ -134,7 +134,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "backup": MessageLookupByLibrary.simpleMessage("備份"),
     "backupAndRecovery": MessageLookupByLibrary.simpleMessage("備份與還原"),
     "backupAndRecoveryDesc": MessageLookupByLibrary.simpleMessage(
-      "透過WebDAV或本機同步資料",
+      "透過 WebDAV 或本地同步資料",
     ),
     "backupSuccess": MessageLookupByLibrary.simpleMessage("備份成功"),
     "basicConfig": MessageLookupByLibrary.simpleMessage("內核配置"),
@@ -146,11 +146,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "bind": MessageLookupByLibrary.simpleMessage("綁定"),
     "blacklist": MessageLookupByLibrary.simpleMessage("黑名單"),
     "blacklistMode": MessageLookupByLibrary.simpleMessage("黑名單模式"),
+    "blockComment": MessageLookupByLibrary.simpleMessage("註解"),
     "bypassDomain": MessageLookupByLibrary.simpleMessage("排除網域"),
     "bypassDomainDesc": MessageLookupByLibrary.simpleMessage("僅在系統代理啟用時生效"),
     "bypassPrivateRoute": MessageLookupByLibrary.simpleMessage("繞過私有網路"),
     "bypassPrivateRouteDesc": MessageLookupByLibrary.simpleMessage(
-      "自動繞過私有網路IP位址",
+      "自動繞過私有網路 IP 位址",
     ),
     "cacheAlgorithm": MessageLookupByLibrary.simpleMessage("快取演算法"),
     "cacheCorrupt": MessageLookupByLibrary.simpleMessage("快取已損壞，是否清空？"),
@@ -240,7 +241,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "deleteTip": m2,
     "deleteTunnel": MessageLookupByLibrary.simpleMessage("刪除轉發"),
     "desc": MessageLookupByLibrary.simpleMessage(
-      "Bettbox 基於強大靈活的 Mihomo (Clash.Meta) 代理內核，致力於提供更好的體驗，Forked from FlClash，Better Experience, Out of the box",
+      "Bettbox 基於強大靈活的 Mihomo (Clash.Meta) 代理核心，致力於更好的體驗，Forked from FlClash, Better Experience, Out of the Box",
     ),
     "destination": MessageLookupByLibrary.simpleMessage("目標地址"),
     "destinationGeoIP": MessageLookupByLibrary.simpleMessage("目標地理定位"),
@@ -249,7 +250,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "detectionTip": MessageLookupByLibrary.simpleMessage("依賴第三方 API，僅供參考"),
     "developerMode": MessageLookupByLibrary.simpleMessage("開發者模式"),
     "developerModeEnableTip": MessageLookupByLibrary.simpleMessage("開發者模式已啟用。"),
-    "dialerIp4pConvert": MessageLookupByLibrary.simpleMessage("啟用撥號 IP4P 地址轉換"),
+    "dialerIp4pConvert": MessageLookupByLibrary.simpleMessage("啟用撥號 IP4P 位址轉換"),
     "dialerIp4pConvertDesc": MessageLookupByLibrary.simpleMessage(
       "啟用撥號器的 IP4P 地址轉換功能",
     ),
@@ -260,7 +261,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "直連 DNS 遵循規則",
     ),
     "disableQuic": MessageLookupByLibrary.simpleMessage("禁用QUIC"),
-    "disableQuicDesc": MessageLookupByLibrary.simpleMessage("禁用QUIC以解決特定網路問題"),
+    "disableQuicDesc": MessageLookupByLibrary.simpleMessage(
+      "停用 QUIC 以解決特定網路問題",
+    ),
     "disclaimer": MessageLookupByLibrary.simpleMessage("免責聲明"),
     "disclaimerDesc": MessageLookupByLibrary.simpleMessage(
       "本軟體為開源免費軟體，僅供學習交流等非商業性質的個人測試使用，代理服務商的行為均與本軟體無關，同意聲明代表您已完全知曉並確認了這一點，如不同意，請選擇退出！",
@@ -269,7 +272,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "discovery": MessageLookupByLibrary.simpleMessage("發現新版本"),
     "dnsDesc": MessageLookupByLibrary.simpleMessage("更新 DNS 相關設定"),
     "dnsHijack": MessageLookupByLibrary.simpleMessage("DNS 劫持"),
-    "dnsHijackDesc": MessageLookupByLibrary.simpleMessage("將解析匯入內部 DNS 模組"),
+    "dnsHijackDesc": MessageLookupByLibrary.simpleMessage("將解析導入內部 DNS 模組"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("DNS 模式"),
     "doYouWantToPass": MessageLookupByLibrary.simpleMessage("是否要通過"),
     "domain": MessageLookupByLibrary.simpleMessage("網域"),
@@ -303,7 +306,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "exclude": MessageLookupByLibrary.simpleMessage("背景隱藏"),
     "excludeChina": MessageLookupByLibrary.simpleMessage("排除國內"),
     "excludeChinaDesc": MessageLookupByLibrary.simpleMessage(
-      "放行中國QUIC流量而非全部禁用",
+      "放行中國 QUIC 流量而非全部停用",
     ),
     "excludeDesc": MessageLookupByLibrary.simpleMessage("從最近任務中隱藏應用程式"),
     "existsTip": m4,
@@ -328,14 +331,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "fakeIpFilterModeDesc": MessageLookupByLibrary.simpleMessage(
       "指定 FakeIP 過濾模式",
     ),
-    "fakeipFilter": MessageLookupByLibrary.simpleMessage("FakeIP 過濾清單"),
+    "fakeipFilter": MessageLookupByLibrary.simpleMessage("FakeIP 過濾列表"),
     "fakeipRange": MessageLookupByLibrary.simpleMessage("FakeIP 範圍"),
     "fakeipRangeV6": MessageLookupByLibrary.simpleMessage("FakeIPv6 範圍"),
     "fakeipTtl": MessageLookupByLibrary.simpleMessage("FakeIP 有效時間"),
     "fallback": MessageLookupByLibrary.simpleMessage("Fallback"),
     "fallbackConcurrent": MessageLookupByLibrary.simpleMessage("Fallback併發"),
     "fallbackConcurrentDesc": MessageLookupByLibrary.simpleMessage(
-      "使用默認DNS和Fallback同步查詢",
+      "使用預設 DNS 和 Fallback 同步查詢",
     ),
     "fallbackDesc": MessageLookupByLibrary.simpleMessage("一般情況下使用境外 DNS"),
     "fallbackFilter": MessageLookupByLibrary.simpleMessage("Fallback 過濾"),
@@ -344,7 +347,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "增強 FCM 直連時的網路穩定性",
     ),
     "fcmTip": MessageLookupByLibrary.simpleMessage(
-      "FCM 連線和支援取決於裝置本身，顯示結果僅供參考。因系統權限原因，您需要關閉網路中的 \"允許繞過 VPN\" 選項，以獲得更加準確的結果",
+      "FCM連接和支援取決於裝置本身，顯示結果僅供參考。因系統權限原因，您需要關閉網路中的“允許繞過 VPN”選項，以獲得更加準確的結果",
     ),
     "fidelityScheme": MessageLookupByLibrary.simpleMessage("高保真"),
     "file": MessageLookupByLibrary.simpleMessage("檔案"),
@@ -370,7 +373,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "fruitSaladScheme": MessageLookupByLibrary.simpleMessage("果繽紛"),
     "general": MessageLookupByLibrary.simpleMessage("一般"),
     "generalDesc": MessageLookupByLibrary.simpleMessage("修改全域一般設定"),
-    "generateFromPrivateKey": MessageLookupByLibrary.simpleMessage("從Age私鑰生成"),
+    "generateFromPrivateKey": MessageLookupByLibrary.simpleMessage(
+      "從 Age 私鑰生成",
+    ),
     "generateSecret": MessageLookupByLibrary.simpleMessage("產生"),
     "geoData": MessageLookupByLibrary.simpleMessage("地理資料"),
     "geodataLoader": MessageLookupByLibrary.simpleMessage("GEO 節能"),
@@ -396,7 +401,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "啟用裝置最高重新整理率支援",
     ),
     "host": MessageLookupByLibrary.simpleMessage("主機"),
-    "hostsDesc": MessageLookupByLibrary.simpleMessage("附加目前配置 Hosts"),
+    "hostsDesc": MessageLookupByLibrary.simpleMessage("追加目前設定 Hosts"),
     "hotkeyConflict": MessageLookupByLibrary.simpleMessage("快捷鍵衝突"),
     "hotkeyManagement": MessageLookupByLibrary.simpleMessage("快捷鍵管理"),
     "hotkeyManagementDesc": MessageLookupByLibrary.simpleMessage("使用鍵盤控制應用程式"),
@@ -456,7 +461,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "manualRefreshIp": MessageLookupByLibrary.simpleMessage("重新取得 IP"),
     "memoryInfo": MessageLookupByLibrary.simpleMessage("記憶體資訊"),
     "memoryInfoDesc": MessageLookupByLibrary.simpleMessage(
-      "當前記憶體資訊數值顯示為內核運行時的動態堆棧記憶體佔用，非完整APP記憶體統計，僅供參考。",
+      "目前記憶體資訊數值顯示為核心運作時的動態堆疊記憶體佔用，非完整 App 記憶體統計，僅供參考。",
     ),
     "messageTest": MessageLookupByLibrary.simpleMessage("訊息測試"),
     "messageTestTip": MessageLookupByLibrary.simpleMessage("這是一條訊息。"),
@@ -495,7 +500,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkSpeed": MessageLookupByLibrary.simpleMessage("網路速度"),
     "networkSpeedNotification": MessageLookupByLibrary.simpleMessage("網速通知"),
     "networkSpeedNotificationDesc": MessageLookupByLibrary.simpleMessage(
-      "在通知欄顯示當前網速和訂閱資訊",
+      "在通知欄顯示網速和訂閱資訊",
     ),
     "networkType": MessageLookupByLibrary.simpleMessage("網路類型"),
     "neutralScheme": MessageLookupByLibrary.simpleMessage("中性"),
@@ -553,7 +558,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "overrideDns": MessageLookupByLibrary.simpleMessage("覆寫 DNS"),
     "overrideDnsDesc": MessageLookupByLibrary.simpleMessage(
-      "開啟後將覆蓋配置中的 DNS 選項",
+      "開啟後將覆蓋設定中的 DNS 選項",
     ),
     "overrideExperimental": MessageLookupByLibrary.simpleMessage(
       "覆寫 Experimental",
@@ -564,17 +569,17 @@ class MessageLookup extends MessageLookupByLibrary {
     "overrideInvalidTip": MessageLookupByLibrary.simpleMessage("在腳本模式下不生效"),
     "overrideNtp": MessageLookupByLibrary.simpleMessage("覆寫 NTP"),
     "overrideNtpDesc": MessageLookupByLibrary.simpleMessage(
-      "開啟後將覆蓋配置中的 NTP 選項",
+      "開啟後將覆蓋設定中的 NTP 選項",
     ),
     "overrideOriginRules": MessageLookupByLibrary.simpleMessage("覆蓋原始規則"),
     "overrideSniffer": MessageLookupByLibrary.simpleMessage("覆寫 Sniffer"),
     "overrideSnifferDesc": MessageLookupByLibrary.simpleMessage(
-      "開啟後將覆蓋配置中的 Sniffer 選項",
+      "開啟後將覆蓋設定中的 Sniffer 選項",
     ),
     "overrideTestUrl": MessageLookupByLibrary.simpleMessage("覆蓋配置"),
     "overrideTunnel": MessageLookupByLibrary.simpleMessage("覆寫 Tunnel"),
     "overrideTunnelDesc": MessageLookupByLibrary.simpleMessage(
-      "開啟後將覆蓋配置中的 Tunnel 選項",
+      "開啟後將覆蓋設定中的 Tunnel 選項",
     ),
     "packageListPermissionDenied": MessageLookupByLibrary.simpleMessage(
       "權限被拒絕。沒有權限無法存取應用程式清單。",
@@ -603,7 +608,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "port": MessageLookupByLibrary.simpleMessage("連接埠"),
     "portConflictTip": MessageLookupByLibrary.simpleMessage("請輸入不同的連接埠"),
     "portTip": m10,
-    "preferH3Desc": MessageLookupByLibrary.simpleMessage("優先使用 DOH 的 http/3"),
+    "powerSwitch": MessageLookupByLibrary.simpleMessage("啟動開關"),
+    "preferH3Desc": MessageLookupByLibrary.simpleMessage("優先使用 DoH 的 HTTP/3"),
     "pressKeyboard": MessageLookupByLibrary.simpleMessage("請按下按鍵"),
     "preview": MessageLookupByLibrary.simpleMessage("預覽"),
     "profile": MessageLookupByLibrary.simpleMessage("配置"),
@@ -612,7 +618,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "profileAutoUpdateIntervalNullValidationDesc":
         MessageLookupByLibrary.simpleMessage("請輸入自動更新間隔時間"),
     "profileHasUpdate": MessageLookupByLibrary.simpleMessage(
-      "設定檔已經修改，是否關閉自動更新 ",
+      "設定檔已經修改，是否關閉自動更新？",
     ),
     "profileImportFailed": m11,
     "profileNameNullValidationDesc": MessageLookupByLibrary.simpleMessage(
@@ -620,10 +626,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "profileParseErrorDesc": MessageLookupByLibrary.simpleMessage("設定檔解析錯誤"),
     "profileUrlInvalidValidationDesc": MessageLookupByLibrary.simpleMessage(
-      "請輸入有效配置 URL",
+      "請輸入有效設定 URL",
     ),
     "profileUrlNullValidationDesc": MessageLookupByLibrary.simpleMessage(
-      "請輸入配置 URL",
+      "請輸入設定 URL",
     ),
     "profiles": MessageLookupByLibrary.simpleMessage("配置"),
     "profilesSort": MessageLookupByLibrary.simpleMessage("配置排序"),
@@ -637,13 +643,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "proxyNameserver": MessageLookupByLibrary.simpleMessage("代理網域名稱伺服器"),
     "proxyNameserverDesc": MessageLookupByLibrary.simpleMessage("用於解析代理節點的網域"),
     "proxyPort": MessageLookupByLibrary.simpleMessage("代理連接埠"),
-    "proxyPortDesc": MessageLookupByLibrary.simpleMessage("設定 Clash 監聽連接埠"),
+    "proxyPortDesc": MessageLookupByLibrary.simpleMessage("設定 Clash 監聽埠"),
     "proxyProviders": MessageLookupByLibrary.simpleMessage("代理提供者"),
     "pulse": MessageLookupByLibrary.simpleMessage("脈衝律動"),
     "pureBlackMode": MessageLookupByLibrary.simpleMessage("純黑模式"),
     "qrcode": MessageLookupByLibrary.simpleMessage("二維碼"),
     "qrcodeDesc": MessageLookupByLibrary.simpleMessage("掃描二維碼獲取設定檔"),
-    "quicGoDisableEcn": MessageLookupByLibrary.simpleMessage("停用 QUIC 顯式擁塞通知"),
+    "quicGoDisableEcn": MessageLookupByLibrary.simpleMessage("停用 QUIC 顯式壅塞通知"),
     "quicGoDisableEcnDesc": MessageLookupByLibrary.simpleMessage(
       "停用 QUIC 的顯式擁塞通知功能",
     ),
@@ -674,7 +680,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "remoteBackupDesc": MessageLookupByLibrary.simpleMessage("備份資料到 WebDAV"),
     "remoteDestination": MessageLookupByLibrary.simpleMessage("遠端目標"),
     "remoteRecoveryDesc": MessageLookupByLibrary.simpleMessage(
-      "透過 WebDAV 還原資料",
+      "透過 WebDAV 恢復資料",
     ),
     "remove": MessageLookupByLibrary.simpleMessage("移除"),
     "rename": MessageLookupByLibrary.simpleMessage("重新命名"),
@@ -692,7 +698,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "restart": MessageLookupByLibrary.simpleMessage("重啟"),
     "restartApp": MessageLookupByLibrary.simpleMessage("重啟軟件"),
     "restartCoreTitle": MessageLookupByLibrary.simpleMessage("重啟內核"),
-    "restartTip": MessageLookupByLibrary.simpleMessage("重啟TUN後改變生效"),
+    "restartTip": MessageLookupByLibrary.simpleMessage("重啟 TUN 後生效"),
     "retry": MessageLookupByLibrary.simpleMessage("重試"),
     "rightClickBehavior": MessageLookupByLibrary.simpleMessage("右鍵點擊"),
     "rotatingCircle": MessageLookupByLibrary.simpleMessage("單圓自轉"),
@@ -772,7 +778,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "submit": MessageLookupByLibrary.simpleMessage("提交"),
     "success": MessageLookupByLibrary.simpleMessage("Success"),
     "switchLabel": MessageLookupByLibrary.simpleMessage("開關"),
-    "switchToDomesticIp": MessageLookupByLibrary.simpleMessage("取得國內 IP"),
+    "switchToDomesticIp": MessageLookupByLibrary.simpleMessage("獲取國內 IP"),
     "sync": MessageLookupByLibrary.simpleMessage("同步"),
     "syncAll": MessageLookupByLibrary.simpleMessage("全部同步"),
     "syncFailed": MessageLookupByLibrary.simpleMessage("同步失敗"),
@@ -783,7 +789,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "systemProxyDesc": MessageLookupByLibrary.simpleMessage("設定系統代理"),
     "tab": MessageLookupByLibrary.simpleMessage("分頁"),
     "tcpConcurrent": MessageLookupByLibrary.simpleMessage("TCP 並發"),
-    "tcpConcurrentDesc": MessageLookupByLibrary.simpleMessage("開啟後允許 TCP 並發連線"),
+    "tcpConcurrentDesc": MessageLookupByLibrary.simpleMessage("開啟後允許 TCP 併發連接"),
     "testUrl": MessageLookupByLibrary.simpleMessage("測試連結"),
     "testingDelay": MessageLookupByLibrary.simpleMessage("測速中"),
     "textScale": MessageLookupByLibrary.simpleMessage("文字縮放"),
@@ -797,7 +803,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tight": MessageLookupByLibrary.simpleMessage("緊湊"),
     "time": MessageLookupByLibrary.simpleMessage("時間"),
     "tip": MessageLookupByLibrary.simpleMessage("提示"),
-    "titleTooLong": MessageLookupByLibrary.simpleMessage("太長了，最多支援20個字元"),
+    "titleTooLong": MessageLookupByLibrary.simpleMessage("太長了，最多支援 20 個字元"),
     "tlsPortSniffer": MessageLookupByLibrary.simpleMessage("TLS 連接埠嗅探"),
     "toggle": MessageLookupByLibrary.simpleMessage("切換"),
     "tonalSpotScheme": MessageLookupByLibrary.simpleMessage("調性點綴"),
@@ -813,9 +819,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "tryManualRefresh": MessageLookupByLibrary.simpleMessage("請嘗試手動重新整理"),
     "tun": MessageLookupByLibrary.simpleMessage("虛擬網卡"),
-    "tunDesc": MessageLookupByLibrary.simpleMessage("使用 TUN 接管裝置流量"),
+    "tunDesc": MessageLookupByLibrary.simpleMessage("使用 TUN 接管設備流量"),
     "tunEnableRequireAdmin": MessageLookupByLibrary.simpleMessage(
-      "啟用TUN虛擬網卡功能需要管理員或ROOT權限",
+      "啟用 TUN 虛擬網卡功能需要管理員或 Root 權限",
     ),
     "tunRouteConflict": m13,
     "tunnel": MessageLookupByLibrary.simpleMessage("Tunnel"),
@@ -869,10 +875,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "vpnSystemProxyDesc": MessageLookupByLibrary.simpleMessage(
       "為 VpnService 附加 HTTP 代理",
     ),
-    "vpnTip": MessageLookupByLibrary.simpleMessage("重啟VPN後改變生效"),
+    "vpnTip": MessageLookupByLibrary.simpleMessage("重啟 VPN 後生效"),
     "wakelock": MessageLookupByLibrary.simpleMessage("亮螢幕鎖"),
     "wakelockDescription": MessageLookupByLibrary.simpleMessage(
-      "本功能不需要任何特殊權限，因為它僅啟用螢幕喚醒鎖，而不是任何 CPU 喚醒鎖，應用程式會在背景保持必要的活躍，且螢幕不會自動熄滅，這在一些場景下會很有用",
+      "本功能不需要任何特殊權限，因為它僅啟用螢幕喚醒鎖，而不是任何 CPU 喚醒鎖，應用會在後台保持必要的活躍，且螢幕不會自動熄滅，這在一些場景下會很有用",
     ),
     "wave": MessageLookupByLibrary.simpleMessage("波浪起伏"),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage("WebDAV 設定"),

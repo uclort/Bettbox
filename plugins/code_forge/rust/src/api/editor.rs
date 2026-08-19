@@ -843,7 +843,7 @@ pub fn words_extract(rope: &RopeBridge) -> Vec<String> {
 
     let rope = rope.rope.read().unwrap();
     for ch in rope.chars() {
-        if ch.is_alphanumeric() || ch == '_' {
+        if ch.is_alphanumeric() || ch == '_' || ch == '-' {
             current_word.push(ch);
         } else {
             if !current_word.is_empty() {

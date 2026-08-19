@@ -170,8 +170,8 @@ extension ProfileExtension on Profile {
 
   Future<Profile> update({bool validate = true}) async {
     final response = await request.getFileResponseForUrl(url);
-    final disposition = response.headers.value('content-disposition');
-    final userinfo = response.headers.value('subscription-userinfo');
+    final disposition = response.headers['content-disposition']?.firstOrNull;
+    final userinfo = response.headers['subscription-userinfo']?.firstOrNull;
     return await copyWith(
       label: label ?? utils.getFileNameForDisposition(disposition) ?? id,
       subscriptionInfo: SubscriptionInfo.formHString(userinfo),

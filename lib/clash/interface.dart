@@ -396,10 +396,7 @@ abstract class ClashHandlerInterface with ClashInterface {
 
   @override
   Future<String> asyncTestDelay(String url, String proxyName) {
-    const bridgeTimeout = Duration(seconds: 12);
-    final requestId = utils.uuidV4;
     final delayParams = {
-      'request-id': requestId,
       'proxy-name': proxyName,
       'timeout': httpTimeoutDuration.inMilliseconds,
       'test-url': url,
@@ -407,13 +404,8 @@ abstract class ClashHandlerInterface with ClashInterface {
     return invoke<String>(
       method: ActionMethod.asyncTestDelay,
       data: json.encode(delayParams),
-      timeout: bridgeTimeout,
+      timeout: Duration(milliseconds: 6000),
       onTimeout: () {
-        commonPrint.log(
-          '[DELAY-TEST][DART] id=$requestId phase=bridge-timeout '
-          'proxy="$proxyName" url="$url" timeout='
-          '${bridgeTimeout.inMilliseconds}ms',
-        );
         return json.encode(Delay(name: proxyName, value: -1, url: url));
       },
     );

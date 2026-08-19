@@ -202,7 +202,7 @@ class ClashCore {
       return [];
     }
     try {
-      return Isolate.run<List<ExternalProvider>>(() {
+      return await Isolate.run<List<ExternalProvider>>(() {
         final externalProviders =
             (json.decode(externalProvidersRawString) as List<dynamic>)
                 .map((item) => ExternalProvider.fromJson(item))
@@ -269,32 +269,8 @@ class ClashCore {
   }
 
   Future<Delay> getDelay(String url, String proxyName) async {
-    final stopwatch = Stopwatch()..start();
-    commonPrint.log(
-      '[DELAY-TEST][DART] phase=request proxy="$proxyName" url="$url"',
-    );
     final data = await clashInterface.asyncTestDelay(url, proxyName);
-    if (data.isEmpty) {
-      commonPrint.log(
-        '[DELAY-TEST][DART] phase=empty-response proxy="$proxyName" '
-        'url="$url" elapsed=${stopwatch.elapsedMilliseconds}ms',
-      );
-      throw Exception('Empty delay response');
-    }
-    try {
-      final delay = Delay.fromJson(json.decode(data));
-      commonPrint.log(
-        '[DELAY-TEST][DART] phase=response proxy="$proxyName" url="$url" '
-        'elapsed=${stopwatch.elapsedMilliseconds}ms value=${delay.value}',
-      );
-      return delay;
-    } catch (e) {
-      commonPrint.log(
-        '[DELAY-TEST][DART] phase=parse-error proxy="$proxyName" url="$url" '
-        'elapsed=${stopwatch.elapsedMilliseconds}ms error=$e data="$data"',
-      );
-      rethrow;
-    }
+    return Delay.fromJson(json.decode(data));
   }
 
   Future<Map<String, dynamic>> getConfig(

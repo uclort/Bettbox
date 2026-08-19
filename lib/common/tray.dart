@@ -179,7 +179,7 @@ class Tray {
             label: isTestingThisGroup
                 ? '⚡ ${appLocalizations.testingDelay}...'
                 : '⚡ ${appLocalizations.startTest}',
-            disabled: isTestingThisGroup,
+            disabled: delayTestCoordinator.isTesting,
             onClick: (_) => _testGroupDelay(group),
           ),
         );
@@ -554,7 +554,7 @@ class Tray {
   }
 
   Future<void> _testGroupDelay(Group group) async {
-    if (delayTestCoordinator.isTestingGroup(group.name)) return;
+    if (delayTestCoordinator.isTesting) return;
 
     final appController = globalState.appController;
     final testableProxies = group.all.where((p) {

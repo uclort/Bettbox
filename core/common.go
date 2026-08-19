@@ -2,12 +2,14 @@ package main
 
 import (
 	b "bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/adapter/inbound"
 	"github.com/metacubex/mihomo/adapter/outboundgroup"
 	"github.com/metacubex/mihomo/adapter/provider"
+	"github.com/metacubex/mihomo/common/batch"
 	"github.com/metacubex/mihomo/component/dialer"
 	"github.com/metacubex/mihomo/component/resolver"
 	"github.com/metacubex/mihomo/config"
@@ -33,6 +35,7 @@ var (
 	version          = 0
 	isRunning        = false
 	runLock          sync.Mutex
+	mBatch, _        = batch.New[bool](context.Background(), batch.WithConcurrencyNum[bool](50))
 )
 
 type ExternalProviders []ExternalProvider
@@ -304,7 +307,11 @@ func setupConfig(params *SetupParams) error {
 
 	constant.DefaultTestURL = params.TestURL
 	if params.OverrideTestUrl && params.Config != nil {
-		overrideTestURLs(params.Config, params.TestURL)
+		if params.Config.ProxyGroup != nil {
+			for _, group := range params.Config.ProxyGroup {
+				group["url"] = params.TestURL
+			}
+		}
 	}
 
 	var err error
@@ -313,35 +320,12 @@ func setupConfig(params *SetupParams) error {
 		return err
 	}
 	currentRawConfig = params.Config
-	cancelCurrentURLTests()
 	hub.ApplyConfig(currentConfig)
 	patchSelectGroup(params.SelectedMap)
 	updateListeners()
 	runtime.GC()
 	debug.FreeOSMemory()
 	return nil
-}
-
-func cancelCurrentURLTests() {
-	proxies := make([]constant.Proxy, 0, len(tunnel.Proxies()))
-	for _, proxy := range tunnel.Proxies() {
-		proxies = append(proxies, proxy)
-	}
-	for _, provider := range tunnel.Providers() {
-		proxies = append(proxies, provider.Proxies()...)
-	}
-	adapter.CancelURLTests(proxies)
-}
-
-func overrideTestURLs(rawConfig *config.RawConfig, testURL string) {
-	for _, group := range rawConfig.ProxyGroup {
-		group["url"] = testURL
-	}
-	for _, proxyProvider := range rawConfig.ProxyProvider {
-		if healthCheck, ok := proxyProvider["health-check"].(map[string]any); ok {
-			healthCheck["url"] = testURL
-		}
-	}
 }
 
 func UnmarshalJson(data []byte, v any) error {

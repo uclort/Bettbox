@@ -54,7 +54,7 @@
   "disableQuic": "Disable QUIC",
   "disableQuicDesc": "Disable QUIC to resolve specific network issues",
   "networkSpeedNotification": "Speed in Notification",
-  "networkSpeedNotificationDesc": "Show current speed in the notification bar",
+  "networkSpeedNotificationDesc": "Show speed and subscription info in notification bar",
   "alwaysShowTitleBar": "Title Buttons",
   "alwaysShowTitleBarDesc": "Always show the title bar buttons in the top-right corner",
   "trayClickBehavior": "Tray Click Behavior",
@@ -108,7 +108,7 @@
   "clearCacheDesc": "Clear FakeIP and DNS cache?",
   "forceGCTitle": "Force Garbage Collection",
   "forceGCDesc": "Force kernel garbage collection? Experimental, use with caution.",
-  "fcmTip": "FCM support depends on your device; results are for reference. Disable 'Allow Bypass VPN' in network settings for accurate results.",
+  "fcmTip": "FCM connection and support depend on the device itself, the results are for reference only. Due to system permission reasons, you need to disable \"Allow bypass VPN\" in settings to get accurate results",
   "application": "Application",
   "applicationDesc": "Modify application settings",
   "edit": "Edit",
@@ -192,7 +192,7 @@
   "stopVpn": "Stopping...",
   "discovery": "New Version Found",
   "compatible": "Compatible Mode",
-  "compatibleDesc": "Reduces some features for full Clash compatibility",
+  "compatibleDesc": "Enabling this mode may limit some features, but provides full Clash support",
   "notSelectedTip": "Current proxy group cannot be selected.",
   "tip": "Tip",
   "backupAndRecovery": "Backup & Restore",
@@ -658,5 +658,6 @@
   "downloadAndInstall": "Download and Install",
   "updateDownloading": "Downloading update: {progress}%",
   "updateInstalling": "Opening the system installer...",
-  "updateFailed": "Update failed: {message}"
+  "updateFailed": "Update failed: {message}",
+  "blockComment": "Comment"
 }

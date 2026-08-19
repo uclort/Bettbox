@@ -1,7 +1,9 @@
 import 'package:emoji_regex/emoji_regex.dart';
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/enum/enum.dart';
+import 'package:bett_box/providers/providers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../state.dart';
 
@@ -47,7 +49,7 @@ class TooltipText extends StatelessWidget {
   }
 }
 
-class EmojiText extends StatelessWidget {
+class EmojiText extends ConsumerWidget {
   final String text;
   final TextStyle? style;
   final int? maxLines;
@@ -61,7 +63,11 @@ class EmojiText extends StatelessWidget {
     this.style,
   });
 
-  List<TextSpan> _buildTextSpans(String emojis, TextStyle defaultStyle) {
+  List<TextSpan> _buildTextSpans(
+    String emojis,
+    TextStyle defaultStyle,
+    bool useTwemoji,
+  ) {
     final List<TextSpan> spans = [];
     final matches = emojiRegex().allMatches(text);
     final effectiveStyle = style ?? defaultStyle;
@@ -81,9 +87,9 @@ class EmojiText extends StatelessWidget {
           text: match.group(0),
           style: effectiveStyle.merge(
             TextStyle(
-              fontFamily: system.isDesktop && !system.isMacOS 
-                  ? FontFamily.twEmoji.value 
-                  : null,
+              fontFamily: useTwemoji ? FontFamily.twEmoji.value : null,
+              fontFamilyFallback:
+                  useTwemoji ? [FontFamily.twEmoji.value] : null,
             ),
           ),
         ),
@@ -100,13 +106,21 @@ class EmojiText extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final defaultStyle = DefaultTextStyle.of(context).style;
+    final useHarmonyFont = ref.watch(
+      themeSettingProvider.select((state) => state.useHarmonyFont),
+    );
+    final useTwemoji =
+        useHarmonyFont || (system.isDesktop && !system.isMacOS);
+
     return RichText(
       textScaler: MediaQuery.of(context).textScaler,
       maxLines: maxLines,
       overflow: overflow ?? TextOverflow.clip,
-      text: TextSpan(children: _buildTextSpans(text, defaultStyle)),
+      text: TextSpan(
+        children: _buildTextSpans(text, defaultStyle, useTwemoji),
+      ),
     );
   }
 }

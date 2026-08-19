@@ -264,6 +264,10 @@ class BettboxVpnService : VpnService(), BaseServiceInterface {
             return
         }
 
+        if (GlobalState.isSmartStopped) {
+            return
+        }
+
         val separator = " ︙ "
         val combinedText = "$profileName$separator$speedInfo"
         if (combinedText == lastNotificationText) {

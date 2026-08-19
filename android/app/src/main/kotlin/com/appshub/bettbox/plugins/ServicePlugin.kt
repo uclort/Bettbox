@@ -99,20 +99,10 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
                 result.success(true)
             }
             "updateNotificationSpeed" -> {
-                val profileName = call.argument<String>("profileName") ?: ""
-                val speedInfo = call.argument<String>("speedInfo") ?: ""
-
-                com.appshub.bettbox.GlobalState.currentProfileName = profileName
-                com.appshub.bettbox.GlobalState.isSpeedNotificationEnabled = true
-                val context = com.appshub.bettbox.BettboxApplication.getAppContext()
-                context?.let {
-                    android.service.quicksettings.TileService.requestListeningState(
-                        it,
-                        android.content.ComponentName(it, com.appshub.bettbox.services.BettboxTileService::class.java)
-                    )
-                }
-
-                VpnPlugin.updateNotificationSpeed(profileName, speedInfo)
+                VpnPlugin.handleUpdateNotificationSpeed(
+                    call.argument<String>("profileName") ?: "",
+                    call.argument<String>("speedInfo") ?: ""
+                )
                 result.success(true)
             }
             "restoreNotification" -> {

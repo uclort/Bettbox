@@ -2,12 +2,10 @@ package route
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 	"time"
 
-	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/adapter/outboundgroup"
 	"github.com/metacubex/mihomo/common/utils"
 	"github.com/metacubex/mihomo/component/profile/cachefile"
@@ -124,13 +122,11 @@ func getProxyDelay(w http.ResponseWriter, r *http.Request) {
 
 	proxy := r.Context().Value(CtxKeyProxy).(C.Proxy)
 
-	ctx := adapter.WithURLTestTrace(r.Context(), adapter.URLTestTrace{
-		Source:  "external-controller",
-		Timeout: time.Millisecond * time.Duration(timeout),
-	})
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*time.Duration(timeout))
+	defer cancel()
 
 	delay, err := proxy.URLTest(ctx, url, expectedStatus)
-	if errors.Is(err, context.DeadlineExceeded) {
+	if ctx.Err() != nil {
 		render.Status(r, http.StatusGatewayTimeout)
 		render.JSON(w, r, ErrRequestTimeout)
 		return

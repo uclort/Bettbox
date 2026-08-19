@@ -240,14 +240,7 @@ abstract class VpnProps with _$VpnProps {
       _$VpnPropsFromJson(json);
 
   factory VpnProps.safeFromJson(Map<String, Object?>? json) {
-    final props = json == null ? defaultVpnProps : VpnProps.fromJson(json);
-    var safeProps = props;
-
-    if (safeProps.smartAutoStop && safeProps.quickResponse) {
-      safeProps = safeProps.copyWith(quickResponse: false);
-    }
-
-    return safeProps;
+    return json == null ? defaultVpnProps : VpnProps.fromJson(json);
   }
 }
 
@@ -284,7 +277,7 @@ abstract class ProxiesStyle with _$ProxiesStyle {
     @Default(ProxyCardType.shrink) ProxyCardType cardType,
     @Default(DelayAnimationType.none) DelayAnimationType delayAnimation,
     @Default({}) Map<String, String> iconMap,
-    @Default(defaultDelayTestConcurrencyLimit) int concurrencyLimit,
+    @Default(250) int concurrencyLimit,
     @Default(false) bool showHiddenItems,
   }) = _ProxiesStyle;
 

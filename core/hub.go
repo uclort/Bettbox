@@ -207,39 +207,31 @@ func handleResetTraffic() {
 }
 
 func handleAsyncTestDelay(paramsString string, fn func(string)) {
-	requestedAt := time.Now()
-	requestID := utils.NewUUIDV4().String()
-	go func() {
+	mBatch.Go(paramsString, func() (bool, error) {
 		var params = &TestDelayParams{}
 		err := json.Unmarshal([]byte(paramsString), params)
 		if err != nil {
-			log.Warnln("[DELAY-TEST][BRIDGE] id=%s phase=parse-error queue=%dms error=%v", requestID, time.Since(requestedAt).Milliseconds(), err)
 			fn("")
-			return
-		}
-		if params.RequestID != "" {
-			requestID = params.RequestID
+			return false, nil
 		}
 
 		expectedStatus, err := utils.NewUnsignedRanges[uint16]("")
 		if err != nil {
-			log.Warnln("[DELAY-TEST][BRIDGE] id=%s phase=expected-status-error proxy=%q queue=%dms error=%v", requestID, params.ProxyName, time.Since(requestedAt).Milliseconds(), err)
 			fn("")
-			return
+			return false, nil
 		}
 
-		ctx := context.Background()
+		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*time.Duration(params.Timeout))
+		defer cancel()
 
 		var proxy constant.Proxy
 		var exist bool
-		providerName := ""
 		if proxy, exist = tunnel.Proxies()[params.ProxyName]; !exist {
-			for name, provider := range tunnel.Providers() {
+			for _, provider := range tunnel.Providers() {
 				for _, p := range provider.Proxies() {
 					if p.Name() == params.ProxyName {
 						proxy = p
 						exist = true
-						providerName = name
 						break
 					}
 				}
@@ -249,50 +241,37 @@ func handleAsyncTestDelay(paramsString string, fn func(string)) {
 			}
 		}
 
+		delayData := &Delay{
+			Name: params.ProxyName,
+		}
+
+		if proxy == nil {
+			delayData.Value = -1
+			data, _ := json.Marshal(delayData)
+			fn(string(data))
+			return false, nil
+		}
+
 		testUrl := constant.DefaultTestURL
 
 		if params.TestUrl != "" {
 			testUrl = params.TestUrl
 		}
-		delayData := &Delay{
-			Url:  testUrl,
-			Name: params.ProxyName,
-		}
+		delayData.Url = testUrl
 
-		if proxy == nil {
-			log.Warnln("[DELAY-TEST][BRIDGE] id=%s source=bettbox-app phase=finish outcome=proxy-not-found proxy=%q url=%q timeout=%dms queue=%dms total=%dms",
-				requestID, params.ProxyName, testUrl, params.Timeout, time.Since(requestedAt).Milliseconds(), time.Since(requestedAt).Milliseconds())
-			delayData.Value = -1
-			data, _ := json.Marshal(delayData)
-			fn(string(data))
-			return
-		}
-
-		queueElapsed := time.Since(requestedAt).Milliseconds()
-		log.Infoln("[DELAY-TEST][BRIDGE] id=%s source=bettbox-app phase=start proxy=%q resolved=%q type=%s provider=%q url=%q timeout=%dms queue=%dms",
-			requestID, params.ProxyName, proxy.Name(), proxy.Type(), providerName, testUrl, params.Timeout, queueElapsed)
-		networkStarted := time.Now()
-		ctx = adapter.WithURLTestTrace(ctx, adapter.URLTestTrace{
-			ID:      requestID,
-			Source:  "bettbox-app",
-			Timeout: time.Millisecond * time.Duration(params.Timeout),
-		})
 		delay, err := proxy.URLTest(ctx, testUrl, expectedStatus)
 		if err != nil || delay == 0 {
-			log.Warnln("[DELAY-TEST][BRIDGE] id=%s source=bettbox-app phase=finish outcome=failed proxy=%q resolved=%q type=%s provider=%q url=%q timeout=%dms queue=%dms network=%dms total=%dms delay=%dms alive=%t context-error=%v error-type=%T error=%v",
-				requestID, params.ProxyName, proxy.Name(), proxy.Type(), providerName, testUrl, params.Timeout, queueElapsed, time.Since(networkStarted).Milliseconds(), time.Since(requestedAt).Milliseconds(), delay, proxy.AliveForTestUrl(testUrl), ctx.Err(), err, err)
 			delayData.Value = -1
 			data, _ := json.Marshal(delayData)
 			fn(string(data))
-			return
+			return false, nil
 		}
 
-		log.Infoln("[DELAY-TEST][BRIDGE] id=%s source=bettbox-app phase=finish outcome=success proxy=%q resolved=%q type=%s provider=%q url=%q timeout=%dms queue=%dms network=%dms total=%dms delay=%dms alive=%t context-error=%v",
-			requestID, params.ProxyName, proxy.Name(), proxy.Type(), providerName, testUrl, params.Timeout, queueElapsed, time.Since(networkStarted).Milliseconds(), time.Since(requestedAt).Milliseconds(), delay, proxy.AliveForTestUrl(testUrl), ctx.Err())
 		delayData.Value = int32(delay)
 		data, _ := json.Marshal(delayData)
 		fn(string(data))
-	}()
+		return false, nil
+	})
 }
 
 func handleGetConnections() string {
@@ -484,8 +463,6 @@ func handleParseExternalProviderContent(providerName string, fn func(value strin
 			return
 		}
 
-		// RuleProvider 的缓存文件可能是 zstd 压缩的 MRS 二进制格式（无扩展名），
-		// 直接尝试解码；失败则视为普通文本
 		if rp, ok := p.(cp.RuleProvider); ok {
 			var out bytes.Buffer
 			if err := rulesProvider.ConvertToMrs(buf, rp.Behavior(), cp.MrsRule, &out); err == nil {
@@ -655,14 +632,14 @@ func handleSuspend(suspended bool) bool {
 
 func init() {
 	adapter.UrlTestHook = func(url string, name string, delay uint16) {
-		// 后台健康检查失败不更新界面；主动测速会通过返回值写入终态。
-		if delay == 0 {
-			return
-		}
 		delayData := &Delay{
-			Url:   url,
-			Name:  name,
-			Value: int32(delay),
+			Url:  url,
+			Name: name,
+		}
+		if delay == 0 {
+			delayData.Value = -1
+		} else {
+			delayData.Value = int32(delay)
 		}
 		sendMessage(Message{
 			Type: DelayMessage,

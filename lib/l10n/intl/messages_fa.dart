@@ -194,6 +194,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "bind": MessageLookupByLibrary.simpleMessage("اتصال"),
     "blacklist": MessageLookupByLibrary.simpleMessage("لیست سیاه"),
     "blacklistMode": MessageLookupByLibrary.simpleMessage("حالت لیست سیاه"),
+    "blockComment": MessageLookupByLibrary.simpleMessage("کامنت"),
     "bypassDomain": MessageLookupByLibrary.simpleMessage("دامنه‌های استثنا"),
     "bypassDomainDesc": MessageLookupByLibrary.simpleMessage(
       "اعمال تنها در صورت فعال بودن پروکسی سیستم",

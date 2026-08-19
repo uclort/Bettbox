@@ -54,7 +54,7 @@
   "disableQuic": "QUIC 비활성화",
   "disableQuicDesc": "특정 네트워크 문제를 해결하기 위해 QUIC 비활성화",
   "networkSpeedNotification": "속도 알림",
-  "networkSpeedNotificationDesc": "알림 표시줄에 현재 속도 및 구독 정보 표시",
+  "networkSpeedNotificationDesc": "알림 표시줄에 속도 및 구독 정보 표시",
   "alwaysShowTitleBar": "제목 표시줄 버튼",
   "alwaysShowTitleBarDesc": "상단 오른쪽 제목 표시줄 버튼 항상 표시",
   "trayClickBehavior": "트레이 클릭 동작",
@@ -659,5 +659,6 @@
   "downloadAndInstall": "다운로드 및 설치",
   "updateDownloading": "업데이트 다운로드 중: {progress}%",
   "updateInstalling": "시스템 설치 프로그램을 여는 중...",
-  "updateFailed": "업데이트 실패: {message}"
+  "updateFailed": "업데이트 실패: {message}",
+  "blockComment": "주석"
 }

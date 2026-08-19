@@ -443,6 +443,14 @@ abstract class Dns with _$Dns {
   }
 }
 
+extension DnsExt on Dns {
+  String effectiveFakeIpRangeV6({required bool ipv6Enabled}) {
+    if (fakeIpRangeV6.isNotEmpty) return fakeIpRangeV6;
+    if (ipv6Enabled) return '2001:2::1/48';
+    return '';
+  }
+}
+
 @freezed
 abstract class Ntp with _$Ntp {
   const factory Ntp({

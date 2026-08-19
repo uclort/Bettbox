@@ -73,7 +73,7 @@ class MakeAppImageConfig extends MakeConfig {
     final fields = {
       'Name': displayName,
       'GenericName': genericName,
-      'Exec': 'LD_LIBRARY_PATH=usr/lib $appName %u',
+      'Exec': '$appName %u',
       'Icon': appName,
       'Type': 'Application',
       'StartupNotify': startupNotify ? 'true' : 'false',
@@ -86,8 +86,7 @@ class MakeAppImageConfig extends MakeConfig {
     final actions = this.actions.map((action) {
       final fields = {
         'Name': action.name,
-        'Exec':
-            'LD_LIBRARY_PATH=usr/lib $appName ${action.arguments.join(' ')} %u',
+        'Exec': '$appName ${action.arguments.join(' ')} %u',
       };
       return '[Desktop Action ${action.label}]\n${fields.entries.map((e) => '${e.key}=${e.value}').join('\n')}';
     }).join('\n\n');
@@ -97,11 +96,18 @@ class MakeAppImageConfig extends MakeConfig {
 
   String get appRunContent {
     return '''
-#!/bin/bash
+#!/bin/sh
 
-cd "\$(dirname "\$0")"
-export LD_LIBRARY_PATH=usr/lib
-exec ./$appName
+HERE="\$(dirname "\$(readlink -f "\${0}")")"
+export APPDIR="\$HERE"
+
+if [ -n "\$LD_LIBRARY_PATH" ]; then
+  export LD_LIBRARY_PATH="\$HERE/usr/lib:\$HERE/lib:\$LD_LIBRARY_PATH"
+else
+  export LD_LIBRARY_PATH="\$HERE/usr/lib:\$HERE/lib"
+fi
+
+exec "\$HERE/$appName" "\$@"
 ''';
   }
 }

@@ -7,23 +7,26 @@ import 'package:bett_box/state.dart';
 import 'package:flutter/foundation.dart';
 
 class DelayTestCoordinator extends ChangeNotifier {
-  final Set<String> _testingGroups = {};
+  String? _testingGroupName;
 
-  bool get isTesting => _testingGroups.isNotEmpty;
+  String? get testingGroupName => _testingGroupName;
 
-  bool isTestingGroup(String groupName) => _testingGroups.contains(groupName);
+  bool get isTesting => _testingGroupName != null;
+
+  bool isTestingGroup(String groupName) => _testingGroupName == groupName;
 
   Future<bool> run(String groupName, Future<void> Function() action) async {
-    if (!_testingGroups.add(groupName)) {
+    if (isTesting) {
       return false;
     }
 
+    _testingGroupName = groupName;
     notifyListeners();
     try {
       await action();
       return true;
     } finally {
-      _testingGroups.remove(groupName);
+      _testingGroupName = null;
       notifyListeners();
     }
   }
@@ -37,7 +40,38 @@ class DelayTestTarget {
   final String url;
 
   const DelayTestTarget({required this.name, required this.url});
+
+  @override
+  bool operator ==(Object other) {
+    return other is DelayTestTarget && other.name == name && other.url == url;
+  }
+
+  @override
+  int get hashCode => Object.hash(name, url);
 }
+
+class DelayTestRequestPool {
+  final Map<DelayTestTarget, Future<Delay>> _pendingRequests = {};
+
+  int get pendingCount => _pendingRequests.length;
+
+  Future<Delay> run(DelayTestTarget target, Future<Delay> Function() action) {
+    final pendingRequest = _pendingRequests[target];
+    if (pendingRequest != null) {
+      return pendingRequest;
+    }
+
+    final request = action();
+    _pendingRequests[target] = request;
+    return request.whenComplete(() {
+      if (identical(_pendingRequests[target], request)) {
+        _pendingRequests.remove(target);
+      }
+    });
+  }
+}
+
+final _delayTestRequestPool = DelayTestRequestPool();
 
 double get listHeaderHeight {
   final measure = globalState.measure;
@@ -49,8 +83,7 @@ double getItemHeight(ProxyCardType proxyCardType) {
   final baseHeight =
       16 + measure.bodyMediumHeight * 2 + measure.bodySmallHeight + 8 + 4;
   return switch (proxyCardType) {
-    ProxyCardType.expand =>
-      baseHeight - measure.bodySmallHeight + measure.labelSmallHeight * 2 + 4,
+    ProxyCardType.expand => baseHeight - measure.bodySmallHeight + measure.labelSmallHeight * 2 + 4,
     ProxyCardType.shrink => baseHeight,
     ProxyCardType.min => baseHeight - measure.bodyMediumHeight,
   };
@@ -70,39 +103,14 @@ Future<void> proxyDelayTest(Proxy proxy, [String? testUrl]) async {
   appController.addSortNum();
 }
 
-Future<Delay> _testProxyDelay(DelayTestTarget target) async {
-  final appController = globalState.appController;
-  final generation = appController.delayGeneration;
-  void setResult(Delay delay) {
-    if (generation == appController.delayGeneration) {
-      appController.setDelay(delay);
-    } else if (appController.getTrayProxyDelay(
-          proxyName: target.name,
-          testUrl: target.url,
-        ) ==
-        0) {
-      appController.setDelay(
-        Delay(url: target.url, name: target.name, value: null),
-      );
-    }
-  }
-
-  appController.setDelay(Delay(url: target.url, name: target.name, value: 0));
-  try {
-    final result = await clashCore.getDelay(target.url, target.name);
-    final delay = Delay(
-      url: target.url,
-      name: target.name,
-      value: (result.value ?? -1) > 0 ? result.value : -1,
-    );
-    setResult(delay);
+Future<Delay> _testProxyDelay(DelayTestTarget target) {
+  return _delayTestRequestPool.run(target, () async {
+    final appController = globalState.appController;
+    appController.setDelay(Delay(url: target.url, name: target.name, value: 0));
+    final delay = await clashCore.getDelay(target.url, target.name);
+    appController.setDelay(delay);
     return delay;
-  } catch (e) {
-    commonPrint.log('Delay test failed for ${target.name}: $e');
-    final delay = Delay(url: target.url, name: target.name, value: -1);
-    setResult(delay);
-    return delay;
-  }
+  });
 }
 
 bool _isNonTestableProxyName(String proxyName) {
@@ -138,8 +146,7 @@ Future<void> delayTest(
 }) async {
   Future<void> runTest() async {
     final appController = globalState.appController;
-    final stopwatch = Stopwatch()..start();
-    final targets = <DelayTestTarget>[];
+    final targets = <DelayTestTarget>{};
     for (final proxy in proxies) {
       if (_isNonTestableProxy(proxy)) {
         continue;
@@ -156,27 +163,21 @@ Future<void> delayTest(
       }
       targets.add(DelayTestTarget(name: name, url: url));
     }
+    final concurrencyLimit = globalState.config.proxiesStyle.concurrencyLimit;
 
-    commonPrint.log(
-      '[DELAY-TEST][BATCH] phase=start group="${groupName ?? ''}" '
-      'targets=${targets.length} concurrency=unlimited',
-    );
-    final results = await Future.wait(
-      targets.map((target) async {
-        final result = await _testProxyDelay(target);
+    // 按实际节点和实际测试地址创建任务，避免多个代理组别名重复测速。
+    final delayTasks = targets.map((target) {
+      return () async {
+        await _testProxyDelay(target);
         await onDelayUpdated?.call();
-        return result;
-      }),
-    );
-    final successCount = results
-        .where((delay) => (delay.value ?? -1) > 0)
-        .length;
-    commonPrint.log(
-      '[DELAY-TEST][BATCH] phase=finish group="${groupName ?? ''}" '
-      'targets=${targets.length} success=$successCount '
-      'failed=${results.length - successCount} '
-      'elapsed=${stopwatch.elapsedMilliseconds}ms',
-    );
+      };
+    }).toList();
+
+    // Execute tasks in batches
+    final batchedTasks = delayTasks.batch(concurrencyLimit);
+    for (final batchTasks in batchedTasks) {
+      await Future.wait(batchTasks.map((task) => task()));
+    }
     appController.addSortNum();
   }
 

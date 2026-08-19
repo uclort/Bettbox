@@ -300,7 +300,7 @@ class _GroupHeader extends ConsumerWidget {
     return CommonCard(
       radius: 16,
       type: CommonCardType.filled,
-      onPressed: onToggle,
+      onPressed: globalState.isAndroidTV ? null : onToggle,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
@@ -364,7 +364,7 @@ class _GroupHeader extends ConsumerWidget {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.network_ping),
-                    onPressed: isTestingThisGroup
+                    onPressed: delayTestCoordinator.isTesting
                         ? null
                         : () => _delayTest(context),
                     tooltip: appLocalizations.startTest,

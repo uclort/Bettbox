@@ -41,6 +41,8 @@ class GlobalState {
   String? coreSHA256;
   late PackageInfo packageInfo;
   Function? updateCurrentDelayDebounce;
+  VoidCallback? focusDashboardStartSwitch;
+  bool isDashboardStartSwitchFocused = false;
   late Measure measure;
   late CommonTheme theme;
   late Color accentColor;
@@ -312,9 +314,7 @@ class GlobalState {
     await prefs?.setBool('is_vpn_running', true);
 
     if (system.isAndroid) {
-      final conflictFreeQuickResponse =
-          config.vpnProps.quickResponse && !config.vpnProps.smartAutoStop;
-      await service?.setQuickResponse(conflictFreeQuickResponse);
+      await service?.setQuickResponse(config.vpnProps.quickResponse);
     }
     await startUpdateTasks(tasks);
   }
@@ -578,10 +578,15 @@ class GlobalState {
     final originalProxyGroups = rawConfig['proxy-groups'];
 
     final realPatchConfig = patchConfig.copyWith(
+      dns: patchConfig.dns.copyWith(
+        fakeIpRangeV6:
+            patchConfig.dns.effectiveFakeIpRangeV6(ipv6Enabled: patchConfig.ipv6),
+      ),
       tun: patchConfig.tun.getRealTun(
         config.networkProps.bypassPrivateRoute,
         fakeIpRange: patchConfig.dns.fakeIpRange,
-        fakeIpRangeV6: patchConfig.dns.fakeIpRangeV6,
+        fakeIpRangeV6:
+            patchConfig.dns.effectiveFakeIpRangeV6(ipv6Enabled: patchConfig.ipv6),
         bypassPrivateRouteAddress:
             config.networkProps.realBypassPrivateRouteAddress,
       ),
@@ -599,6 +604,9 @@ class GlobalState {
       }
     }
     rawConfig['external-ui'] = await appPath.uiPath;
+    rawConfig['external-ui-url'] =
+        'https://github.com/Zephyruso/zashboard/releases/latest/download/dist.zip';
+    rawConfig.remove('external-ui-name');
     if (rawConfig['interface-name'] == null) {
       rawConfig['interface-name'] = '';
     }
@@ -711,6 +719,12 @@ class GlobalState {
     final isEnableDns = rawConfig['dns']['enable'] == true;
     final overrideDns = globalState.config.overrideDns;
     if (overrideDns || !isEnableDns) {
+      final originalDns = rawConfig['dns'] is Map
+          ? (rawConfig['dns'] as Map).cast<String, dynamic>()
+          : null;
+      final originalHosts = rawConfig['hosts'] is Map
+          ? (rawConfig['hosts'] as Map).cast<String, dynamic>()
+          : null;
       final dns = switch (!isEnableDns) {
         true => realPatchConfig.dns.copyWith(
           nameserver: [...realPatchConfig.dns.nameserver, 'system://'],
@@ -723,6 +737,11 @@ class GlobalState {
         rawConfig['dns']['nameserver-policy'][entry.key] =
             entry.value.splitByMultipleSeparators;
       }
+      applyDnsNodeOverride(
+        rawConfig,
+        originalDns: originalDns,
+        originalHosts: originalHosts,
+      );
     }
 
     if (rawConfig['dns'] != null &&

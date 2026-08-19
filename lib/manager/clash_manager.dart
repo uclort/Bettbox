@@ -101,7 +101,6 @@ class _ClashContainerState extends ConsumerState<ClashManager>
 
   @override
   Future<void> onLoaded(String providerName) async {
-    globalState.appController.invalidateDelayResults();
     ref
         .read(providersProvider.notifier)
         .setProvider(await clashCore.getExternalProvider(providerName));

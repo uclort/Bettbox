@@ -102,11 +102,9 @@ func (bp *baseProvider) RegisterHealthCheckTask(url string, expectedStatus utils
 
 func (bp *baseProvider) setProxies(proxies []C.Proxy) {
 	bp.mutex.Lock()
-	oldProxies := bp.proxies
+	defer bp.mutex.Unlock()
 	bp.proxies = proxies
 	bp.version += 1
-	bp.mutex.Unlock()
-	adapter.CancelURLTests(oldProxies)
 	bp.healthCheck.setProxies(proxies)
 	if bp.healthCheck.auto() {
 		go bp.healthCheck.check()

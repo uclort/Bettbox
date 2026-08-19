@@ -53,6 +53,67 @@ class AppPackageMakerAppImage extends AppPackageMaker {
         });
   }
 
+  static final List<RegExp> _excludedLibraryPatterns = [
+    // Graphics / OpenGL / EGL / Vulkan / Mesa / DRM
+    RegExp(r'^libEGL.*\.so'),
+    RegExp(r'^libGL.*\.so'),
+    RegExp(r'^libGLES.*\.so'),
+    RegExp(r'^libglapi.*\.so'),
+    RegExp(r'^libOpenGL.*\.so'),
+    RegExp(r'^libdrm.*\.so'),
+    RegExp(r'^libgbm.*\.so'),
+    RegExp(r'^libvulkan.*\.so'),
+    RegExp(r'^libepoxy.*\.so'),
+    // Wayland & X11 & XCB
+    RegExp(r'^libwayland-.*\.so'),
+    RegExp(r'^libX11.*\.so'),
+    RegExp(r'^libxcb.*\.so'),
+    RegExp(r'^libXau.*\.so'),
+    RegExp(r'^libXdmcp.*\.so'),
+    RegExp(r'^libXext.*\.so'),
+    RegExp(r'^libXfixes.*\.so'),
+    RegExp(r'^libXrender.*\.so'),
+    RegExp(r'^libXdamage.*\.so'),
+    RegExp(r'^libXcomposite.*\.so'),
+    RegExp(r'^libXcursor.*\.so'),
+    RegExp(r'^libXi.*\.so'),
+    RegExp(r'^libXinerama.*\.so'),
+    RegExp(r'^libXrandr.*\.so'),
+    RegExp(r'^libXss.*\.so'),
+    RegExp(r'^libXtst.*\.so'),
+    RegExp(r'^libXxf86vm.*\.so'),
+    RegExp(r'^libxkbcommon.*\.so'),
+    // Glibc / C/C++ Runtime / System Low Level
+    RegExp(r'^libc\.so'),
+    RegExp(r'^libm\.so'),
+    RegExp(r'^libdl\.so'),
+    RegExp(r'^librt\.so'),
+    RegExp(r'^libpthread.*\.so'),
+    RegExp(r'^libresolv.*\.so'),
+    RegExp(r'^libutil.*\.so'),
+    RegExp(r'^ld-linux.*\.so'),
+    RegExp(r'^libnss_.*\.so'),
+    RegExp(r'^libstdc\+\+.*\.so'),
+    RegExp(r'^libgcc_s.*\.so'),
+    RegExp(r'^libz\.so'),
+    // Audio / Core hardware bus / OS services
+    RegExp(r'^libasound.*\.so'),
+    RegExp(r'^libpulse.*\.so'),
+    RegExp(r'^libpipewire.*\.so'),
+    RegExp(r'^libudev.*\.so'),
+    RegExp(r'^libsystemd.*\.so'),
+    RegExp(r'^libdbus-1.*\.so'),
+    // GTK / GDK / Cairo / Pango (Standard Desktop toolkit)
+    RegExp(r'^libgtk-3.*\.so'),
+    RegExp(r'^libgdk-3.*\.so'),
+    RegExp(r'^libcairo.*\.so'),
+    RegExp(r'^libpango.*\.so'),
+    RegExp(r'^libgdk_pixbuf.*\.so'),
+    RegExp(r'^libgio.*\.so'),
+    RegExp(r'^libglib.*\.so'),
+    RegExp(r'^libgobject.*\.so'),
+  ];
+
   @override
   Future<MakeResult> make(MakeConfig config) {
     return _make(
@@ -189,7 +250,11 @@ class AppPackageMakerAppImage extends AppPackageMaker {
         final referencedSharedLibs = await _getSharedDependencies(so.path).then(
           (d) =>
               d.difference(libFlutterGtkDeps)
-                ..removeWhere((lib) => lib.contains('libflutter_linux_gtk.so')),
+                ..removeWhere((lib) {
+                  final libName = path.basename(lib);
+                  return libName.contains('libflutter_linux_gtk.so') ||
+                      _excludedLibraryPatterns.any((p) => p.hasMatch(libName));
+                }),
         );
         allReferencedSharedLibs.addAll(referencedSharedLibs);
       }

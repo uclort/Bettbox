@@ -1,10 +1,10 @@
 package route
 
 import (
+	"context"
 	"strconv"
 	"time"
 
-	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/adapter/outboundgroup"
 	"github.com/metacubex/mihomo/common/utils"
 	"github.com/metacubex/mihomo/component/profile/cachefile"
@@ -80,10 +80,8 @@ func getGroupDelay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := adapter.WithURLTestTrace(r.Context(), adapter.URLTestTrace{
-		Source:  "external-controller",
-		Timeout: time.Millisecond * time.Duration(timeout),
-	})
+	ctx, cancel := context.WithTimeout(r.Context(), time.Millisecond*time.Duration(timeout))
+	defer cancel()
 
 	dm, err := group.URLTest(ctx, url, expectedStatus)
 	if err != nil {

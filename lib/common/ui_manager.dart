@@ -22,17 +22,23 @@ class UiManager {
       final uiPath = await appPath.uiPath;
       final uiDir = Directory(uiPath);
       final versionFile = File(join(uiPath, '.ui_version'));
+      final appVersionFile = File(join(File(uiPath).parent.path, '.ui_app_version'));
       final currentVersion = globalState.packageInfo.version;
 
-      if (await uiDir.exists()) {
-        if (await versionFile.exists()) {
-          final existingVersion = await versionFile.readAsString();
-          if (existingVersion.trim() == currentVersion) {
-            commonPrint.log('UI already up to date (v$currentVersion)');
-            return;
-          }
-          commonPrint.log('UI version mismatch: $existingVersion -> $currentVersion');
+      if (await uiDir.exists() && (await uiDir.list().toList()).isNotEmpty) {
+        final deployedVersion = await appVersionFile.exists()
+            ? (await appVersionFile.readAsString()).trim()
+            : null;
+        if (deployedVersion == currentVersion) {
+          commonPrint.log('UI already up to date (v$currentVersion)');
+          return;
         }
+        if (!await versionFile.exists()) {
+          commonPrint.log('UI managed by user, skip restore');
+          await appVersionFile.writeAsString(currentVersion);
+          return;
+        }
+        commonPrint.log('UI version mismatch: $deployedVersion -> $currentVersion');
         await clearUI();
       }
 
@@ -87,6 +93,8 @@ class UiManager {
           }
         }
       });
+
+      await appVersionFile.writeAsString(currentVersion);
 
       commonPrint.log('UI extracted successfully to: $uiPath (v$currentVersion)');
     } catch (e) {

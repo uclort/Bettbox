@@ -479,10 +479,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Show current speed in the notification bar`
+  /// `Show speed and subscription info in notification bar`
   String get networkSpeedNotificationDesc {
     return Intl.message(
-      'Show current speed in the notification bar',
+      'Show speed and subscription info in notification bar',
       name: 'networkSpeedNotificationDesc',
       desc: '',
       args: [],
@@ -964,10 +964,10 @@ class AppLocalizations {
     );
   }
 
-  /// `FCM support depends on your device; results are for reference. Disable 'Allow Bypass VPN' in network settings for accurate results.`
+  /// `FCM connection and support depend on the device itself, the results are for reference only. Due to system permission reasons, you need to disable "Allow bypass VPN" in settings to get accurate results`
   String get fcmTip {
     return Intl.message(
-      'FCM support depends on your device; results are for reference. Disable \'Allow Bypass VPN\' in network settings for accurate results.',
+      'FCM connection and support depend on the device itself, the results are for reference only. Due to system permission reasons, you need to disable "Allow bypass VPN" in settings to get accurate results',
       name: 'fcmTip',
       desc: '',
       args: [],
@@ -1624,10 +1624,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Reduces some features for full Clash compatibility`
+  /// `Enabling this mode may limit some features, but provides full Clash support`
   String get compatibleDesc {
     return Intl.message(
-      'Reduces some features for full Clash compatibility',
+      'Enabling this mode may limit some features, but provides full Clash support',
       name: 'compatibleDesc',
       desc: '',
       args: [],
@@ -5407,6 +5407,11 @@ class AppLocalizations {
       desc: '',
       args: [message],
     );
+  }
+
+  /// `Comment`
+  String get blockComment {
+    return Intl.message('Comment', name: 'blockComment', desc: '', args: []);
   }
 }
 

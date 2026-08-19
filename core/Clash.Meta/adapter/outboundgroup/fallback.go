@@ -6,7 +6,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/common/callback"
 	N "github.com/metacubex/mihomo/common/net"
 	"github.com/metacubex/mihomo/common/utils"
@@ -139,10 +138,8 @@ func (f *Fallback) Set(name string) error {
 
 	f.selected = name
 	if !p.AliveForTestUrl(f.testUrl) {
-		ctx := adapter.WithURLTestTrace(context.Background(), adapter.URLTestTrace{
-			Source:  "fallback-health-check",
-			Timeout: 5 * time.Second,
-		})
+		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*time.Duration(5000))
+		defer cancel()
 		expectedStatus, _ := utils.NewUnsignedRanges[uint16](f.expectedStatus)
 		_, _ = p.URLTest(ctx, f.testUrl, expectedStatus)
 	}

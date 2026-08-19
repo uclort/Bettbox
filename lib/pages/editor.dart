@@ -374,10 +374,16 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                           !widget.simple && !_disableSyntaxHighlight,
                       enableGutter: true,
                       enableGutterDivider: false,
-                      enableLocalSuggestions: false,
-                      enableKeyboardSuggestions: false,
+                      enableLocalSuggestions: true,
+                      enableKeyboardSuggestions: true,
                       enableMagnifier: true,
                       language: _languageMode(),
+                      languageId: switch (widget.languages.firstOrNull) {
+                        Language.yaml => 'yaml',
+                        Language.javaScript => 'javascript',
+                        _ => null,
+                      },
+                      blockCommentLabel: appLocalizations.blockComment,
                       editorTheme: brightness == Brightness.dark
                           ? atomOneDarkTheme
                           : atomOneLightTheme,

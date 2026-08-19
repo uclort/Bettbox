@@ -17,10 +17,18 @@ class Request {
 
   Request() {
     _dio = Dio(BaseOptions(headers: {'User-Agent': browserUa}));
+    _dio.httpClientAdapter = IOHttpClientAdapter(
+      createHttpClient: () {
+        final client = HttpClient();
+        client.autoUncompress = false;
+        return client;
+      },
+    );
     _clashDio = Dio();
     _clashDio.httpClientAdapter = IOHttpClientAdapter(
       createHttpClient: () {
         final client = HttpClient();
+        client.autoUncompress = false;
         client.findProxy = (Uri uri) {
           client.userAgent = globalState.ua;
           return BettboxHttpOverrides.handleFindProxy(uri);
@@ -28,6 +36,44 @@ class Request {
         return client;
       },
     );
+  }
+
+  Uint8List _decompressIfNeeded(Uint8List bytes, Headers headers) {
+    final encodings =
+        headers['content-encoding']?.map((e) => e.toLowerCase()).toList() ?? [];
+    final encodingStr = encodings.join(', ');
+    final wantGzip = encodingStr.contains('gzip');
+    final wantDeflate = encodingStr.contains('deflate');
+
+    var current = bytes;
+    for (var i = 0; i < 4; i++) {
+      final isGzipMagic =
+          current.length >= 2 && current[0] == 0x1f && current[1] == 0x8b;
+      if (wantGzip || isGzipMagic) {
+        try {
+          current = Uint8List.fromList(gzip.decode(current));
+          continue;
+        } catch (_) {
+          break;
+        }
+      }
+      if (wantDeflate) {
+        try {
+          current = Uint8List.fromList(zlib.decode(current));
+          continue;
+        } catch (_) {
+          break;
+        }
+      }
+      break;
+    }
+    return current;
+  }
+
+  Uint8List _bytesFromResponse(Response response) {
+    final data = response.data;
+    if (data is Uint8List) return data;
+    return Uint8List.fromList((data as List).cast<int>());
   }
 
   Future<Response> _getResponseForUrl(
@@ -57,9 +103,7 @@ class Request {
       }
     }
 
-    final headers = <String, dynamic>{
-      'Connection': 'close',
-    };
+    final headers = <String, dynamic>{'Connection': 'close'};
     if (userInfo != null && userInfo.isNotEmpty) {
       final auth = base64Encode(utf8.encode(userInfo));
       headers['Authorization'] = 'Basic $auth';
@@ -67,12 +111,36 @@ class Request {
 
     final response = await _clashDio.get(
       requestUrl,
-      options: Options(
-        responseType: responseType,
-        headers: headers,
-      ),
+      options: Options(responseType: ResponseType.bytes, headers: headers),
     );
-    return response;
+
+    final rawBytes = _bytesFromResponse(response);
+    final decompressedBytes = _decompressIfNeeded(rawBytes, response.headers);
+
+    if (responseType == ResponseType.plain) {
+      final text = utf8.decode(decompressedBytes, allowMalformed: true);
+      return Response(
+        requestOptions: response.requestOptions,
+        data: text,
+        statusCode: response.statusCode,
+        statusMessage: response.statusMessage,
+        isRedirect: response.isRedirect,
+        redirects: response.redirects,
+        extra: response.extra,
+        headers: response.headers,
+      );
+    } else {
+      return Response(
+        requestOptions: response.requestOptions,
+        data: decompressedBytes,
+        statusCode: response.statusCode,
+        statusMessage: response.statusMessage,
+        isRedirect: response.isRedirect,
+        redirects: response.redirects,
+        extra: response.extra,
+        headers: response.headers,
+      );
+    }
   }
 
   Future<Response> getFileResponseForUrl(String url) async {
@@ -91,7 +159,8 @@ class Request {
     );
     final data = response.data;
     if (data == null) return null;
-    return MemoryImage(data);
+    final bytes = _decompressIfNeeded(data, response.headers);
+    return MemoryImage(bytes);
   }
 
   Future<Map<String, dynamic>?> checkForUpdate() async {
@@ -109,7 +178,7 @@ class Request {
               status != null && status >= 300 && status < 400,
         ),
       );
-      final location = response.headers.value('location');
+      final location = response.headers['location']?.firstOrNull;
       if (location != null && location.contains('/releases/tag/')) {
         final remoteVersion = location.split('/').last.trim();
         if (remoteVersion.isNotEmpty) {
@@ -190,13 +259,13 @@ class Request {
   }
 
   final List<String> _ipInfoSources = [
-    'https://cp.cloudflare.com/cdn-cgi/trace',
-    'https://api.cloudflare.com/cdn-cgi/trace',
+    'https://ip.sb/cdn-cgi/trace',
+    'https://api.ip.sb/cdn-cgi/trace',
   ];
 
   final List<String> _domesticIpSources = [
     'https://www.qualcomm.cn/cdn-cgi/trace',
-    'https://www.cloudflare-cn.com/cdn-cgi/trace',
+    'https://www.teamviewer.cn/cdn-cgi/trace',
   ];
 
   Future<Result<IpInfo?>> _checkIpFromSources(
@@ -212,6 +281,13 @@ class Request {
         connectTimeout: effectiveTimeout,
       ),
     );
+    dio.httpClientAdapter = IOHttpClientAdapter(
+      createHttpClient: () {
+        final client = HttpClient();
+        client.autoUncompress = false;
+        return client;
+      },
+    );
 
     final Completer<Result<IpInfo?>> resultCompleter = Completer();
     int failureCount = 0;
@@ -226,17 +302,21 @@ class Request {
 
     for (final url in sources) {
       dio
-          .get<String>(
+          .get<Uint8List>(
             url,
             cancelToken: cancelToken,
-            options: Options(responseType: ResponseType.plain),
+            options: Options(responseType: ResponseType.bytes),
           )
           .then((res) {
             if (resultCompleter.isCompleted) return;
             if (res.statusCode == HttpStatus.ok && res.data != null) {
               try {
+                final text = utf8.decode(
+                  _decompressIfNeeded(_bytesFromResponse(res), res.headers),
+                  allowMalformed: true,
+                );
                 resultCompleter.complete(
-                  Result.success(IpInfo.fromCloudflareTrace(res.data!)),
+                  Result.success(IpInfo.fromCloudflareTrace(text)),
                 );
               } catch (_) {
                 handleFailure();

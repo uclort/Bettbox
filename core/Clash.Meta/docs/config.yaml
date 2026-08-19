@@ -1292,6 +1292,9 @@ proxies: # socks5
     # 数组格式也是合法的
     # reserved: [209,98,59]
     # persistent-keepalive: 0
+    # ip-stack:
+    #   mode: auto # options: auto, gvisor, mips; auto uses gVisor when compiled in and mihomo IP stack (MIPS) otherwise
+    #   congestion-controller: cubic # TCP congestion controller: cubic, reno, bbr, or bbr3; ignored by gVisor
     # 一个出站代理的标识。当值不为空时，将使用指定的 proxy 发出连接
     # dialer-proxy: "ss1"
     # remote-dns-resolve: true # 强制 dns 远程解析，默认值为 false
@@ -1307,30 +1310,37 @@ proxies: # socks5
     #     reserved: [209,98,59]
     # 如果存在则开启AmneziaWG功能
     # amnezia-wg-option:
-    #   jc: 5
-    #   jmin: 500
-    #   jmax: 501
-    #   s1: 30
-    #   s2: 40
-    #   s3: 50                                            # AmneziaWG v1.5 and v2
-    #   s4: 5                                             # AmneziaWG v1.5 and v2
-    #   h1: 123456                                        # AmneziaWG v1.0 and v1.5
-    #   h2: 67543                                         # AmneziaWG v1.0 and v1.5
-    #   h3: 123123                                        # AmneziaWG v1.0 and v1.5
-    #   h4: 32345                                         # AmneziaWG v1.0 and v1.5
-    #   h1: 123456-123500                                 # AmneziaWG v2.0 only
-    #   h2: 67543-67550                                   # AmneziaWG v2.0 only
-    #   h3: 123123-123200                                 # AmneziaWG v2.0 only
-    #   h4: 32345-32350                                   # AmneziaWG v2.0 only
-    #   i1: <b 0xf6ab3267fa><c><b 0xf6ab><t><r 10><wt 10> # AmneziaWG v1.5 and v2
-    #   i2: <b 0xf6ab3267fa><r 100>                       # AmneziaWG v1.5 and v2
-    #   i3: ""                                            # AmneziaWG v1.5 and v2
-    #   i4: ""                                            # AmneziaWG v1.5 and v2
-    #   i5: ""                                            # AmneziaWG v1.5 and v2
-    #   j1: <b 0xffffffff><c><b 0xf6ab><t><r 10>          # AmneziaWG v1.5 only (removed in v2)
-    #   j2: <c><b 0xf6ab><t><wt 1000>                     # AmneziaWG v1.5 only (removed in v2)
-    #   j3: <t><b 0xf6ab><c><r 10>                        # AmneziaWG v1.5 only (removed in v2)
-    #   itime: 60                                         # AmneziaWG v1.5 only (removed in v2)
+    #   version: 2                                        # Only version 3 uses the v3 implementation; all other values use the legacy implementation
+    #   jc: 5                                             # AmneziaWG v1.0+
+    #   jmin: 500                                         # AmneziaWG v1.0+
+    #   jmax: 501                                         # AmneziaWG v1.0+
+    #   s1: 30                                            # AmneziaWG v1.0+
+    #   s2: 40                                            # AmneziaWG v1.0+
+    #   s3: 50                                            # AmneziaWG v1.5+
+    #   s4: 8                                             # AmneziaWG v1.5+
+    #   h1: 123456                                        # AmneziaWG v1.0/v1.5 support single values only; v2+ also supports ranges
+    #   h2: 67543                                         # AmneziaWG v1.0/v1.5 support single values only; v2+ also supports ranges
+    #   h3: 123123                                        # AmneziaWG v1.0/v1.5 support single values only; v2+ also supports ranges
+    #   h4: 32345                                         # AmneziaWG v1.0/v1.5 support single values only; v2+ also supports ranges
+    #   i1: <b 0xf6ab3267fa><b 0xf6ab><t><r 10>           # AmneziaWG v1.5+
+    #   i2: <b 0xf6ab3267fa><r 100>                       # AmneziaWG v1.5+
+    #   i3: ""                                            # AmneziaWG v1.5+
+    #   i4: ""                                            # AmneziaWG v1.5+
+    #   i5: ""                                            # AmneziaWG v1.5+
+    #   j1: <b 0xffffffff><c><b 0xf6ab><t><r 10>          # AmneziaWG v1.5 only (removed in v2+)
+    #   j2: <c><b 0xf6ab><t><wt 1000>                     # AmneziaWG v1.5 only (removed in v2+)
+    #   j3: <t><b 0xf6ab><c><r 10>                        # AmneziaWG v1.5 only (removed in v2+)
+    #   itime: 60                                         # AmneziaWG v1.5 only (removed in v2+)
+    #   header-protection-key: >-                         # AmneziaWG v3+
+    #     MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+    #   content-padding-addition: 0-32                    # AmneziaWG v3+
+    #   rekey-after-time: 120                             # AmneziaWG v3+
+    #   rekey-timeout: 5                                  # AmneziaWG v3+
+    #   reject-after-time: 180                            # AmneziaWG v3+
+    #   keepalive-timeout: 10                             # AmneziaWG v3+
+    #   max-handshake-attempts: 18                        # AmneziaWG v3+
+    #   random-trailers: true                             # AmneziaWG v3.1+
+    #   disable-cookies: true                             # AmneziaWG v3.1+
 
   # tailscale
   - name: "tailscale"
@@ -1351,6 +1361,36 @@ proxies: # socks5
     # interface-name: "WLAN" # 指定出站网卡
     # routing-mark: 6666 # Linux 下配置 fwmark
     # ip-version: ipv4-prefer # 可选：dual/ipv4/ipv6/ipv4-prefer/ipv6-prefer
+
+  # zerotier
+  - name: "zerotier"
+    type: zerotier
+    network: "0123456789abcdef" # 16-digit ZeroTier network ID
+    # state-dir: ./zerotier-node # persistent node identity; defaults to an isolated directory derived from network and outbound name
+    # planet: ./planet # optional private planet file; replaces the built-in Earth planet
+    # mtu: 1400 # optional local MTU override; cannot exceed the controller MTU
+    # physical-mtu: 1432 # optional ZeroTier UDP payload MTU (510-10324; default 1432)
+    # ip-stack:
+    #   mode: auto # options: auto, gvisor, mips; auto uses gVisor when compiled in and mihomo IP stack (MIPS) otherwise
+    #   congestion-controller: cubic # TCP congestion controller: cubic, reno, bbr, or bbr3; ignored by gVisor
+    # primary-port: 0 # primary UDP port; 0 selects an available port
+    # secondary-port: 0 # second UDP port; 0 selects an available port, -1 disables it
+    # tcp-fallback-mode: auto # auto uses relay after UDP failure; force uses relay only; disable turns relay off
+    # tcp-fallback-relay: 204.80.128.1:443
+    # remote-trace-target: "0123456789" # optional node ID receiving global diagnostic traces
+    # remote-trace-level: 0 # 0 normal, 10 verbose, 15 rules, 20 debug, 30 insane
+    # low-bandwidth: false # reduce background traffic and network configuration refresh frequency
+    # encrypted-hello: false # use protocol-13 extended encryption for outgoing HELLO packets
+    # orbit: # optional federated root worlds (moons)
+    #   - world: "0123456789abcdef" # 16-digit moon world ID
+    #     seed: "0123456789" # 10-digit node ID of one moon root
+    udp: true
+    # remote-dns-resolve: true # resolve destination names through ZeroTier using controller-provided DNS servers
+    # dns: [10.147.17.1] # optional override for controller-provided DNS servers
+    # dialer-proxy: "ss1" # carry ZeroTier wire traffic through another outbound
+    # interface-name: "WLAN"
+    # routing-mark: 6666
+    # ip-version: ipv4-prefer
 
   # openvpn
   - name: "openvpn"
@@ -1405,9 +1445,13 @@ proxies: # socks5
     #   UV_DEVICE_ID: "laptop-001"
     # ping: 10 # 默认值为 0
     # ping-restart: 60 # 默认值为 0
+    # tran-window: 3600 # 旧 data key 在 rekey 后保留的秒数；默认 3600，显式设为 0 表示立即过期，应与服务端 --tran-window 对齐
     # handshake-timeout: 30 # 单位为秒；配置后握手时不受外层连接超时影响；默认值为 0，表示仅使用外层连接超时
     # mtu: 1500
     udp: true
+    # ip-stack:
+    #   mode: auto # options: auto, gvisor, mips; auto uses gVisor when compiled in and mihomo IP stack (MIPS) otherwise
+    #   congestion-controller: cubic # TCP congestion controller: cubic, reno, bbr, or bbr3; ignored by gVisor
     # 一个出站代理的标识。当值不为空时，将使用指定的 proxy 发出连接
     # dialer-proxy: "ss1"
     # remote-dns-resolve: true # 强制 dns 远程解析，默认值为 false
@@ -1424,6 +1468,9 @@ proxies: # socks5
     ipv6: 2606:4700:110:84c0:163a:4914:a0ad:3342
     mtu: 1280
     udp: true
+    # ip-stack:
+    #   mode: auto # options: auto, gvisor, mips; auto uses gVisor when compiled in and mihomo IP stack (MIPS) otherwise
+    #   congestion-controller: cubic # TCP congestion controller: cubic, reno, bbr, or bbr3; ignored by gVisor
     # 一个出站代理的标识。当值不为空时，将使用指定的 proxy 发出连接
     # dialer-proxy: "ss1"
     # remote-dns-resolve: true # 强制 dns 远程解析，默认值为 false
@@ -1459,6 +1506,9 @@ proxies: # socks5
     mtu: 1280
     udp: true
     network: h2
+    # ip-stack:
+    #   mode: auto # options: auto, gvisor, mips; auto uses gVisor when compiled in and mihomo IP stack (MIPS) otherwise
+    #   congestion-controller: cubic # TCP congestion controller: cubic, reno, bbr, or bbr3; ignored by gVisor
     # 一个出站代理的标识。当值不为空时，将使用指定的 proxy 发出连接
     # dialer-proxy: "ss1"
     # remote-dns-resolve: true # 强制 dns 远程解析，默认值为 false
@@ -1603,6 +1653,7 @@ proxies: # socks5
     password: "<your password>"
     # client-fingerprint: chrome
     udp: true
+    # client-metadata: "" # 发送给服务端的客户端元数据，由于这可能被用于统计客户端信息并区别对待，从v1.19.30开始默认再不发送该内容，如果需要请自行填写
     # idle-session-check-interval: 30 # seconds
     # idle-session-timeout: 30 # seconds
     # min-idle-session: 0

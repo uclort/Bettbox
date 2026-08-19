@@ -133,8 +133,6 @@ class AppController {
   bool _isUpdatingGroups = false;
   Timer? _updateGroupsRetryTimer;
   int _coreGeneration = 0;
-  int _delayGeneration = 0;
-  int get delayGeneration => _delayGeneration;
   int _setupGeneration = 0;
   int _macOSNetworkRecoveryGeneration = 0;
 
@@ -193,15 +191,10 @@ class AppController {
 
   void _invalidateCoreReads() {
     _coreGeneration++;
-    _delayGeneration++;
     _backgroundLoadVersion++;
     _updateGroupsRetryTimer?.cancel();
     _updateGroupsRetryTimer = null;
     _updateGroupsRetryCount = 0;
-  }
-
-  void invalidateDelayResults() {
-    _delayGeneration++;
   }
 
   Future<void> restartCore() {
@@ -680,12 +673,6 @@ class AppController {
       return;
     }
 
-    if (networkSpeedNotification &&
-        !shouldUpdateDashboard &&
-        !globalState.appState.isScreenOn) {
-      return;
-    }
-
     final traffic = await clashCore.getTraffic();
 
     if (shouldUpdateDashboard) {
@@ -1076,6 +1063,7 @@ class AppController {
             '[MissedUpdate] Updating external provider: ${provider.name}',
           );
           await clashCore.updateExternalProvider(providerName: provider.name);
+          setProvider(await clashCore.getExternalProvider(provider.name));
         }
       }
     } catch (e) {

@@ -11,6 +11,7 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.os.Build
 import android.os.IBinder
+import android.service.quicksettings.TileService
 import androidx.core.content.getSystemService
 import com.appshub.bettbox.BettboxApplication
 import com.appshub.bettbox.GlobalState
@@ -24,6 +25,7 @@ import com.appshub.bettbox.models.VpnOptions
 import com.appshub.bettbox.modules.SuspendModule
 import com.appshub.bettbox.services.BaseServiceInterface
 import com.appshub.bettbox.services.BettboxService
+import com.appshub.bettbox.services.BettboxTileService
 import com.appshub.bettbox.services.BettboxVpnService
 import com.google.gson.Gson
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -212,6 +214,14 @@ data object VpnPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
                 result.success(true)
             }
 
+            "updateNotificationSpeed" -> {
+                handleUpdateNotificationSpeed(
+                    call.argument<String>("profileName") ?: "",
+                    call.argument<String>("speedInfo") ?: ""
+                )
+                result.success(true)
+            }
+
             "status" -> {
                 result.success(GlobalState.currentRunState == RunState.START)
             }
@@ -360,6 +370,7 @@ data object VpnPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
             lastNetworkType = currentNetworkType
 
             ServicePlugin.notifyNetworkChanged()
+            invokeDart("networkChanged")
 
             if (!quickResponseEnabled) return
 
@@ -425,6 +436,21 @@ data object VpnPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
                 android.util.Log.e("VpnPlugin", "updateNotificationIcon error: ${it.message}")
             }
         }
+    }
+
+    fun handleUpdateNotificationSpeed(profileName: String, speedInfo: String) {
+        if (profileName != GlobalState.currentProfileName ||
+            !GlobalState.isSpeedNotificationEnabled
+        ) {
+            GlobalState.currentProfileName = profileName
+            GlobalState.isSpeedNotificationEnabled = true
+            val context = BettboxApplication.getAppContext()
+            TileService.requestListeningState(
+                context,
+                ComponentName(context, BettboxTileService::class.java)
+            )
+        }
+        updateNotificationSpeed(profileName, speedInfo)
     }
 
     fun updateNotificationSpeed(profileName: String, speedInfo: String) {
@@ -652,6 +678,7 @@ data object VpnPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         suspendModule?.uninstall()
         suspendModule = null
         Core.stopTun()
+        Core.suspended(true)
         scope.launch {
             startForeground()
         }
@@ -675,6 +702,7 @@ data object VpnPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
             }
             if (!startAllowed) return@launch
 
+            Core.suspended(false)
             performStartCore(options, retry = false, notifyOnFailure = false)
         }
         return true

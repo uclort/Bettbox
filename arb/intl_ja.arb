@@ -659,5 +659,6 @@
   "downloadAndInstall": "ダウンロードしてインストール",
   "updateDownloading": "アップデートをダウンロード中：{progress}%",
   "updateInstalling": "システムインストーラーを開いています...",
-  "updateFailed": "アップデートに失敗しました：{message}"
+  "updateFailed": "アップデートに失敗しました：{message}",
+  "blockComment": "コメント"
 }

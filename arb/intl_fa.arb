@@ -659,5 +659,6 @@
   "downloadAndInstall": "دانلود و نصب",
   "updateDownloading": "در حال دانلود به‌روزرسانی: {progress}%",
   "updateInstalling": "در حال باز کردن نصب‌کننده سیستم...",
-  "updateFailed": "به‌روزرسانی ناموفق بود: {message}"
+  "updateFailed": "به‌روزرسانی ناموفق بود: {message}",
+  "blockComment": "کامنت"
 }

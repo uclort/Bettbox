@@ -5,6 +5,7 @@ import 'package:collection/collection.dart';
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/models.dart';
+import 'package:bett_box/state.dart';
 import 'package:flutter/material.dart';
 
 const appName = AppIdentity.displayName;
@@ -24,9 +25,7 @@ final baseInfoEdgeInsets = EdgeInsets.symmetric(
 
 final defaultTextScaleFactor =
     WidgetsBinding.instance.platformDispatcher.textScaleFactor;
-const httpTimeoutDuration = Duration(seconds: 10);
-const defaultDelayTestConcurrencyLimit = 16;
-
+const httpTimeoutDuration = Duration(milliseconds: 5000);
 const moreDuration = Duration(milliseconds: 100);
 const animateDuration = Duration(milliseconds: 100);
 const midDuration = Duration(milliseconds: 200);
@@ -66,6 +65,9 @@ double getFloatingBottomBarReserveHeight(BuildContext context) {
     mediaQuery.viewPadding.bottom,
     mediaQuery.padding.bottom,
   );
+  if (globalState.isAndroidTV) {
+    return 132.0 + (viewBottom > 12 ? viewBottom - 12 : 0);
+  }
   return 84.0 + (viewBottom > 12 ? viewBottom - 12 : 0);
 }
 
@@ -141,7 +143,7 @@ double getWidgetHeight(num lines) {
   return max(lines * 84 + (lines - 1) * 16, 0).ap;
 }
 
-const maxLength = 1024;
+const maxLength = 256;
 
 final mainIsolate = 'BettboxMainIsolate';
 
