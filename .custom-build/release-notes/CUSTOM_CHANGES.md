@@ -123,3 +123,7 @@
 - `custom-build.yml` 的手动触发支持仅构建并发布 macOS Apple Silicon，或仅构建并发布 Android arm64-v8a；单平台模式只创建对应 Action 任务与 Release 资产，不消耗其他平台构建资源，两个选项不能同时启用，Android 单平台发布跳过桌面应用内更新源生成。
 - 自定义应用代码发生变化但没有补充增量说明时拒绝发布，避免 Release 内容与安装包不一致。
 - 自定义应用代码发生变化但没有同步完整改动总账时同样拒绝发布。
+
+### 自定义内核同步
+
+- 私有 `custom-mihomo` 已按 Bettbox `main@433af6a97861` 的 `core/Clash.Meta` 重新生成，内核源码树校验值为 `f97606094dc467e6e8c62d22c586514d50c7d0d8`；继续应用 `opensnell-v6.patch`，并通过 `go test ./transport/snell ./adapter/outbound`。

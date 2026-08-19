@@ -2,6 +2,7 @@
 
 - 已同步 `upstream/main` 最新代码（当前提交 `433af6a9` / `v1.18.10`），冲突处保留双方不重复能力，重复实现以远端为准。
 - 删除自定义测速链路重构及其专用测试，测速恢复 Bettbox 原有 Dart 批处理、桥接超时、Mihomo URLTest 和 Provider 健康检查逻辑；保留 `concurrencyLimit` 配置字段以兼容旧数据，但恢复由上游运行时读取。
+- 私有 `custom-mihomo` 已按当前 Bettbox 内核树重新生成并通过 Snell v6 适配测试，避免打包阶段因内核树校验不一致而停止。
 
 ### WebDAV 配置同步切割
 
