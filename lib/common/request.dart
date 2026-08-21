@@ -208,12 +208,18 @@ class Request {
 
   Future<Map<String, dynamic>?> _checkForCustomUpdateFeed() async {
     try {
-      final response = await _dio.get<Map<String, dynamic>>(
+      final response = await _dio.get<String>(
         customUpdateFeedUrl,
-        options: Options(headers: {'Accept': 'application/json'}),
+        options: Options(
+          responseType: ResponseType.plain,
+          headers: {'Accept': 'application/json'},
+        ),
       );
-      final release = response.data;
-      if (release == null) return null;
+      final data = response.data;
+      if (data == null || data.isEmpty) return null;
+      final decoded = jsonDecode(data);
+      if (decoded is! Map) return null;
+      final release = Map<String, dynamic>.from(decoded);
       return _filterCustomRelease(release);
     } catch (e) {
       commonPrint.log('Check custom update feed failed: ${e.formatError}');
