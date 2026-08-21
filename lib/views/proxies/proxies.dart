@@ -51,21 +51,23 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
           onPressed: () {
             _proxiesTabKey.currentState?.scrollToGroupSelected();
           },
-          icon: Icon(Icons.adjust, weight: 1),
+          tooltip: appLocalizations.locate,
+          icon: const Icon(Icons.adjust, weight: 1),
         ),
       if (hasCustom)
         IconButton(
           onPressed: _handleCustomOptions,
-          icon: Icon(Icons.tune),
+          icon: const Icon(Icons.tune),
           tooltip: appLocalizations.custom,
         ),
       CommonPopupBox(
         targetBuilder: (open) {
           return IconButton(
             onPressed: () {
-              open(offset: Offset(0, 20));
+              open(offset: const Offset(0, 20));
             },
-            icon: Icon(Icons.more_vert),
+            tooltip: appLocalizations.more,
+            icon: const Icon(Icons.more_vert),
           );
         },
         popup: CommonPopupMenu(

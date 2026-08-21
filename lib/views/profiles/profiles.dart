@@ -74,6 +74,7 @@ class _ProfilesViewState extends ConsumerState<ProfilesView> {
           _updateProfiles();
         },
         icon: const Icon(Icons.sync),
+        tooltip: appLocalizations.syncAll,
       ),
       IconButton(
         onPressed: () {
@@ -84,6 +85,7 @@ class _ProfilesViewState extends ConsumerState<ProfilesView> {
             },
           );
         },
+        tooltip: appLocalizations.script,
         icon: Consumer(
           builder: (_, ref, _) {
             final isScriptMode = ref.watch(
@@ -106,6 +108,7 @@ class _ProfilesViewState extends ConsumerState<ProfilesView> {
             },
           );
         },
+        tooltip: appLocalizations.sort,
         icon: const Icon(Icons.sort),
         iconSize: 26,
       ),
@@ -282,6 +285,7 @@ class ProfileItem extends StatelessWidget {
           actions: [
             IconButton(
               icon: const Icon(Icons.security),
+              tooltip: appLocalizations.ageKeyGenerateTitle,
               onPressed: () {
                 editKey.currentState?.showAgeKeyGenerator();
               },
@@ -479,7 +483,8 @@ class ProfileItem extends StatelessWidget {
                     onPressed: () {
                       open();
                     },
-                    icon: Icon(Icons.more_vert),
+                    tooltip: appLocalizations.more,
+                    icon: const Icon(Icons.more_vert),
                   );
                 },
               ),

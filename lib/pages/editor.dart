@@ -332,12 +332,14 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                                   _titleController.text != widget.title)
                           ? () => _handleSave(context)
                           : null,
+                      tooltip: appLocalizations.save,
                       icon: const Icon(Icons.save_sharp),
                     ),
                   ),
                 if (widget.supportRemoteDownload && !readOnly)
                   IconButton(
                     onPressed: _isLoading ? null : _handleImport,
+                    tooltip: appLocalizations.download,
                     icon: const Icon(Icons.arrow_downward),
                   ),
                 ListenableBuilder(
@@ -350,6 +352,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                             : () {
                                 open(offset: const Offset(-20, 20));
                               },
+                        tooltip: appLocalizations.more,
                         icon: const Icon(Icons.more_vert),
                       );
                     },

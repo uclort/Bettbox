@@ -415,7 +415,7 @@ abstract class Dns with _$Dns {
     Map<String, String> nameserverPolicy,
     @Default(['1.1.1.1']) List<String> nameserver,
     @Default([]) List<String> fallback,
-    @Default(['https://doh.pub/dns-query#DIRECT'])
+    @Default(['https://120.53.53.53/dns-query#DIRECT'])
     @JsonKey(name: 'proxy-server-nameserver')
     List<String> proxyServerNameserver,
     @Default([])

@@ -189,9 +189,11 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
       actions: [
         IconButton(
           onPressed: _handleCloseAll,
+          tooltip: appLocalizations.closeAll,
           icon: const Icon(Icons.delete_sweep_outlined),
         ),
         IconButton(
+          tooltip: appLocalizations.connectionsSort,
           onPressed: () async {
             final currentSortType = ref.read(connectionsSortProvider);
             final selectedSortType = await globalState

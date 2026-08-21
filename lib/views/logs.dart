@@ -115,15 +115,19 @@ class _LogsViewState extends ConsumerState<LogsView> {
                 )
               : null,
           onPressed: _toggleAutoScroll,
+          tooltip: appLocalizations.autoScroll,
           icon: const Icon(Icons.vertical_align_top_outlined),
         ),
-        InkWell(
-          onTap: _handleExport,
-          onLongPress: _handleClearLogs,
-          borderRadius: BorderRadius.circular(20),
-          child: const Padding(
-            padding: EdgeInsets.all(12),
-            child: Icon(Icons.save_as_outlined, size: 24),
+        Tooltip(
+          message: appLocalizations.export,
+          child: InkWell(
+            onTap: _handleExport,
+            onLongPress: _handleClearLogs,
+            borderRadius: BorderRadius.circular(20),
+            child: const Padding(
+              padding: EdgeInsets.all(12),
+              child: Icon(Icons.save_as_outlined, size: 24),
+            ),
           ),
         ),
       ],

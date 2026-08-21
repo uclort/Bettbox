@@ -69,9 +69,9 @@ class AppLocalizations {
     return Intl.message('Direct', name: 'direct', desc: '', args: []);
   }
 
-  /// `Dash`
+  /// `Home`
   String get dashboard {
-    return Intl.message('Dash', name: 'dashboard', desc: '', args: []);
+    return Intl.message('Home', name: 'dashboard', desc: '', args: []);
   }
 
   /// `Custom Dashboard Title`
@@ -552,7 +552,7 @@ class AppLocalizations {
   /// `Network Speed`
   String get enableTraySpeed {
     return Intl.message(
-      'Network Speed',
+      'Tray Speed',
       name: 'enableTraySpeed',
       desc: '',
       args: [],
@@ -2159,9 +2159,9 @@ class AppLocalizations {
     return Intl.message('Test URL', name: 'testUrl', desc: '', args: []);
   }
 
-  /// `Start Test`
+  /// `Delay Test`
   String get startTest {
-    return Intl.message('Start Test', name: 'startTest', desc: '', args: []);
+    return Intl.message('Delay Test', name: 'startTest', desc: '', args: []);
   }
 
   /// `Testing`
@@ -5412,6 +5412,66 @@ class AppLocalizations {
   /// `Comment`
   String get blockComment {
     return Intl.message('Comment', name: 'blockComment', desc: '', args: []);
+  }
+
+  /// `Locate`
+  String get locate {
+    return Intl.message('Locate', name: 'locate', desc: '', args: []);
+  }
+
+  /// `Minimize`
+  String get minimize {
+    return Intl.message('Minimize', name: 'minimize', desc: '', args: []);
+  }
+
+  /// `Maximize`
+  String get maximize {
+    return Intl.message('Maximize', name: 'maximize', desc: '', args: []);
+  }
+
+  /// `Restore`
+  String get restore {
+    return Intl.message('Restore', name: 'restore', desc: '', args: []);
+  }
+
+  /// `Pin`
+  String get pin {
+    return Intl.message('Pin', name: 'pin', desc: '', args: []);
+  }
+
+  /// `Unpin`
+  String get unpin {
+    return Intl.message('Unpin', name: 'unpin', desc: '', args: []);
+  }
+
+  /// `Close`
+  String get close {
+    return Intl.message('Close', name: 'close', desc: '', args: []);
+  }
+
+  /// `Auto Scroll`
+  String get autoScroll {
+    return Intl.message('Auto Scroll', name: 'autoScroll', desc: '', args: []);
+  }
+
+  /// `Export`
+  String get export {
+    return Intl.message('Export', name: 'export', desc: '', args: []);
+  }
+
+  /// `Clear`
+  String get clear {
+    return Intl.message('Clear', name: 'clear', desc: '', args: []);
+  }
+
+  /// `Back`
+  String get back {
+    return Intl.message('Back', name: 'back', desc: '', args: []);
+  }
+
+  /// `Close All`
+  String get closeAll {
+    return Intl.message('Close All', name: 'closeAll', desc: '', args: []);
   }
 }
 

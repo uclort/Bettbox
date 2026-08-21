@@ -2,7 +2,7 @@
   "rule": "Rule",
   "global": "Global",
   "direct": "Direct",
-  "dashboard": "Dash",
+  "dashboard": "Home",
   "customDashboardTitle": "Custom Dashboard Title",
   "titleTooLong": "Title is too long, maximum 20 characters supported",
   "proxies": "Proxies",

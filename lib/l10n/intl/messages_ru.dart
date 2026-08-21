@@ -176,6 +176,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage(
       "Интервал автообновления (минуты)",
     ),
+    "back": MessageLookupByLibrary.simpleMessage("Назад"),
     "backup": MessageLookupByLibrary.simpleMessage("Создать копию"),
     "backupAndRecovery": MessageLookupByLibrary.simpleMessage(
       "Резервное копирование",
@@ -237,6 +238,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "checking": MessageLookupByLibrary.simpleMessage("Проверка..."),
     "circle": MessageLookupByLibrary.simpleMessage("Круг"),
+    "clear": MessageLookupByLibrary.simpleMessage("Очистить"),
     "clearCacheDesc": MessageLookupByLibrary.simpleMessage(
       "Очистить кэш FakeIP и DNS?",
     ),
@@ -254,6 +256,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "clipboardExport": MessageLookupByLibrary.simpleMessage("Экспорт в буфер"),
     "clipboardImport": MessageLookupByLibrary.simpleMessage("Импорт из буфера"),
+    "close": MessageLookupByLibrary.simpleMessage("Закрыть"),
+    "closeAll": MessageLookupByLibrary.simpleMessage("Закрыть все"),
     "color": MessageLookupByLibrary.simpleMessage("Цвет"),
     "colorSchemes": MessageLookupByLibrary.simpleMessage("Цветовые схемы"),
     "columns": MessageLookupByLibrary.simpleMessage("Колонки"),
@@ -410,7 +414,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "enableOverride": MessageLookupByLibrary.simpleMessage(
       "Включить переопределение",
     ),
-    "enableTraySpeed": MessageLookupByLibrary.simpleMessage("Скорость сети"),
+    "enableTraySpeed": MessageLookupByLibrary.simpleMessage("Скорость в трее"),
     "enableTraySpeedDesc": MessageLookupByLibrary.simpleMessage(
       "Отображение скорости отдачи и загрузки в строке меню",
     ),
@@ -440,6 +444,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Экспериментальные настройки, используйте с осторожностью",
     ),
     "expirationTime": MessageLookupByLibrary.simpleMessage("Срок действия"),
+    "export": MessageLookupByLibrary.simpleMessage("Экспорт"),
     "exportFile": MessageLookupByLibrary.simpleMessage("Экспорт файла"),
     "exportLogs": MessageLookupByLibrary.simpleMessage("Экспорт логов"),
     "exportSuccess": MessageLookupByLibrary.simpleMessage("Экспорт успешен"),
@@ -639,6 +644,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "localRecoveryDesc": MessageLookupByLibrary.simpleMessage(
       "Восстановление из файла",
     ),
+    "locate": MessageLookupByLibrary.simpleMessage("Найти"),
     "log": MessageLookupByLibrary.simpleMessage("Лог"),
     "logLevel": MessageLookupByLibrary.simpleMessage("Уровень логов"),
     "logcat": MessageLookupByLibrary.simpleMessage("Сбор логов"),
@@ -652,6 +658,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "loose": MessageLookupByLibrary.simpleMessage("Максимальная"),
     "manualRefreshIp": MessageLookupByLibrary.simpleMessage("Обновить IP"),
+    "maximize": MessageLookupByLibrary.simpleMessage("Развернуть"),
     "memoryInfo": MessageLookupByLibrary.simpleMessage("Память"),
     "memoryInfoDesc": MessageLookupByLibrary.simpleMessage(
       "Текущее значение памяти — это динамическое потребление стека ядра во время выполнения, а не полная статистика памяти приложения, только для справки.",
@@ -661,6 +668,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Это тестовое сообщение.",
     ),
     "min": MessageLookupByLibrary.simpleMessage("Минимальная"),
+    "minimize": MessageLookupByLibrary.simpleMessage("Свернуть"),
     "minimizeOnExit": MessageLookupByLibrary.simpleMessage(
       "Сворачивать при выходе",
     ),
@@ -839,6 +847,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "password": MessageLookupByLibrary.simpleMessage("Пароль"),
     "paste": MessageLookupByLibrary.simpleMessage("Вставить"),
+    "pin": MessageLookupByLibrary.simpleMessage("Закрепить"),
     "pleaseBindWebDAV": MessageLookupByLibrary.simpleMessage(
       "Привяжите WebDAV",
     ),
@@ -995,6 +1004,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "restartTip": MessageLookupByLibrary.simpleMessage(
       "Изменения вступят в силу после перезапуска TUN",
     ),
+    "restore": MessageLookupByLibrary.simpleMessage("Восстановить"),
     "retry": MessageLookupByLibrary.simpleMessage("Повторить"),
     "rightClickBehavior": MessageLookupByLibrary.simpleMessage("Правая кнопка"),
     "rotatingCircle": MessageLookupByLibrary.simpleMessage("Вращающийся круг"),
@@ -1205,6 +1215,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "unknown": MessageLookupByLibrary.simpleMessage("Неизвестно"),
     "unnamed": MessageLookupByLibrary.simpleMessage("Без имени"),
+    "unpin": MessageLookupByLibrary.simpleMessage("Открепить"),
     "update": MessageLookupByLibrary.simpleMessage("Обновить"),
     "updateDownloading": m14,
     "updateFailed": m15,

@@ -175,13 +175,15 @@ class CommonScaffoldState extends State<CommonScaffold> {
     if (_isEdit) {
       return IconButton(
         onPressed: _appBarState.value.editState?.onExit,
-        icon: Icon(Icons.close),
+        icon: const Icon(Icons.close),
+        tooltip: appLocalizations.cancel,
       );
     }
     if (_isSearch) {
       return IconButton(
         onPressed: _handleExitSearching,
-        icon: Icon(Icons.arrow_back),
+        icon: const Icon(Icons.arrow_back),
+        tooltip: appLocalizations.back,
       );
     }
     return widget.leading;
@@ -212,7 +214,11 @@ class CommonScaffoldState extends State<CommonScaffold> {
   List<Widget> _buildActions(bool hasSearch, List<Widget> actions) {
     if (_isSearch) {
       return genActions([
-        IconButton(onPressed: _handleClear, icon: Icon(Icons.close)),
+        IconButton(
+          onPressed: _handleClear,
+          icon: const Icon(Icons.close),
+          tooltip: appLocalizations.clear,
+        ),
       ]);
     }
     return genActions([
@@ -227,7 +233,8 @@ class CommonScaffoldState extends State<CommonScaffold> {
               });
             });
           },
-          icon: Icon(Icons.search),
+          icon: const Icon(Icons.search),
+          tooltip: appLocalizations.search,
         ),
       ...actions,
     ]);

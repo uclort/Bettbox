@@ -80,7 +80,18 @@ class _TrayContainerState extends ConsumerState<TrayManager> with TrayListener {
   }
 
   @override
+  void onTrayIconRightMouseDown() {
+    unawaited(_handleTrayIconClick(isRightClick: true));
+  }
+
+  @override
+  void onTrayIconMouseDown() {
+    unawaited(_handleTrayIconClick(isRightClick: false));
+  }
+
+  @override
   void onTrayMenuItemClick(MenuItem menuItem) {
+    if (menuItem.submenu != null) return;
     if (globalState.backgroundMode.value) {
       globalState.appController.updateTray(false, false, true);
     }

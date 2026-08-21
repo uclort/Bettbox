@@ -4,6 +4,7 @@
 
 #include <dbghelp.h>
 #include <shlobj_core.h>
+#include <shobjidl.h>
 
 #include <algorithm>
 #include <chrono>
@@ -15,6 +16,12 @@
 #include "utils.h"
 
 namespace {
+
+#ifdef BETTBOX_DEV
+constexpr const wchar_t kAppUserModelId[] = L"Appshub.Bettbox.Dev";
+#else
+constexpr const wchar_t kAppUserModelId[] = L"Appshub.Bettbox";
+#endif
 
 static std::wstring GetDumpDirectory() {
   wchar_t path[MAX_PATH];
@@ -79,6 +86,7 @@ static LONG WINAPI BettboxUnhandledExceptionFilter(
 
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
+  ::SetCurrentProcessExplicitAppUserModelID(kAppUserModelId);
   ::SetUnhandledExceptionFilter(BettboxUnhandledExceptionFilter);
 
   // Attach to console when present (e.g., 'flutter run') or create a

@@ -171,10 +171,6 @@ class Utils {
     bool isStart = false,
     bool invertTrayIcon = false,
   }) {
-    if (system.isMacOS) {
-      return 'assets/images/icon_template.png';
-    }
-
     if (system.isLinux) {
       return 'assets/images/icon.png';
     }
@@ -182,10 +178,10 @@ class Utils {
     final suffix = system.isWindows ? 'ico' : 'png';
 
     final darkPath = !isStart
-        ? 'assets/images/icon.$suffix'
+        ? 'assets/images/icon_light.$suffix'
         : 'assets/images/icon_white.$suffix';
     final lightPath = !isStart
-        ? 'assets/images/icon_light.$suffix'
+        ? 'assets/images/icon.$suffix'
         : 'assets/images/icon_black.$suffix';
 
     if (invertTrayIcon) {

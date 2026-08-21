@@ -199,6 +199,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
                           onPressed: () {
                             open();
                           },
+                          tooltip: appLocalizations.more,
                           icon: Icon(Icons.more_vert),
                         );
                       },
@@ -437,6 +438,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
       actions: [
         IconButton(
           onPressed: _handleShowScriptSettings,
+          tooltip: appLocalizations.settings,
           icon: Icon(Icons.settings),
         ),
       ],

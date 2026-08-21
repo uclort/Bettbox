@@ -121,13 +121,13 @@ public class TrayIcon: NSView {
         paragraphStyle.maximumLineHeight = Self.speedLineHeight
         paragraphStyle.paragraphSpacingBefore = 0
 
+        let barHeight = button.bounds.height > 0
+            ? button.bounds.height
+            : NSStatusBar.system.thickness
         let glyphHeight = font.ascender - font.descender
-        let freeSpace = Self.speedLineHeight * 2 - button.bounds.height
+        let freeSpace = Self.speedLineHeight * 2 - barHeight
         let baselineOffset = -(glyphHeight / 3) + freeSpace / 2
-        button.title = title
-        let attributedTitle = NSMutableAttributedString(
-            attributedString: button.attributedTitle
-        )
+        let attributedTitle = NSMutableAttributedString(string: title)
         let fullRange = NSRange(
             location: 0,
             length: attributedTitle.length
@@ -207,30 +207,8 @@ public class TrayIcon: NSView {
         guard let sourceImage else {
             return
         }
-        if isActive {
-            button.contentTintColor = nil
-            sourceImage.isTemplate = true
-            button.image = sourceImage
-            return
-        }
-        button.image = tintedImage(sourceImage, color: Self.inactiveColor)
+        button.image = sourceImage
         button.contentTintColor = nil
-    }
-
-    private func tintedImage(_ image: NSImage, color: NSColor) -> NSImage {
-        let tintedImage = NSImage(size: image.size)
-        tintedImage.lockFocus()
-        color.setFill()
-        NSRect(origin: .zero, size: image.size).fill()
-        image.draw(
-            in: NSRect(origin: .zero, size: image.size),
-            from: .zero,
-            operation: .destinationIn,
-            fraction: 1
-        )
-        tintedImage.unlockFocus()
-        tintedImage.isTemplate = false
-        return tintedImage
     }
 
     private func syncClickTargetFrame(_ button: NSStatusBarButton) {

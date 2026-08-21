@@ -30,6 +30,7 @@ class AddProfileView extends StatelessWidget {
           actions: [
             IconButton(
               icon: const Icon(Icons.security),
+              tooltip: appLocalizations.ageKeyGenerateTitle,
               onPressed: () {
                 editKey.currentState?.showAgeKeyGenerator();
               },

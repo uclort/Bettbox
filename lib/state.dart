@@ -261,7 +261,11 @@ class GlobalState {
     }
 
     await appController.updateRunTime();
-    await startUpdateTasks([appController.updateTraffic]);
+    await appController.updateTraffic();
+    await startUpdateTasks([
+      appController.updateRunTime,
+      appController.updateTraffic,
+    ]);
   }
 
   void _scheduleBackgroundCleanup() {
@@ -756,6 +760,21 @@ class GlobalState {
       if (listen.endsWith(':53')) {
         rawConfig['dns']['listen'] = listen.replaceAll(':53', ':10053');
       }
+      final noProviders = rawConfig['proxy-providers'] == null &&
+          rawConfig['rule-providers'] == null;
+      final proxyServerNameserver =
+          rawConfig['dns']['proxy-server-nameserver'];
+      final hasLocalProxyServerNameserver = switch (proxyServerNameserver) {
+        List list => list.any((e) => e.toString().startsWith('127.0.0.1')),
+        String str => str.startsWith('127.0.0.1'),
+        _ => false,
+      };
+      if (noProviders &&
+          hasLocalProxyServerNameserver &&
+          listen.startsWith('0.0.0.0')) {
+        rawConfig['dns']['listen'] =
+            '127.0.0.1${listen.substring('0.0.0.0'.length)}';
+      }
     }
 
     if (rawConfig['ntp'] == null) {
@@ -1036,15 +1055,9 @@ class DashboardRefreshManager {
   bool get isRunning => _isRunning;
 
   Future<bool> _isActive() async {
-    final lifecycleState = WidgetsBinding.instance.lifecycleState;
-    final isPinned =
-        system.isDesktop && globalState.config.windowProps.isPinned;
-    if (!isPinned &&
-        lifecycleState != null &&
-        lifecycleState != AppLifecycleState.resumed) {
-      return false;
-    }
     if (system.isDesktop) {
+      final isPinned = globalState.config.windowProps.isPinned;
+      if (isPinned) return true;
       final visible = await window?.isVisible;
       if (visible == false) {
         return false;
@@ -1053,6 +1066,13 @@ class DashboardRefreshManager {
       if (minimized) {
         return false;
       }
+      return true;
+    }
+
+    final lifecycleState = WidgetsBinding.instance.lifecycleState;
+    if (lifecycleState != null &&
+        lifecycleState != AppLifecycleState.resumed) {
+      return false;
     }
     return true;
   }
@@ -1099,7 +1119,7 @@ class DetectionState {
   int _requestId = 0;
   CancelToken? _cancelToken;
   bool _isIpMasked = false;
-  IpInfo? _originalIpInfo;
+  IpInfo? _rawIpInfo;
   bool _isFirstLaunch = true;
 
   final state = ValueNotifier<NetworkDetectionState>(
@@ -1119,36 +1139,32 @@ class DetectionState {
 
   bool get isIpMasked => _isIpMasked;
 
+  IpInfo? _maskIpInfo(IpInfo? ipInfo) {
+    if (ipInfo == null) return null;
+    return _isIpMasked ? ipInfo.copyWith(ip: '*** *** *** ***') : ipInfo;
+  }
+
   void toggleIpPrivacy() {
     _isIpMasked = !_isIpMasked;
-    final currentIpInfo = state.value.ipInfo;
-    if (currentIpInfo != null) {
-      if (_isIpMasked) {
-        _originalIpInfo = currentIpInfo;
-        state.value = state.value.copyWith(
-          ipInfo: currentIpInfo.copyWith(ip: '*** *** *** ***'),
-        );
-      } else if (_originalIpInfo != null) {
-        state.value = state.value.copyWith(ipInfo: _originalIpInfo);
-        _originalIpInfo = null;
-      }
+    if (_rawIpInfo != null) {
+      state.value = state.value.copyWith(
+        ipInfo: _maskIpInfo(_rawIpInfo),
+      );
     }
   }
 
   void manualRefresh() {
-    _isIpMasked = false;
-    _originalIpInfo = null;
+    _rawIpInfo = null;
     state.value = state.value.copyWith(
       isLoading: true,
       ipInfo: null,
       errorMessage: null,
     );
-    startCheck();
+    startCheck(immediate: true);
   }
 
   Future<void> switchToDomesticIp() async {
-    _isIpMasked = false;
-    _originalIpInfo = null;
+    _rawIpInfo = null;
 
     _cancelPreviousRequest();
     _cancelToken = CancelToken();
@@ -1201,6 +1217,7 @@ class DetectionState {
         );
         return;
       }
+      _rawIpInfo = null;
       state.value = state.value.copyWith(
         isLoading: false,
         ipInfo: null,
@@ -1209,11 +1226,12 @@ class DetectionState {
       return;
     }
 
-    final ipInfo = res.data;
+    _rawIpInfo = res.data;
     state.value = state.value.copyWith(
       isLoading: false,
-      ipInfo: ipInfo,
-      errorMessage: ipInfo != null ? null : appLocalizations.tryManualRefresh,
+      ipInfo: _maskIpInfo(_rawIpInfo),
+      errorMessage:
+          _rawIpInfo != null ? null : appLocalizations.tryManualRefresh,
     );
   }
 
@@ -1228,7 +1246,7 @@ class DetectionState {
     _preIsStart = isStart;
 
     if (!isStart &&
-        state.value.ipInfo != null &&
+        _rawIpInfo != null &&
         !state.value.isLoading &&
         !isStateChanged) {
       return;
@@ -1241,7 +1259,7 @@ class DetectionState {
     state.value = state.value.copyWith(
       isLoading: true,
       errorMessage: null,
-      ipInfo: isStateChanged ? null : state.value.ipInfo,
+      ipInfo: isStateChanged ? null : _maskIpInfo(_rawIpInfo),
     );
 
     final timeout = const Duration(seconds: 5);

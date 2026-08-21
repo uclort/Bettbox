@@ -349,7 +349,7 @@ class _GroupHeader extends ConsumerWidget {
                 visualDensity: VisualDensity.compact,
                 icon: const Icon(Icons.adjust),
                 onPressed: onScrollToSelected,
-                tooltip: 'Scroll to selected',
+                tooltip: appLocalizations.locate,
               ),
               AnimatedBuilder(
                 animation: delayTestCoordinator,

@@ -26,6 +26,7 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
   }
 
   void _showIpClickBehaviorSettings() {
+    final isZh = Localizations.localeOf(context).languageCode == 'zh';
     globalState.showCommonDialog<IpClickBehavior>(
       child: CommonDialog(
         title: appLocalizations.ipClickBehavior,
@@ -40,14 +41,15 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
                 detectionState.manualRefresh();
               },
             ),
-            ListTile(
-              leading: Icon(Icons.public),
-              title: Text(appLocalizations.switchToDomesticIp),
-              onTap: () {
-                Navigator.of(context, rootNavigator: true).pop();
-                detectionState.switchToDomesticIp();
-              },
-            ),
+            if (isZh)
+              ListTile(
+                leading: Icon(Icons.public),
+                title: Text(appLocalizations.switchToDomesticIp),
+                onTap: () {
+                  Navigator.of(context, rootNavigator: true).pop();
+                  detectionState.switchToDomesticIp();
+                },
+              ),
             ListTile(
               leading: Icon(Icons.security),
               title: Text(appLocalizations.ipPrivacyProtection),

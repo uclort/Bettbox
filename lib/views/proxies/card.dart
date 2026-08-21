@@ -111,6 +111,7 @@ class ProxyCard extends StatelessWidget {
                 icon: const Icon(Icons.bolt),
                 iconSize: measure.labelSmallHeight,
                 padding: EdgeInsets.zero,
+                tooltip: appLocalizations.startTest,
                 onPressed: _handleTestCurrentDelay,
               ),
             );

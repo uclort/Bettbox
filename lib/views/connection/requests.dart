@@ -64,6 +64,7 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
           onPressed: () {
             ref.read(requestsProvider.notifier).clearRequests();
           },
+          tooltip: appLocalizations.clear,
           icon: const Icon(Icons.delete_sweep_outlined),
         ),
         IconButton(
@@ -75,6 +76,7 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
                 )
               : null,
           onPressed: _toggleAutoScroll,
+          tooltip: appLocalizations.autoScroll,
           icon: const Icon(Icons.vertical_align_top_outlined),
         ),
       ],

@@ -177,6 +177,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage(
       "Auto update interval (min)",
     ),
+    "back": MessageLookupByLibrary.simpleMessage("Back"),
     "backup": MessageLookupByLibrary.simpleMessage("Backup"),
     "backupAndRecovery": MessageLookupByLibrary.simpleMessage(
       "Backup & Restore",
@@ -234,6 +235,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "checking": MessageLookupByLibrary.simpleMessage("Checking..."),
     "circle": MessageLookupByLibrary.simpleMessage("Circle"),
+    "clear": MessageLookupByLibrary.simpleMessage("Clear"),
     "clearCacheDesc": MessageLookupByLibrary.simpleMessage(
       "Clear FakeIP and DNS cache?",
     ),
@@ -255,6 +257,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "clipboardImport": MessageLookupByLibrary.simpleMessage(
       "Import from Clipboard",
     ),
+    "close": MessageLookupByLibrary.simpleMessage("Close"),
+    "closeAll": MessageLookupByLibrary.simpleMessage("Close All"),
     "color": MessageLookupByLibrary.simpleMessage("Color"),
     "colorSchemes": MessageLookupByLibrary.simpleMessage("Color Schemes"),
     "columns": MessageLookupByLibrary.simpleMessage("Columns"),
@@ -314,7 +318,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "darkIconDesc": MessageLookupByLibrary.simpleMessage(
       "Manually switch dark desktop app icon",
     ),
-    "dashboard": MessageLookupByLibrary.simpleMessage("Dash"),
+    "dashboard": MessageLookupByLibrary.simpleMessage("Home"),
     "days": m0,
     "defaultNameserver": MessageLookupByLibrary.simpleMessage(
       "Default Nameserver",
@@ -409,7 +413,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Upload crash logs when needed",
     ),
     "enableOverride": MessageLookupByLibrary.simpleMessage("Enable Override"),
-    "enableTraySpeed": MessageLookupByLibrary.simpleMessage("Network Speed"),
+    "enableTraySpeed": MessageLookupByLibrary.simpleMessage("Tray Speed"),
     "enableTraySpeedDesc": MessageLookupByLibrary.simpleMessage(
       "Display upload and download rates in the menu bar",
     ),
@@ -439,6 +443,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Use with caution",
     ),
     "expirationTime": MessageLookupByLibrary.simpleMessage("Expiration Time"),
+    "export": MessageLookupByLibrary.simpleMessage("Export"),
     "exportFile": MessageLookupByLibrary.simpleMessage("Export File"),
     "exportLogs": MessageLookupByLibrary.simpleMessage("Export Logs"),
     "exportSuccess": MessageLookupByLibrary.simpleMessage("Export Successful"),
@@ -630,6 +635,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "localRecoveryDesc": MessageLookupByLibrary.simpleMessage(
       "Restore data from file",
     ),
+    "locate": MessageLookupByLibrary.simpleMessage("Locate"),
     "log": MessageLookupByLibrary.simpleMessage("Log"),
     "logLevel": MessageLookupByLibrary.simpleMessage("Log Level"),
     "logcat": MessageLookupByLibrary.simpleMessage("Log Capture"),
@@ -645,6 +651,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "loose": MessageLookupByLibrary.simpleMessage("Loose"),
     "manualRefreshIp": MessageLookupByLibrary.simpleMessage("Refresh IP"),
+    "maximize": MessageLookupByLibrary.simpleMessage("Maximize"),
     "memoryInfo": MessageLookupByLibrary.simpleMessage("Memory"),
     "memoryInfoDesc": MessageLookupByLibrary.simpleMessage(
       "The current memory information value displayed is the dynamic stack memory usage of the core during runtime, not the complete APP memory statistics, for reference only.",
@@ -654,6 +661,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "This is a message.",
     ),
     "min": MessageLookupByLibrary.simpleMessage("Min"),
+    "minimize": MessageLookupByLibrary.simpleMessage("Minimize"),
     "minimizeOnExit": MessageLookupByLibrary.simpleMessage("Minimize on Exit"),
     "minimizeOnExitDesc": MessageLookupByLibrary.simpleMessage(
       "Override default exit behavior",
@@ -822,6 +830,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "password": MessageLookupByLibrary.simpleMessage("Password"),
     "paste": MessageLookupByLibrary.simpleMessage("Paste"),
+    "pin": MessageLookupByLibrary.simpleMessage("Pin"),
     "pleaseBindWebDAV": MessageLookupByLibrary.simpleMessage(
       "Please bind WebDAV",
     ),
@@ -980,6 +989,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "restartTip": MessageLookupByLibrary.simpleMessage(
       "Restart TUN for changes to take effect",
     ),
+    "restore": MessageLookupByLibrary.simpleMessage("Restore"),
     "retry": MessageLookupByLibrary.simpleMessage("Retry"),
     "rightClickBehavior": MessageLookupByLibrary.simpleMessage("Right Click"),
     "rotatingCircle": MessageLookupByLibrary.simpleMessage("Rotating Circle"),
@@ -1064,7 +1074,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "stackMode": MessageLookupByLibrary.simpleMessage("Stack Mode"),
     "standard": MessageLookupByLibrary.simpleMessage("Standard"),
     "start": MessageLookupByLibrary.simpleMessage("Start"),
-    "startTest": MessageLookupByLibrary.simpleMessage("Start Test"),
+    "startTest": MessageLookupByLibrary.simpleMessage("Delay Test"),
     "startVpn": MessageLookupByLibrary.simpleMessage("Starting..."),
     "status": MessageLookupByLibrary.simpleMessage("Status"),
     "statusDesc": MessageLookupByLibrary.simpleMessage(
@@ -1176,6 +1186,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "unknown": MessageLookupByLibrary.simpleMessage("Unknown"),
     "unnamed": MessageLookupByLibrary.simpleMessage("Unnamed"),
+    "unpin": MessageLookupByLibrary.simpleMessage("Unpin"),
     "update": MessageLookupByLibrary.simpleMessage("Update"),
     "updateDownloading": m14,
     "updateFailed": m15,

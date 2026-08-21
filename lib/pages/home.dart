@@ -20,7 +20,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final Map<int, FocusNode> _navFocusNodes = {};
   int _currentNavIndex = 0;
-  bool _isNavFocused = false;
 
   FocusNode _getNavFocusNode(int index) {
     return _navFocusNodes.putIfAbsent(index, () => FocusNode());
@@ -33,7 +32,8 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  bool get isNavFocused => _isNavFocused;
+  bool get isNavFocused =>
+      _navFocusNodes.values.any((node) => node.hasFocus);
 
   void focusNav() {
     if (!globalState.isAndroidTV || !mounted) return;
@@ -52,8 +52,10 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return HomeBackScope(
       onTvBack: () {
-        if (isNavFocused) return false;
-        if (globalState.appState.pageLabel == PageLabel.dashboard) {
+        final currentPage = globalState.appState.pageLabel;
+        final isNav = isNavFocused;
+
+        if (currentPage == PageLabel.dashboard) {
           if (globalState.isDashboardStartSwitchFocused) {
             return false;
           }
@@ -62,7 +64,17 @@ class _HomePageState extends State<HomePage> {
             focus();
             return true;
           }
+          return false;
         }
+
+        if (isNav) {
+          globalState.appController.toPage(PageLabel.dashboard);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            globalState.focusDashboardStartSwitch?.call();
+          });
+          return true;
+        }
+
         focusNav();
         return true;
       },
@@ -191,26 +203,6 @@ class _HomePageState extends State<HomePage> {
                     final isFocused = focusNode.hasFocus;
                     return InkWell(
                       focusNode: focusNode,
-                      onFocusChange: (hasFocus) {
-                        if (hasFocus) {
-                          if (!_isNavFocused) {
-                            _isNavFocused = true;
-                            if (index != currentIndex) {
-                              _requestNavFocus(currentIndex);
-                              return;
-                            }
-                          }
-                        } else {
-                          Future.microtask(() {
-                            final currentFocus =
-                                FocusManager.instance.primaryFocus;
-                            if (currentFocus == null ||
-                                !_navFocusNodes.values.contains(currentFocus)) {
-                              _isNavFocused = false;
-                            }
-                          });
-                        }
-                      },
                       onTap: () {
                         globalState.appController.toPage(item.label);
                       },

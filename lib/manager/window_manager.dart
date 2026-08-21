@@ -249,16 +249,16 @@ class _WindowHeaderState extends ConsumerState<WindowHeader> {
               ignoring: !showButtons,
               child: Row(
                 children: [
-                  IconButton(
-                    onPressed: _updatePin,
-                    icon: ValueListenableBuilder(
-                      valueListenable: isPinNotifier,
-                      builder: (_, value, _) {
-                        return value
+                  ValueListenableBuilder(
+                    valueListenable: isPinNotifier,
+                    builder: (_, value, _) {
+                      return IconButton(
+                        onPressed: _updatePin,
+                        icon: value
                             ? const Icon(Icons.push_pin)
-                            : const Icon(Icons.push_pin_outlined);
-                      },
-                    ),
+                            : const Icon(Icons.push_pin_outlined),
+                      );
+                    },
                   ),
                   IconButton(
                     onPressed: () {
@@ -266,24 +266,23 @@ class _WindowHeaderState extends ConsumerState<WindowHeader> {
                     },
                     icon: const Icon(Icons.remove),
                   ),
-                  IconButton(
-                    onPressed: () async {
-                      _updateMaximized();
-                    },
-                    icon: ValueListenableBuilder(
-                      valueListenable: isMaximizedNotifier,
-                      builder: (_, value, _) {
-                        return value
+                  ValueListenableBuilder(
+                    valueListenable: isMaximizedNotifier,
+                    builder: (_, value, _) {
+                      return IconButton(
+                        onPressed: () async {
+                          _updateMaximized();
+                        },
+                        icon: value
                             ? const Icon(Icons.filter_none, size: 20)
-                            : const Icon(Icons.crop_square);
-                      },
-                    ),
+                            : const Icon(Icons.crop_square),
+                      );
+                    },
                   ),
                   IconButton(
                     onPressed: () {
                       FocusManager.instance.primaryFocus?.unfocus();
                       globalState.appController.unBackBlock();
-                      isHoveringNotifier.value = true;
                       globalState.appController.handleBackOrExit();
                     },
                     icon: const Icon(Icons.close),

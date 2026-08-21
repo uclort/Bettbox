@@ -523,6 +523,32 @@ class TrayClickBehaviorItem extends ConsumerWidget {
         );
   }
 
+  Future<void> _showTrayClickBehaviorDialog(
+    BuildContext context,
+    WidgetRef ref, {
+    required TrayClickBehavior leftBehavior,
+    required TrayClickBehavior rightBehavior,
+  }) async {
+    final result = await globalState
+        .showCommonDialog<
+          ({TrayClickBehavior leftBehavior, TrayClickBehavior rightBehavior})
+        >(
+          child: _TrayClickBehaviorDialog(
+            leftBehavior: leftBehavior,
+            rightBehavior: rightBehavior,
+          ),
+        );
+    if (result == null) return;
+    ref
+        .read(vpnSettingProvider.notifier)
+        .updateState(
+          (state) => state.copyWith(
+            trayLeftClickBehavior: result.leftBehavior,
+            trayRightClickBehavior: result.rightBehavior,
+          ),
+        );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final (leftBehavior, rightBehavior) = ref.watch(
@@ -663,6 +689,101 @@ class EnableTraySpeedItem extends ConsumerWidget {
               .updateState((state) => state.copyWith(enableTraySpeed: value));
           await globalState.appController.updateTray();
         },
+      ),
+    );
+  }
+}
+
+class _TrayClickBehaviorDialog extends StatefulWidget {
+  final TrayClickBehavior leftBehavior;
+  final TrayClickBehavior rightBehavior;
+
+  const _TrayClickBehaviorDialog({
+    required this.leftBehavior,
+    required this.rightBehavior,
+  });
+
+  @override
+  State<_TrayClickBehaviorDialog> createState() =>
+      _TrayClickBehaviorDialogState();
+}
+
+class _TrayClickBehaviorDialogState extends State<_TrayClickBehaviorDialog> {
+  late TrayClickBehavior _leftBehavior;
+  late TrayClickBehavior _rightBehavior;
+
+  @override
+  void initState() {
+    super.initState();
+    _leftBehavior = widget.leftBehavior;
+    _rightBehavior = widget.rightBehavior;
+  }
+
+  List<ButtonSegment<TrayClickBehavior>> get _segments => [
+    ButtonSegment(
+      value: TrayClickBehavior.showPanel,
+      icon: const Icon(Icons.dashboard_outlined),
+      label: Text(appLocalizations.showPanel),
+    ),
+    ButtonSegment(
+      value: TrayClickBehavior.showMenu,
+      icon: const Icon(Icons.menu),
+      label: Text(appLocalizations.showMenu),
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return CommonDialog(
+      title: appLocalizations.trayClickBehavior,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(appLocalizations.cancel),
+        ),
+        FilledButton(
+          onPressed: () {
+            Navigator.of(
+              context,
+            ).pop((leftBehavior: _leftBehavior, rightBehavior: _rightBehavior));
+          },
+          child: Text(appLocalizations.confirm),
+        ),
+      ],
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            appLocalizations.leftClickBehavior,
+            style: context.textTheme.titleSmall,
+          ),
+          const SizedBox(height: 8),
+          SegmentedButton<TrayClickBehavior>(
+            segments: _segments,
+            selected: {_leftBehavior},
+            showSelectedIcon: false,
+            expandedInsets: EdgeInsets.zero,
+            onSelectionChanged: (selection) {
+              setState(() => _leftBehavior = selection.first);
+            },
+          ),
+          const SizedBox(height: 20),
+          Text(
+            appLocalizations.rightClickBehavior,
+            style: context.textTheme.titleSmall,
+          ),
+          const SizedBox(height: 8),
+          SegmentedButton<TrayClickBehavior>(
+            segments: _segments,
+            selected: {_rightBehavior},
+            showSelectedIcon: false,
+            expandedInsets: EdgeInsets.zero,
+            onSelectionChanged: (selection) {
+              setState(() => _rightBehavior = selection.first);
+            },
+          ),
+        ],
       ),
     );
   }

@@ -171,6 +171,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage(
       "فاصله بروزرسانی خودکار (دقیقه)",
     ),
+    "back": MessageLookupByLibrary.simpleMessage("بازگشت"),
     "backup": MessageLookupByLibrary.simpleMessage("پشتیبان‌گیری"),
     "backupAndRecovery": MessageLookupByLibrary.simpleMessage(
       "پشتیبان‌گیری و بازیابی",
@@ -232,6 +233,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "checking": MessageLookupByLibrary.simpleMessage("در حال بررسی..."),
     "circle": MessageLookupByLibrary.simpleMessage("حلقه"),
+    "clear": MessageLookupByLibrary.simpleMessage("پاک کردن"),
     "clearCacheDesc": MessageLookupByLibrary.simpleMessage(
       "آیا حافظه پنهان FakeIP و DNS پاکسازی شود؟",
     ),
@@ -253,6 +255,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "clipboardImport": MessageLookupByLibrary.simpleMessage(
       "وارد کردن از حافظه موقت",
     ),
+    "close": MessageLookupByLibrary.simpleMessage("بستن"),
+    "closeAll": MessageLookupByLibrary.simpleMessage("بستن همه"),
     "color": MessageLookupByLibrary.simpleMessage("رنگ"),
     "colorSchemes": MessageLookupByLibrary.simpleMessage("پالت‌های رنگی"),
     "columns": MessageLookupByLibrary.simpleMessage("تعداد ستون‌ها"),
@@ -429,6 +433,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "تنظیمات آزمایشی با احتیاط استفاده شود",
     ),
     "expirationTime": MessageLookupByLibrary.simpleMessage("تاریخ انقضا"),
+    "export": MessageLookupByLibrary.simpleMessage("خروجی"),
     "exportFile": MessageLookupByLibrary.simpleMessage("خروجی فایل"),
     "exportLogs": MessageLookupByLibrary.simpleMessage(
       "خروجی گرفتن از گزارش‌ها",
@@ -624,6 +629,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "localRecoveryDesc": MessageLookupByLibrary.simpleMessage(
       "بازیابی داده‌ها از فایل محلی",
     ),
+    "locate": MessageLookupByLibrary.simpleMessage("موقعیت"),
     "log": MessageLookupByLibrary.simpleMessage("گزارش"),
     "logLevel": MessageLookupByLibrary.simpleMessage("سطح گزارش"),
     "logcat": MessageLookupByLibrary.simpleMessage("ثبت گزارش‌ها"),
@@ -643,6 +649,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "loose": MessageLookupByLibrary.simpleMessage("باز"),
     "manualRefreshIp": MessageLookupByLibrary.simpleMessage("دریافت مجدد IP"),
+    "maximize": MessageLookupByLibrary.simpleMessage("بزرگ کردن"),
     "memoryInfo": MessageLookupByLibrary.simpleMessage("اطلاعات حافظه"),
     "memoryInfoDesc": MessageLookupByLibrary.simpleMessage(
       "مقادیر حافظه نشان داده شده صرفاً مربوط به حافظه دینامیک هسته بوده و تمام حافظه برنامه نیست (جهت اطلاع).",
@@ -652,6 +659,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "این یک پیام تستی است.",
     ),
     "min": MessageLookupByLibrary.simpleMessage("حداقل"),
+    "minimize": MessageLookupByLibrary.simpleMessage("کوچک کردن"),
     "minimizeOnExit": MessageLookupByLibrary.simpleMessage(
       "مینیمایز هنگام خروج",
     ),
@@ -830,6 +838,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "password": MessageLookupByLibrary.simpleMessage("رمز عبور"),
     "paste": MessageLookupByLibrary.simpleMessage("جایگذاری"),
+    "pin": MessageLookupByLibrary.simpleMessage("پین"),
     "pleaseBindWebDAV": MessageLookupByLibrary.simpleMessage(
       "لطفاً به WebDAV متصل شوید",
     ),
@@ -1000,6 +1009,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "restartTip": MessageLookupByLibrary.simpleMessage(
       "تغییرات پس از راه‌اندازی مجدد TUN اعمال می‌شود",
     ),
+    "restore": MessageLookupByLibrary.simpleMessage("بازیابی"),
     "retry": MessageLookupByLibrary.simpleMessage("تلاش مجدد"),
     "rightClickBehavior": MessageLookupByLibrary.simpleMessage("کلیک راست"),
     "rotatingCircle": MessageLookupByLibrary.simpleMessage("چرخش تک‌دایره"),
@@ -1206,6 +1216,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "unknown": MessageLookupByLibrary.simpleMessage("نامشخص"),
     "unnamed": MessageLookupByLibrary.simpleMessage("بدون نام"),
+    "unpin": MessageLookupByLibrary.simpleMessage("برداشتن پین"),
     "update": MessageLookupByLibrary.simpleMessage("بروزرسانی"),
     "updateDownloading": m14,
     "updateFailed": m15,

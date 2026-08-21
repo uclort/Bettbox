@@ -29,6 +29,7 @@ import (
 	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/listener"
 	"github.com/metacubex/mihomo/log"
+	mihomoNtp "github.com/metacubex/mihomo/ntp/ntp"
 	rulesProvider "github.com/metacubex/mihomo/rules/provider"
 	"github.com/metacubex/mihomo/tunnel"
 	"github.com/metacubex/mihomo/tunnel/statistic"
@@ -623,9 +624,32 @@ func handleSuspend(suspended bool) bool {
 	if suspended {
 		log.Infoln("[APP] Suspend mode enabled")
 		tunnel.OnSuspend()
+
+		mihomoNtp.ReCreateNTPService("", 0, "", nil, false)
+
+		statistic.DefaultManager.Range(func(c statistic.Tracker) bool {
+			_ = c.Close()
+			return true
+		})
+
+		runtime.GC()
 	} else {
 		log.Infoln("[APP] Resume from suspend")
 		tunnel.OnRunning()
+
+		runLock.Lock()
+		cfg := currentConfig
+		runLock.Unlock()
+		if cfg != nil && cfg.NTP != nil && cfg.NTP.Enable {
+			c := cfg.NTP
+			mihomoNtp.ReCreateNTPService(
+				net.JoinHostPort(c.Server, strconv.Itoa(c.Port)),
+				time.Duration(c.Interval),
+				c.DialerProxy,
+				tunnel.Tunnel,
+				c.WriteToSystem,
+			)
+		}
 	}
 	return true
 }

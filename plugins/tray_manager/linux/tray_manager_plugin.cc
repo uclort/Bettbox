@@ -211,16 +211,25 @@ GtkWidget* _create_menu(FlValue* args) {
         GtkWidget* sub_menu =
             _create_menu(fl_value_lookup_string(item_value, "submenu"));
         gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), sub_menu);
+      } else {
+        g_signal_connect(G_OBJECT(item), "activate", G_CALLBACK(_on_activate),
+                         GINT_TO_POINTER(item_id));
       }
-
-      g_signal_connect(G_OBJECT(item), "activate", G_CALLBACK(_on_activate),
-                       GINT_TO_POINTER(item_id));
 
       gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
     }
   }
   return menu;
 }
+
+#ifdef HAVE_AYATANA
+static void _on_indicator_activate(AppIndicator* indicator, gint x, gint y,
+                                   gpointer user_data) {
+  fl_method_channel_invoke_method(plugin_instance->channel,
+                                  "onTrayIconMouseDown", nullptr, nullptr,
+                                  nullptr, nullptr);
+}
+#endif
 
 static FlMethodResponse* destroy(TrayManagerPlugin* self, FlValue* args) {
   if (!(!indicator)) {
@@ -241,6 +250,13 @@ static FlMethodResponse* set_icon(TrayManagerPlugin* self, FlValue* args) {
   if (!indicator) {
     indicator = app_indicator_new(id, icon_path,
                                   APP_INDICATOR_CATEGORY_APPLICATION_STATUS);
+
+#ifdef HAVE_AYATANA
+    if (g_signal_lookup("activate", app_indicator_get_type()) != 0) {
+      g_signal_connect(G_OBJECT(indicator), "activate", G_CALLBACK(_on_indicator_activate),
+                       nullptr);
+    }
+#endif
 
     app_indicator_set_menu(indicator, GTK_MENU(menu));
     gtk_widget_show_all(menu);

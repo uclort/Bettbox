@@ -76,7 +76,10 @@ class ProxiesSetting extends StatelessWidget {
                         ref
                             .read(proxiesStyleSettingProvider.notifier)
                             .updateState((state) {
-                              return state.copyWith(type: item);
+                              return state.copyWith(
+                                type: item,
+                                hasCustomizedStyle: true,
+                              );
                             });
                       },
                     ),
@@ -228,7 +231,10 @@ class ProxiesSetting extends StatelessWidget {
                         ref
                             .read(proxiesStyleSettingProvider.notifier)
                             .updateState((state) {
-                              return state.copyWith(iconStyle: item);
+                              return state.copyWith(
+                                iconStyle: item,
+                                hasCustomizedStyle: true,
+                              );
                             });
                       },
                     ),

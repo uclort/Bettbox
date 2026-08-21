@@ -108,7 +108,9 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
     final isPinned =
         system.isDesktop &&
         ref.read(windowSettingProvider.select((s) => s.isPinned));
-    final shouldRun = (isForeground || isPinned) && isVisible && !isMinimized;
+    final shouldRun = system.isDesktop
+        ? (isPinned || (isVisible && !isMinimized))
+        : isForeground;
 
     if (!shouldRun) {
       _dashboardRefreshDebounceTimer?.cancel();

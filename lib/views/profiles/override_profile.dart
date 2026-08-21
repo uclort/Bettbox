@@ -248,7 +248,11 @@ class _OverrideProfileViewState extends State<OverrideProfileView> {
                 ],
                 editState: AppBarEditState(
                   editCount: editCount,
-                  onExit: () => Navigator.of(context).pop(),
+                  onExit: () {
+                    ref.read(profileOverrideStateProvider.notifier).updateState(
+                          (state) => state.copyWith(selectedRules: {}),
+                        );
+                  },
                 ),
               ),
             );

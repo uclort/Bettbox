@@ -229,12 +229,15 @@ class FakeIpRangeV6Item extends ConsumerWidget {
       subtitle: Text(displaySubtitle),
       delegate: InputDelegate(
         title: appLocalizations.fakeipRangeV6,
-        value: fakeIpRangeV6,
+        value: displaySubtitle,
         validator: (value) {
           return null;
         },
         onChanged: (String? value) {
           if (value == null) {
+            return;
+          }
+          if (value == displaySubtitle && fakeIpRangeV6.isEmpty) {
             return;
           }
           ref

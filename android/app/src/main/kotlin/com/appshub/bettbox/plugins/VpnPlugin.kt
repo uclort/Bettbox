@@ -376,7 +376,7 @@ data object VpnPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
 
             quickResponseJob?.cancel()
             quickResponseJob = scope.launch {
-                delay(500)
+                delay(150)
                 if (GlobalState.currentRunState == RunState.START) {
                     android.util.Log.d("VpnPlugin", "Quick Response: Network changed, notifying Dart")
                     ServicePlugin.notifyQuickResponse()
