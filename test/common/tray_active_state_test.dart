@@ -1,6 +1,7 @@
 import 'package:bett_box/common/tray.dart';
 import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/models.dart';
+import 'package:bett_box/state.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -8,6 +9,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('两个接管开关关闭时网速归零，任一开启时恢复活动状态', () async {
+    globalState.config = Config(themeProps: defaultThemeProps);
     const channel = MethodChannel('tray_manager');
     final calls = <MethodCall>[];
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger

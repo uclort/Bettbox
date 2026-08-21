@@ -126,4 +126,9 @@
 
 ### 自定义内核同步
 
-- 私有 `custom-mihomo` 已按 Bettbox `main@433af6a97861` 的 `core/Clash.Meta` 重新生成，内核源码树校验值为 `f97606094dc467e6e8c62d22c586514d50c7d0d8`；继续应用 `opensnell-v6.patch`，并通过 `go test ./transport/snell ./adapter/outbound`。
+- 私有 `custom-mihomo` 当前提交为 `0509ad43f718`，基线记录为 Bettbox `main@6291ab3d7e2d`；内核源码树仍为已验证的 `f97606094dc467e6e8c62d22c586514d50c7d0d8`，继续应用 `opensnell-v6.patch`，并通过 `go test ./transport/snell ./adapter/outbound`。
+
+### 2026-08-21 上游融合校验
+
+- 上游 Bettbox `main@6291ab3d7e2d` 已合入 `custom-build`；托盘、网络面板、TUN/DNS、WebDAV 和应用内更新等自定义逻辑保留。
+- 合并冲突修正了配置更新并发集合、桌面仪表盘生命周期判断及重复托盘点击弹窗；对应回归测试位于 `test/common/tray_active_state_test.dart`、`test/controller/macos_tun_startup_test.dart`、`test/models/clash_config_test.dart`、`test/models/webdav_shared_config_test.dart` 和 `test/views/network_monitor_test.dart`。
