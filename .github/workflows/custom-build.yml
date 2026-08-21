@@ -1116,18 +1116,19 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          feed_worktree="${RUNNER_TEMP}/custom-update-feed-worktree"
           if git ls-remote --exit-code --heads origin \
             "refs/heads/${FEED_BRANCH}" >/dev/null 2>&1; then
             git fetch origin "${FEED_BRANCH}"
-            git checkout -B "${FEED_BRANCH}" FETCH_HEAD
+            git worktree add --detach "${feed_worktree}" FETCH_HEAD
           else
-            git checkout -b "${FEED_BRANCH}" "${UPSTREAM_SHA}"
+            git worktree add --detach "${feed_worktree}" "${UPSTREAM_SHA}"
           fi
-          cp "${feed_source}"/* .
-          git add -- .
-          if ! git diff --cached --quiet; then
-            git commit -m "chore: update appcast for ${RELEASE_TAG} [skip ci]"
-            git push origin "HEAD:${FEED_BRANCH}"
+          cp "${feed_source}"/* "${feed_worktree}/"
+          git -C "${feed_worktree}" add -- .
+          if ! git -C "${feed_worktree}" diff --cached --quiet; then
+            git -C "${feed_worktree}" commit -m "chore: update appcast for ${RELEASE_TAG} [skip ci]"
+            git -C "${feed_worktree}" push origin "HEAD:${FEED_BRANCH}"
           fi
 
       - name: 写入发布摘要

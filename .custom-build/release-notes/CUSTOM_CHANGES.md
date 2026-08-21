@@ -122,7 +122,7 @@
 
 - `custom-sync.yml` 仅保留手动触发，移除每天四次的定时同步与构建，避免无人值守同步上游代码。
 - Release 保留本包相较上游的完整功能说明，并单独列出相较上一自定义 Release 的上游同步与自定义增量。
-- `custom-build.yml` 的手动触发支持仅构建并发布 macOS Apple Silicon，或仅构建并发布 Android arm64-v8a；单平台模式只创建对应 Action 任务与 Release 资产，不消耗其他平台构建资源，两个选项不能同时启用；包含 Android 时同步生成静态 Android 更新源，桌面更新源仍按构建平台生成。
+- `custom-build.yml` 的手动触发支持仅构建并发布 macOS Apple Silicon，或仅构建并发布 Android arm64-v8a；单平台模式只创建对应 Action 任务与 Release 资产，不消耗其他平台构建资源，两个选项不能同时启用；包含 Android 时通过独立 worktree 同步静态 Android 更新源，桌面更新源仍按构建平台生成。
 - 自定义应用代码发生变化但没有补充增量说明时拒绝发布，避免 Release 内容与安装包不一致。
 - 自定义应用代码发生变化但没有同步完整改动总账时同样拒绝发布。
 
