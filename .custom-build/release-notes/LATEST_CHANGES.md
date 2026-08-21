@@ -97,6 +97,7 @@
 - 同步 Bettbox 上游 `main` 的编辑器优化、README 整理和版本号更新。
 - 同步 AIsouler 覆写脚本 `7ca7733b` 中与当前结构有关的节点过滤边界、DNS 大小写匹配及 `#DIRECT` 后缀处理；`private_ip` 继续保持上游调整后的尾部直连顺序。
 - 同步 Bettbox 上游 `main@6291ab3d7e2d`，版本更新至 `1.19.0+2026081601`；保留 custom-build 的网络面板、TUN/DNS、托盘和应用内更新能力，并修正合并后的配置更新并发、仪表盘生命周期和重复托盘弹窗问题。
+- 修复 `lib/manager/tray_manager.dart` 中左右键托盘回调重复声明导致四个平台构建失败的问题。
 
 ### 自定义改动维护
 

@@ -132,3 +132,4 @@
 
 - 上游 Bettbox `main@6291ab3d7e2d` 已合入 `custom-build`；托盘、网络面板、TUN/DNS、WebDAV 和应用内更新等自定义逻辑保留。
 - 合并冲突修正了配置更新并发集合、桌面仪表盘生命周期判断及重复托盘点击弹窗；对应回归测试位于 `test/common/tray_active_state_test.dart`、`test/controller/macos_tun_startup_test.dart`、`test/models/clash_config_test.dart`、`test/models/webdav_shared_config_test.dart` 和 `test/views/network_monitor_test.dart`。
+- 修复上游托盘点击回调与现有自定义回调重复合并，保留单份左右键处理及父级菜单空点击保护；代码位于 `lib/manager/tray_manager.dart`。
