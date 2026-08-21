@@ -171,6 +171,10 @@ class Utils {
     bool isStart = false,
     bool invertTrayIcon = false,
   }) {
+    if (system.isMacOS) {
+      return 'assets/images/icon_template.png';
+    }
+
     if (system.isLinux) {
       return 'assets/images/icon.png';
     }

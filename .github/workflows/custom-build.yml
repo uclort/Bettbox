@@ -381,7 +381,7 @@ jobs:
     env:
       APP_UPDATE_REPOSITORY: uclort/Bettbox
       APP_RELEASE_TAG: ${{ needs.inspect.outputs.release_tag }}
-      APP_UPDATE_FEED_URL: https://raw.githubusercontent.com/uclort/Bettbox/custom-update-feed/appcast-${{ matrix.platform }}-${{ matrix.arch }}.xml
+      APP_UPDATE_FEED_URL: ${{ matrix.platform == 'android' && format('https://raw.githubusercontent.com/uclort/Bettbox/custom-update-feed/android-update-{0}.json', matrix.arch) || format('https://raw.githubusercontent.com/uclort/Bettbox/custom-update-feed/appcast-{0}-{1}.xml', matrix.platform, matrix.arch) }}
       CUSTOM_BUILD_NUMBER: ${{ needs.inspect.outputs.build_number }}
 
     steps:
@@ -820,6 +820,7 @@ jobs:
           pattern: Bettbox-*
 
       - name: 下载桌面更新元数据
+        if: ${{ !inputs.android_only }}
         uses: actions/download-artifact@v8
         with:
           path: update-metadata
@@ -980,22 +981,24 @@ jobs:
             --title "Bettbox ${FINAL_APP_VERSION} · ${BETTBOX_RELEASE} · ${release_summary}" \
             --notes-file "${notes_file}"
 
-      - name: 更新桌面应用内更新源
-        if: ${{ !inputs.android_only }}
+      - name: 更新应用内更新源
         shell: bash
         env:
           RELEASE_TAG: ${{ needs.inspect.outputs.release_tag }}
           APP_VERSION: ${{ needs.inspect.outputs.app_version }}
+          FINAL_APP_VERSION: ${{ needs.inspect.outputs.final_app_version }}
           BUILD_NUMBER: ${{ needs.inspect.outputs.build_number }}
           UPSTREAM_SHA: ${{ needs.inspect.outputs.upstream_sha }}
           FEED_BRANCH: custom-update-feed
           MACOS_ARM64_ONLY: ${{ inputs.macos_arm64_only || false }}
+          ANDROID_ONLY: ${{ inputs.android_only || false }}
         run: |
           set -euo pipefail
 
           short_version="${APP_VERSION%%+*}"
           release_url="https://github.com/${GITHUB_REPOSITORY}/releases/tag/${RELEASE_TAG}"
           published_at="$(date -Ru)"
+          export published_at
           feed_source="${RUNNER_TEMP}/custom-update-feed"
           mkdir -p "${feed_source}"
 
@@ -1057,10 +1060,58 @@ jobs:
             } > "${feed_file}"
           }
 
-          generate_feed macos arm64
+          if [[ "${ANDROID_ONLY}" != "true" ]]; then
+            generate_feed macos arm64
+            if [[ "${MACOS_ARM64_ONLY}" != "true" ]]; then
+              generate_feed macos amd64
+              generate_feed windows amd64
+            fi
+          fi
+
           if [[ "${MACOS_ARM64_ONLY}" != "true" ]]; then
-            generate_feed macos amd64
-            generate_feed windows amd64
+            android_asset_path="$(find release-assets -type f -name '*.apk' -print -quit)"
+            if [[ -z "${android_asset_path}" ]]; then
+              echo "缺少 Android APK，无法生成 Android 更新源。" >&2
+              exit 1
+            fi
+            android_asset="$(basename "${android_asset_path}")"
+            android_sha256="$(sha256sum "${android_asset_path}" | awk '{ print $1 }')"
+            android_length="$(wc -c < "${android_asset_path}" | tr -d '[:space:]')"
+            release_summary="$(tr -d '\r\n' < .custom-build/release-notes/RELEASE_SUMMARY)"
+            export ANDROID_ASSET="${android_asset}"
+            export ANDROID_LENGTH="${android_length}"
+            export ANDROID_SHA256="${android_sha256}"
+            export RELEASE_SUMMARY="${release_summary}"
+            python3 - "${feed_source}/android-update-arm64.json" <<'PY'
+          import json
+          import os
+          import sys
+          from urllib.parse import quote
+
+          repository = os.environ['GITHUB_REPOSITORY']
+          release_tag = os.environ['RELEASE_TAG']
+          asset = os.environ['ANDROID_ASSET']
+          release_url = f'https://github.com/{repository}/releases/tag/{quote(release_tag, safe="")}'
+          asset_url = f'https://github.com/{repository}/releases/download/{quote(release_tag, safe="")}/{quote(asset, safe="")}'
+          payload = {
+              'tag_name': release_tag,
+              'name': f"Bettbox {os.environ['FINAL_APP_VERSION']}",
+              'html_url': release_url,
+              'published_at': os.environ['published_at'],
+              'body': os.environ['RELEASE_SUMMARY'],
+              'draft': False,
+              'prerelease': False,
+              'assets': [{
+                  'name': asset,
+                  'size': int(os.environ['ANDROID_LENGTH']),
+                  'digest': f"sha256:{os.environ['ANDROID_SHA256']}",
+                  'browser_download_url': asset_url,
+              }],
+          }
+          with open(sys.argv[1], 'w', encoding='utf-8') as file:
+              json.dump(payload, file, ensure_ascii=False, separators=(',', ':'))
+              file.write('\n')
+          PY
           fi
 
           git config user.name "github-actions[bot]"
@@ -1072,8 +1123,8 @@ jobs:
           else
             git checkout -b "${FEED_BRANCH}" "${UPSTREAM_SHA}"
           fi
-          cp "${feed_source}"/*.xml .
-          git add appcast-*.xml
+          cp "${feed_source}"/* .
+          git add -- .
           if ! git diff --cached --quiet; then
             git commit -m "chore: update appcast for ${RELEASE_TAG} [skip ci]"
             git push origin "HEAD:${FEED_BRANCH}"

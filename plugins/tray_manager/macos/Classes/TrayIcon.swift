@@ -207,8 +207,30 @@ public class TrayIcon: NSView {
         guard let sourceImage else {
             return
         }
-        button.image = sourceImage
+        if isActive {
+            button.contentTintColor = nil
+            sourceImage.isTemplate = true
+            button.image = sourceImage
+            return
+        }
+        button.image = tintedImage(sourceImage, color: Self.inactiveColor)
         button.contentTintColor = nil
+    }
+
+    private func tintedImage(_ image: NSImage, color: NSColor) -> NSImage {
+        let tintedImage = NSImage(size: image.size)
+        tintedImage.lockFocus()
+        color.setFill()
+        NSRect(origin: .zero, size: image.size).fill()
+        image.draw(
+            in: NSRect(origin: .zero, size: image.size),
+            from: .zero,
+            operation: .destinationIn,
+            fraction: 1
+        )
+        tintedImage.unlockFocus()
+        tintedImage.isTemplate = false
+        return tintedImage
     }
 
     private func syncClickTargetFrame(_ button: NSStatusBarButton) {

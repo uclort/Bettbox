@@ -41,6 +41,7 @@
 - “关于本机 → 查找更新”改为检查 `uclort/Bettbox` 已发布的最新自定义 Release。
 - macOS 使用 Sparkle、Windows 使用 WinSparkle 在应用内下载并替换安装包；更新安装前继续执行 Bettbox 原有的内核、代理和系统 DNS 退出清理。
 - Android 自动选择 arm64-v8a 固定签名 APK，校验 Release 资产的 SHA-256 后调用系统安装器，因此后续自定义版本可以直接覆盖安装。
+- Android 检查更新改读 `custom-update-feed` 分支的静态 JSON 更新源，不再调用容易触发匿名限流的 GitHub Releases API；更新源包含 Release tag、版本说明、APK 地址、大小和 SHA-256，代码位于 `lib/common/request.dart`，发布生成位于 `.github/workflows/custom-build.yml`。
 - 自动检查更新与手动检查使用同一自定义发布源；草稿 Release 不会被识别为可用更新。
 
 ### TUN 自动托管系统 DNS
@@ -64,6 +65,7 @@
 - Bettbox 未启动，或系统代理与虚拟网卡均未开启时，图标和速率文字显示为灰色。
 - 系统代理与虚拟网卡均关闭时上传、下载立即归零；重新开启任一接管方式时清除速率文字遗留的灰色前景色并恢复系统高亮色。托盘监听内核实际 TUN 状态，两个开关完成切换后均强制同步最终状态，避免图标停留在启动过程中的灰色快照。共享状态逻辑位于 `lib/providers/state.dart`、`lib/controller.dart` 和 `lib/common/tray.dart`，macOS 文字渲染位于 `plugins/tray_manager/macos/Classes/TrayIcon.swift`，回归测试位于 `test/common/tray_active_state_test.dart`。
 - 启用状态使用 macOS 原生自适应颜色，自动匹配菜单栏背景。
+- 恢复 macOS 菜单栏使用模板图标和原生 active/inactive 着色，避免上游托盘资源切换后活动状态显示为纯黑；代码位于 `lib/common/utils.dart`、`lib/common/tray.dart` 和 `plugins/tray_manager/macos/Classes/TrayIcon.swift`。
 - 托盘点击行为支持“显示面板”和“显示菜单”，左键与右键可以分别配置。
 - 移除旧“托盘增强”总开关，代理组菜单直接可用；速率和点击行为均作为增强工具中的独立一级设置。
 - 修复应用位于后台时从托盘启动后，图标和菜单状态未立即更新的问题。
@@ -120,7 +122,7 @@
 
 - `custom-sync.yml` 仅保留手动触发，移除每天四次的定时同步与构建，避免无人值守同步上游代码。
 - Release 保留本包相较上游的完整功能说明，并单独列出相较上一自定义 Release 的上游同步与自定义增量。
-- `custom-build.yml` 的手动触发支持仅构建并发布 macOS Apple Silicon，或仅构建并发布 Android arm64-v8a；单平台模式只创建对应 Action 任务与 Release 资产，不消耗其他平台构建资源，两个选项不能同时启用，Android 单平台发布跳过桌面应用内更新源生成。
+- `custom-build.yml` 的手动触发支持仅构建并发布 macOS Apple Silicon，或仅构建并发布 Android arm64-v8a；单平台模式只创建对应 Action 任务与 Release 资产，不消耗其他平台构建资源，两个选项不能同时启用；包含 Android 时同步生成静态 Android 更新源，桌面更新源仍按构建平台生成。
 - 自定义应用代码发生变化但没有补充增量说明时拒绝发布，避免 Release 内容与安装包不一致。
 - 自定义应用代码发生变化但没有同步完整改动总账时同样拒绝发布。
 

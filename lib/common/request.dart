@@ -165,6 +165,9 @@ class Request {
 
   Future<Map<String, dynamic>?> checkForUpdate() async {
     if (isCustomUpdateBuild) {
+      if (system.isAndroid && customUpdateFeedUrl.isNotEmpty) {
+        return _checkForCustomUpdateFeed();
+      }
       return _checkForCustomUpdate();
     }
 
@@ -203,6 +206,41 @@ class Request {
     return null;
   }
 
+  Future<Map<String, dynamic>?> _checkForCustomUpdateFeed() async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        customUpdateFeedUrl,
+        options: Options(headers: {'Accept': 'application/json'}),
+      );
+      final release = response.data;
+      if (release == null) return null;
+      return _filterCustomRelease(release);
+    } catch (e) {
+      commonPrint.log('Check custom update feed failed: ${e.formatError}');
+      return null;
+    }
+  }
+
+  Map<String, dynamic>? _filterCustomRelease(Map<String, dynamic> latest) {
+    final latestTag = latest['tag_name']?.toString().trim() ?? '';
+    if (latestTag.isEmpty || latestTag == currentCustomReleaseTag) {
+      return null;
+    }
+    final buildIdPattern = RegExp(r'-r(\d{14})-');
+    final latestBuildId = int.tryParse(
+      buildIdPattern.firstMatch(latestTag)?.group(1) ?? '',
+    );
+    final currentBuildId = int.tryParse(
+      buildIdPattern.firstMatch(currentCustomReleaseTag)?.group(1) ?? '',
+    );
+    if (latestBuildId != null &&
+        currentBuildId != null &&
+        latestBuildId <= currentBuildId) {
+      return null;
+    }
+    return latest;
+  }
+
   Future<Map<String, dynamic>?> _checkForCustomUpdate() async {
     try {
       final response = await _dio.get<List<dynamic>>(
@@ -234,24 +272,7 @@ class Request {
             });
 
       if (releases.isEmpty) return null;
-      final latest = releases.first;
-      final latestTag = latest['tag_name']?.toString().trim() ?? '';
-      if (latestTag.isEmpty || latestTag == currentCustomReleaseTag) {
-        return null;
-      }
-      final buildIdPattern = RegExp(r'-r(\d{14})-');
-      final latestBuildId = int.tryParse(
-        buildIdPattern.firstMatch(latestTag)?.group(1) ?? '',
-      );
-      final currentBuildId = int.tryParse(
-        buildIdPattern.firstMatch(currentCustomReleaseTag)?.group(1) ?? '',
-      );
-      if (latestBuildId != null &&
-          currentBuildId != null &&
-          latestBuildId <= currentBuildId) {
-        return null;
-      }
-      return latest;
+      return _filterCustomRelease(releases.first);
     } catch (e) {
       commonPrint.log('Check custom update failed: ${e.formatError}');
       return null;
