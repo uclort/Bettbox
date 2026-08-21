@@ -208,16 +208,18 @@ class Request {
 
   Future<Map<String, dynamic>?> _checkForCustomUpdateFeed() async {
     try {
-      final response = await _dio.get<String>(
+      final response = await _dio.get<Uint8List>(
         customUpdateFeedUrl,
         options: Options(
-          responseType: ResponseType.plain,
+          responseType: ResponseType.bytes,
           headers: {'Accept': 'application/json'},
         ),
       );
       final data = response.data;
       if (data == null || data.isEmpty) return null;
-      final decoded = jsonDecode(data);
+      final decoded = jsonDecode(
+        utf8.decode(_decompressIfNeeded(data, response.headers)),
+      );
       if (decoded is! Map) return null;
       final release = Map<String, dynamic>.from(decoded);
       return _filterCustomRelease(release);

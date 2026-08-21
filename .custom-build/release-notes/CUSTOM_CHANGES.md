@@ -41,7 +41,7 @@
 - “关于本机 → 查找更新”改为检查 `uclort/Bettbox` 已发布的最新自定义 Release。
 - macOS 使用 Sparkle、Windows 使用 WinSparkle 在应用内下载并替换安装包；更新安装前继续执行 Bettbox 原有的内核、代理和系统 DNS 退出清理。
 - Android 自动选择 arm64-v8a 固定签名 APK，校验 Release 资产的 SHA-256 后调用系统安装器，因此后续自定义版本可以直接覆盖安装。
-- Android 检查更新改读 `custom-update-feed` 分支的静态 JSON 更新源，不再调用容易触发匿名限流的 GitHub Releases API；更新源包含 Release tag、版本说明、APK 地址、大小和 SHA-256，并按文本解码 raw GitHub 返回内容，代码位于 `lib/common/request.dart`，发布生成位于 `.github/workflows/custom-build.yml`。
+- Android 检查更新改读 `custom-update-feed` 分支的静态 JSON 更新源，不再调用容易触发匿名限流的 GitHub Releases API；更新源包含 Release tag、版本说明、APK 地址、大小和 SHA-256，并兼容 raw GitHub 的 text/plain 与 gzip 返回内容，代码位于 `lib/common/request.dart`，发布生成位于 `.github/workflows/custom-build.yml`。
 - 自动检查更新与手动检查使用同一自定义发布源；草稿 Release 不会被识别为可用更新。
 
 ### TUN 自动托管系统 DNS

@@ -6,7 +6,7 @@
 
 ### 2026-08-21 更新检查与菜单栏图标修复
 
-- Android 检查更新改用 `custom-update-feed` 分支静态 JSON，不再依赖 GitHub Releases API 的匿名额度；静态源携带最新 Release tag、APK 下载地址、文件大小和 SHA-256，按文本解码 raw GitHub 返回内容，继续复用现有 Android 下载、校验和覆盖安装流程。
+- Android 检查更新改用 `custom-update-feed` 分支静态 JSON，不再依赖 GitHub Releases API 的匿名额度；静态源携带最新 Release tag、APK 下载地址、文件大小和 SHA-256，兼容 raw GitHub 的 text/plain 与 gzip 返回内容，继续复用现有 Android 下载、校验和覆盖安装流程。
 - 恢复 macOS 菜单栏托盘的模板图标与原生 active/inactive 着色，修复上游同步后活动状态显示纯黑图标的问题；保留速率文字布局修复。
 
 ### WebDAV 配置同步切割
