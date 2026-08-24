@@ -93,6 +93,9 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
                                   ?.toLight
                                   .copyWith(
                                     fontFamily: FontFamily.twEmoji.value,
+                                    fontFamilyFallback: [
+                                      FontFamily.twEmoji.value,
+                                    ],
                                   ),
                             )
                           : Icon(

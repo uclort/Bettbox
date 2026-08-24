@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/models/models.dart';
 import 'package:bett_box/widgets/fade_box.dart';
+import 'package:bett_box/widgets/text.dart';
 import 'package:flutter/material.dart';
 
 class MessageManager extends StatefulWidget {
@@ -114,7 +115,7 @@ class MessageManagerState extends State<MessageManager> {
                                     duration: message.duration,
                                   ),
                                 Expanded(
-                                  child: Text(
+                                  child: EmojiText(
                                     message.text,
                                     textAlign: TextAlign.center,
                                   ),

@@ -1,7 +1,23 @@
 import 'dart:async';
 
 import 'package:bett_box/state.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
+
+bool dismissTvInputFocus() {
+  if (!globalState.isAndroidTV) return false;
+  final node = FocusManager.instance.primaryFocus;
+  if (node == null) return false;
+  final context = node.context;
+  if (context == null) return false;
+  final isInput =
+      context.widget is EditableText ||
+      context.findAncestorWidgetOfExactType<EditableText>() != null ||
+      context.widget is Slider ||
+      context.findAncestorWidgetOfExactType<Slider>() != null;
+  if (!isInput) return false;
+  node.enclosingScope?.requestScopeFocus();
+  return true;
+}
 
 class CommonPopScope extends StatelessWidget {
   final Widget child;
@@ -11,21 +27,23 @@ class CommonPopScope extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isTv = globalState.isAndroidTV;
+    final intercept = onPop != null || isTv;
     return PopScope(
-      canPop: onPop == null ? true : false,
-      onPopInvokedWithResult: onPop == null
+      canPop: !intercept,
+      onPopInvokedWithResult: !intercept
           ? null
           : (didPop, _) async {
-              if (didPop) {
-                return;
+              if (didPop) return;
+              if (dismissTvInputFocus()) return;
+
+              if (onPop != null) {
+                final res = await onPop!();
+                if (!context.mounted) return;
+                if (!res) return;
               }
-              final res = await onPop!();
-              if (!context.mounted) {
-                return;
-              }
-              if (!res) {
-                return;
-              }
+
+              if (ModalRoute.of(context)?.isCurrent != true) return;
               Navigator.of(context).pop();
             },
       child: child,

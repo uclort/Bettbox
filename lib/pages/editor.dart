@@ -67,6 +67,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
   late UndoRedoController _undoController;
   late TextEditingController _titleController;
   final _focusNode = FocusNode();
+  late final FocusNode _saveButtonFocusNode;
   bool _lineWrap = false;
   late final int _lineCount;
   bool _isLoading = true;
@@ -84,6 +85,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
   @override
   void initState() {
     super.initState();
+    _saveButtonFocusNode = FocusNode();
     _lineCount = widget.content.split('\n').length;
     _lineWrap = !widget.readOnly && !_isLineWrapDisabled;
     _controller = CodeForgeController();
@@ -118,6 +120,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     _controller.dispose();
     _titleController.dispose();
     _focusNode.dispose();
+    _saveButtonFocusNode.dispose();
     super.dispose();
   }
 
@@ -280,6 +283,20 @@ class _EditorPageState extends ConsumerState<EditorPage> {
 
     return CommonPopScope(
       onPop: () async {
+        if (globalState.isAndroidTV && _focusNode.hasFocus) {
+          final hasChanges =
+              _controller.text != widget.content ||
+              _titleController.text != widget.title;
+          final canSave =
+              hasChanges &&
+              widget.onSave != null &&
+              !widget.simple &&
+              !widget.readOnly;
+          if (canSave) {
+            _saveButtonFocusNode.requestFocus();
+            return false;
+          }
+        }
         if (widget.onPop == null) {
           return true;
         }
@@ -325,15 +342,18 @@ class _EditorPageState extends ConsumerState<EditorPage> {
               actions: genActions([
                 if (widget.onSave != null && !readOnly)
                   _wrapTitleController(
-                    () => IconButton(
-                      onPressed:
-                          !_isLoading &&
-                              (_controller.text != widget.content ||
-                                  _titleController.text != widget.title)
-                          ? () => _handleSave(context)
-                          : null,
-                      tooltip: appLocalizations.save,
-                      icon: const Icon(Icons.save_sharp),
+                    () => Focus(
+                      focusNode: _saveButtonFocusNode,
+                      child: IconButton(
+                        onPressed:
+                            !_isLoading &&
+                                (_controller.text != widget.content ||
+                                    _titleController.text != widget.title)
+                            ? () => _handleSave(context)
+                            : null,
+                        tooltip: appLocalizations.save,
+                        icon: const Icon(Icons.save_sharp),
+                      ),
                     ),
                   ),
                 if (widget.supportRemoteDownload && !readOnly)

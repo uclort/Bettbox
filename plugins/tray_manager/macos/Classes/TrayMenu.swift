@@ -105,6 +105,9 @@ private final class PersistentTrayMenuItemView: NSView {
         isHovered = contains(event)
         updateAppearance()
         if shouldTrigger {
+            if !NSApp.isActive {
+                NSApp.activate(ignoringOtherApps: true)
+            }
             onClick?()
         }
     }
@@ -146,10 +149,12 @@ private final class PersistentTrayMenuItemView: NSView {
     }
 
     private func contains(_ event: NSEvent) -> Bool {
-        guard event.window === window else {
+        let mouseLocation = NSEvent.mouseLocation
+        let rectInWindow = convert(bounds, to: nil)
+        guard let screenRect = window?.convertToScreen(rectInWindow) else {
             return false
         }
-        return bounds.contains(convert(event.locationInWindow, from: nil))
+        return screenRect.contains(mouseLocation)
     }
 }
 
@@ -359,8 +364,15 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
         autoenablesItems = false
     }
 
-    private func menuItemTitle(_ label: String, _ sublabel: String) -> String {
-        return sublabel.isEmpty ? label : "\(label)\t\(sublabel)"
+    private func menuItemTitle(
+        _ label: String,
+        _ sublabel: String,
+        forceRightColumn: Bool = false
+    ) -> String {
+        if sublabel.isEmpty {
+            return forceRightColumn ? "\(label)\t" : label
+        }
+        return "\(label)\t\(sublabel)"
     }
 
     private func applyShortcut(_ shortcut: String, to menuItem: NSMenuItem) {
@@ -390,7 +402,10 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
             let key = itemDict["key"] as? String ?? ""
             let label = itemDict["label"] as? String ?? ""
             let sublabel = itemDict["sublabel"] as? String ?? ""
-            let labelWidth = (label as NSString).size(
+            let isCheckbox = type == "checkbox"
+            let title = menuItemTitle(label, sublabel, forceRightColumn: isCheckbox)
+            let widthText = key.hasPrefix("proxy-item:") ? label : title
+            let labelWidth = (widthText as NSString).size(
                 withAttributes: [.font: font]
             ).width
             maximumLabelWidth = max(maximumLabelWidth, ceil(labelWidth))
@@ -439,6 +454,7 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
             let checked: Bool? = itemDict["checked"] as? Bool
             let disabled: Bool = itemDict["disabled"] as? Bool ?? true
             let shortcut: String = itemDict["shortcut"] as? String ?? ""
+            let isCheckbox = type == "checkbox"
             
             if (type == "separator") {
                 menuItem = NSMenuItem.separator()
@@ -448,7 +464,7 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
 
             menuItem.tag = id
             menuItem.representedObject = key.isEmpty ? nil : key
-            menuItem.title = menuItemTitle(label, sublabel)
+            menuItem.title = menuItemTitle(label, sublabel, forceRightColumn: isCheckbox)
             menuItem.toolTip = toolTip
             menuItem.isEnabled = !disabled
             menuItem.action = !disabled ? #selector(statusItemMenuButtonClicked) : nil
@@ -555,6 +571,7 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
             let checked: Bool? = itemDict["checked"] as? Bool
             let disabled: Bool = itemDict["disabled"] as? Bool ?? true
             let shortcut: String = itemDict["shortcut"] as? String ?? ""
+            let isCheckbox = type == "checkbox"
 
             let menuItem: NSMenuItem
             if key.isEmpty {
@@ -572,7 +589,7 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
                 return
             }
 
-            menuItem.title = menuItemTitle(label, sublabel)
+            menuItem.title = menuItemTitle(label, sublabel, forceRightColumn: isCheckbox)
             menuItem.toolTip = toolTip
             menuItem.isEnabled = !disabled
             menuItem.action = !disabled ? #selector(statusItemMenuButtonClicked) : nil

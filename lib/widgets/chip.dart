@@ -1,6 +1,8 @@
 import 'package:bett_box/enum/enum.dart';
 import 'package:flutter/material.dart';
 
+import 'text.dart';
+
 class CommonChip extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -27,7 +29,7 @@ class CommonChip extends StatelessWidget {
         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         onDeleted: onPressed ?? () {},
         labelStyle: labelStyle,
-        label: Text(label),
+        label: EmojiText(label),
       );
     }
     return ActionChip(
@@ -37,7 +39,7 @@ class CommonChip extends StatelessWidget {
       labelPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 4),
       onPressed: onPressed ?? () {},
       labelStyle: labelStyle,
-      label: Text(label),
+      label: EmojiText(label),
     );
   }
 }

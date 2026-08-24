@@ -215,7 +215,7 @@ class LogItem extends StatelessWidget {
           onTap: () {
             globalState.showCommonDialog(child: LogDetailDialog(log: log));
           },
-          title: Text(
+          title: EmojiText(
             log.payload,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,

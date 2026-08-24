@@ -3,6 +3,7 @@ import 'package:bett_box/models/common.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/dialog.dart';
 import 'package:bett_box/widgets/null_status.dart';
+import 'package:bett_box/widgets/text.dart';
 import 'package:flutter/material.dart';
 
 import 'card.dart';
@@ -62,12 +63,12 @@ class OptionsDialog<T> extends StatelessWidget {
                         child: value == option
                             ? SingleChildScrollView(
                                 scrollDirection: Axis.horizontal,
-                                child: Text(
+                                child: EmojiText(
                                   textBuilder(option),
                                   style: context.textTheme.bodyMedium,
                                 ),
                               )
-                            : Text(
+                            : EmojiText(
                                 textBuilder(option),
                                 style: context.textTheme.bodyMedium,
                                 overflow: TextOverflow.ellipsis,

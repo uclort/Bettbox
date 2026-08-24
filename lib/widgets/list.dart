@@ -255,7 +255,8 @@ class ListItem<T> extends StatelessWidget {
   }) : leading = null,
        onTap = null;
 
-  Widget _buildListTile({
+  Widget _buildListTile(
+    BuildContext context, {
     void Function()? onTap,
     Widget? trailing,
     Widget? leading,
@@ -265,6 +266,8 @@ class ListItem<T> extends StatelessWidget {
       key: key,
       dense: dense,
       enabled: enabled,
+      focusColor: context.colorScheme.primary.withValues(alpha: 0.1),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       titleTextStyle: titleTextStyle,
       subtitleTextStyle: subtitleTextStyle,
       leading: leading ?? this.leading,
@@ -316,7 +319,7 @@ class ListItem<T> extends StatelessWidget {
             action();
           }
 
-          return _buildListTile(onTap: openAction);
+          return _buildListTile(context, onTap: openAction);
         },
         openBuilder: (context, action) {
           final child = buildChild(context);
@@ -338,6 +341,7 @@ class ListItem<T> extends StatelessWidget {
       }
 
       return _buildListTile(
+        context,
         onTap: () {
           showExtend(
             context,
@@ -364,6 +368,7 @@ class ListItem<T> extends StatelessWidget {
     if (delegate is OptionsDelegate) {
       final optionsDelegate = delegate as OptionsDelegate<T>;
       return _buildListTile(
+        context,
         onTap: () async {
           final value = await globalState.showCommonDialog<T>(
             child: OptionsDialog<T>(
@@ -381,6 +386,7 @@ class ListItem<T> extends StatelessWidget {
       final inputDelegate = delegate as InputDelegate;
       final isEnabled = inputDelegate.onChanged != null;
       return _buildListTile(
+        context,
         enabled: isEnabled,
         onTap: isEnabled
             ? () async {
@@ -402,6 +408,7 @@ class ListItem<T> extends StatelessWidget {
     if (delegate is CheckboxDelegate) {
       final checkboxDelegate = delegate as CheckboxDelegate;
       return _buildListTile(
+        context,
         onTap: () {
           if (checkboxDelegate.onChanged != null) {
             checkboxDelegate.onChanged!(!checkboxDelegate.value);
@@ -425,6 +432,7 @@ class ListItem<T> extends StatelessWidget {
       final switchDelegate = delegate as SwitchDelegate;
       final isEnabled = switchDelegate.onChanged != null;
       return _buildListTile(
+        context,
         enabled: isEnabled,
         onTap: isEnabled
             ? () {
@@ -447,6 +455,7 @@ class ListItem<T> extends StatelessWidget {
       final radioDelegate = delegate as RadioDelegate<T>;
       final isSelected = radioDelegate.value == radioDelegate.groupValue;
       return _buildListTile(
+        context,
         onTap: () {
           if (radioDelegate.onChanged != null) {
             radioDelegate.onChanged!(radioDelegate.value);
@@ -463,7 +472,7 @@ class ListItem<T> extends StatelessWidget {
       );
     }
 
-    return _buildListTile(onTap: onTap);
+    return _buildListTile(context, onTap: onTap);
   }
 }
 

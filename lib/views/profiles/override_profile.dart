@@ -449,7 +449,7 @@ class RuleContent extends ConsumerWidget {
                 },
               ),
             ),
-            title: Text(rule.value),
+            title: EmojiText(rule.value),
           ),
         ),
       ),

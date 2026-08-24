@@ -1,9 +1,6 @@
 name: 构建已同步的 Bettbox 自定义版
 
 on:
-  push:
-    branches:
-      - custom-build
   workflow_dispatch:
     inputs:
       force:

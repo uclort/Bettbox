@@ -304,7 +304,7 @@ class ProviderItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListItem(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      title: Text(provider.name),
+      title: EmojiText(provider.name),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'scaffold.dart';
 import 'side_sheet.dart';
 import 'text.dart';
+import 'pop_scope.dart';
 
 @immutable
 class SheetProps {
@@ -130,39 +131,51 @@ class AdaptiveSheetScaffold extends StatelessWidget {
         ...actions,
       ]),
     );
-    if (bottomSheet) {
-      final handleSize = Size(32, 4);
-      return Container(
-        clipBehavior: Clip.hardEdge,
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28.0)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: EdgeInsets.only(top: 16),
-              child: Container(
-                alignment: Alignment.center,
-                height: handleSize.height,
-                width: handleSize.width,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(handleSize.height / 2),
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
-              ),
+    final content = bottomSheet
+        ? Container(
+            clipBehavior: Clip.hardEdge,
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28.0)),
             ),
-            appBar,
-            Flexible(flex: 1, child: body),
-          ],
-        ),
-      );
-    }
-    return CommonScaffold(
-      appBar: appBar,
-      backgroundColor: backgroundColor,
-      body: body,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(top: 16),
+                  child: Container(
+                    alignment: Alignment.center,
+                    height: 4,
+                    width: 32,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(2),
+                      color: context.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                appBar,
+                Flexible(flex: 1, child: body),
+              ],
+            ),
+          )
+        : CommonScaffold(
+            appBar: appBar,
+            backgroundColor: backgroundColor,
+            body: body,
+          );
+
+    final isTv = globalState.isAndroidTV;
+    return PopScope(
+      canPop: !isTv,
+      onPopInvokedWithResult: !isTv
+          ? null
+          : (didPop, result) {
+              if (didPop) return;
+              if (dismissTvInputFocus()) return;
+              if (ModalRoute.of(context)?.isCurrent != true) return;
+              Navigator.of(context).pop();
+            },
+      child: content,
     );
   }
 }

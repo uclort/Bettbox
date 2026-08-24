@@ -102,7 +102,10 @@ class _ResourcesViewState extends ConsumerState<ResourcesView> {
         ),
       ],
       body: ListView(
-        padding: const EdgeInsets.only(bottom: 24, top: 8),
+        padding: EdgeInsets.only(
+          bottom: 16 + MediaQuery.of(context).padding.bottom,
+          top: 8,
+        ),
         children: [
           ...generateSection(
             items: geoItems.map((geoItem) => GeoDataListItem(geoItem: geoItem)),

@@ -435,10 +435,7 @@ class EditProfileViewState extends State<EditProfileView> {
     ];
     return CommonPopScope(
       onPop: () {
-        final primaryFocus = FocusManager.instance.primaryFocus;
-        if (primaryFocus != null &&
-            primaryFocus.context?.widget is EditableText) {
-          primaryFocus.unfocus();
+        if (dismissTvInputFocus()) {
           return false;
         }
         if (fileData == null) {

@@ -264,7 +264,7 @@ class _IconConfigView extends ConsumerWidget {
       map: iconMap,
       keyLabel: appLocalizations.regExp,
       valueLabel: appLocalizations.icon,
-      titleBuilder: (item) => Text(item.key),
+      titleBuilder: (item) => EmojiText(item.key),
       leadingBuilder: (item) => Container(
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
         clipBehavior: Clip.antiAlias,

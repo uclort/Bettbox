@@ -678,7 +678,7 @@ class PackageListItem extends ConsumerWidget {
               },
             ),
           ),
-          title: Text(
+          title: EmojiText(
             package.label,
             style: const TextStyle(overflow: TextOverflow.ellipsis),
             maxLines: 1,

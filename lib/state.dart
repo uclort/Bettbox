@@ -122,21 +122,24 @@ class GlobalState {
 
   Future<void> init() async {
     packageInfo = await PackageInfo.fromPlatform();
+    if (system.isAndroid) {
+      _isAndroidTV = await app.isAndroidTV();
+    }
     config = await preferences.getConfig() ??
         Config(
           themeProps: defaultThemeProps,
           patchClashConfig: system.isAndroid
               ? const ClashConfig(findProcessMode: FindProcessMode.always)
               : defaultClashConfig,
+          appSetting: defaultAppSettingProps.copyWith(
+            showStartSwitch: _isAndroidTV ?? false,
+          ),
         );
     await globalState.migrateOldData(config);
     final locale =
         utils.getLocaleForString(config.appSetting.locale) ??
         utils.getSystemLocale();
     await AppLocalizations.load(locale);
-    if (system.isAndroid) {
-      _isAndroidTV = await app.isAndroidTV();
-    }
   }
 
   bool get isAndroidTV => _isAndroidTV ?? false;

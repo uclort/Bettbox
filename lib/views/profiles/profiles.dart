@@ -504,7 +504,7 @@ class ProfileItem extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(right: 52),
-                  child: Text(
+                  child: EmojiText(
                     profile.label ?? profile.id,
                     style: context.textTheme.titleMedium,
                     maxLines: 1,
@@ -548,7 +548,7 @@ class ProfileItem extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
+                    EmojiText(
                       profile.label ?? profile.id,
                       style: context.textTheme.titleMedium,
                       maxLines: 1,
@@ -632,7 +632,7 @@ class _ReorderableProfilesSheetState extends State<ReorderableProfilesSheet> {
           type: CommonCardType.filled,
           child: ListTile(
             contentPadding: const EdgeInsets.only(right: 44, left: 16),
-            title: Text(profile.label ?? profile.id),
+            title: EmojiText(profile.label ?? profile.id),
           ),
         ),
       ),
@@ -677,7 +677,7 @@ class _ReorderableProfilesSheetState extends State<ReorderableProfilesSheet> {
                 type: CommonCardType.filled,
                 child: ListTile(
                   contentPadding: const EdgeInsets.only(right: 16, left: 16),
-                  title: Text(profile.label ?? profile.id),
+                  title: EmojiText(profile.label ?? profile.id),
                   trailing: ReorderableDragStartListener(
                     index: index,
                     child: const Icon(Icons.drag_handle),

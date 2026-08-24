@@ -376,6 +376,14 @@ class _GroupHeader extends ConsumerWidget {
               visualDensity: VisualDensity.compact,
               icon: CommonExpandIcon(expand: isExpand),
               onPressed: onToggle,
+              style: ButtonStyle(
+                backgroundColor: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.focused)) {
+                    return context.colorScheme.primary.withValues(alpha: 0.2);
+                  }
+                  return null;
+                }),
+              ),
             ),
           ],
         ),
