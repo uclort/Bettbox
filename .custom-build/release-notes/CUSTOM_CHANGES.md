@@ -120,6 +120,7 @@
 
 ### 自定义构建与发布
 
+- README 顶部明确声明 `uclort/Bettbox` 是基于官方项目维护的非官方个人自定义版，并提供本仓库 Release、自定义变更总账和发布增量入口。
 - `custom-sync.yml` 仅保留手动触发，移除每天四次的定时同步与构建，避免无人值守同步上游代码。
 - `custom-build.yml` 移除 `push` 触发器，仅保留 `workflow_dispatch`；后续自定义打包统一由人工手动触发。
 - Release 保留本包相较上游的完整功能说明，并单独列出相较上一自定义 Release 的上游同步与自定义增量。

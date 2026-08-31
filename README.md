@@ -1,3 +1,10 @@
+> [!IMPORTANT]
+> ## 非官方 Bettbox 自定义版
+>
+> 本仓库 [`uclort/Bettbox`](https://github.com/uclort/Bettbox) 是基于官方 [`appshubcc/Bettbox`](https://github.com/appshubcc/Bettbox) 维护的个人自定义版本，并非 Bettbox 官方仓库。请从[本仓库 Releases](https://github.com/uclort/Bettbox/releases)下载安装包；自定义版本的问题请在本仓库反馈，不要提交到官方项目。
+>
+> 主要修改包括：独立网络面板与 Sub-Store 规则管理、macOS TUN/DNS 自动托管及网络恢复、菜单栏状态与快捷操作增强、WebDAV 配置同步边界、自定义应用内更新，以及 custom-mihomo 的接口 DNS、连接链路追踪和 Snell v6 适配。完整说明见[自定义变更总账](.custom-build/release-notes/CUSTOM_CHANGES.md)和[本次发布增量](.custom-build/release-notes/LATEST_CHANGES.md)。
+
 <h4 align="right">
   <strong>简体中文</strong> | <a href="readme/README_en.md">English</a> | <a href="readme/README_ru.md">Русский</a> | <a href="readme/README_fa.md">فارسی</a> | <a href="readme/README_ja.md">日本語</a> | <a href="readme/README_ko.md">한국어</a>
 </h4>
