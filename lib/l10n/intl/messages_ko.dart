@@ -142,6 +142,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoLaunchDesc": MessageLookupByLibrary.simpleMessage("시스템 부팅 시 앱 자동 시작"),
     "autoRun": MessageLookupByLibrary.simpleMessage("자동 연결"),
     "autoRunDesc": MessageLookupByLibrary.simpleMessage("앱 실행 시 자동으로 프록시 연결"),
+    "autoScroll": MessageLookupByLibrary.simpleMessage("자동 스크롤"),
     "autoUpdate": MessageLookupByLibrary.simpleMessage("자동 업데이트"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage(
       "자동 업데이트 간격 (분)",
@@ -234,6 +235,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "contactMe": MessageLookupByLibrary.simpleMessage("문의하기"),
     "content": MessageLookupByLibrary.simpleMessage("내용"),
     "contentScheme": MessageLookupByLibrary.simpleMessage("콘텐츠 테마"),
+    "continent": MessageLookupByLibrary.simpleMessage("대륙"),
     "controlSecret": MessageLookupByLibrary.simpleMessage("제어 비밀번호"),
     "controlSecretDesc": MessageLookupByLibrary.simpleMessage(
       "RESTful API 접근 비밀번호",
@@ -241,6 +243,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "copiedPackageName": MessageLookupByLibrary.simpleMessage(
       "패키지 이름이 복사되었습니다",
     ),
+    "copiedToClipboard": MessageLookupByLibrary.simpleMessage("클립보드에 복사되었습니다"),
     "copy": MessageLookupByLibrary.simpleMessage("복사"),
     "copyEnvVar": MessageLookupByLibrary.simpleMessage("환경 변수 복사"),
     "copyLink": MessageLookupByLibrary.simpleMessage("링크 복사"),
@@ -250,6 +253,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "coreInfo": MessageLookupByLibrary.simpleMessage("코어 정보"),
     "coreSuspended": MessageLookupByLibrary.simpleMessage("일시 중지됨"),
     "country": MessageLookupByLibrary.simpleMessage("지역"),
+    "countryOrRegion": MessageLookupByLibrary.simpleMessage("국가 / 지역"),
     "crashTest": MessageLookupByLibrary.simpleMessage("크래시 테스트"),
     "create": MessageLookupByLibrary.simpleMessage("생성"),
     "creationTime": MessageLookupByLibrary.simpleMessage("생성 시간"),
@@ -260,9 +264,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "cut": MessageLookupByLibrary.simpleMessage("잘라내기"),
     "dark": MessageLookupByLibrary.simpleMessage("다크"),
     "darkIcon": MessageLookupByLibrary.simpleMessage("다크 아이콘"),
-    "darkIconDesc": MessageLookupByLibrary.simpleMessage(
-      "데스크톱 앱 아이콘을 어두운 색계열로 전환",
-    ),
+    "darkIconDesc": MessageLookupByLibrary.simpleMessage("앱 아이콘을 어두운 색계열로 전환"),
     "dashboard": MessageLookupByLibrary.simpleMessage("홈"),
     "days": m0,
     "defaultNameserver": MessageLookupByLibrary.simpleMessage("기본 네임서버"),
@@ -326,7 +328,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "dnsMode": MessageLookupByLibrary.simpleMessage("DNS 모드"),
     "doYouWantToPass": MessageLookupByLibrary.simpleMessage("다음 요청을 허용하시겠습니까:"),
-    "domain": MessageLookupByLibrary.simpleMessage("도메인"),
+    "domain": MessageLookupByLibrary.simpleMessage("조직 / 도메인"),
     "doubleBounce": MessageLookupByLibrary.simpleMessage("더블 바운스"),
     "download": MessageLookupByLibrary.simpleMessage("다운로드"),
     "downloadAndInstall": MessageLookupByLibrary.simpleMessage("다운로드 및 설치"),
@@ -342,7 +344,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "필요 시 앱 크래시 로그 전송",
     ),
     "enableOverride": MessageLookupByLibrary.simpleMessage("오버라이드 활성화"),
-    "enableTraySpeed": MessageLookupByLibrary.simpleMessage("속도 표시"),
+    "enableTraySpeed": MessageLookupByLibrary.simpleMessage("네트워크 속도"),
     "enableTraySpeedDesc": MessageLookupByLibrary.simpleMessage(
       "메뉴 막대에 업로드 및 다운로드 속도 표시",
     ),
@@ -485,6 +487,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputCorrectHotkey": MessageLookupByLibrary.simpleMessage(
       "올바른 단축키를 입력하세요",
     ),
+    "installTime": MessageLookupByLibrary.simpleMessage("설치 시간"),
     "intelligentSelected": MessageLookupByLibrary.simpleMessage("스마트 선택"),
     "internet": MessageLookupByLibrary.simpleMessage("인터넷"),
     "interval": MessageLookupByLibrary.simpleMessage("간격"),
@@ -492,11 +495,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "invalidIpFormat": MessageLookupByLibrary.simpleMessage(
       "유효하지 않은 IP 또는 CIDR 형식입니다",
     ),
+    "ipAddress": MessageLookupByLibrary.simpleMessage("IP 주소"),
     "ipClickBehavior": MessageLookupByLibrary.simpleMessage("표시 전환"),
     "ipPrivacyProtection": MessageLookupByLibrary.simpleMessage("IP 표시 숨기기"),
     "ipcidr": MessageLookupByLibrary.simpleMessage("IP / 서브넷 마스크"),
     "ipv6Desc": MessageLookupByLibrary.simpleMessage("활성화 시 IPv6 트래픽 수신 허용"),
     "ipv6InboundDesc": MessageLookupByLibrary.simpleMessage("IPv6 인바운드 허용"),
+    "isp": MessageLookupByLibrary.simpleMessage("통신사"),
     "just": MessageLookupByLibrary.simpleMessage("방금 전"),
     "keepAliveIntervalDesc": MessageLookupByLibrary.simpleMessage(
       "TCP Keep-Alive 간격",
@@ -506,10 +511,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "layout": MessageLookupByLibrary.simpleMessage("레이아웃"),
     "leftClickBehavior": MessageLookupByLibrary.simpleMessage("왼쪽 클릭"),
     "light": MessageLookupByLibrary.simpleMessage("라이트"),
-    "lightIcon": MessageLookupByLibrary.simpleMessage("라이트 아이콘"),
-    "lightIconDesc": MessageLookupByLibrary.simpleMessage(
-      "데스크톱 앱 아이콘을 밝은 색계열로 전환",
-    ),
     "lineWrap": MessageLookupByLibrary.simpleMessage("자동 줄바꿈"),
     "list": MessageLookupByLibrary.simpleMessage("목록"),
     "listen": MessageLookupByLibrary.simpleMessage("수신"),
@@ -545,6 +546,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "monochromeScheme": MessageLookupByLibrary.simpleMessage("모노크롬"),
     "months": m7,
     "more": MessageLookupByLibrary.simpleMessage("더보기"),
+    "moreIpInfo": MessageLookupByLibrary.simpleMessage("상세 IP 정보"),
     "name": MessageLookupByLibrary.simpleMessage("이름"),
     "nameSort": MessageLookupByLibrary.simpleMessage("이름순 정렬"),
     "nameserver": MessageLookupByLibrary.simpleMessage("네임서버"),
@@ -562,13 +564,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "network": MessageLookupByLibrary.simpleMessage("네트워크"),
     "networkDesc": MessageLookupByLibrary.simpleMessage("네트워크 관련 설정 변경"),
     "networkDetection": MessageLookupByLibrary.simpleMessage("네트워크 진단"),
+    "networkErrorRetryLater": MessageLookupByLibrary.simpleMessage(
+      "네트워크 오류가 발생했습니다. 나중에 다시 시도해 주세요",
+    ),
     "networkFix": MessageLookupByLibrary.simpleMessage("네트워크 복구"),
     "networkFixDesc": MessageLookupByLibrary.simpleMessage(
       "시스템 네트워크 상태 아이콘 문제 복구",
     ),
     "networkMatch": MessageLookupByLibrary.simpleMessage("네트워크 일치"),
     "networkMatchHint": MessageLookupByLibrary.simpleMessage(
-      "IP 또는 CIDR 입력 (쉼표로 구분, 최대 2개)",
+      "IP, CIDR 또는 Gateway:IP/CIDR 입력",
     ),
     "networkSpeed": MessageLookupByLibrary.simpleMessage("네트워크 속도"),
     "networkSpeedNotification": MessageLookupByLibrary.simpleMessage("속도 알림"),
@@ -625,6 +630,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "openDashboard": MessageLookupByLibrary.simpleMessage("Zashboard 열기"),
     "openSettings": MessageLookupByLibrary.simpleMessage("설정 열기"),
+    "operatorOrAsn": MessageLookupByLibrary.simpleMessage("소속 / ASN"),
     "options": MessageLookupByLibrary.simpleMessage("옵션"),
     "other": MessageLookupByLibrary.simpleMessage("기타"),
     "otherContributors": MessageLookupByLibrary.simpleMessage(
@@ -703,6 +709,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "preferH3Desc": MessageLookupByLibrary.simpleMessage("DoH에서 HTTP/3 우선 사용"),
     "pressKeyboard": MessageLookupByLibrary.simpleMessage("키를 누르세요"),
     "preview": MessageLookupByLibrary.simpleMessage("미리보기"),
+    "privateIp": MessageLookupByLibrary.simpleMessage("사설 / LAN IP 주소"),
     "profile": MessageLookupByLibrary.simpleMessage("프로필"),
     "profileAutoUpdateIntervalInvalidValidationDesc":
         MessageLookupByLibrary.simpleMessage("올바른 시간 형식을 입력하세요"),
@@ -729,6 +736,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "progress": MessageLookupByLibrary.simpleMessage("프로세스"),
     "project": MessageLookupByLibrary.simpleMessage("프로젝트"),
     "providers": MessageLookupByLibrary.simpleMessage("프로바이더"),
+    "provinceAndCity": MessageLookupByLibrary.simpleMessage("시 / 도 / 도시"),
     "proxies": MessageLookupByLibrary.simpleMessage("프록시"),
     "proxiesSetting": MessageLookupByLibrary.simpleMessage("프록시 설정"),
     "proxyChains": MessageLookupByLibrary.simpleMessage("프록시 체인"),
@@ -934,6 +942,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "TUN 가상 어댑터 기능을 사용하려면 관리자(ROOT) 권한이 필요합니다",
     ),
     "tunRouteConflict": m13,
+    "tunVirtualAddress": MessageLookupByLibrary.simpleMessage(
+      "TUN 가상 네트워크 어댑터",
+    ),
     "tunnel": MessageLookupByLibrary.simpleMessage("터널"),
     "tunnelAddress": MessageLookupByLibrary.simpleMessage("바인딩 주소"),
     "tunnelAddressHint": MessageLookupByLibrary.simpleMessage(
@@ -968,6 +979,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "updateInstalling": MessageLookupByLibrary.simpleMessage(
       "시스템 설치 프로그램을 여는 중...",
     ),
+    "updateTime": MessageLookupByLibrary.simpleMessage("업데이트 시간"),
     "upload": MessageLookupByLibrary.simpleMessage("업로드"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("URL 주소로 프로필 가져오기"),
@@ -980,6 +992,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "value": MessageLookupByLibrary.simpleMessage("값"),
     "vibrantScheme": MessageLookupByLibrary.simpleMessage("바이브런트"),
     "view": MessageLookupByLibrary.simpleMessage("보기"),
+    "viewDetailedIpData": MessageLookupByLibrary.simpleMessage("상세 IP 데이터 보기"),
     "vpnDesc": MessageLookupByLibrary.simpleMessage("VPN 관련 설정 변경"),
     "vpnEnableDesc": MessageLookupByLibrary.simpleMessage(
       "VpnService를 통해 시스템 트래픽 라우팅",

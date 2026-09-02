@@ -69,6 +69,7 @@ Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
       'openLogs': instance.openLogs,
       'closeConnections': instance.closeConnections,
       'testUrl': instance.testUrl,
+      'showStartSwitch': instance.showStartSwitch,
       'enableNavBarHapticFeedback': instance.enableNavBarHapticFeedback,
       'autoCheckUpdate': instance.autoCheckUpdate,
       'showLabel': instance.showLabel,
@@ -126,8 +127,17 @@ _AccessControl _$AccessControlFromJson(Map<String, dynamic> json) =>
               ?.map((e) => e as String)
               .toList() ??
           const [],
+      manualList:
+          (json['manualList'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
       sort:
-          $enumDecodeNullable(_$AccessSortTypeEnumMap, json['sort']) ??
+          $enumDecodeNullable(
+            _$AccessSortTypeEnumMap,
+            json['sort'],
+            unknownValue: AccessSortType.none,
+          ) ??
           AccessSortType.none,
       isFilterSystemApp: json['isFilterSystemApp'] as bool? ?? false,
       isFilterNonInternetApp: json['isFilterNonInternetApp'] as bool? ?? false,
@@ -139,6 +149,7 @@ Map<String, dynamic> _$AccessControlToJson(_AccessControl instance) =>
       'mode': _$AccessControlModeEnumMap[instance.mode]!,
       'acceptList': instance.acceptList,
       'rejectList': instance.rejectList,
+      'manualList': instance.manualList,
       'sort': _$AccessSortTypeEnumMap[instance.sort]!,
       'isFilterSystemApp': instance.isFilterSystemApp,
       'isFilterNonInternetApp': instance.isFilterNonInternetApp,
@@ -151,8 +162,8 @@ const _$AccessControlModeEnumMap = {
 
 const _$AccessSortTypeEnumMap = {
   AccessSortType.none: 'none',
-  AccessSortType.name: 'name',
-  AccessSortType.time: 'time',
+  AccessSortType.installTime: 'installTime',
+  AccessSortType.updateTime: 'updateTime',
 };
 
 _WindowProps _$WindowPropsFromJson(Map<String, dynamic> json) => _WindowProps(
@@ -185,6 +196,7 @@ _VpnProps _$VpnPropsFromJson(Map<String, dynamic> json) => _VpnProps(
   disableQuic: json['disableQuic'] as bool? ?? false,
   networkSpeedNotification: json['networkSpeedNotification'] as bool? ?? false,
   excludeChina: json['excludeChina'] as bool? ?? false,
+  trayEnhancement: json['trayEnhancement'] as bool? ?? false,
   trayLeftClickBehavior:
       $enumDecodeNullable(
         _$TrayClickBehaviorEnumMap,
@@ -218,6 +230,7 @@ Map<String, dynamic> _$VpnPropsToJson(_VpnProps instance) => <String, dynamic>{
   'disableQuic': instance.disableQuic,
   'networkSpeedNotification': instance.networkSpeedNotification,
   'excludeChina': instance.excludeChina,
+  'trayEnhancement': instance.trayEnhancement,
   'trayLeftClickBehavior':
       _$TrayClickBehaviorEnumMap[instance.trayLeftClickBehavior]!,
   'trayRightClickBehavior':
@@ -287,9 +300,7 @@ _ProxiesStyle _$ProxiesStyleFromJson(Map<String, dynamic> json) =>
             (k, e) => MapEntry(k, e as String),
           ) ??
           const {},
-      concurrencyLimit:
-          (json['concurrencyLimit'] as num?)?.toInt() ??
-          250,
+      concurrencyLimit: (json['concurrencyLimit'] as num?)?.toInt() ?? 250,
       showHiddenItems: json['showHiddenItems'] as bool? ?? false,
       hasCustomizedStyle: json['hasCustomizedStyle'] as bool? ?? false,
     );

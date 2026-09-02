@@ -48,7 +48,7 @@ class ThemeView extends ConsumerWidget {
 
     final toggleItems = [
       if (shouldShowHarmonyFont) _HarmonyFontItem(),
-      _DarkIconItem(),
+      if (system.isAndroid) const _DarkIconItem(),
       if (system.isWindows) _TrayIconInvertItem(),
       _TextScaleFactorItem(),
     ];
@@ -474,34 +474,26 @@ class _HarmonyFontItem extends ConsumerWidget {
   }
 }
 
+
 class _DarkIconItem extends ConsumerWidget {
   const _DarkIconItem();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isWindowsOrLinux = system.isWindows || system.isLinux;
     final useDarkIcon = ref.watch(
       themeSettingProvider.select((state) => state.useDarkIcon),
     );
     return ListItem.switchItem(
-      leading: Icon(
-        isWindowsOrLinux
-            ? Icons.light_mode_outlined
-            : Icons.dark_mode_outlined,
-      ),
+      leading: const Icon(Icons.dark_mode_outlined),
       horizontalTitleGap: 12,
       title: Text(
-        isWindowsOrLinux
-            ? appLocalizations.lightIcon
-            : appLocalizations.darkIcon,
+        appLocalizations.darkIcon,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
           color: context.colorScheme.onSurfaceVariant,
         ),
       ),
       subtitle: Text(
-        isWindowsOrLinux
-            ? appLocalizations.lightIconDesc
-            : appLocalizations.darkIconDesc,
+        appLocalizations.darkIconDesc,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: context.colorScheme.onSurfaceVariant.withOpacity(0.7),
         ),
@@ -509,7 +501,6 @@ class _DarkIconItem extends ConsumerWidget {
       delegate: SwitchDelegate(
         value: useDarkIcon,
         onChanged: (value) async {
-          // Call native method to switch icon
           await app.setLauncherIcon(value);
           ref
               .read(themeSettingProvider.notifier)

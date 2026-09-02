@@ -250,6 +250,24 @@ data object VpnPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         emptyList()
     }
 
+    fun getLocalGateways(): List<String> = runCatching {
+        networks.flatMap { network ->
+            connectivity?.getLinkProperties(network)
+                ?.routes
+                ?.filter { it.isDefaultRoute() }
+                ?.mapNotNull { it.gateway }
+                ?.filter {
+                    !it.isLoopbackAddress && !it.isAnyLocalAddress &&
+                        it.hostAddress?.contains(":") == false
+                }
+                ?.mapNotNull { it.hostAddress }
+                ?: emptyList()
+        }
+    }.getOrElse {
+        android.util.Log.e("VpnPlugin", "getLocalGateways error: ${it.message}")
+        emptyList()
+    }
+
     fun handleStart(options: VpnOptions): Boolean {
         onUpdateNetwork()
         if (options.enable != this.options?.enable) {
@@ -587,11 +605,22 @@ data object VpnPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         onUpdateNetwork()
     }
 
-    private fun protect(fd: Int): Boolean = runCatching {
-        (bettBoxService as? BettboxVpnService)?.protect(fd) == true
-    }.getOrElse {
-        android.util.Log.e("VpnPlugin", "protect error: ${it.message}")
-        false
+    private fun protect(fd: Int): Boolean {
+        var retries = 0
+        while (retries < 5) {
+            val success = runCatching {
+                (bettBoxService as? BettboxVpnService)?.protect(fd) == true
+            }.getOrDefault(false)
+
+            if (success) return true
+
+            retries++
+            if (retries < 5) {
+                Thread.sleep(60)
+            }
+        }
+        android.util.Log.e("VpnPlugin", "protect failed for fd $fd after retries")
+        return false
     }
 
     private fun resolverProcess(

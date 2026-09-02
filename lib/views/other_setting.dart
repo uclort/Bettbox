@@ -43,8 +43,8 @@ class SmartAutoStopSection extends ConsumerWidget {
             thickness: 1,
             color: context.colorScheme.outlineVariant.withValues(
               alpha: context.colorScheme.brightness == Brightness.light
-                  ? 0.3
-                  : 0.2,
+                  ? 0.6
+                  : 0.45,
             ),
             indent: 16,
             endIndent: 16,
@@ -433,8 +433,8 @@ class DisableQuicSection extends ConsumerWidget {
             thickness: 1,
             color: context.colorScheme.outlineVariant.withValues(
               alpha: context.colorScheme.brightness == Brightness.light
-                  ? 0.3
-                  : 0.2,
+                  ? 0.6
+                  : 0.45,
             ),
             indent: 16,
             endIndent: 16,
@@ -499,32 +499,6 @@ class TrayClickBehaviorItem extends ConsumerWidget {
   }
 
   Future<void> _showSettings(
-    WidgetRef ref, {
-    required TrayClickBehavior leftBehavior,
-    required TrayClickBehavior rightBehavior,
-  }) async {
-    final result = await globalState
-        .showCommonDialog<
-          ({TrayClickBehavior leftBehavior, TrayClickBehavior rightBehavior})
-        >(
-          child: _TrayClickBehaviorDialog(
-            leftBehavior: leftBehavior,
-            rightBehavior: rightBehavior,
-          ),
-        );
-    if (result == null) return;
-    ref
-        .read(vpnSettingProvider.notifier)
-        .updateState(
-          (state) => state.copyWith(
-            trayLeftClickBehavior: result.leftBehavior,
-            trayRightClickBehavior: result.rightBehavior,
-          ),
-        );
-  }
-
-  Future<void> _showTrayClickBehaviorDialog(
-    BuildContext context,
     WidgetRef ref, {
     required TrayClickBehavior leftBehavior,
     required TrayClickBehavior rightBehavior,
@@ -717,6 +691,6 @@ class OtherSettingView extends ConsumerWidget {
       return const Center(child: Text('No settings available'));
     }
 
-    return generateListView(items);
+    return generateListView(generateSection(items: items));
   }
 }

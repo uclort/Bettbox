@@ -354,10 +354,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Max 2 IPs/CIDRs, comma-separated`
+  /// `Enter IP, CIDR or Gateway:IP/CIDR`
   String get networkMatchHint {
     return Intl.message(
-      'Max 2 IPs/CIDRs, comma-separated',
+      'Enter IP, CIDR or Gateway:IP/CIDR',
       name: 'networkMatchHint',
       desc: '',
       args: [],
@@ -552,7 +552,7 @@ class AppLocalizations {
   /// `Network Speed`
   String get enableTraySpeed {
     return Intl.message(
-      'Tray Speed',
+      'Network Speed',
       name: 'enableTraySpeed',
       desc: '',
       args: [],
@@ -2159,9 +2159,9 @@ class AppLocalizations {
     return Intl.message('Test URL', name: 'testUrl', desc: '', args: []);
   }
 
-  /// `Delay Test`
+  /// `Start Test`
   String get startTest {
-    return Intl.message('Delay Test', name: 'startTest', desc: '', args: []);
+    return Intl.message('Start Test', name: 'startTest', desc: '', args: []);
   }
 
   /// `Testing`
@@ -3749,9 +3749,14 @@ class AppLocalizations {
     return Intl.message('IP/CIDR', name: 'ipcidr', desc: '', args: []);
   }
 
-  /// `Domain`
+  /// `Organization / Domain`
   String get domain {
-    return Intl.message('Domain', name: 'domain', desc: '', args: []);
+    return Intl.message(
+      'Organization / Domain',
+      name: 'domain',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Reset`
@@ -4699,26 +4704,11 @@ class AppLocalizations {
     return Intl.message('Dark Icon', name: 'darkIcon', desc: '', args: []);
   }
 
-  /// `Manually switch dark desktop app icon`
+  /// `Manually switch dark app icon`
   String get darkIconDesc {
     return Intl.message(
-      'Manually switch dark desktop app icon',
+      'Manually switch dark app icon',
       name: 'darkIconDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Light Icon`
-  String get lightIcon {
-    return Intl.message('Light Icon', name: 'lightIcon', desc: '', args: []);
-  }
-
-  /// `Manually switch light desktop app icon`
-  String get lightIconDesc {
-    return Intl.message(
-      'Manually switch light desktop app icon',
-      name: 'lightIconDesc',
       desc: '',
       args: [],
     );
@@ -5472,6 +5462,126 @@ class AppLocalizations {
   /// `Close All`
   String get closeAll {
     return Intl.message('Close All', name: 'closeAll', desc: '', args: []);
+  }
+
+  /// `More IP Information`
+  String get moreIpInfo {
+    return Intl.message(
+      'More IP Information',
+      name: 'moreIpInfo',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `View Detailed IP Data`
+  String get viewDetailedIpData {
+    return Intl.message(
+      'View Detailed IP Data',
+      name: 'viewDetailedIpData',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `IP Address`
+  String get ipAddress {
+    return Intl.message('IP Address', name: 'ipAddress', desc: '', args: []);
+  }
+
+  /// `Country / Region`
+  String get countryOrRegion {
+    return Intl.message(
+      'Country / Region',
+      name: 'countryOrRegion',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Province / City`
+  String get provinceAndCity {
+    return Intl.message(
+      'Province / City',
+      name: 'provinceAndCity',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Organization / ASN`
+  String get operatorOrAsn {
+    return Intl.message(
+      'Organization / ASN',
+      name: 'operatorOrAsn',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Continent`
+  String get continent {
+    return Intl.message('Continent', name: 'continent', desc: '', args: []);
+  }
+
+  /// `Copied to clipboard`
+  String get copiedToClipboard {
+    return Intl.message(
+      'Copied to clipboard',
+      name: 'copiedToClipboard',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Private / LAN IP Address`
+  String get privateIp {
+    return Intl.message(
+      'Private / LAN IP Address',
+      name: 'privateIp',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `ISP`
+  String get isp {
+    return Intl.message('ISP', name: 'isp', desc: '', args: []);
+  }
+
+  /// `Network error, please try again later`
+  String get networkErrorRetryLater {
+    return Intl.message(
+      'Network error, please try again later',
+      name: 'networkErrorRetryLater',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `TUN Virtual Network Adapter`
+  String get tunVirtualAddress {
+    return Intl.message(
+      'TUN Virtual Network Adapter',
+      name: 'tunVirtualAddress',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Install Time`
+  String get installTime {
+    return Intl.message(
+      'Install Time',
+      name: 'installTime',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Update Time`
+  String get updateTime {
+    return Intl.message('Update Time', name: 'updateTime', desc: '', args: []);
   }
 }
 

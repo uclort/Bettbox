@@ -6,13 +6,13 @@ import LaunchAtLogin
 class MainFlutterWindow: NSWindow {
     private var appMethodChannel: FlutterMethodChannel?
     private var systemDidWakeObserver: NSObjectProtocol?
-    
+
     override func awakeFromNib() {
         let flutterViewController = FlutterViewController()
         let windowFrame = self.frame
         self.contentViewController = flutterViewController
         self.setFrame(windowFrame, display: true)
-        
+
         FlutterMethodChannel(
             name: "launch_at_startup", binaryMessenger: flutterViewController.engine.binaryMessenger
         )
@@ -29,20 +29,18 @@ class MainFlutterWindow: NSWindow {
                 result(FlutterMethodNotImplemented)
             }
         }
-        
-        // Setup app method channel
+
+        // 配置应用方法通道与系统唤醒监听
         setupAppMethodChannel(flutterViewController: flutterViewController)
         setupSystemWakeNotification()
-        
+
         RegisterGeneratedPlugins(registry: flutterViewController)
-        
-        // Load and apply saved icon preference
+
+        // 网络面板使用独立 Dock 图标
         if CommandLine.arguments.contains("--network-panel") {
             _ = setDockIcon(named: "network_monitor_icon")
-        } else if loadIconPreference() {
-            _ = setDockIcon(useDarkIcon: true)
         }
-        
+
         super.awakeFromNib()
     }
 
@@ -51,14 +49,14 @@ class MainFlutterWindow: NSWindow {
             NSWorkspace.shared.notificationCenter.removeObserver(observer)
         }
     }
-    
+
     override public func order(_ place: NSWindow.OrderingMode, relativeTo otherWin: Int) {
         super.order(place, relativeTo: otherWin)
         hiddenWindowAtLaunch()
     }
-    
-    // MARK: - App Method Channel
-    
+
+    // MARK: - 应用方法通道
+
     private func setupAppMethodChannel(flutterViewController: FlutterViewController) {
         appMethodChannel = FlutterMethodChannel(
             name: "app",
@@ -77,14 +75,6 @@ class MainFlutterWindow: NSWindow {
                 let processPath = arguments?["processPath"] as? String ?? ""
                 let processName = arguments?["packageName"] as? String ?? ""
                 result(self.processIconData(processPath: processPath, processName: processName))
-            case "setLauncherIcon":
-                if let arguments = call.arguments as? [String: Any],
-                   let useDarkIcon = arguments["useDarkIcon"] as? Bool {
-                    let success = self.setDockIcon(useDarkIcon: useDarkIcon)
-                    result(success)
-                } else {
-                    result(FlutterError(code: "INVALID_ARGUMENT", message: "Missing useDarkIcon argument", details: nil))
-                }
             default:
                 result(FlutterMethodNotImplemented)
             }
@@ -100,17 +90,8 @@ class MainFlutterWindow: NSWindow {
             self?.appMethodChannel?.invokeMethod("systemDidWake", arguments: nil)
         }
     }
-    
-    // MARK: - Icon Management
-    
-    private func setDockIcon(useDarkIcon: Bool) -> Bool {
-        let iconName = useDarkIcon ? "icon_black_macOS" : "icon_light_macOS"
-        let result = setDockIcon(named: iconName)
-        if result {
-            saveIconPreference(useDarkIcon: useDarkIcon)
-        }
-        return result
-    }
+
+    // MARK: - 图标管理
 
     private func setDockIcon(named iconName: String) -> Bool {
         guard let iconPath = Bundle.main.privateFrameworksURL?
@@ -167,14 +148,5 @@ class MainFlutterWindow: NSWindow {
             }
             return FlutterStandardTypedData(bytes: data)
         }
-    }
-    
-    private func saveIconPreference(useDarkIcon: Bool) {
-        UserDefaults.standard.set(useDarkIcon, forKey: "UseDarkIcon")
-        UserDefaults.standard.synchronize()
-    }
-    
-    private func loadIconPreference() -> Bool {
-        return UserDefaults.standard.bool(forKey: "UseDarkIcon")
     }
 }

@@ -670,7 +670,7 @@ class AppController {
     final enableTraySpeed =
         system.isMacOS && _ref.read(vpnSettingProvider).enableTraySpeed;
 
-    final isScreenOn = globalState.appState.isScreenOn;
+    final isScreenOn = globalState.isScreenOn;
 
     if (!shouldUpdateDashboard &&
         !(networkSpeedNotification && isScreenOn) &&
@@ -1198,6 +1198,22 @@ class AppController {
           _ref
               .read(profilesProvider.notifier)
               .setProfile(currentProfile.copyWith(selectedMap: selectedMap));
+        }
+      }
+
+      if (currentGroups.isNotEmpty) {
+        bool activeProxyChanged = false;
+        for (final newGroup in newGroups) {
+          final oldGroup = currentGroups.firstWhereOrNull(
+            (g) => g.name == newGroup.name,
+          );
+          if (oldGroup != null && oldGroup.now != newGroup.now) {
+            activeProxyChanged = true;
+            break;
+          }
+        }
+        if (activeProxyChanged) {
+          addCheckIpNumDebounce();
         }
       }
 

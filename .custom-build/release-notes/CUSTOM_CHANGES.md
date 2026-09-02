@@ -67,7 +67,7 @@
 - 启用状态使用 macOS 原生自适应颜色，自动匹配菜单栏背景。
 - 恢复 macOS 菜单栏使用模板图标和原生 active/inactive 着色，避免上游托盘资源切换后活动状态显示为纯黑；代码位于 `lib/common/utils.dart`、`lib/common/tray.dart` 和 `plugins/tray_manager/macos/Classes/TrayIcon.swift`。
 - 托盘点击行为支持“显示面板”和“显示菜单”，左键与右键可以分别配置。
-- 移除旧“托盘增强”总开关，代理组菜单直接可用；速率和点击行为均作为增强工具中的独立一级设置。
+- 移除旧“托盘增强”总开关，代理组菜单直接可用；速率和点击行为均作为增强工具中的独立一级设置。旧 `trayEnhancement` 配置键仅保留用于反序列化历史配置，不再关联 UI 或运行行为。
 - 修复应用位于后台时从托盘启动后，图标和菜单状态未立即更新的问题。
 - 修复从托盘重启内核后，运行状态未主动同步，导致图标持续置灰且菜单仍显示“启动”的问题。
 - 节点测速逻辑已在本次上游融合中恢复为 Bettbox `upstream/main` 原实现；此前自定义的并发、去重、缓存、独立超时、Provider 生命周期取消、测速诊断和 Provider URL 覆写逻辑已删除，相关行为以远端实现为准。
@@ -130,7 +130,14 @@
 
 ### 自定义内核同步
 
-- 私有 `custom-mihomo` 当前提交为 `0509ad43f718`，基线记录为 Bettbox `main@6291ab3d7e2d`；内核源码树仍为已验证的 `f97606094dc467e6e8c62d22c586514d50c7d0d8`，继续应用 `opensnell-v6.patch`，并通过 `go test ./transport/snell ./adapter/outbound`。
+- 私有 `custom-mihomo` 当前提交为 `7acc68a2dac5`，基线记录为 Bettbox `main@c3e9f86c03df` 与 Mihomo `v1.19.30`；内核源码树为 `12490457db9f6debfdcb26b543c6e925e1920661`，继续应用 `opensnell-v6.patch`。私有覆写脚本内容未改动。
+- 私有核心同步后通过 `go test ./transport/snell ./adapter/outbound ./component/dialer ./component/dhcp ./dns ./listener/sing_tun ./tunnel/statistic`，并保留全部四处 `BETTBOX-CUSTOM` 标记。
+
+### 2026-09-02 上游融合校验
+
+- 上游 Bettbox `main@c3e9f86c03df` 已合入 `custom-build`，版本更新为 `1.19.0+2026090201`；托盘、网络面板、TUN/DNS、WebDAV 和应用内更新等自定义逻辑保留。
+- IPInfo 重复能力采用上游多数据源增量合并与本地化来源；访问控制采用上游 `manualList`；macOS 托盘组合自定义模板图标、活动状态、实时网速、独立延迟列和左右键行为与上游动态原生颜色、菜单宽度、右对齐优化。
+- 上游删除桌面启动图标开关后，macOS 保留网络面板专属 Dock 图标、系统唤醒和进程图标通道；Android 继续保留深色图标设置。旧托盘总开关只保留反序列化字段，不恢复 UI 或运行行为。
 
 ### 2026-08-21 上游融合校验
 

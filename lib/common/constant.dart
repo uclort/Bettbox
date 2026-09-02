@@ -33,7 +33,6 @@ const commonDuration = Duration(milliseconds: 300);
 const defaultUpdateDuration = Duration(days: 1);
 const mmdbFileName = 'geoip.metadb';
 const asnFileName = 'ASN.mmdb';
-const geoIpFileName = 'GeoIP.dat';
 const geoSiteFileName = 'GeoSite.dat';
 const bundleMRSFileName = 'BundleMRS.7z';
 final double kHeaderHeight = system.isDesktop
@@ -56,6 +55,7 @@ const isCustomUpdateBuild = customUpdateRepository != '';
 const updateRepository = isCustomUpdateBuild
     ? customUpdateRepository
     : repository;
+const ipInfoToken = String.fromEnvironment('IPINFO_TOKEN', defaultValue: '');
 const defaultExternalController = '127.0.0.1:9090';
 const maxMobileWidth = 600;
 const maxLaptopWidth = 840;
@@ -137,7 +137,7 @@ const proxiesListStoreKey = PageStorageKey<String>('proxies_list');
 const toolsStoreKey = PageStorageKey<String>('tools');
 const profilesStoreKey = PageStorageKey<String>('profiles');
 
-const defaultPrimaryColor = 0xFF00796B;
+const defaultPrimaryColor = 0xFF00897B;
 
 double getWidgetHeight(num lines) {
   return max(lines * 84 + (lines - 1) * 16, 0).ap;
@@ -150,13 +150,13 @@ final mainIsolate = 'BettboxMainIsolate';
 final serviceIsolate = 'BettboxServiceIsolate';
 
 const defaultPrimaryColors = [
-  0xFF191919,
+  0xFF1E293B,
   0xFF1976D2,
   defaultPrimaryColor,
   0xFFE91E63,
   0xFF7B1FA2,
   0xFFD97706,
-  0xFF455A64,
+  0xFF334155,
 ];
 
 const scriptTemplate = '''

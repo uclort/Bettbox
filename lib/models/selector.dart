@@ -171,7 +171,7 @@ extension PackageListSelectorStateExt on PackageListSelectorState {
     final filtered = list;
     final existingPackageNames = packages.map((e) => e.packageName).toSet();
     final packageNameRegex = RegExp(r'^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)+$');
-    final manualPackages = selectedList
+    final manualPackages = accessControl.manualList
         .where(
           (pkg) =>
               !existingPackageNames.contains(pkg) &&
@@ -191,12 +191,16 @@ extension PackageListSelectorStateExt on PackageListSelectorState {
     return combined
         .sorted((a, b) {
           return switch (sort) {
-            AccessSortType.none => 0,
-            AccessSortType.name => utils.sortByChar(
+            AccessSortType.none => utils.sortByChar(
               utils.getPinyin(a.label),
               utils.getPinyin(b.label),
             ),
-            AccessSortType.time => b.lastUpdateTime.compareTo(a.lastUpdateTime),
+            AccessSortType.installTime => b.firstInstallTime.compareTo(
+              a.firstInstallTime,
+            ),
+            AccessSortType.updateTime => b.lastUpdateTime.compareTo(
+              a.lastUpdateTime,
+            ),
           };
         })
         .sorted((a, b) {

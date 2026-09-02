@@ -105,9 +105,6 @@ private final class PersistentTrayMenuItemView: NSView {
         isHovered = contains(event)
         updateAppearance()
         if shouldTrigger {
-            if !NSApp.isActive {
-                NSApp.activate(ignoringOtherApps: true)
-            }
             onClick?()
         }
     }
@@ -432,6 +429,59 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
             detailWidth: detailWidth
         )
     }
+
+    private func maximumTextWidth(_ items: [NSDictionary]) -> CGFloat {
+        let font = NSFont.menuFont(ofSize: NSFont.systemFontSize)
+        return items.reduce(CGFloat.zero) { width, item in
+            let itemDict = item as? [String: Any] ?? [:]
+            let type = itemDict["type"] as? String ?? ""
+            guard type != "separator" else {
+                return width
+            }
+            let label = itemDict["label"] as? String ?? ""
+            let sublabel = itemDict["sublabel"] as? String ?? ""
+            let labelWidth = (label as NSString).size(
+                withAttributes: [.font: font]
+            ).width
+            let sublabelWidth = sublabel.isEmpty
+                ? 0
+                : (sublabel as NSString).size(
+                    withAttributes: [.font: font]
+                ).width + 24
+            let totalWidth = labelWidth + sublabelWidth
+            return max(width, ceil(totalWidth))
+        }
+    }
+
+    private func setMenuItemTitle(
+        _ menuItem: NSMenuItem,
+        label: String,
+        sublabel: String,
+        forceRightColumn: Bool,
+        maxTextWidth: CGFloat
+    ) {
+        if sublabel.isEmpty && !forceRightColumn {
+            menuItem.title = label
+            menuItem.attributedTitle = nil
+            return
+        }
+        let titleString = sublabel.isEmpty ? "\(label)\t" : "\(label)\t\(sublabel)"
+        let font = NSFont.menuFont(ofSize: NSFont.systemFontSize)
+        let paragraphStyle = NSMutableParagraphStyle()
+        let tabStop = NSTextTab(
+            textAlignment: .right,
+            location: maxTextWidth,
+            options: [:]
+        )
+        paragraphStyle.tabStops = [tabStop]
+        menuItem.attributedTitle = NSAttributedString(
+            string: titleString,
+            attributes: [
+                .font: font,
+                .paragraphStyle: paragraphStyle
+            ]
+        )
+    }
     
     public init(_ args: [String: Any]) {
         super.init(title: "")
@@ -441,6 +491,7 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
         let menuLayout = preferredMenuLayout(items)
         let menuWidth = menuLayout.width
         minimumWidth = menuWidth
+        let maxTextWidth = maximumTextWidth(items)
         for item in items {
             let menuItem: NSMenuItem
             
@@ -464,7 +515,13 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
 
             menuItem.tag = id
             menuItem.representedObject = key.isEmpty ? nil : key
-            menuItem.title = menuItemTitle(label, sublabel, forceRightColumn: isCheckbox)
+            setMenuItemTitle(
+                menuItem,
+                label: label,
+                sublabel: sublabel,
+                forceRightColumn: isCheckbox,
+                maxTextWidth: maxTextWidth
+            )
             menuItem.toolTip = toolTip
             menuItem.isEnabled = !disabled
             menuItem.action = !disabled ? #selector(statusItemMenuButtonClicked) : nil
@@ -561,6 +618,8 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
             return
         }
 
+        let maxTextWidth = maximumTextWidth(items)
+
         for (index, item) in items.enumerated() {
             let itemDict = item as! [String: Any]
             let key: String = itemDict["key"] as? String ?? ""
@@ -589,7 +648,13 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
                 return
             }
 
-            menuItem.title = menuItemTitle(label, sublabel, forceRightColumn: isCheckbox)
+            setMenuItemTitle(
+                menuItem,
+                label: label,
+                sublabel: sublabel,
+                forceRightColumn: isCheckbox,
+                maxTextWidth: maxTextWidth
+            )
             menuItem.toolTip = toolTip
             menuItem.isEnabled = !disabled
             menuItem.action = !disabled ? #selector(statusItemMenuButtonClicked) : nil

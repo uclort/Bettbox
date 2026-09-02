@@ -442,24 +442,35 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         val pm = BettboxApplication.getAppContext().packageManager ?: return@withContext emptyList()
         val selfPackageName = BettboxApplication.getAppContext().packageName
 
-        packages.addAll(pm.getInstalledApplications(PackageManager.GET_META_DATA).mapNotNull { appInfo ->
-            val packageName = appInfo.packageName ?: return@mapNotNull null
+        packages.addAll(pm.getInstalledPackages(0).mapNotNull { packageInfo ->
+            val packageName = packageInfo.packageName ?: return@mapNotNull null
             if (packageName == selfPackageName) return@mapNotNull null
+            val appInfo = packageInfo.applicationInfo ?: return@mapNotNull null
 
             val label = runCatching { appInfo.loadLabel(pm).toString() }.getOrDefault(packageName)
             val system = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
             val internet = runCatching {
                 pm.checkPermission(Manifest.permission.INTERNET, packageName) == PackageManager.PERMISSION_GRANTED
             }.getOrDefault(false)
-            val lastUpdateTime = appInfo.sourceDir?.let { File(it).lastModified() } ?: 0L
+            val firstInstallTime = packageInfo.firstInstallTime
+            val lastUpdateTime = packageInfo.lastUpdateTime.takeIf { it > 0 } ?: firstInstallTime
 
-            Package(packageName, label, system, internet, lastUpdateTime)
+            Package(packageName, label, system, internet, firstInstallTime, lastUpdateTime)
         })
         packages
     }
 
     private suspend fun getPackagesToList(forceRefresh: Boolean = false): List<Map<String, Any>> =
-        getPackages(forceRefresh).map { mapOf("packageName" to it.packageName, "label" to it.label, "system" to it.system, "internet" to it.internet, "lastUpdateTime" to it.lastUpdateTime) }
+        getPackages(forceRefresh).map {
+            mapOf(
+                "packageName" to it.packageName,
+                "label" to it.label,
+                "system" to it.system,
+                "internet" to it.internet,
+                "firstInstallTime" to it.firstInstallTime,
+                "lastUpdateTime" to it.lastUpdateTime
+            )
+        }
 
     private suspend fun getChinaPackageNamesList(): List<String> =
         getPackages().map { it.packageName }.filter { isChinaPackage(it) }
@@ -474,10 +485,18 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
 
     fun requestVpnPermission(callBack: () -> Unit) {
         vpnCallBack = callBack
-        val intent = VpnService.prepare(BettboxApplication.getAppContext())
+        val intent = runCatching { VpnService.prepare(BettboxApplication.getAppContext()) }.getOrNull()
         if (intent != null) {
-            activityRef?.get()?.startActivityForResult(intent, VPN_PERMISSION_REQUEST_CODE)
-            return
+            val activity = activityRef?.get()
+            if (activity != null) {
+                runCatching {
+                    activity.startActivityForResult(intent, VPN_PERMISSION_REQUEST_CODE)
+                }.onFailure { e ->
+                    android.util.Log.e("AppPlugin", "startActivityForResult for VPN permission failed: ${e.message}")
+                    vpnCallBack?.invoke()
+                }
+                return
+            }
         }
         vpnCallBack?.invoke()
     }
