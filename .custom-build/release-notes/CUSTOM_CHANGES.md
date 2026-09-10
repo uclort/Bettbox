@@ -65,7 +65,7 @@
 - Bettbox 未启动，或系统代理与虚拟网卡均未开启时，图标和速率文字显示为灰色。
 - 系统代理与虚拟网卡均关闭时上传、下载立即归零；重新开启任一接管方式时清除速率文字遗留的灰色前景色并恢复系统高亮色。托盘监听内核实际 TUN 状态，两个开关完成切换后均强制同步最终状态，避免图标停留在启动过程中的灰色快照。共享状态逻辑位于 `lib/providers/state.dart`、`lib/controller.dart` 和 `lib/common/tray.dart`，macOS 文字渲染位于 `plugins/tray_manager/macos/Classes/TrayIcon.swift`，回归测试位于 `test/common/tray_active_state_test.dart`。
 - 启用状态使用 macOS 原生自适应颜色，自动匹配菜单栏背景。
-- 恢复 macOS 菜单栏使用模板图标和原生 active/inactive 着色，避免上游托盘资源切换后活动状态显示为纯黑；代码位于 `lib/common/utils.dart`、`lib/common/tray.dart` 和 `plugins/tray_manager/macos/Classes/TrayIcon.swift`。
+- 恢复 macOS 菜单栏使用模板图标和原生 active/inactive 着色，避免上游托盘资源切换后活动状态显示为纯黑；同一模板图标由 `NSStatusBarButton.contentTintColor` 在未启用时动态应用次级标签灰色，不再将动态颜色提前烘焙为无法随菜单栏外观变化的非模板位图。代码位于 `lib/common/utils.dart`、`lib/common/tray.dart` 和 `plugins/tray_manager/macos/Classes/TrayIcon.swift`。
 - 托盘点击行为支持“显示面板”和“显示菜单”，左键与右键可以分别配置。
 - 移除旧“托盘增强”总开关，代理组菜单直接可用；速率和点击行为均作为增强工具中的独立一级设置。旧 `trayEnhancement` 配置键仅保留用于反序列化历史配置，不再关联 UI 或运行行为。
 - 修复应用位于后台时从托盘启动后，图标和菜单状态未立即更新的问题。
