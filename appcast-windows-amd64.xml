@@ -6,13 +6,13 @@
     <description>Bettbox 自定义版本更新源</description>
     <language>zh-CN</language>
     <item>
-      <title>Bettbox 1.19.0</title>
-      <pubDate>Wed, 02 Sep 2026 03:53:41 +0000</pubDate>
-      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.0+2090000116-r20260902034050-65f450676a4d-85b69945cbaf</link>
-      <sparkle:releaseNotesLink>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.0+2090000116-r20260902034050-65f450676a4d-85b69945cbaf</sparkle:releaseNotesLink>
-      <sparkle:version>2090000116</sparkle:version>
-      <sparkle:shortVersionString>1.19.0</sparkle:shortVersionString>
-      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.0+2090000116-r20260902034050-65f450676a4d-85b69945cbaf/Bettbox-1.19.0-windows-amd64-setup.exe" length="40188830" type="application/octet-stream" sparkle:os="windows" sparkle:dsaSignature="MDwCHAJv8BDFhRIGoC07F81Vd1i6C3LB+aJM6Awo8dQCHDGGpcRHbfoBQD9uxKMN5Mh1zxDznXSWuQ/Kf4o=" />
+      <title>Bettbox 1.19.1</title>
+      <pubDate>Thu, 10 Sep 2026 01:54:11 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.1+2090000117-r20260910013506-749760e5b552-6efbe86a15aa</link>
+      <sparkle:releaseNotesLink>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.1+2090000117-r20260910013506-749760e5b552-6efbe86a15aa</sparkle:releaseNotesLink>
+      <sparkle:version>2090000117</sparkle:version>
+      <sparkle:shortVersionString>1.19.1</sparkle:shortVersionString>
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.1+2090000117-r20260910013506-749760e5b552-6efbe86a15aa/Bettbox-1.19.1-windows-amd64-setup.exe" length="40234889" type="application/octet-stream" sparkle:os="windows" sparkle:dsaSignature="MDwCHEzfKXJbx0siknDjmn62EF9vlq3w4qjfobIPdbQCHERsLcPK3REzWxyv0kZIkKBYJPq448GTi1tg4GU=" />
     </item>
   </channel>
 </rss>
