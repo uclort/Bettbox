@@ -130,8 +130,14 @@
 
 ### 自定义内核同步
 
-- 私有 `custom-mihomo` 当前提交为 `7acc68a2dac5`，基线记录为 Bettbox `main@c3e9f86c03df` 与 Mihomo `v1.19.30`；内核源码树为 `12490457db9f6debfdcb26b543c6e925e1920661`，继续应用 `opensnell-v6.patch`。私有覆写脚本内容未改动。
-- 私有核心同步后通过 `go test ./transport/snell ./adapter/outbound ./component/dialer ./component/dhcp ./dns ./listener/sing_tun ./tunnel/statistic`，并保留全部四处 `BETTBOX-CUSTOM` 标记。
+- 私有 `custom-mihomo` 当前提交为 `39ed8bada621`，基线记录为 Bettbox `main@70b607789788` 与 Mihomo `v1.19.30`；内核源码树为 `d3aa5ea42fb256650567049ebdf6f494e9255af6`，继续应用 `opensnell-v6.patch`。私有覆写脚本内容未改动。
+- 私有核心同步后通过 `go test ./transport/snell ./adapter/outbound ./component/dialer ./component/dhcp ./dns ./listener/sing_tun ./tunnel/statistic ./transport/hysteria/core ./transport/trusttunnel`，并保留全部四处 `BETTBOX-CUSTOM` 标记；两份私有覆写脚本也完成语法与 Sukka 回归校验。
+
+### 2026-09-10 上游融合校验
+
+- 上游 Bettbox `main@70b607789788` 已合入 `custom-build`，版本更新为 `1.19.1+2026090901`；Android 通知、智能暂停、磁贴、编辑器、配置卡片、连接详情、运行配置预览和安全备份恢复等改进已纳入。
+- 重复功能逐项比较后，备份恢复和访问控制排序采用上游更安全、确定性更强的实现；WebDAV Provider 排除边界、macOS `mixed` 栈、串行 DNS/TUN 生命周期恢复及 Android 浮动总开关保留自定义实现，并补入上游 Linux `auto-redirect` 与智能暂停保护。
+- `flutter analyze --no-fatal-infos --no-fatal-warnings`、Flutter 全量 80 项测试、公开/私有 Mihomo 定向测试、Snell v6 测试和覆写脚本校验均通过；融合前后四处 `BETTBOX-CUSTOM` 标记保持完整。
 
 ### 2026-09-02 上游融合校验
 

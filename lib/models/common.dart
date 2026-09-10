@@ -446,7 +446,6 @@ class IpInfo {
   });
 
   static IpInfo fromJson(Map<String, dynamic> json) {
-    // myip.ipip.net 格式: {"ret":"ok", "data":{"ip":"...", "location":["中国", "浙江", "绍兴", "", "电信"]}}
     if (json['ret'] == 'ok' && json['data'] is Map) {
       final data = json['data'] as Map;
       final ip = data['ip']?.toString() ?? '';
@@ -488,7 +487,6 @@ class IpInfo {
     }
 
     final ip = json['ip']?.toString() ?? '';
-    // myip.la 格式: {"ip":"...", "location":{"country_code":"...", "country_name":"...", "province":"...", "city":"..."}}
     if (json['location'] is Map) {
       final loc = json['location'] as Map;
       final countryCode = loc['country_code']?.toString() ?? '';
@@ -505,8 +503,11 @@ class IpInfo {
         );
       }
     }
-    // ip-api.com 格式: {"status":"success", "country":"...", "countryCode":"...", "regionName":"...", "city":"...", "isp":"...", "org":"...", "as":"...", "query":"..."}
-    if (json['query'] != null || json['countryCode'] != null) {
+
+    if (json['query'] != null || json['countryCode'] != null || json['status'] != null) {
+      if (json['status'] != null && json['status'] != 'success') {
+        throw FormatException('ip-api.com status not success: ${json['message']}');
+      }
       final ip = (json['query'] ?? json['ip'])?.toString() ?? '';
       final countryCode =
           (json['countryCode'] ?? json['country_code'])?.toString() ?? '';
@@ -520,7 +521,6 @@ class IpInfo {
           ? org
           : (json['as_name']?.toString());
 
-      // 仅取最前面的 AS 号 (例如: "AS37963 Hangzhou Alibaba..." -> "AS37963")
       final rawAs = (json['as'] ?? json['asn'])?.toString() ?? '';
       final asnMatch =
           RegExp(r'^(AS\d+)', caseSensitive: false).firstMatch(rawAs.trim());
@@ -541,7 +541,32 @@ class IpInfo {
         );
       }
     }
-    // ipinfo.io 格式: {"ip":"...", "country_code":"...", "country":"...", "asn":"...", "as_name":"...", "as_domain":"...", "continent":"...", "continent_code":"..."}
+
+    if (json['country_code'] != null && json['country_code3'] != null) {
+      final ip = json['ip']?.toString() ?? '';
+      final org = json['organization_name']?.toString() ??
+          json['organization']?.toString();
+      final rawAsn = json['asn']?.toString() ?? '';
+      final asn = rawAsn.isNotEmpty
+          ? (rawAsn.toUpperCase().startsWith('AS')
+              ? rawAsn.toUpperCase()
+              : 'AS$rawAsn')
+          : null;
+      if (ip.isNotEmpty) {
+        return IpInfo(
+          ip: ip,
+          countryCode: json['country_code']?.toString() ?? '',
+          country: json['country']?.toString(),
+          province: json['region']?.toString(),
+          city: json['city']?.toString(),
+          isp: org,
+          asName: org,
+          asn: asn,
+          continentCode: json['continent_code']?.toString(),
+        );
+      }
+    }
+
     final countryCode =
         (json['country_code'] ?? json['country'])?.toString() ?? '';
     final country = json['country']?.toString();
@@ -566,24 +591,6 @@ class IpInfo {
   }
 
   static IpInfo fromCloudflareTrace(String traceText) {
-    // Cloudflare trace格式示例:
-    // fl=...
-    // h=...
-    // ip=1.2.3.4
-    // ts=...
-    // visit_scheme=https
-    // uag=...
-    // colo=...
-    // sliver=none
-    // http=http/2
-    // loc=US
-    // tls=TLSv1.3
-    // sni=plaintext
-    // warp=off
-    // gateway=off
-    // rbi=off
-    // kex=X25519
-
     final lines = traceText.split('\n');
     String? ip;
     String? countryCode;

@@ -66,18 +66,25 @@ class _AndroidStartButtonState extends ConsumerState<AndroidStartButton> {
     if (!state.isInit || !state.hasProfile) return const SizedBox.shrink();
 
     final isRestarting = ref.watch(isRestartingCoreProvider);
+    final isSmartStopped = ref.watch(isSmartStoppedProvider);
     final isStart = _optimisticStart ?? ref.watch(runTimeProvider) != null;
     final isLoading = _isDisabled || isRestarting;
     return FloatingActionButton(
       heroTag: null,
-      onPressed: isLoading ? null : _handleStart,
+      onPressed: isLoading || isSmartStopped ? null : _handleStart,
       child: isLoading
           ? const SizedBox(
               width: 24,
               height: 24,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
-          : Icon(isStart ? Icons.stop : Icons.play_arrow),
+          : Icon(
+              isSmartStopped
+                  ? Icons.pause_circle_outline
+                  : isStart
+                  ? Icons.stop
+                  : Icons.play_arrow,
+            ),
     );
   }
 }

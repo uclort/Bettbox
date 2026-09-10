@@ -254,32 +254,52 @@ class ProviderItem extends StatelessWidget {
     );
   }
 
+  Widget _buildTitleRow(BuildContext context) {
+    final subtitleText = provider.subscriptionInfo?.expireDesc;
+
+    return Row(
+      children: [
+        Flexible(
+          child: EmojiText(
+            provider.name,
+            style: context.textTheme.titleMedium,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        if (subtitleText != null && subtitleText.isNotEmpty) ...[
+          const SizedBox(width: 6),
+          Text(
+            '·',
+            style: context.textTheme.labelMedium?.toLight,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            subtitleText,
+            style: context.textTheme.labelMedium?.toLight,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ],
+    );
+  }
+
   String _buildProviderDesc() {
     final updateTimeText = provider.updateAt.lastUpdateTimeDesc;
     final subInfo = provider.subscriptionInfo;
-    String infoText;
-    if (subInfo == null) {
-      infoText = updateTimeText;
-    } else {
-      final trafficText = _buildTrafficInfoText(subInfo);
-      final expireText = _getExpireText(subInfo);
-      infoText = trafficText == null
-          ? '$expireText - $updateTimeText'
-          : '$trafficText · $expireText - $updateTimeText';
-    }
+    final trafficText = _buildTrafficInfoText(subInfo);
     final count = provider.count;
-    return count == 0
-        ? infoText
-        : '$infoText · $count${appLocalizations.entries}';
-  }
+    final countText =
+        count == 0 ? null : '$count${appLocalizations.entries}';
 
-  String _getExpireText(SubscriptionInfo subscriptionInfo) {
-    if (subscriptionInfo.expire == 0) {
-      return appLocalizations.infiniteTime;
-    }
-    return DateTime.fromMillisecondsSinceEpoch(
-      subscriptionInfo.expire * 1000,
-    ).show;
+    final parts = [
+      if (trafficText != null && trafficText.isNotEmpty) trafficText,
+      updateTimeText,
+      ?countText,
+    ];
+
+    return parts.join(' · ');
   }
 
   String? _buildTrafficInfoText(SubscriptionInfo? subscriptionInfo) {
@@ -304,7 +324,7 @@ class ProviderItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListItem(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      title: EmojiText(provider.name),
+      title: _buildTitleRow(context),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

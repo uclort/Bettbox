@@ -274,7 +274,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "deleteTip": m2,
     "deleteTunnel": MessageLookupByLibrary.simpleMessage("転送削除"),
     "desc": MessageLookupByLibrary.simpleMessage(
-      "Bettboxは柔軟で強力なMihomo(Clash.Meta)カーネルを搭載した、快適性を追求したプロキシクライアントです。（FlClashベース）",
+      "Bettboxは柔軟で強力なMihomo(Clash.Meta)カーネルを搭載した、快適性を追求したプロキシクライアントです。私たちのビジョン：Connecting Open Source and AI, Accelerating Innovation",
     ),
     "destination": MessageLookupByLibrary.simpleMessage("宛先アドレス"),
     "destinationGeoIP": MessageLookupByLibrary.simpleMessage("宛先GeoIP"),
@@ -362,6 +362,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "実験的設定（注意してご使用ください）",
     ),
     "expirationTime": MessageLookupByLibrary.simpleMessage("有効期限"),
+    "expired": MessageLookupByLibrary.simpleMessage("期限切れ"),
     "export": MessageLookupByLibrary.simpleMessage("エクスポート"),
     "exportFile": MessageLookupByLibrary.simpleMessage("ファイルをエクスポート"),
     "exportLogs": MessageLookupByLibrary.simpleMessage("ログをエクスポート"),
@@ -498,6 +499,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "key": MessageLookupByLibrary.simpleMessage("キー"),
     "language": MessageLookupByLibrary.simpleMessage("言語"),
+    "lastEdit": MessageLookupByLibrary.simpleMessage("前回の編集"),
     "layout": MessageLookupByLibrary.simpleMessage("レイアウト"),
     "leftClickBehavior": MessageLookupByLibrary.simpleMessage("左クリック"),
     "light": MessageLookupByLibrary.simpleMessage("ライト"),
@@ -506,6 +508,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "listen": MessageLookupByLibrary.simpleMessage("リスニング"),
     "local": MessageLookupByLibrary.simpleMessage("ローカル"),
     "localBackupDesc": MessageLookupByLibrary.simpleMessage("ローカルにデータをバックアップ"),
+    "localFile": MessageLookupByLibrary.simpleMessage("ローカルファイル"),
     "localRecoveryDesc": MessageLookupByLibrary.simpleMessage("ファイルからデータを復元"),
     "locate": MessageLookupByLibrary.simpleMessage("位置"),
     "log": MessageLookupByLibrary.simpleMessage("ログ"),
@@ -588,6 +591,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "noStatusAvailable": MessageLookupByLibrary.simpleMessage(
       "ステータスを取得できませんでした",
     ),
+    "noUsageData": MessageLookupByLibrary.simpleMessage("使用量統計なし"),
     "nodeExclusion": MessageLookupByLibrary.simpleMessage("ノード除外"),
     "nodeExclusionDesc": MessageLookupByLibrary.simpleMessage(
       "指定キーワードに一致するノードを除外",
@@ -598,6 +602,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "none": MessageLookupByLibrary.simpleMessage("なし"),
     "notRecommended": MessageLookupByLibrary.simpleMessage("非推奨"),
     "notSelectedTip": MessageLookupByLibrary.simpleMessage("選択できないプロキシグループです"),
+    "notificationHighPriority": MessageLookupByLibrary.simpleMessage("高優先度"),
+    "notificationHighPriorityDesc": MessageLookupByLibrary.simpleMessage(
+      "現在の通知バーをフォアグラウンド高優先度に調整",
+    ),
+    "notificationHighPriorityTip": MessageLookupByLibrary.simpleMessage(
+      "高優先度の通知は、一部のカスタムOSでバックグラウンド維持の問題を緩和できます。現在VPNが正常に動作している場合は無効のままにすることをお勧めします。有効にしますか？",
+    ),
     "ntp": MessageLookupByLibrary.simpleMessage("NTP時刻同期"),
     "ntpDesc": MessageLookupByLibrary.simpleMessage("NTP時刻同期サービスを使用"),
     "ntpInterval": MessageLookupByLibrary.simpleMessage("更新間隔"),
@@ -827,6 +838,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "showHiddenItems": MessageLookupByLibrary.simpleMessage("非表示項目を表示"),
     "showMenu": MessageLookupByLibrary.simpleMessage("メニューを表示"),
     "showPanel": MessageLookupByLibrary.simpleMessage("パネルを表示"),
+    "showStartSwitch": MessageLookupByLibrary.simpleMessage("単独スイッチ表示"),
+    "showStartSwitchDesc": MessageLookupByLibrary.simpleMessage(
+      "ホーム画面に独立したON/OFFボタンを表示",
+    ),
     "shrink": MessageLookupByLibrary.simpleMessage("コンパクト"),
     "silentLaunch": MessageLookupByLibrary.simpleMessage("サイレント起動"),
     "silentLaunchDesc": MessageLookupByLibrary.simpleMessage(

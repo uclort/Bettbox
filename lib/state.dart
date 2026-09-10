@@ -133,6 +133,9 @@ class GlobalState {
           patchClashConfig: system.isAndroid
               ? const ClashConfig(findProcessMode: FindProcessMode.always)
               : defaultClashConfig,
+          networkProps: defaultNetworkProps.copyWith(
+            systemProxy: system.isDesktop,
+          ),
           appSetting: defaultAppSettingProps.copyWith(
             showStartSwitch: _isAndroidTV ?? false,
           ),
@@ -324,6 +327,9 @@ class GlobalState {
 
     if (system.isAndroid) {
       await service?.setQuickResponse(config.vpnProps.quickResponse);
+      await service?.setHighPriorityNotification(
+        config.vpnProps.highPriorityNotification,
+      );
     }
     await startUpdateTasks(tasks);
   }
@@ -561,13 +567,28 @@ class GlobalState {
 
   Future<SetupParams> getSetupParams({required ClashConfig pathConfig}) async {
     final clashConfig = await patchRawConfig(patchConfig: pathConfig);
-    final params = SetupParams(
-      config: clashConfig,
+    await _writeRunningConfig(clashConfig);
+    return SetupParams(
       selectedMap: config.currentProfile?.selectedMap ?? {},
       testUrl: config.appSetting.testUrl,
       overrideTestUrl: config.overrideTestUrl,
     );
-    return params;
+  }
+
+  Future<void> _writeRunningConfig(Map<String, dynamic> clashConfig) async {
+    final content = await encodeCompactYamlTask(clashConfig);
+    final configPath = await appPath.configFilePath;
+    final tempFile = File('$configPath.tmp');
+    await tempFile.writeAsString(content, flush: true);
+    try {
+      await tempFile.rename(configPath);
+    } catch (_) {
+      final targetFile = File(configPath);
+      if (await targetFile.exists()) {
+        await targetFile.delete();
+      }
+      await tempFile.rename(configPath);
+    }
   }
 
   Future<Map<String, dynamic>> patchRawConfig({
@@ -648,6 +669,7 @@ class GlobalState {
         realPatchConfig.tun.routeExcludeAddress;
     rawConfig['tun']['auto-route'] = !system.isAndroid;
     rawConfig['tun']['auto-detect-interface'] = !system.isAndroid;
+    rawConfig['tun']['auto-redirect'] = system.isLinux;
     rawConfig['tun']['strict-route'] = realPatchConfig.tun.strictRoute;
     rawConfig['tun']['endpoint-independent-nat'] =
         realPatchConfig.tun.endpointIndependentNat;
@@ -1002,7 +1024,8 @@ class GlobalState {
       }
     }
 
-    rawConfig['rule'] = rules;
+    rawConfig.remove('rule');
+    rawConfig['rules'] = rules;
     return rawConfig;
   }
 

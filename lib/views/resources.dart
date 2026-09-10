@@ -10,6 +10,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' hide context;
 
+final geoUpdatingKeysProvider =
+    StateProvider.autoDispose<Set<String>>((ref) => {});
+
 @immutable
 class GeoItem {
   final String label;
@@ -23,15 +26,8 @@ class GeoItem {
   });
 }
 
-class ResourcesView extends ConsumerStatefulWidget {
+class ResourcesView extends ConsumerWidget {
   const ResourcesView({super.key});
-
-  @override
-  ConsumerState<ResourcesView> createState() => _ResourcesViewState();
-}
-
-class _ResourcesViewState extends ConsumerState<ResourcesView> {
-  final isUpdatingAll = ValueNotifier<bool>(false);
 
   static const geoItems = <GeoItem>[
     GeoItem(label: 'GeoSite', fileName: geoSiteFileName, key: 'geosite'),
@@ -40,40 +36,51 @@ class _ResourcesViewState extends ConsumerState<ResourcesView> {
     GeoItem(label: 'MRS', fileName: bundleMRSFileName, key: 'mrs'),
   ];
 
-  Future<void> _handleSyncAll() async {
-    if (isUpdatingAll.value) return;
+  Future<void> _handleSyncAll(WidgetRef ref) async {
+    final updatingKeysNotifier = ref.read(geoUpdatingKeysProvider.notifier);
+    if (updatingKeysNotifier.state.isNotEmpty) return;
 
-    isUpdatingAll.value = true;
+    final syncItems =
+        geoItems.where((geoItem) => geoItem.key != 'mrs').toList();
+    updatingKeysNotifier.state = syncItems.map((e) => e.key).toSet();
+
+    final errors = <String>[];
     try {
       await Future.wait(
-        geoItems
-            .where((geoItem) => geoItem.key != 'mrs')
-            .map(
-              (geoItem) => clashCore.updateGeoData(
+        syncItems.map(
+          (geoItem) async {
+            try {
+              final message = await clashCore.updateGeoData(
                 UpdateGeoDataParams(
                   geoName: geoItem.fileName,
                   geoType: geoItem.label,
                 ),
-              ),
-            ),
+              );
+              if (message.isNotEmpty) {
+                errors.add('${geoItem.label}: $message');
+              }
+            } catch (e) {
+              errors.add('${geoItem.label}: $e');
+            } finally {
+              updatingKeysNotifier
+                  .update((s) => Set.of(s)..remove(geoItem.key));
+            }
+          },
+        ),
       );
-      if (mounted) {
-        setState(() {});
-      }
-    } catch (e) {
-      if (mounted) {
+      if (errors.isNotEmpty) {
         globalState.showMessage(
           title: appLocalizations.syncFailed,
-          message: TextSpan(text: e.toString()),
+          message: TextSpan(text: errors.join('\n')),
           cancelable: false,
         );
       }
     } finally {
-      isUpdatingAll.value = false;
+      updatingKeysNotifier.state = {};
     }
   }
 
-  Future<void> _handleResetAll() async {
+  Future<void> _handleResetAll(WidgetRef ref) async {
     final res = await globalState.showMessage(
       title: appLocalizations.reset,
       message: TextSpan(text: appLocalizations.resetTip),
@@ -88,36 +95,29 @@ class _ResourcesViewState extends ConsumerState<ResourcesView> {
   }
 
   @override
-  void dispose() {
-    isUpdatingAll.dispose();
-    super.dispose();
-  }
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isUpdating = ref.watch(
+      geoUpdatingKeysProvider.select((keys) => keys.isNotEmpty),
+    );
 
-  @override
-  Widget build(BuildContext context) {
     return CommonScaffold(
       title: appLocalizations.resources,
       actions: [
         IconButton(
           icon: const Icon(Icons.replay),
-          onPressed: _handleResetAll,
+          onPressed: () => _handleResetAll(ref),
           tooltip: appLocalizations.reset,
         ),
-        ValueListenableBuilder(
-          valueListenable: isUpdatingAll,
-          builder: (_, isUpdating, _) {
-            return IconButton(
-              icon: isUpdating
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.sync),
-              onPressed: isUpdating ? null : _handleSyncAll,
-              tooltip: appLocalizations.syncAll,
-            );
-          },
+        IconButton(
+          icon: isUpdating
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.sync),
+          onPressed: isUpdating ? null : () => _handleSyncAll(ref),
+          tooltip: appLocalizations.syncAll,
         ),
       ],
       body: ListView(
@@ -136,21 +136,19 @@ class _ResourcesViewState extends ConsumerState<ResourcesView> {
   }
 }
 
-class GeoDataListItem extends StatefulWidget {
+class GeoDataListItem extends ConsumerStatefulWidget {
   final GeoItem geoItem;
 
   const GeoDataListItem({super.key, required this.geoItem});
 
   @override
-  State<GeoDataListItem> createState() => _GeoDataListItemState();
+  ConsumerState<GeoDataListItem> createState() => _GeoDataListItemState();
 }
 
-class _GeoDataListItemState extends State<GeoDataListItem> {
-  final isUpdating = ValueNotifier<bool>(false);
-
+class _GeoDataListItemState extends ConsumerState<GeoDataListItem> {
   GeoItem get geoItem => widget.geoItem;
 
-  Future<void> _updateUrl(String url, WidgetRef ref) async {
+  Future<void> _updateUrl(String url) async {
     final defaultMap = defaultGeoXUrl.toJson();
     final newUrl = await globalState.showCommonDialog<String>(
       child: UpdateGeoUrlFormDialog(
@@ -188,138 +186,120 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
     return FileInfo(size: size, lastModified: lastModified);
   }
 
-  Widget _buildSubtitle() {
-    return Consumer(
-      builder: (_, ref, _) {
-        final url = ref.watch(
-          patchClashConfigProvider.select(
-            (state) => state.geoXUrl.toJson()[geoItem.key],
-          ),
-        );
-        final isBundleMRS = geoItem.key == 'mrs';
-        if (url == null && !isBundleMRS) {
-          return SizedBox();
-        }
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 6),
-            FutureBuilder<FileInfo>(
-              future: _getGeoFileLastModified(geoItem.fileName),
-              builder: (_, snapshot) {
-                final height = globalState.measure.bodyMediumHeight;
-                return SizedBox(
-                  height: height,
-                  child: snapshot.data == null
-                      ? SizedBox(width: height, height: height)
-                      : Text(
-                          isBundleMRS
-                              ? '${TrafficValue(value: snapshot.data!.size).show}  ·  Bundled'
-                              : snapshot.data!.desc,
-                          style: context.textTheme.bodyMedium,
-                        ),
-                );
-              },
-            ),
-            const SizedBox(height: 4),
-            Text(
-              isBundleMRS
-                  ? 'https://fastly.jsdelivr.net/gh/appshubcc/bett-rules@release/BundleMRS.7z'
-                  : url!,
-              style: context.textTheme.bodyMedium?.toLight,
-            ),
-            if (!isBundleMRS) ...[
-              const SizedBox(height: 12),
-              Wrap(
-                runSpacing: 6,
-                spacing: 12,
-                runAlignment: WrapAlignment.center,
-                children: [
-                  CommonChip(
-                    avatar: const Icon(Icons.edit),
-                    label: appLocalizations.edit,
-                    onPressed: () {
-                      _updateUrl(url, ref);
-                    },
-                  ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        child: ValueListenableBuilder(
-                          valueListenable: isUpdating,
-                          builder: (_, isUpdating, _) {
-                            return isUpdating
-                                ? SizedBox(
-                                    height: 30,
-                                    width: 30,
-                                    child: const Padding(
-                                      padding: EdgeInsets.all(2),
-                                      child: CircularProgressIndicator(),
-                                    ),
-                                  )
-                                : CommonChip(
-                                    avatar: const Icon(Icons.sync),
-                                    label: appLocalizations.sync,
-                                    onPressed: () {
-                                      _handleUpdateGeoDataItem();
-                                    },
-                                  );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ],
-        );
-      },
-    );
-  }
-
   Future<void> _handleUpdateGeoDataItem() async {
+    final updatingKeysNotifier = ref.read(geoUpdatingKeysProvider.notifier);
+    if (ref.read(geoUpdatingKeysProvider).contains(geoItem.key)) return;
+
     await globalState.appController.safeRun<void>(
       () async {
-        await updateGeoDateItem();
+        updatingKeysNotifier.update((s) => Set.of(s)..add(geoItem.key));
+        try {
+          final message = await clashCore.updateGeoData(
+            UpdateGeoDataParams(
+              geoName: geoItem.fileName,
+              geoType: geoItem.label,
+            ),
+          );
+          if (message.isNotEmpty) throw message;
+        } finally {
+          updatingKeysNotifier.update((s) => Set.of(s)..remove(geoItem.key));
+        }
       },
       silence: false,
       needLoading: false,
     );
-    if (mounted) {
-      setState(() {});
-    }
-  }
-
-  Future<void> updateGeoDateItem() async {
-    if (geoItem.key == 'mrs') return;
-    isUpdating.value = true;
-    try {
-      final message = await clashCore.updateGeoData(
-        UpdateGeoDataParams(geoName: geoItem.fileName, geoType: geoItem.label),
-      );
-      if (message.isNotEmpty) throw message;
-    } catch (e) {
-      isUpdating.value = false;
-      rethrow;
-    }
-    isUpdating.value = false;
-    return;
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    isUpdating.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(
+      geoUpdatingKeysProvider.select((s) => s.contains(geoItem.key)),
+      (prev, next) {
+        if (prev == true && next == false && mounted) {
+          setState(() {});
+        }
+      },
+    );
+
+    final url = ref.watch(
+      patchClashConfigProvider.select(
+        (state) => state.geoXUrl.toJson()[geoItem.key],
+      ),
+    );
+    final isSyncing = ref.watch(
+      geoUpdatingKeysProvider.select((s) => s.contains(geoItem.key)),
+    );
+    final isBundleMRS = geoItem.key == 'mrs';
+
     return ListItem(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       title: Text(geoItem.label),
-      subtitle: _buildSubtitle(),
+      subtitle: (url == null && !isBundleMRS)
+          ? const SizedBox()
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 6),
+                FutureBuilder<FileInfo>(
+                  future: _getGeoFileLastModified(geoItem.fileName),
+                  builder: (_, snapshot) {
+                    final height = globalState.measure.bodyMediumHeight;
+                    return SizedBox(
+                      height: height,
+                      child: snapshot.data == null
+                          ? SizedBox(width: height, height: height)
+                          : Text(
+                              isBundleMRS
+                                  ? '${TrafficValue(value: snapshot.data!.size).show}  ·  Bundled'
+                                  : snapshot.data!.desc,
+                              style: context.textTheme.bodyMedium,
+                            ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  isBundleMRS
+                      ? 'https://github.com/appshubcc/bett-rules/releases/download/latest/BundleMRS.7z'
+                      : url!,
+                  style: context.textTheme.bodyMedium?.toLight,
+                ),
+                if (!isBundleMRS) ...[
+                  const SizedBox(height: 12),
+                  Wrap(
+                    runSpacing: 6,
+                    spacing: 12,
+                    runAlignment: WrapAlignment.center,
+                    children: [
+                      CommonChip(
+                        avatar: const Icon(Icons.edit),
+                        label: appLocalizations.edit,
+                        onPressed: isSyncing ? null : () => _updateUrl(url),
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          isSyncing
+                              ? const SizedBox(
+                                  height: 30,
+                                  width: 30,
+                                  child: Padding(
+                                    padding: EdgeInsets.all(2),
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                )
+                              : CommonChip(
+                                  avatar: const Icon(Icons.sync),
+                                  label: appLocalizations.sync,
+                                  onPressed: _handleUpdateGeoDataItem,
+                                ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
     );
   }
 }

@@ -299,6 +299,7 @@ abstract class Tun with _$Tun {
     @JsonKey(name: 'endpoint-independent-nat')
     @Default(false)
     bool endpointIndependentNat,
+    @JsonKey(name: 'auto-redirect') @Default(false) bool autoRedirect,
   }) = _Tun;
 
   factory Tun.fromJson(Map<String, Object?> json) => _$TunFromJson(json);
@@ -330,6 +331,7 @@ extension TunExt on Tun {
         return copyWith(
           autoRoute: true,
           stack: realStack,
+          autoRedirect: system.isLinux,
           routeAddress: [],
           routeExcludeAddress:
               bypassPrivateRouteAddress ??
@@ -339,6 +341,7 @@ extension TunExt on Tun {
       return copyWith(
         autoRoute: true,
         stack: realStack,
+        autoRedirect: system.isLinux,
         routeAddress: [],
         routeExcludeAddress: [],
       );

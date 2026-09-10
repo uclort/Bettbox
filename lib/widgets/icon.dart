@@ -28,7 +28,7 @@ class _CommonTargetIconState extends State<CommonTargetIcon> {
   static final Map<String, File?> _moduleFileCache = {};
   static final Map<String, bool> _moduleSvgValidCache = {};
   static final Map<String, DateTime> _moduleFailureCache = {};
-  static const _maxCacheEntries = 80;
+  static const _maxCacheEntries = 256;
   static const _failureCooldownSeconds = 10;
 
   String _moduleCacheKey(int cacheSize) {
@@ -63,13 +63,19 @@ class _CommonTargetIconState extends State<CommonTargetIcon> {
     final cacheSize = (widget.size * devicePixelRatio).ceil();
     final key = _moduleCacheKey(cacheSize);
 
-    final cachedFile = _moduleFileCache[key] ?? _findCachedFileForSrc(widget.src);
-    final syncHit = cachedFile != null;
-
-    if (syncHit) {
+    final exactFile = _moduleFileCache[key];
+    if (exactFile != null) {
       _cachedSrc = widget.src;
       _cachedSize = cacheSize;
-      _file = cachedFile;
+      _file = exactFile;
+      return;
+    }
+
+    final fallbackFile = _findCachedFileForSrc(widget.src);
+    if (fallbackFile != null) {
+      _cachedSrc = widget.src;
+      _cachedSize = null;
+      _file = fallbackFile;
     }
     _init(cacheSize);
   }
@@ -113,7 +119,7 @@ class _CommonTargetIconState extends State<CommonTargetIcon> {
     return path.join(tempDir, 'resized_icons', '$hash.png');
   }
 
-  /// Decode, resize and cache image to disk
+  /// Decode, resize and cache image to disk, preserving aspect ratio
   Future<File?> _resizeAndCacheImage(File originalFile, int targetSize) async {
     try {
       final cachePath = await _getResizedCachePath(
@@ -129,10 +135,36 @@ class _CommonTargetIconState extends State<CommonTargetIcon> {
 
       // Read original image
       final bytes = await originalFile.readAsBytes();
+
+      // Probe original image dimensions
+      final probeCodec = await ui.instantiateImageCodec(bytes);
+      final probeFrame = await probeCodec.getNextFrame();
+      final origImage = probeFrame.image;
+      final origWidth = origImage.width;
+      final origHeight = origImage.height;
+
+      // If already small enough, no need to resize and re-encode
+      if (origWidth <= targetSize && origHeight <= targetSize) {
+        return originalFile;
+      }
+
+      // Calculate aspect-ratio-preserving dimensions bounded by targetSize
+      final int targetWidth;
+      final int targetHeight;
+      if (origWidth >= origHeight) {
+        targetWidth = targetSize;
+        targetHeight =
+            (origHeight * targetSize / origWidth).round().clamp(1, targetSize);
+      } else {
+        targetHeight = targetSize;
+        targetWidth =
+            (origWidth * targetSize / origHeight).round().clamp(1, targetSize);
+      }
+
       final codec = await ui.instantiateImageCodec(
         bytes,
-        targetWidth: targetSize,
-        targetHeight: targetSize,
+        targetWidth: targetWidth,
+        targetHeight: targetHeight,
       );
       final frame = await codec.getNextFrame();
       final image = frame.image;
@@ -140,7 +172,7 @@ class _CommonTargetIconState extends State<CommonTargetIcon> {
       // Convert to PNG bytes
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       if (byteData == null) {
-        return null;
+        return originalFile;
       }
 
       // Save to disk
@@ -319,8 +351,7 @@ class _CommonTargetIconState extends State<CommonTargetIcon> {
       return Image.memory(
         base64,
         gaplessPlayback: true,
-        cacheWidth: cacheSize,
-        cacheHeight: cacheSize,
+        fit: BoxFit.contain,
         errorBuilder: (_, error, _) {
           return _defaultIcon();
         },
@@ -335,6 +366,7 @@ class _CommonTargetIconState extends State<CommonTargetIcon> {
               _file!,
               width: widget.size,
               height: widget.size,
+              fit: BoxFit.contain,
               placeholderBuilder: (_) => _defaultIcon(),
             );
           } catch (e) {
@@ -369,6 +401,7 @@ class _CommonTargetIconState extends State<CommonTargetIcon> {
                 _file!,
                 width: widget.size,
                 height: widget.size,
+                fit: BoxFit.contain,
                 placeholderBuilder: (_) => _defaultIcon(),
               );
             } catch (e) {
@@ -388,6 +421,7 @@ class _CommonTargetIconState extends State<CommonTargetIcon> {
       return Image.file(
         _file!,
         gaplessPlayback: true,
+        fit: BoxFit.contain,
         errorBuilder: (_, _, _) {
           _moduleFileCache.remove(mKey);
           _moduleFailureCache.remove(mKey);

@@ -352,7 +352,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Удалить перенаправление",
     ),
     "desc": MessageLookupByLibrary.simpleMessage(
-      "Bettbox основан на мощном и гибком прокси-ядре Mihomo (Clash.Meta) и стремится к созданию лучшего пользовательского опыта. Форк от FlClash: Улучшенный опыт, готов к работе «из коробки»",
+      "Bettbox основан на мощном и гибком прокси-ядре Mihomo (Clash.Meta) и стремится к созданию лучшего пользовательского опыта. Наше видение: Connecting Open Source and AI, Accelerating Innovation",
     ),
     "destination": MessageLookupByLibrary.simpleMessage("Адрес назначения"),
     "destinationGeoIP": MessageLookupByLibrary.simpleMessage(
@@ -458,6 +458,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Экспериментальные настройки, используйте с осторожностью",
     ),
     "expirationTime": MessageLookupByLibrary.simpleMessage("Срок действия"),
+    "expired": MessageLookupByLibrary.simpleMessage("Истекший"),
     "export": MessageLookupByLibrary.simpleMessage("Экспорт"),
     "exportFile": MessageLookupByLibrary.simpleMessage("Экспорт файла"),
     "exportLogs": MessageLookupByLibrary.simpleMessage("Экспорт логов"),
@@ -646,6 +647,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "key": MessageLookupByLibrary.simpleMessage("Ключ"),
     "language": MessageLookupByLibrary.simpleMessage("Язык"),
+    "lastEdit": MessageLookupByLibrary.simpleMessage(
+      "Последнее редактирование",
+    ),
     "layout": MessageLookupByLibrary.simpleMessage("Ширина"),
     "leftClickBehavior": MessageLookupByLibrary.simpleMessage("Действие ЛКМ"),
     "light": MessageLookupByLibrary.simpleMessage("Светлая"),
@@ -656,6 +660,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "localBackupDesc": MessageLookupByLibrary.simpleMessage(
       "Резервное копирование данных в файл",
     ),
+    "localFile": MessageLookupByLibrary.simpleMessage("Локальный файл"),
     "localRecoveryDesc": MessageLookupByLibrary.simpleMessage(
       "Восстановление из файла",
     ),
@@ -758,6 +763,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "noStatusAvailable": MessageLookupByLibrary.simpleMessage(
       "Статус недоступен",
     ),
+    "noUsageData": MessageLookupByLibrary.simpleMessage("Нет статистики"),
     "nodeExclusion": MessageLookupByLibrary.simpleMessage("Исключение узлов"),
     "nodeExclusionDesc": MessageLookupByLibrary.simpleMessage(
       "Исключить все узлы, соответствующие шаблону",
@@ -769,6 +775,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "notRecommended": MessageLookupByLibrary.simpleMessage("Не рекомендуется"),
     "notSelectedTip": MessageLookupByLibrary.simpleMessage(
       "Невозможно выбрать эту группу прокси",
+    ),
+    "notificationHighPriority": MessageLookupByLibrary.simpleMessage(
+      "Высокий приоритет",
+    ),
+    "notificationHighPriorityDesc": MessageLookupByLibrary.simpleMessage(
+      "Установить высокий приоритет для панели уведомлений",
+    ),
+    "notificationHighPriorityTip": MessageLookupByLibrary.simpleMessage(
+      "Уведомления с высоким приоритетом могут решить проблемы работы в фоне на некоторых кастомных прошивках. Если ваш VPN работает нормально, рекомендуется оставить выключенным. Включить?",
     ),
     "ntp": MessageLookupByLibrary.simpleMessage("NTP"),
     "ntpDesc": MessageLookupByLibrary.simpleMessage(
@@ -1065,6 +1080,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "showHiddenItems": MessageLookupByLibrary.simpleMessage("Показать скрытые"),
     "showMenu": MessageLookupByLibrary.simpleMessage("Открыть меню"),
     "showPanel": MessageLookupByLibrary.simpleMessage("Показать окно"),
+    "showStartSwitch": MessageLookupByLibrary.simpleMessage(
+      "Тумблер запуска на главной",
+    ),
+    "showStartSwitchDesc": MessageLookupByLibrary.simpleMessage(
+      "Отображать отдельную кнопку переключения на главной странице",
+    ),
     "shrink": MessageLookupByLibrary.simpleMessage("Стандарт"),
     "silentLaunch": MessageLookupByLibrary.simpleMessage("Тихий запуск"),
     "silentLaunchDesc": MessageLookupByLibrary.simpleMessage(

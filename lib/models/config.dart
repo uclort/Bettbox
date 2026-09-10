@@ -228,6 +228,7 @@ abstract class VpnProps with _$VpnProps {
     @Default(false) bool storeFix,
     @Default(false) bool networkFix,
     @Default(false) bool disableQuic,
+    @Default(false) bool highPriorityNotification,
     @Default(false) bool networkSpeedNotification,
     @Default(false) bool excludeChina,
     @Default(false) bool trayEnhancement,
