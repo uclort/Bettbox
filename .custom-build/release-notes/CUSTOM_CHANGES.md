@@ -130,8 +130,14 @@
 
 ### 自定义内核同步
 
-- 私有 `custom-mihomo` 当前提交为 `39ed8bada621`，基线记录为 Bettbox `main@70b607789788` 与 Mihomo `v1.19.30`；内核源码树为 `d3aa5ea42fb256650567049ebdf6f494e9255af6`，继续应用 `opensnell-v6.patch`。私有覆写脚本内容未改动。
+- 私有 `custom-mihomo` 当前提交为 `a56a20c64b69`，基线记录为 Bettbox `main@b2d8734e3650` 与 Mihomo `v1.19.31`；内核源码树为 `2069be92c7c3929d91a1ed43321cba287c4414dd`，继续应用 `opensnell-v6.patch`。私有覆写脚本内容未改动。
 - 私有核心同步后通过 `go test ./transport/snell ./adapter/outbound ./component/dialer ./component/dhcp ./dns ./listener/sing_tun ./tunnel/statistic ./transport/hysteria/core ./transport/trusttunnel`，并保留全部四处 `BETTBOX-CUSTOM` 标记；两份私有覆写脚本也完成语法与 Sukka 回归校验。
+
+### 2026-09-20 上游融合校验
+
+- 上游 Bettbox `main@b2d8734e3650` 已合入 `custom-build`，版本更新为 `1.19.2+2026091901`；媒体解锁检测、内存状态、文件 URL 导入、配置持久化、编辑器及 Android 改进已纳入。
+- 重复功能逐项比较后，采用上游 Linux 固定托盘 ID、核心初始化与空闲 GC、Android 重启等待和覆盖恢复目录清理；WebDAV Provider 排除边界、macOS `mixed` 栈、串行 DNS/TUN 生命周期及统一启停继续保留自定义实现。
+- macOS 菜单栏仍固定使用 `icon_template.png`，`setIcon` 始终传递 `isTemplate: true`，并由 `setActive` 驱动 `contentTintColor` 在系统原生高亮与次级标签灰色之间切换。
 
 ### 2026-09-10 上游融合校验
 

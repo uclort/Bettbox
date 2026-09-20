@@ -93,11 +93,6 @@ class App {
     return packageNamesRaw.map((e) => e.toString()).toList();
   }
 
-  Future<bool> openFile(String path) async {
-    return await methodChannel.invokeMethod<bool>('openFile', {'path': path}) ??
-        false;
-  }
-
   Future<Uint8List?> getPackageIcon(
     String packageName, {
     String processPath = '',

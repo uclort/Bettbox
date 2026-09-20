@@ -7,6 +7,8 @@ import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
+import 'core_status_dialog.dart';
+
 class MemoryInfo extends StatefulWidget {
   const MemoryInfo({super.key});
 
@@ -101,6 +103,7 @@ class _MemoryInfoState extends State<MemoryInfo> {
     return SizedBox(
       height: getWidgetHeight(1),
       child: CommonCard(
+        onPressed: () => showCoreStatusDialog(context),
         onLongPress: () async {
           // Show confirmation dialog
           final result = await globalState.showCommonDialog<bool>(

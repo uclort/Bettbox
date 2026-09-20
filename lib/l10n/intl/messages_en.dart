@@ -33,34 +33,36 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m5(count) =>
       "${Intl.plural(count, one: 'hour', other: 'hours')}";
 
-  static String m6(count) =>
-      "${Intl.plural(count, one: 'minute', other: 'minutes')}";
+  static String m6(count) => "${count}";
 
   static String m7(count) =>
+      "${Intl.plural(count, one: 'minute', other: 'minutes')}";
+
+  static String m8(count) =>
       "${Intl.plural(count, one: 'month', other: 'months')}";
 
-  static String m8(label) => "No ${label}";
+  static String m9(label) => "No ${label}";
 
-  static String m9(label) => "${label} must be a number";
+  static String m10(label) => "${label} must be a number";
 
-  static String m10(label) =>
+  static String m11(label) =>
       "${label} must be between 1024 and 49151, 0 to disable";
 
-  static String m11(statusCode) =>
+  static String m12(statusCode) =>
       "Failed to import profile. Please check your network status or try resetting the subscription link ( HTTP error code: ${statusCode} )";
 
-  static String m12(count) => "${count} items selected";
+  static String m13(count) => "${count} items selected";
 
-  static String m13(interface) =>
+  static String m14(interface) =>
       "Another VPN/TUN is still active (${interface}). Turn it off and try again.";
 
-  static String m14(progress) => "Downloading update: ${progress}%";
+  static String m15(progress) => "Downloading update: ${progress}%";
 
-  static String m15(message) => "Update failed: ${message}";
+  static String m16(message) => "Update failed: ${message}";
 
-  static String m16(label) => "${label} must be a URL";
+  static String m17(label) => "${label} must be a URL";
 
-  static String m17(count) =>
+  static String m18(count) =>
       "${Intl.plural(count, one: 'year', other: 'years')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -82,6 +84,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "action_proxy": MessageLookupByLibrary.simpleMessage("System Proxy"),
     "action_tun": MessageLookupByLibrary.simpleMessage("TUN"),
     "action_view": MessageLookupByLibrary.simpleMessage("Show/Hide"),
+    "activeGoroutines": MessageLookupByLibrary.simpleMessage("Goroutines"),
     "add": MessageLookupByLibrary.simpleMessage("Add"),
     "addProfile": MessageLookupByLibrary.simpleMessage("Add Profile"),
     "addRule": MessageLookupByLibrary.simpleMessage("Add Rule"),
@@ -127,6 +130,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "ago": MessageLookupByLibrary.simpleMessage(" ago"),
     "agree": MessageLookupByLibrary.simpleMessage("Agree"),
     "allApps": MessageLookupByLibrary.simpleMessage("All Apps"),
+    "allocatedMemory": MessageLookupByLibrary.simpleMessage("Allocated"),
     "allowBypass": MessageLookupByLibrary.simpleMessage("Allow Bypassing VPN"),
     "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
       "Allow specific apps to bypass VPN",
@@ -226,7 +230,16 @@ class MessageLookup extends MessageLookupByLibrary {
       "Show System Apps",
     ),
     "cancelSelectAll": MessageLookupByLibrary.simpleMessage("Deselect All"),
+    "categoryAi": MessageLookupByLibrary.simpleMessage("AI"),
+    "categoryAll": MessageLookupByLibrary.simpleMessage("All"),
+    "categoryChina": MessageLookupByLibrary.simpleMessage("China Direct"),
+    "categoryCrypto": MessageLookupByLibrary.simpleMessage("Crypto"),
+    "categoryDeveloper": MessageLookupByLibrary.simpleMessage("Developer"),
+    "categoryGaming": MessageLookupByLibrary.simpleMessage("Gaming Center"),
+    "categorySocial": MessageLookupByLibrary.simpleMessage("Social Platforms"),
+    "categoryStreaming": MessageLookupByLibrary.simpleMessage("Streaming"),
     "checkError": MessageLookupByLibrary.simpleMessage("Check Failed"),
+    "checkFailed": MessageLookupByLibrary.simpleMessage("Timeout"),
     "checkOrAddProfile": MessageLookupByLibrary.simpleMessage(
       "Please add a profile first",
     ),
@@ -304,6 +317,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "core": MessageLookupByLibrary.simpleMessage("Core"),
     "coreConnected": MessageLookupByLibrary.simpleMessage("Connected"),
     "coreInfo": MessageLookupByLibrary.simpleMessage("Core Info"),
+    "coreStatus": MessageLookupByLibrary.simpleMessage("Core Status"),
     "coreSuspended": MessageLookupByLibrary.simpleMessage("Suspended"),
     "country": MessageLookupByLibrary.simpleMessage("Country"),
     "countryOrRegion": MessageLookupByLibrary.simpleMessage("Country / Region"),
@@ -508,6 +522,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "findProcessModeDesc": MessageLookupByLibrary.simpleMessage(
       "Enable process matching",
     ),
+    "flagged": MessageLookupByLibrary.simpleMessage("Flagged"),
     "fontFamily": MessageLookupByLibrary.simpleMessage("Font"),
     "forceDnsMapping": MessageLookupByLibrary.simpleMessage(
       "Force DNS Mapping",
@@ -532,7 +547,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Modify global settings",
     ),
     "generateFromPrivateKey": MessageLookupByLibrary.simpleMessage(
-      "Generate from Age private key",
+      "Generate from private key",
     ),
     "generateSecret": MessageLookupByLibrary.simpleMessage("Generate"),
     "geoData": MessageLookupByLibrary.simpleMessage("GeoData"),
@@ -540,6 +555,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "geodataLoaderDesc": MessageLookupByLibrary.simpleMessage(
       "Use GEO low memory loader",
     ),
+    "geodataUse": MessageLookupByLibrary.simpleMessage("GEO Load"),
     "geoipCode": MessageLookupByLibrary.simpleMessage("GeoIP Code"),
     "getOriginRules": MessageLookupByLibrary.simpleMessage("Original Rules"),
     "global": MessageLookupByLibrary.simpleMessage("Global"),
@@ -556,6 +572,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "healthCheckTimeoutDesc": MessageLookupByLibrary.simpleMessage(
       "Node health check timeout",
     ),
+    "heapObjects": MessageLookupByLibrary.simpleMessage("Objects"),
     "highPriority": MessageLookupByLibrary.simpleMessage("High Priority"),
     "highPriorityDesc": MessageLookupByLibrary.simpleMessage(
       "Increase priority of main process and core process",
@@ -622,6 +639,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Allow IPv6 inbound",
     ),
     "isp": MessageLookupByLibrary.simpleMessage("ISP"),
+    "itemsCount": m6,
     "just": MessageLookupByLibrary.simpleMessage("Just now"),
     "keepAliveIntervalDesc": MessageLookupByLibrary.simpleMessage(
       "TCP keep-alive interval",
@@ -632,6 +650,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "layout": MessageLookupByLibrary.simpleMessage("Layout"),
     "leftClickBehavior": MessageLookupByLibrary.simpleMessage("Left Click"),
     "light": MessageLookupByLibrary.simpleMessage("Light"),
+    "limitedUnlock": MessageLookupByLibrary.simpleMessage("Originals Only"),
     "lineWrap": MessageLookupByLibrary.simpleMessage("Wrap Lines"),
     "list": MessageLookupByLibrary.simpleMessage("List"),
     "listen": MessageLookupByLibrary.simpleMessage("Listen"),
@@ -660,6 +679,38 @@ class MessageLookup extends MessageLookupByLibrary {
     "loose": MessageLookupByLibrary.simpleMessage("Loose"),
     "manualRefreshIp": MessageLookupByLibrary.simpleMessage("Refresh IP"),
     "maximize": MessageLookupByLibrary.simpleMessage("Maximize"),
+    "mediaUnlock": MessageLookupByLibrary.simpleMessage("Connectivity Test"),
+    "mediaUnlockColorfulIcons": MessageLookupByLibrary.simpleMessage(
+      "Show colored icons by default",
+    ),
+    "mediaUnlockDetails": MessageLookupByLibrary.simpleMessage(
+      "Connectivity Test Details",
+    ),
+    "mediaUnlockDisplaySettings": MessageLookupByLibrary.simpleMessage(
+      "Display Settings",
+    ),
+    "mediaUnlockExtraDetails": MessageLookupByLibrary.simpleMessage(
+      "Show more IP details",
+    ),
+    "mediaUnlockMiscSettings": MessageLookupByLibrary.simpleMessage(
+      "Misc Settings",
+    ),
+    "mediaUnlockPinnedSettingsDesc": MessageLookupByLibrary.simpleMessage(
+      "Select up to 4 items to pin on the widget",
+    ),
+    "mediaUnlockRefreshByCategory": MessageLookupByLibrary.simpleMessage(
+      "Partially refresh based on current category",
+    ),
+    "mediaUnlockRefreshOnNodeChange": MessageLookupByLibrary.simpleMessage(
+      "Auto refresh on node change",
+    ),
+    "mediaUnlockSelectLimit": MessageLookupByLibrary.simpleMessage(
+      "You can select up to 4 items",
+    ),
+    "mediaUnlocked": MessageLookupByLibrary.simpleMessage("Unlocked"),
+    "memoryAndRuntime": MessageLookupByLibrary.simpleMessage(
+      "Memory & Runtime",
+    ),
     "memoryInfo": MessageLookupByLibrary.simpleMessage("Memory"),
     "memoryInfoDesc": MessageLookupByLibrary.simpleMessage(
       "The current memory information value displayed is the dynamic stack memory usage of the core during runtime, not the complete APP memory statistics, for reference only.",
@@ -674,11 +725,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "minimizeOnExitDesc": MessageLookupByLibrary.simpleMessage(
       "Override default exit behavior",
     ),
-    "minutes": m6,
+    "minutes": m7,
     "mixedPort": MessageLookupByLibrary.simpleMessage("Mixed Port"),
     "mode": MessageLookupByLibrary.simpleMessage("Mode"),
     "monochromeScheme": MessageLookupByLibrary.simpleMessage("Monochrome"),
-    "months": m7,
+    "months": m8,
     "more": MessageLookupByLibrary.simpleMessage("More"),
     "moreIpInfo": MessageLookupByLibrary.simpleMessage("More IP Information"),
     "name": MessageLookupByLibrary.simpleMessage("Name"),
@@ -753,6 +804,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "notSelectedTip": MessageLookupByLibrary.simpleMessage(
       "Current proxy group cannot be selected.",
     ),
+    "notUnlocked": MessageLookupByLibrary.simpleMessage("Not Unlocked"),
     "notificationHighPriority": MessageLookupByLibrary.simpleMessage(
       "High Priority",
     ),
@@ -774,8 +826,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "nullProfileDesc": MessageLookupByLibrary.simpleMessage(
       "No profile. Please add one.",
     ),
-    "nullTip": m8,
-    "numberTip": m9,
+    "nullTip": m9,
+    "numberTip": m10,
     "oneColumn": MessageLookupByLibrary.simpleMessage("1 Column"),
     "onlinePanel": MessageLookupByLibrary.simpleMessage("Online Panel"),
     "onlyIcon": MessageLookupByLibrary.simpleMessage("Icon Only"),
@@ -879,7 +931,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "portConflictTip": MessageLookupByLibrary.simpleMessage(
       "Please enter a different port",
     ),
-    "portTip": m10,
+    "portTip": m11,
+    "powerSwitch": MessageLookupByLibrary.simpleMessage("Power"),
     "preferH3Desc": MessageLookupByLibrary.simpleMessage(
       "Prioritize DoH HTTP/3",
     ),
@@ -889,6 +942,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Private / LAN IP Address",
     ),
     "profile": MessageLookupByLibrary.simpleMessage("Profile"),
+    "profileAndRules": MessageLookupByLibrary.simpleMessage("Profile & Rules"),
     "profileAutoUpdateIntervalInvalidValidationDesc":
         MessageLookupByLibrary.simpleMessage("Please enter a valid interval"),
     "profileAutoUpdateIntervalNullValidationDesc":
@@ -896,7 +950,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "profileHasUpdate": MessageLookupByLibrary.simpleMessage(
       "Profile modified. Disable auto-update?",
     ),
-    "profileImportFailed": m11,
+    "profileImportFailed": m12,
     "profileNameNullValidationDesc": MessageLookupByLibrary.simpleMessage(
       "Please enter a profile name",
     ),
@@ -916,9 +970,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "providers": MessageLookupByLibrary.simpleMessage("Providers"),
     "provinceAndCity": MessageLookupByLibrary.simpleMessage("Province / City"),
     "proxies": MessageLookupByLibrary.simpleMessage("Proxies"),
+    "proxiesCount": MessageLookupByLibrary.simpleMessage("Proxies"),
     "proxiesSetting": MessageLookupByLibrary.simpleMessage("Proxy Settings"),
     "proxyChains": MessageLookupByLibrary.simpleMessage("Proxy Chains"),
     "proxyGroup": MessageLookupByLibrary.simpleMessage("Proxy Group"),
+    "proxyGroupsCount": MessageLookupByLibrary.simpleMessage("Proxy Groups"),
     "proxyNameserver": MessageLookupByLibrary.simpleMessage("Proxy Nameserver"),
     "proxyNameserverDesc": MessageLookupByLibrary.simpleMessage(
       "Used to resolve proxy nodes",
@@ -928,6 +984,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Set the Clash listening port",
     ),
     "proxyProviders": MessageLookupByLibrary.simpleMessage("Proxy Providers"),
+    "proxyProvidersCount": MessageLookupByLibrary.simpleMessage(
+      "Proxy Providers",
+    ),
     "pulse": MessageLookupByLibrary.simpleMessage("Pulse"),
     "pureBlackMode": MessageLookupByLibrary.simpleMessage("Pure Black Mode"),
     "qrcode": MessageLookupByLibrary.simpleMessage("QR Code"),
@@ -955,6 +1014,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "rainbowScheme": MessageLookupByLibrary.simpleMessage("Rainbow"),
     "realTimeSpeed": MessageLookupByLibrary.simpleMessage("Real-time Speed"),
+    "reclaimableMemory": MessageLookupByLibrary.simpleMessage("Reclaimable"),
     "recovery": MessageLookupByLibrary.simpleMessage("Restore"),
     "recoveryAll": MessageLookupByLibrary.simpleMessage("Restore All Data"),
     "recoveryProfiles": MessageLookupByLibrary.simpleMessage(
@@ -1023,7 +1083,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "rule": MessageLookupByLibrary.simpleMessage("Rule"),
     "ruleName": MessageLookupByLibrary.simpleMessage("Rule Name"),
     "ruleProviders": MessageLookupByLibrary.simpleMessage("Rule Providers"),
+    "ruleProvidersCount": MessageLookupByLibrary.simpleMessage(
+      "Rule Providers",
+    ),
     "ruleTarget": MessageLookupByLibrary.simpleMessage("Rule Target"),
+    "rulesCount": MessageLookupByLibrary.simpleMessage("Rules"),
     "runTime": MessageLookupByLibrary.simpleMessage("Uptime"),
     "runtimeConfig": MessageLookupByLibrary.simpleMessage("Runtime Config"),
     "save": MessageLookupByLibrary.simpleMessage("Save"),
@@ -1042,7 +1106,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "selectAll": MessageLookupByLibrary.simpleMessage("Select All"),
     "selected": MessageLookupByLibrary.simpleMessage("Selected"),
-    "selectedCountTitle": m12,
+    "selectedCountTitle": m13,
+    "serviceReady": MessageLookupByLibrary.simpleMessage("Service Ready"),
     "serviceRunning": MessageLookupByLibrary.simpleMessage("Service Running"),
     "settings": MessageLookupByLibrary.simpleMessage("Settings"),
     "show": MessageLookupByLibrary.simpleMessage("Show"),
@@ -1144,6 +1209,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "testUrl": MessageLookupByLibrary.simpleMessage("Test URL"),
     "testingDelay": MessageLookupByLibrary.simpleMessage("Testing"),
+    "testing": MessageLookupByLibrary.simpleMessage("Testing"),
     "textScale": MessageLookupByLibrary.simpleMessage("Text Scaling"),
     "theme": MessageLookupByLibrary.simpleMessage("Theme"),
     "themeColor": MessageLookupByLibrary.simpleMessage("Theme Color"),
@@ -1185,7 +1251,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunEnableRequireAdmin": MessageLookupByLibrary.simpleMessage(
       "Enabling the TUN virtual network adapter requires Administrator or ROOT privileges.",
     ),
-    "tunRouteConflict": m13,
+    "tunRouteConflict": m14,
     "tunVirtualAddress": MessageLookupByLibrary.simpleMessage(
       "TUN Virtual Network Adapter",
     ),
@@ -1219,11 +1285,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Exclude handshake delays from testing",
     ),
     "unknown": MessageLookupByLibrary.simpleMessage("Unknown"),
+    "unlocked": MessageLookupByLibrary.simpleMessage("Completed"),
     "unnamed": MessageLookupByLibrary.simpleMessage("Unnamed"),
     "unpin": MessageLookupByLibrary.simpleMessage("Unpin"),
     "update": MessageLookupByLibrary.simpleMessage("Update"),
-    "updateDownloading": m14,
-    "updateFailed": m15,
+    "updateDownloading": m15,
+    "updateFailed": m16,
     "updateInstalling": MessageLookupByLibrary.simpleMessage(
       "Opening the system installer...",
     ),
@@ -1231,7 +1298,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "upload": MessageLookupByLibrary.simpleMessage("Upload"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("Get profile via URL"),
-    "urlTip": m16,
+    "urlTip": m17,
     "useGlobalScriptOverride": MessageLookupByLibrary.simpleMessage(
       "Use Global Script Override",
     ),
@@ -1270,6 +1337,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "Requires administrator privileges",
     ),
-    "years": m17,
+    "years": m18,
   };
 }

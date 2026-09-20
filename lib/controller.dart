@@ -27,7 +27,6 @@ import 'package:yaml/yaml.dart';
 
 import 'common/archive.dart' show restoreBackupFiles;
 import 'common/common.dart';
-import 'common/flclash_database_extractor.dart';
 import 'models/models.dart';
 import 'views/profiles/override_profile.dart';
 
@@ -137,10 +136,19 @@ class AppController {
   int _setupGeneration = 0;
   final Set<String> _updatingProfileIds = {};
   int _macOSNetworkRecoveryGeneration = 0;
+  Timer? _idleGcTimer;
 
   AppController(this.context, WidgetRef ref) : _ref = ref;
 
   DateTime _lastModeChangeTime = DateTime.fromMillisecondsSinceEpoch(0);
+
+  void scheduleIdleGc({Duration delay = const Duration(seconds: 2)}) {
+    _idleGcTimer?.cancel();
+    _idleGcTimer = Timer(delay, () {
+      _idleGcTimer = null;
+      unawaited(clashCore.requestGc(forceFreeOSMemory: true));
+    });
+  }
 
   void setupClashConfigDebounce() {
     debouncer.call(FunctionTag.setupClashConfig, () async {
@@ -241,6 +249,9 @@ class AppController {
         await clashCore.flushFakeIP();
         await clashCore.flushDnsCache();
         await clashCore.requestGc(forceFreeOSMemory: true);
+        if (wasRunning) {
+          await Future.delayed(const Duration(milliseconds: 500));
+        }
       }
       if (system.isDesktop) {
         lastProfileModified = null;
@@ -252,6 +263,7 @@ class AppController {
       if (refreshData && configured) {
         await updateGroups();
         await updateProviders();
+        scheduleIdleGc();
       }
 
       if (wasRunning) {
@@ -556,7 +568,7 @@ class AppController {
 
         await Future.delayed(const Duration(seconds: 2));
         if (version != _backgroundLoadVersion) return;
-        await clashCore.requestGc();
+        await clashCore.requestGc(forceFreeOSMemory: true);
       } catch (e) {
         commonPrint.log('Background load error: $e');
       }
@@ -587,6 +599,7 @@ class AppController {
     if (currentProfile == null) {
       return false;
     }
+    await _initCore();
     await currentProfile.checkAndUpdate();
     final patchConfig = _ref.read(patchClashConfigProvider);
     final targetTun = enableTun ?? patchConfig.tun.enable;
@@ -870,6 +883,7 @@ class AppController {
 
   Future<void> _updateClashConfig() async {
     try {
+      await _initCore();
       final updateParams = _ref.read(updateParamsProvider);
       final tunResult = await _requestAdmin(updateParams.tun.enable);
       if (tunResult.isError) return;
@@ -900,6 +914,7 @@ class AppController {
       final prefs = await preferences.sharedPreferencesCompleter.future;
       await prefs?.setBool('is_tun_running', enable);
     }
+    scheduleIdleGc();
   }
 
   Future<Result<bool>> _requestAdmin(bool enableTun) async {
@@ -932,7 +947,10 @@ class AppController {
     return _coreLifecycleLock.synchronized(() async {
       _invalidateCoreReads();
       await safeRun(() async {
-        await _setupCoreConfig();
+        final configured = await _setupCoreConfig();
+        if (configured) {
+          scheduleIdleGc();
+        }
       }, needLoading: false);
     });
   }
@@ -946,6 +964,7 @@ class AppController {
     final providers = await clashCore.getExternalProviders();
     _ref.read(providersProvider.notifier).value = providers;
     await updateGroups(preloadedProviders: providers);
+    scheduleIdleGc();
   }
 
   Future<void> applyProfile({bool silence = false}) {
@@ -1272,7 +1291,7 @@ class AppController {
       ChangeProxyParams(groupName: groupName, proxyName: proxyName),
     );
     if (_ref.read(appSettingProvider).closeConnections) {
-      clashCore.closeConnections();
+      await clashCore.closeConnections();
     }
     addCheckIp();
   }
@@ -1476,20 +1495,31 @@ class AppController {
     );
     if (res == true) {
       final file = File(await appPath.sharedPreferencesPath);
-      final isExists = await file.exists();
-      if (isExists) {
+      if (await file.exists()) {
         await file.delete();
+      }
+      final configFile = File(await appPath.appConfigPath);
+      if (await configFile.exists()) {
+        await configFile.delete();
       }
     }
     await handleExit();
   }
 
-  Future<void> _initCore() async {
-    final isInit = await clashCore.isInit;
-    if (!isInit) {
-      await clashCore.init();
-      await clashCore.setState(globalState.getCoreState());
-    }
+  Future<void>? _initCoreFuture;
+
+  Future<void> _initCore() {
+    return _initCoreFuture ??= () async {
+      try {
+        final isInit = await clashCore.isInit;
+        if (!isInit) {
+          await clashCore.init();
+          await clashCore.setState(globalState.getCoreState());
+        }
+      } finally {
+        _initCoreFuture = null;
+      }
+    }();
   }
 
   void startWakelockAutoRecovery() {
@@ -2399,6 +2429,13 @@ class AppController {
       json.decode(utf8.decode(configContent)),
     );
 
+    final recoveryStrategy = _ref.read(
+      appSettingProvider.select((state) => state.recoveryStrategy),
+    );
+    if (!sharedOnly && recoveryStrategy == RecoveryStrategy.override) {
+      await _cleanProfilesDirForOverride();
+    }
+
     await restoreBackupFiles(
       sharedOnly
           ? profiles.where((profile) => !profile.name.contains('/providers/'))
@@ -2411,6 +2448,25 @@ class AppController {
       _recoveryWebDavShared(tempConfig, recoveryOption);
     } else {
       _recovery(tempConfig, recoveryOption);
+    }
+    await savePreferences();
+  }
+
+  Future<void> _cleanProfilesDirForOverride() async {
+    try {
+      final profilesDirPath = await appPath.profilesPath;
+      final dir = Directory(profilesDirPath);
+      if (await dir.exists()) {
+        await for (final entity in dir.list(followLinks: false)) {
+          try {
+            await entity.delete(recursive: true);
+          } catch (e) {
+            commonPrint.log('Delete profile entity failed: $e');
+          }
+        }
+      }
+    } catch (e) {
+      commonPrint.log('Clean profiles dir for override failed: $e');
     }
   }
 
@@ -2448,96 +2504,62 @@ class AppController {
       json.decode(utf8.decode(configContent)),
     );
 
-    await restoreBackupFiles(profileFiles, homeDirPath);
+    final recoveryStrategy = _ref.read(
+      appSettingProvider.select((state) => state.recoveryStrategy),
+    );
+    if (!sharedOnly && recoveryStrategy == RecoveryStrategy.override) {
+      await _cleanProfilesDirForOverride();
+    }
 
-    // Extract profiles from backup
-    List<Profile> profiles = [];
-    bool extractedFromDatabase = false;
-
-    // 1. Try SQLite database first (FlClash backup)
-    final dbFile = archive.files.firstWhereOrNull(
-      (file) => file.name.endsWith('database.sqlite'),
+    await restoreBackupFiles(
+      sharedOnly
+          ? profileFiles.where(
+              (profile) => !profile.name.contains('/providers/'),
+            )
+          : profileFiles,
+      homeDirPath,
     );
 
-    if (dbFile != null && dbFile.content.isNotEmpty) {
-      try {
-        // Save database temporarily
-        final tempDbPath = join(await appPath.tempPath, 'temp_flclash.db');
-        final tempDb = File(tempDbPath);
-        await tempDb.writeAsBytes(dbFile.content);
+    List<Profile> profiles = [];
 
-        // Extract profiles from database
-        profiles = await FlClashDatabaseExtractor.extractProfiles(tempDbPath);
-        extractedFromDatabase = true;
+    if (backupConfig.profiles.isNotEmpty) {
+      profiles = backupConfig.profiles;
+    } else {
+      for (final profileFile in profileFiles) {
+        final fileName = profileFile.name.split('/').last;
+        if (fileName.endsWith('.yaml') || fileName.endsWith('.yml')) {
+          final id = fileName.replaceAll(RegExp(r'\.(yaml|yml)$'), '');
+          final label = await _extractLabelFromYaml(profileFile) ?? id;
 
-        // Clean up temp file
-        if (await tempDb.exists()) {
-          await tempDb.delete();
-        }
-
-        commonPrint.log(
-          'Extracted ${profiles.length} profiles from FlClash database',
-        );
-      } catch (e) {
-        commonPrint.log(
-          'Failed to extract from database, fallback to file names: $e',
-        );
-        profiles = [];
-        extractedFromDatabase = false;
-      }
-    }
-
-    // 2. Fallback if database extraction failed
-    if (profiles.isEmpty) {
-      // Get from config.json
-      if (backupConfig.profiles.isNotEmpty) {
-        profiles = backupConfig.profiles;
-      } else {
-        // Extract ID from profile file names (FlClash mode)
-        for (final profileFile in profileFiles) {
-          final fileName = profileFile.name.split('/').last;
-          if (fileName.endsWith('.yaml') || fileName.endsWith('.yml')) {
-            final id = fileName.replaceAll(RegExp(r'\.(yaml|yml)$'), '');
-
-            // Try to extract friendly label from YAML
-            final label = await _extractLabelFromYaml(profileFile) ?? id;
-
-            // Create basic Profile object
-            profiles.add(
-              Profile(
-                id: id,
-                label: label,
-                autoUpdateDuration: defaultUpdateDuration,
-                url: '', // Mark empty, user needs to add
-              ),
-            );
-          }
+          profiles.add(
+            Profile(
+              id: id,
+              label: label,
+              autoUpdateDuration: defaultUpdateDuration,
+              url: '',
+            ),
+          );
         }
       }
     }
 
-    // Create limited recovery config (subscriptions only)
     Config limitedConfig = globalState.config.copyWith(profiles: profiles);
 
-    // Android: also restore app list
     if (system.isAndroid) {
-      // FlClash uses accessControlProps instead of accessControl
       final vpnProps = backupConfig.vpnProps;
       AccessControl? accessControl;
 
-      // Try to get from vpnProps.accessControl
       try {
         accessControl = vpnProps.accessControl;
       } catch (_) {
-        // Fallback: try accessControlProps from raw JSON
         try {
           final configJson = json.decode(utf8.decode(configFile.content));
           final vpnPropsJson = configJson['vpnProps'];
           if (vpnPropsJson != null && vpnPropsJson is Map) {
             final accessControlPropsJson = vpnPropsJson['accessControlProps'];
-            if (accessControlPropsJson != null) {
+            if (accessControlPropsJson != null && accessControlPropsJson is Map) {
               accessControl = AccessControl.fromJson(
-                accessControlPropsJson as Map<String, dynamic>,
+                Map<String, dynamic>.from(accessControlPropsJson),
               );
             }
           }
@@ -2557,9 +2579,9 @@ class AppController {
       recoveryOption,
       restorePlatformSettings: !sharedOnly,
     );
+    await savePreferences();
 
-    // Show recovery result message
-    _showRecoveryResultMessage(profiles, extractedFromDatabase);
+    _showRecoveryResultMessage(profiles);
   }
 
   /// Extract label
@@ -2599,19 +2621,13 @@ class AppController {
   }
 
   /// Show results
-  void _showRecoveryResultMessage(
-    List<Profile> profiles,
-    bool extractedFromDatabase,
-  ) {
+  void _showRecoveryResultMessage(List<Profile> profiles) {
     if (profiles.isEmpty) return;
 
     final hasEmptyUrl = profiles.any((p) => p.url.isEmpty);
 
     String message;
-    if (extractedFromDatabase) {
-      // Successfully extracted from database
-      message = 'Restored ${profiles.length} subscriptions with URLs.';
-    } else if (hasEmptyUrl) {
+    if (hasEmptyUrl) {
       // Partial recovery, missing URLs
       message =
           'Restored ${profiles.length} subscriptions.\n\n'

@@ -5389,10 +5389,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Generate from Age private key`
+  /// `Generate from private key`
   String get generateFromPrivateKey {
     return Intl.message(
-      'Generate from Age private key',
+      'Generate from private key',
       name: 'generateFromPrivateKey',
       desc: '',
       args: [],
@@ -5657,6 +5657,326 @@ class AppLocalizations {
   /// `Update Time`
   String get updateTime {
     return Intl.message('Update Time', name: 'updateTime', desc: '', args: []);
+  }
+
+  /// `Core Status`
+  String get coreStatus {
+    return Intl.message('Core Status', name: 'coreStatus', desc: '', args: []);
+  }
+
+  /// `Memory & Runtime`
+  String get memoryAndRuntime {
+    return Intl.message(
+      'Memory & Runtime',
+      name: 'memoryAndRuntime',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Allocated`
+  String get allocatedMemory {
+    return Intl.message(
+      'Allocated',
+      name: 'allocatedMemory',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Reclaimable`
+  String get reclaimableMemory {
+    return Intl.message(
+      'Reclaimable',
+      name: 'reclaimableMemory',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Goroutines`
+  String get activeGoroutines {
+    return Intl.message(
+      'Goroutines',
+      name: 'activeGoroutines',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Objects`
+  String get heapObjects {
+    return Intl.message('Objects', name: 'heapObjects', desc: '', args: []);
+  }
+
+  /// `Profile & Rules`
+  String get profileAndRules {
+    return Intl.message(
+      'Profile & Rules',
+      name: 'profileAndRules',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Rules`
+  String get rulesCount {
+    return Intl.message('Rules', name: 'rulesCount', desc: '', args: []);
+  }
+
+  /// `Proxies`
+  String get proxiesCount {
+    return Intl.message('Proxies', name: 'proxiesCount', desc: '', args: []);
+  }
+
+  /// `Proxy Groups`
+  String get proxyGroupsCount {
+    return Intl.message(
+      'Proxy Groups',
+      name: 'proxyGroupsCount',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Rule Providers`
+  String get ruleProvidersCount {
+    return Intl.message(
+      'Rule Providers',
+      name: 'ruleProvidersCount',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Proxy Providers`
+  String get proxyProvidersCount {
+    return Intl.message(
+      'Proxy Providers',
+      name: 'proxyProvidersCount',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `GEO Load`
+  String get geodataUse {
+    return Intl.message('GEO Load', name: 'geodataUse', desc: '', args: []);
+  }
+
+  /// `{count}`
+  String itemsCount(Object count) {
+    return Intl.message('$count', name: 'itemsCount', desc: '', args: [count]);
+  }
+
+  /// `Connectivity Test`
+  String get mediaUnlock {
+    return Intl.message(
+      'Connectivity Test',
+      name: 'mediaUnlock',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connectivity Test Details`
+  String get mediaUnlockDetails {
+    return Intl.message(
+      'Connectivity Test Details',
+      name: 'mediaUnlockDetails',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Display Settings`
+  String get mediaUnlockDisplaySettings {
+    return Intl.message(
+      'Display Settings',
+      name: 'mediaUnlockDisplaySettings',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Misc Settings`
+  String get mediaUnlockMiscSettings {
+    return Intl.message(
+      'Misc Settings',
+      name: 'mediaUnlockMiscSettings',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show more IP details`
+  String get mediaUnlockExtraDetails {
+    return Intl.message(
+      'Show more IP details',
+      name: 'mediaUnlockExtraDetails',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Auto refresh on node change`
+  String get mediaUnlockRefreshOnNodeChange {
+    return Intl.message(
+      'Auto refresh on node change',
+      name: 'mediaUnlockRefreshOnNodeChange',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show colored icons by default`
+  String get mediaUnlockColorfulIcons {
+    return Intl.message(
+      'Show colored icons by default',
+      name: 'mediaUnlockColorfulIcons',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Partially refresh based on current category`
+  String get mediaUnlockRefreshByCategory {
+    return Intl.message(
+      'Partially refresh based on current category',
+      name: 'mediaUnlockRefreshByCategory',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Select up to 4 items to pin on the widget`
+  String get mediaUnlockPinnedSettingsDesc {
+    return Intl.message(
+      'Select up to 4 items to pin on the widget',
+      name: 'mediaUnlockPinnedSettingsDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `You can select up to 4 items`
+  String get mediaUnlockSelectLimit {
+    return Intl.message(
+      'You can select up to 4 items',
+      name: 'mediaUnlockSelectLimit',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `All`
+  String get categoryAll {
+    return Intl.message('All', name: 'categoryAll', desc: '', args: []);
+  }
+
+  /// `AI`
+  String get categoryAi {
+    return Intl.message('AI', name: 'categoryAi', desc: '', args: []);
+  }
+
+  /// `Streaming`
+  String get categoryStreaming {
+    return Intl.message(
+      'Streaming',
+      name: 'categoryStreaming',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `China Direct`
+  String get categoryChina {
+    return Intl.message(
+      'China Direct',
+      name: 'categoryChina',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Social Platforms`
+  String get categorySocial {
+    return Intl.message(
+      'Social Platforms',
+      name: 'categorySocial',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Developer`
+  String get categoryDeveloper {
+    return Intl.message(
+      'Developer',
+      name: 'categoryDeveloper',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Gaming Center`
+  String get categoryGaming {
+    return Intl.message(
+      'Gaming Center',
+      name: 'categoryGaming',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Crypto`
+  String get categoryCrypto {
+    return Intl.message('Crypto', name: 'categoryCrypto', desc: '', args: []);
+  }
+
+  /// `Completed`
+  String get unlocked {
+    return Intl.message('Completed', name: 'unlocked', desc: '', args: []);
+  }
+
+  /// `Unlocked`
+  String get mediaUnlocked {
+    return Intl.message('Unlocked', name: 'mediaUnlocked', desc: '', args: []);
+  }
+
+  /// `Originals Only`
+  String get limitedUnlock {
+    return Intl.message(
+      'Originals Only',
+      name: 'limitedUnlock',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Not Unlocked`
+  String get notUnlocked {
+    return Intl.message(
+      'Not Unlocked',
+      name: 'notUnlocked',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Timeout`
+  String get checkFailed {
+    return Intl.message('Timeout', name: 'checkFailed', desc: '', args: []);
+  }
+
+  /// `Testing`
+  String get testing {
+    return Intl.message('Testing', name: 'testing', desc: '', args: []);
+  }
+
+  /// `Flagged`
+  String get flagged {
+    return Intl.message('Flagged', name: 'flagged', desc: '', args: []);
   }
 }
 
