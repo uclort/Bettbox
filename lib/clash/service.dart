@@ -142,6 +142,10 @@ class ClashService extends ClashHandlerInterface {
 
     await _destroySocket();
 
+    if (system.isWindows) {
+      await helperClient.stopCore().catchError((_) => false);
+    }
+
     final previousProcess = process;
     process = null;
     previousProcess?.kill();
@@ -267,7 +271,12 @@ class ClashService extends ClashHandlerInterface {
     if (_isDestroying || globalState.isExiting) {
       return;
     }
-    final socket = await socketCompleter.future;
+    final socket = await socketCompleter.future.timeout(
+      const Duration(seconds: 5),
+      onTimeout: () {
+        throw TimeoutException('Core socket connection timed out');
+      },
+    );
     try {
       final frame = FrameCodec.encode(message);
       socket.add(frame);

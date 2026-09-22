@@ -487,7 +487,6 @@ class AppController {
             updateRunTime,
             updateTraffic,
           ]);
-          await updateProviders();
           _backgroundLoad();
         } catch (e) {
           commonPrint.log('FastStart macOS TUN startup failed: $e');
@@ -498,7 +497,6 @@ class AppController {
       }
 
       await globalState.handleStart([updateRunTime, updateTraffic]);
-      await updateProviders();
 
       Future.microtask(() async {
         try {
@@ -533,7 +531,6 @@ class AppController {
 
     _scheduleCheckIpRefresh();
 
-    await updateProviders();
     _backgroundLoad();
   }
 
@@ -549,6 +546,10 @@ class AppController {
 
     Future.microtask(() async {
       try {
+        await updateProviders();
+        if (version != _backgroundLoadVersion) return;
+        if (generation != _coreGeneration) return;
+
         List<Group> groups = [];
         for (var attempt = 0; attempt < 3; attempt++) {
           if (version != _backgroundLoadVersion) return;
@@ -1388,7 +1389,7 @@ class AppController {
     commonPrint.log('clear preferences');
     globalState.config = Config(
       themeProps: defaultThemeProps,
-      networkProps: defaultNetworkProps.copyWith(systemProxy: system.isDesktop),
+      networkProps: defaultNetworkProps,
     );
   }
 
@@ -2556,7 +2557,8 @@ class AppController {
           final vpnPropsJson = configJson['vpnProps'];
           if (vpnPropsJson != null && vpnPropsJson is Map) {
             final accessControlPropsJson = vpnPropsJson['accessControlProps'];
-            if (accessControlPropsJson != null && accessControlPropsJson is Map) {
+            if (accessControlPropsJson != null &&
+                accessControlPropsJson is Map) {
               accessControl = AccessControl.fromJson(
                 Map<String, dynamic>.from(accessControlPropsJson),
               );

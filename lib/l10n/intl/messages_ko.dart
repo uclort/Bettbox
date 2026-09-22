@@ -199,6 +199,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "categoryGaming": MessageLookupByLibrary.simpleMessage("게임 센터"),
     "categorySocial": MessageLookupByLibrary.simpleMessage("커뮤니티 플랫폼"),
     "categoryStreaming": MessageLookupByLibrary.simpleMessage("스트리밍"),
+    "chasingDots": MessageLookupByLibrary.simpleMessage("체이싱 도트"),
     "checkError": MessageLookupByLibrary.simpleMessage("확인 실패"),
     "checkFailed": MessageLookupByLibrary.simpleMessage("Timeout"),
     "checkOrAddProfile": MessageLookupByLibrary.simpleMessage(
@@ -271,11 +272,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "crashTest": MessageLookupByLibrary.simpleMessage("크래시 테스트"),
     "create": MessageLookupByLibrary.simpleMessage("생성"),
     "creationTime": MessageLookupByLibrary.simpleMessage("생성 시간"),
+    "cubeGrid": MessageLookupByLibrary.simpleMessage("큐브 그리드"),
     "custom": MessageLookupByLibrary.simpleMessage("사용자 지정"),
     "customDashboardTitle": MessageLookupByLibrary.simpleMessage("사용자 지정 제목"),
     "customScriptOptions": MessageLookupByLibrary.simpleMessage("커스텀 규칙"),
     "customUrl": MessageLookupByLibrary.simpleMessage("사용자 지정 URL"),
     "cut": MessageLookupByLibrary.simpleMessage("잘라내기"),
+    "dancingSquare": MessageLookupByLibrary.simpleMessage("댄싱 스퀘어"),
     "dark": MessageLookupByLibrary.simpleMessage("다크"),
     "darkIcon": MessageLookupByLibrary.simpleMessage("다크 아이콘"),
     "darkIconDesc": MessageLookupByLibrary.simpleMessage("앱 아이콘을 어두운 색계열로 전환"),
@@ -350,6 +353,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "dozeSuspendDesc": MessageLookupByLibrary.simpleMessage(
       "시스템 Doze 절전 모드와 동기화",
     ),
+    "dualRing": MessageLookupByLibrary.simpleMessage("듀얼 링"),
     "edit": MessageLookupByLibrary.simpleMessage("편집"),
     "editTunnel": MessageLookupByLibrary.simpleMessage("포워딩 편집"),
     "emptyTip": m3,
@@ -397,7 +401,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "externalLink": MessageLookupByLibrary.simpleMessage("외부 링크"),
     "externalResources": MessageLookupByLibrary.simpleMessage("외부 리소스"),
     "fadingCircle": MessageLookupByLibrary.simpleMessage("페이딩 서클"),
+    "fadingCube": MessageLookupByLibrary.simpleMessage("페이딩 큐브"),
     "fadingFour": MessageLookupByLibrary.simpleMessage("페이딩 포 스퀘어"),
+    "fadingGrid": MessageLookupByLibrary.simpleMessage("페이딩 그리드"),
     "fakeIpFilterMode": MessageLookupByLibrary.simpleMessage("FakeIP 필터 모드"),
     "fakeIpFilterModeDesc": MessageLookupByLibrary.simpleMessage(
       "FakeIP 필터 동작 모드 지정",
@@ -432,6 +438,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "활성화 시 프로세스 매칭 검색 가능",
     ),
     "flagged": MessageLookupByLibrary.simpleMessage("표시됨"),
+    "foldingCube": MessageLookupByLibrary.simpleMessage("폴딩 큐브"),
     "fontFamily": MessageLookupByLibrary.simpleMessage("글꼴"),
     "forceDnsMapping": MessageLookupByLibrary.simpleMessage("강제 DNS 매핑"),
     "forceDnsMappingDesc": MessageLookupByLibrary.simpleMessage(
@@ -485,6 +492,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "hotkeyManagementDesc": MessageLookupByLibrary.simpleMessage(
       "키보드로 애플리케이션 제어",
     ),
+    "hourGlass": MessageLookupByLibrary.simpleMessage("모래시계"),
     "hours": m5,
     "httpPortSniffer": MessageLookupByLibrary.simpleMessage("HTTP 포트 스니핑"),
     "icmpForwarding": MessageLookupByLibrary.simpleMessage("ICMP 포워딩"),
@@ -738,6 +746,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "parsePureIpDesc": MessageLookupByLibrary.simpleMessage("순수 IP 연결 분석"),
     "password": MessageLookupByLibrary.simpleMessage("비밀번호"),
     "paste": MessageLookupByLibrary.simpleMessage("붙여넣기"),
+    "pianoWave": MessageLookupByLibrary.simpleMessage("피아노 웨이브"),
     "pin": MessageLookupByLibrary.simpleMessage("고정"),
     "pleaseBindWebDAV": MessageLookupByLibrary.simpleMessage("WebDAV를 연결해 주세요"),
     "pleaseCloseSystemProxyFirst": MessageLookupByLibrary.simpleMessage(
@@ -761,6 +770,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "중복되지 않는 포트를 입력하세요",
     ),
     "portTip": m11,
+    "pouringHourGlass": MessageLookupByLibrary.simpleMessage("흐르는 모래시계"),
+    "pouringHourGlassRefined": MessageLookupByLibrary.simpleMessage("정밀 모래시계"),
     "powerSwitch": MessageLookupByLibrary.simpleMessage("전원 스위치"),
     "preferH3Desc": MessageLookupByLibrary.simpleMessage("DoH에서 HTTP/3 우선 사용"),
     "pressKeyboard": MessageLookupByLibrary.simpleMessage("키를 누르세요"),
@@ -809,6 +820,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "proxyProviders": MessageLookupByLibrary.simpleMessage("프록시 프로바이더"),
     "proxyProvidersCount": MessageLookupByLibrary.simpleMessage("프록시 세트"),
     "pulse": MessageLookupByLibrary.simpleMessage("펄스"),
+    "pulsingGrid": MessageLookupByLibrary.simpleMessage("펄싱 그리드"),
+    "pumpingHeart": MessageLookupByLibrary.simpleMessage("펌핑 하트"),
     "pureBlackMode": MessageLookupByLibrary.simpleMessage("트루 블랙 모드"),
     "qrcode": MessageLookupByLibrary.simpleMessage("QR 코드"),
     "qrcodeDesc": MessageLookupByLibrary.simpleMessage("QR 코드를 스캔하여 프로필 가져오기"),
@@ -870,7 +883,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "restore": MessageLookupByLibrary.simpleMessage("이전 크기로"),
     "retry": MessageLookupByLibrary.simpleMessage("재시도"),
     "rightClickBehavior": MessageLookupByLibrary.simpleMessage("오른쪽 클릭"),
+    "ring": MessageLookupByLibrary.simpleMessage("링"),
+    "ripple": MessageLookupByLibrary.simpleMessage("물결 리플"),
     "rotatingCircle": MessageLookupByLibrary.simpleMessage("단일 회전"),
+    "rotatingPlain": MessageLookupByLibrary.simpleMessage("로테이팅 플레인"),
     "rule": MessageLookupByLibrary.simpleMessage("규칙"),
     "ruleName": MessageLookupByLibrary.simpleMessage("규칙 이름"),
     "ruleProviders": MessageLookupByLibrary.simpleMessage("규칙 프로바이더"),
@@ -937,7 +953,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "sourceIp": MessageLookupByLibrary.simpleMessage("출발지 IP"),
     "specialProxy": MessageLookupByLibrary.simpleMessage("특수 프록시"),
     "specialRules": MessageLookupByLibrary.simpleMessage("특수 규칙"),
+    "spinningCircle": MessageLookupByLibrary.simpleMessage("스피닝 서클"),
     "spinningLines": MessageLookupByLibrary.simpleMessage("스핀 라인"),
+    "squareCircle": MessageLookupByLibrary.simpleMessage("스퀘어 서클"),
     "stackMode": MessageLookupByLibrary.simpleMessage("스택 모드"),
     "standard": MessageLookupByLibrary.simpleMessage("표준"),
     "start": MessageLookupByLibrary.simpleMessage("시작"),
@@ -1029,6 +1047,31 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunnelTargetHint": MessageLookupByLibrary.simpleMessage(
       "예: 114.114.114.114:53",
     ),
+    "tvScanImport": MessageLookupByLibrary.simpleMessage("스캔 / LAN 가져오기"),
+    "tvScanImportDesc": MessageLookupByLibrary.simpleMessage(
+      "스마트폰으로 스캔하거나 LAN을 통해 TV로 프로필 푸시",
+    ),
+    "tvScanManualUrl": MessageLookupByLibrary.simpleMessage(
+      "스마트폰 브라우저에 직접 입력할 수도 있습니다:",
+    ),
+    "tvScanNoNetwork": MessageLookupByLibrary.simpleMessage(
+      "사용 가능한 LAN을 찾을 수 없습니다. Wi-Fi를 확인하세요",
+    ),
+    "tvScanStep1": MessageLookupByLibrary.simpleMessage(
+      "스마트폰과 TV가 동일한 Wi-Fi 네트워크에 연결되어 있는지 확인",
+    ),
+    "tvScanStep2": MessageLookupByLibrary.simpleMessage(
+      "지원되는 카메라 또는 브라우저로 QR 코드를 스캔하세요",
+    ),
+    "tvScanStep3": MessageLookupByLibrary.simpleMessage(
+      "웹페이지에서 구독 링크를 붙여넣거나 프로필을 업로드하여 푸시하세요",
+    ),
+    "tvScanSuccess": MessageLookupByLibrary.simpleMessage(
+      "프로필이 푸시되었습니다. 가져오는 중...",
+    ),
+    "tvScanWaiting": MessageLookupByLibrary.simpleMessage(
+      "스마트폰에서 프로필 푸시 대기 중...",
+    ),
     "twoColumns": MessageLookupByLibrary.simpleMessage("2열"),
     "unableToUpdateCurrentProfileDesc": MessageLookupByLibrary.simpleMessage(
       "현재 프로필을 업데이트할 수 없습니다",
@@ -1067,9 +1110,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "vpnEnableDesc": MessageLookupByLibrary.simpleMessage(
       "VpnService를 통해 시스템 트래픽 라우팅",
     ),
-    "vpnSystemProxyConfirmDesc": MessageLookupByLibrary.simpleMessage(
-      "모바일 환경에서는 HTTP 프록시 병용을 권장하지 않습니다. 필요한 경우에만 켜세요",
-    ),
     "vpnSystemProxyDesc": MessageLookupByLibrary.simpleMessage(
       "VpnService에 HTTP 프록시 연결",
     ),
@@ -1078,7 +1118,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "wakelockDescription": MessageLookupByLibrary.simpleMessage(
       "화면 자동 꺼짐을 방지하는 스크린 웨이크록을 활성화합니다. 백그라운드 작업을 유지할 때 유용합니다.",
     ),
+    "wanderingCubes": MessageLookupByLibrary.simpleMessage("원더링 큐브"),
     "wave": MessageLookupByLibrary.simpleMessage("웨이브"),
+    "waveSpinner": MessageLookupByLibrary.simpleMessage("웨이브 스피너"),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage("WebDAV 설정"),
     "whitelist": MessageLookupByLibrary.simpleMessage("화이트리스트"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("화이트리스트 모드"),

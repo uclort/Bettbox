@@ -21,6 +21,8 @@ func (closedDarwinTun) BatchRead() ([]*buf.Buffer, error) {
 	return nil, os.NewSyscallError("recvmsgx", syscall.ENOTSOCK)
 }
 
+func (closedDarwinTun) BatchSize() int { return 1 }
+
 func (closedDarwinTun) BatchWrite([]*buf.Buffer) error {
 	return nil
 }

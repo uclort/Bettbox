@@ -110,14 +110,6 @@ class VpnSystemProxyItem extends ConsumerWidget {
       delegate: SwitchDelegate(
         value: systemProxy,
         onChanged: (bool value) async {
-          if (value) {
-            final res = await globalState.showMessage(
-              message: TextSpan(
-                text: appLocalizations.vpnSystemProxyConfirmDesc,
-              ),
-            );
-            if (res != true) return;
-          }
           ref
               .read(vpnSettingProvider.notifier)
               .updateState((state) => state.copyWith(systemProxy: value));
@@ -409,7 +401,7 @@ class MtuItem extends ConsumerWidget {
     );
 
     // Preset options
-    final presetOptions = [1480, 4064, 9000];
+    final presetOptions = [9000, 4064];
     final isCustom = !presetOptions.contains(mtu);
 
     return ListItem.options(
@@ -417,7 +409,7 @@ class MtuItem extends ConsumerWidget {
       subtitle: Text(isCustom ? '$mtu (${appLocalizations.custom})' : '$mtu'),
       delegate: OptionsDelegate<String>(
         value: isCustom ? 'custom' : '$mtu',
-        options: ['1480', '4064', '9000', 'custom'],
+        options: ['9000', '4064', 'custom'],
         textBuilder: (value) {
           if (value == 'custom') {
             return '${appLocalizations.custom}...';
@@ -473,6 +465,7 @@ class BypassDomainItem extends StatelessWidget {
                         (state) =>
                             state.copyWith(bypassDomain: defaultBypassDomain),
                       );
+                  await _handleNetworkConfigChange(ref);
                 },
                 tooltip: appLocalizations.reset,
                 icon: const Icon(Icons.replay),
@@ -490,12 +483,13 @@ class BypassDomainItem extends StatelessWidget {
               title: appLocalizations.bypassDomain,
               items: bypassDomain,
               titleBuilder: (item) => Text(item),
-              onChange: (items) {
+              onChange: (items) async {
                 ref
                     .read(networkSettingProvider.notifier)
                     .updateState(
                       (state) => state.copyWith(bypassDomain: List.from(items)),
                     );
+                await _handleNetworkConfigChange(ref);
               },
             );
           },
@@ -612,38 +606,44 @@ class BypassPrivateRouteItem extends ConsumerWidget {
   }
 }
 
-final networkItems = [
-  if (system.isAndroid) ...generateSection(items: const [VPNItem()]),
-  if (system.isAndroid)
-    ...generateSection(
-      title: 'VPN',
-      items: [const AllowBypassItem(), const VpnSystemProxyItem()],
-    ),
-  if (system.isDesktop)
-    ...generateSection(
-      title: appLocalizations.system,
-      items: [SystemProxyItem(), BypassDomainItem()],
-    ),
-  ...generateSection(
-    title: appLocalizations.options,
-    items: [
-      if (system.isDesktop) const TUNItem(),
-      if (!system.isAndroid) const StrictRouteItem(),
-      const IcmpForwardingItem(),
-      const DnsHijackItem(),
-      const EndpointIndependentNatItem(),
-      const TunStackItem(),
-      const MtuItem(),
-      const BypassPrivateRouteItem(),
-    ],
-  ),
-];
-
-class NetworkListView extends StatelessWidget {
+class NetworkListView extends ConsumerWidget {
   const NetworkListView({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final vpnSystemProxy =
+        system.isAndroid &&
+        ref.watch(vpnSettingProvider.select((state) => state.systemProxy));
+    final networkItems = [
+      if (system.isAndroid) ...generateSection(items: const [VPNItem()]),
+      if (system.isAndroid)
+        ...generateSection(
+          title: 'VPN',
+          items: [
+            const AllowBypassItem(),
+            const VpnSystemProxyItem(),
+            if (vpnSystemProxy) const BypassDomainItem(),
+          ],
+        ),
+      if (system.isDesktop)
+        ...generateSection(
+          title: appLocalizations.system,
+          items: const [SystemProxyItem(), BypassDomainItem()],
+        ),
+      ...generateSection(
+        title: appLocalizations.options,
+        items: [
+          if (system.isDesktop) const TUNItem(),
+          if (!system.isAndroid) const StrictRouteItem(),
+          const IcmpForwardingItem(),
+          const DnsHijackItem(),
+          const EndpointIndependentNatItem(),
+          const TunStackItem(),
+          const MtuItem(),
+          const BypassPrivateRouteItem(),
+        ],
+      ),
+    ];
     return generateListView(networkItems);
   }
 }

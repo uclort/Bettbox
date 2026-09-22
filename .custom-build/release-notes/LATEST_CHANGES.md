@@ -1,5 +1,7 @@
 ### 2026-09-22 自定义功能精简与菜单栏图标修复
 
+- 同步官方 `appshubcc/Bettbox` 的 `main@55067fafb0fb`，纳入 1.19.3、Android TV 二维码导入、延迟动画、媒体解锁检测、平台图标和核心更新；冲突处继续保留 WebDAV 边界、macOS TUN/DNS 恢复、统一启停和托盘点击行为。
+- 融合上游启动修复：Provider 刷新移入后台加载，核心重启同时保留自定义旧进程隔离与上游 Windows helper 停止；网络页按平台展示设置，macOS 自动 DNS 开关继续移除。
 - 按保留清单精简自定义版：继续保留 WebDAV 共享边界、macOS TUN/DNS 与唤醒恢复、统一启停、隐藏策略组、Inline Provider 查看、应用内更新、自定义构建、系统代理所有权保护、HarmonyOS Sans 空格修复、Snell v6 及接口 DNS。
 - 删除独立网络面板及其最近请求、连接、DNS、设备、流量、日志、规则生成和 Sub-Store 管理页面；同时删除独立进程、IPC、专属图标、导航/托盘入口和对应测试。
 - 删除 TrackerInfo 连接链路扩展、连接加入通知以及私有 custom-mihomo 覆写脚本；请求、连接和进程图标展示恢复 Bettbox 上游实现。

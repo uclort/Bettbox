@@ -1149,10 +1149,10 @@ class AppLocalizations {
     return Intl.message('QR Code', name: 'qrcode', desc: '', args: []);
   }
 
-  /// `Scan QR code to get profile`
+  /// `Scan QR code to import profile`
   String get qrcodeDesc {
     return Intl.message(
-      'Scan QR code to get profile',
+      'Scan QR code to import profile',
       name: 'qrcodeDesc',
       desc: '',
       args: [],
@@ -2034,16 +2034,6 @@ class AppLocalizations {
     );
   }
 
-  /// `HTTP proxy is generally not recommended on non-desktop platforms. Only enable this feature when necessary and you fully understand the implications.`
-  String get vpnSystemProxyConfirmDesc {
-    return Intl.message(
-      'HTTP proxy is generally not recommended on non-desktop platforms. Only enable this feature when necessary and you fully understand the implications.',
-      name: 'vpnSystemProxyConfirmDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Set system proxy`
   String get systemProxyDesc {
     return Intl.message(
@@ -2409,6 +2399,166 @@ class AppLocalizations {
     return Intl.message(
       'Double Bounce',
       name: 'doubleBounce',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Chasing Dots`
+  String get chasingDots {
+    return Intl.message(
+      'Chasing Dots',
+      name: 'chasingDots',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Cube Grid`
+  String get cubeGrid {
+    return Intl.message('Cube Grid', name: 'cubeGrid', desc: '', args: []);
+  }
+
+  /// `Dancing Square`
+  String get dancingSquare {
+    return Intl.message(
+      'Dancing Square',
+      name: 'dancingSquare',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Dual Ring`
+  String get dualRing {
+    return Intl.message('Dual Ring', name: 'dualRing', desc: '', args: []);
+  }
+
+  /// `Fading Cube`
+  String get fadingCube {
+    return Intl.message('Fading Cube', name: 'fadingCube', desc: '', args: []);
+  }
+
+  /// `Fading Grid`
+  String get fadingGrid {
+    return Intl.message('Fading Grid', name: 'fadingGrid', desc: '', args: []);
+  }
+
+  /// `Folding Cube`
+  String get foldingCube {
+    return Intl.message(
+      'Folding Cube',
+      name: 'foldingCube',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Hourglass`
+  String get hourGlass {
+    return Intl.message('Hourglass', name: 'hourGlass', desc: '', args: []);
+  }
+
+  /// `Piano Wave`
+  String get pianoWave {
+    return Intl.message('Piano Wave', name: 'pianoWave', desc: '', args: []);
+  }
+
+  /// `Pouring Hourglass`
+  String get pouringHourGlass {
+    return Intl.message(
+      'Pouring Hourglass',
+      name: 'pouringHourGlass',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Refined Hourglass`
+  String get pouringHourGlassRefined {
+    return Intl.message(
+      'Refined Hourglass',
+      name: 'pouringHourGlassRefined',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Pulsing Grid`
+  String get pulsingGrid {
+    return Intl.message(
+      'Pulsing Grid',
+      name: 'pulsingGrid',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Pumping Heart`
+  String get pumpingHeart {
+    return Intl.message(
+      'Pumping Heart',
+      name: 'pumpingHeart',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Ring`
+  String get ring {
+    return Intl.message('Ring', name: 'ring', desc: '', args: []);
+  }
+
+  /// `Ripple`
+  String get ripple {
+    return Intl.message('Ripple', name: 'ripple', desc: '', args: []);
+  }
+
+  /// `Rotating Plain`
+  String get rotatingPlain {
+    return Intl.message(
+      'Rotating Plain',
+      name: 'rotatingPlain',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Spinning Circle`
+  String get spinningCircle {
+    return Intl.message(
+      'Spinning Circle',
+      name: 'spinningCircle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Square Circle`
+  String get squareCircle {
+    return Intl.message(
+      'Square Circle',
+      name: 'squareCircle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Wandering Cubes`
+  String get wanderingCubes {
+    return Intl.message(
+      'Wandering Cubes',
+      name: 'wanderingCubes',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Wave Spinner`
+  String get waveSpinner {
+    return Intl.message(
+      'Wave Spinner',
+      name: 'waveSpinner',
       desc: '',
       args: [],
     );
@@ -5977,6 +6127,96 @@ class AppLocalizations {
   /// `Flagged`
   String get flagged {
     return Intl.message('Flagged', name: 'flagged', desc: '', args: []);
+  }
+
+  /// `Scan / LAN Import`
+  String get tvScanImport {
+    return Intl.message(
+      'Scan / LAN Import',
+      name: 'tvScanImport',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Scan QR or push profile to TV via LAN`
+  String get tvScanImportDesc {
+    return Intl.message(
+      'Scan QR or push profile to TV via LAN',
+      name: 'tvScanImportDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Ensure phone and TV are on the same Wi-Fi network`
+  String get tvScanStep1 {
+    return Intl.message(
+      'Ensure phone and TV are on the same Wi-Fi network',
+      name: 'tvScanStep1',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Scan the QR code with a supported camera or browser`
+  String get tvScanStep2 {
+    return Intl.message(
+      'Scan the QR code with a supported camera or browser',
+      name: 'tvScanStep2',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Paste subscription URL or upload profile on the webpage and push`
+  String get tvScanStep3 {
+    return Intl.message(
+      'Paste subscription URL or upload profile on the webpage and push',
+      name: 'tvScanStep3',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Or enter directly in phone browser:`
+  String get tvScanManualUrl {
+    return Intl.message(
+      'Or enter directly in phone browser:',
+      name: 'tvScanManualUrl',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Waiting for profile from phone...`
+  String get tvScanWaiting {
+    return Intl.message(
+      'Waiting for profile from phone...',
+      name: 'tvScanWaiting',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Profile received, importing...`
+  String get tvScanSuccess {
+    return Intl.message(
+      'Profile received, importing...',
+      name: 'tvScanSuccess',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No available LAN detected, please check Wi-Fi`
+  String get tvScanNoNetwork {
+    return Intl.message(
+      'No available LAN detected, please check Wi-Fi',
+      name: 'tvScanNoNetwork',
+      desc: '',
+      args: [],
+    );
   }
 }
 

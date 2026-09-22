@@ -11,13 +11,15 @@ part 'generated/config.freezed.dart';
 part 'generated/config.g.dart';
 
 const defaultBypassDomain = [
-  '*jd.com',
-  '*zhihu.com',
-  '*zhimg.com',
-  '*360buyimg.com',
+  '*.jd.com',
+  '*.zhihu.com',
+  '*.zhimg.com',
+  '*.360buyimg.com',
   'localhost',
-  '*.local',
   '127.*',
+  '[::1]',
+  '::1',
+  '*.local',
   '10.*',
   '172.16.*',
   '172.17.*',
@@ -128,6 +130,18 @@ List<MediaPlatform> pinnedMediaPlatformsSafeFromJson(
       final str = e.toString();
       if (str == 'chatgpt') {
         list.add(MediaPlatform.openai);
+        continue;
+      }
+      if (str == 'qqnews') {
+        list.add(MediaPlatform.tencent);
+        continue;
+      }
+      if (str == 'alidnsprobe') {
+        list.add(MediaPlatform.alibaba);
+        continue;
+      }
+      if (str == 'bytedance') {
+        list.add(MediaPlatform.douyin);
         continue;
       }
       final p = MediaPlatform.values.where((v) => v.name == str).firstOrNull;
@@ -243,6 +257,7 @@ abstract class WindowProps with _$WindowProps {
     double? top,
     double? left,
     @Default(false) bool isPinned,
+    @Default(1.0) double scaleFactor,
   }) = _WindowProps;
 
   factory WindowProps.fromJson(Map<String, Object?>? json) =>
@@ -253,7 +268,7 @@ abstract class WindowProps with _$WindowProps {
 abstract class VpnProps with _$VpnProps {
   const factory VpnProps({
     @Default(true) bool enable,
-    @Default(false) bool systemProxy,
+    @Default(true) bool systemProxy,
     @Default(false) bool allowBypass,
     @Default(true) bool bypassPrivateRoute,
     @Default(true) bool dozeSuspend,
@@ -287,7 +302,7 @@ abstract class VpnProps with _$VpnProps {
 @freezed
 abstract class NetworkProps with _$NetworkProps {
   const factory NetworkProps({
-    @Default(false) bool systemProxy,
+    @Default(true) bool systemProxy,
     @Default(defaultBypassDomain) List<String> bypassDomain,
     @Default(true) bool bypassPrivateRoute,
     @Default([]) List<String> bypassPrivateRouteAddress,
