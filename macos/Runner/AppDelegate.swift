@@ -4,18 +4,11 @@ import window_ext
 
 @main
 class AppDelegate: FlutterAppDelegate {
-    private var isNetworkPanel: Bool {
-        CommandLine.arguments.contains("--network-panel")
-    }
-    
     override func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        return isNetworkPanel
+        return false
     }
     
     override func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        if isNetworkPanel {
-            return .terminateNow
-        }
         WindowExtPlugin.instance?.handleShouldTerminate()
         return .terminateCancel
     }

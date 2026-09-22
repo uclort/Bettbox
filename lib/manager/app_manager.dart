@@ -7,7 +7,6 @@ import 'package:bett_box/manager/window_manager.dart';
 import 'package:bett_box/plugins/app.dart';
 import 'package:bett_box/providers/providers.dart';
 import 'package:bett_box/state.dart';
-import 'package:bett_box/views/network_monitor.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -248,18 +247,6 @@ class AppSidebarContainer extends ConsumerWidget {
 
   const AppSidebarContainer({super.key, required this.child});
 
-  void _selectPage(PageLabel label) {
-    if (label == PageLabel.networkMonitor && system.isDesktop) {
-      unawaited(
-        openNetworkMonitorWindow().catchError((Object error) {
-          globalState.showNotifier('打开网络面板失败：$error');
-        }),
-      );
-      return;
-    }
-    globalState.appController.toPage(label);
-  }
-
   Widget _buildLoading() {
     return Consumer(
       builder: (_, ref, _) {
@@ -342,7 +329,7 @@ class AppSidebarContainer extends ConsumerWidget {
                                         LogicalKeyboardKey.arrowUp,
                                       ): () {
                                         if (currentIndex > 0) {
-                                          _selectPage(
+                                          globalState.appController.toPage(
                                             navigationItems[currentIndex - 1]
                                                 .label,
                                           );
@@ -353,7 +340,7 @@ class AppSidebarContainer extends ConsumerWidget {
                                       ): () {
                                         if (currentIndex <
                                             navigationItems.length - 1) {
-                                          _selectPage(
+                                          globalState.appController.toPage(
                                             navigationItems[currentIndex + 1]
                                                 .label,
                                           );
@@ -434,7 +421,9 @@ class AppSidebarContainer extends ConsumerWidget {
                                               );
                                             }
                                           }
-                                          _selectPage(label);
+                                          globalState.appController.toPage(
+                                            label,
+                                          );
                                         },
                                         extended: showLabel,
                                         selectedIndex: currentIndex,

@@ -117,13 +117,6 @@ static gboolean my_application_local_command_line(GApplication* application, gch
   // Strip out the first argument as it is the binary name.
   self->dart_entrypoint_arguments = g_strdupv(*arguments + 1);
 
-  for (gchar** arg = self->dart_entrypoint_arguments; arg && *arg; arg++) {
-    if (g_strcmp0(*arg, "--network-panel") == 0) {
-      g_application_set_flags(application, G_APPLICATION_NON_UNIQUE);
-      break;
-    }
-  }
-
   // Check for --exit or --restart before GApplication registration
   for (gchar** arg = self->dart_entrypoint_arguments; arg && *arg; arg++) {
     if (g_strcmp0(*arg, "--exit") == 0 || g_strcmp0(*arg, "--restart") == 0) {

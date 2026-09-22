@@ -10,9 +10,6 @@ import 'package:restart_app/restart_app.dart';
 class ExternalControl {
   static ServerSocket? _server;
   static TransportType? _transportType;
-  static Future<Object?> Function(String method, Object? arguments)?
-  _networkMonitorHandler;
-  static final Set<Socket> _networkMonitorSubscribers = {};
 
   static Future<void> start() async {
     if (!system.isDesktop || _server != null) return;
@@ -56,64 +53,16 @@ class ExternalControl {
 
   static void _listen() {
     _server!.listen(
-      _handleSocket,
+      (socket) => socket
+          .cast<List<int>>()
+          .transform(utf8.decoder)
+          .transform(const LineSplitter())
+          .listen(_handleCommand),
       onError: (e) => commonPrint.log('ExternalControl server error: $e'),
     );
   }
 
-  static void _handleSocket(Socket socket) {
-    socket
-        .cast<List<int>>()
-        .transform(utf8.decoder)
-        .transform(const LineSplitter())
-        .listen(
-          (line) => unawaited(_handleLine(socket, line)),
-          onDone: () => _closeSocket(socket),
-          onError: (_) => _closeSocket(socket),
-        );
-  }
-
-  static Future<void> _handleLine(Socket socket, String line) async {
-    try {
-      if (!line.trimLeft().startsWith('{')) {
-        _handleCommand(line);
-        return;
-      }
-      final message = jsonDecode(line) as Map<String, dynamic>;
-      final method = message['method'] as String;
-      if (method == 'networkMonitor.subscribe') {
-        _networkMonitorSubscribers.add(socket);
-        socket.writeln(jsonEncode({'event': 'ready'}));
-        await socket.flush();
-        return;
-      }
-      final handler = _networkMonitorHandler;
-      if (handler == null) throw StateError('网络面板服务尚未就绪');
-      final result = await handler(method, message['arguments']);
-      socket.writeln(jsonEncode({'ok': true, 'result': result}));
-    } catch (error) {
-      socket.writeln(jsonEncode({'ok': false, 'error': error.toString()}));
-    } finally {
-      if (!_networkMonitorSubscribers.contains(socket)) {
-        try {
-          await socket.flush();
-        } finally {
-          _closeSocket(socket);
-        }
-      }
-    }
-  }
-
-  static void _closeSocket(Socket socket) {
-    _networkMonitorSubscribers.remove(socket);
-    socket.destroy();
-  }
-
   static Future<void> stop() async {
-    for (final socket in _networkMonitorSubscribers) {
-      socket.destroy();
-    }
-    _networkMonitorSubscribers.clear();
     await _server?.close();
     _server = null;
     _transportType = null;
@@ -136,7 +85,40 @@ class ExternalControl {
 
   static Future<void> sendCommand(String command) async {
     if (!system.isDesktop) return;
-    final socket = await _connect();
+
+    final socketPath = await appPath.controlSocketPath;
+    final socketType = FileSystemEntity.typeSync(socketPath);
+    if (socketType != FileSystemEntityType.notFound) {
+      try {
+        await _sendUnixCommand(socketPath, command);
+        return;
+      } catch (_) {}
+    }
+
+    final portFilePath = await appPath.controlPortFilePath;
+    if (await File(portFilePath).exists()) {
+      final content = await File(portFilePath).readAsString();
+      final port = int.tryParse(content.trim());
+      if (port != null) {
+        try {
+          await _sendTcpCommand(port, command);
+          return;
+        } catch (_) {}
+      }
+    }
+
+    throw StateError('Bettbox is not running');
+  }
+
+  static Future<void> _sendUnixCommand(
+    String socketPath,
+    String command,
+  ) async {
+    final address = InternetAddress(socketPath, type: InternetAddressType.unix);
+    final socket = await Socket.connect(
+      address,
+      0,
+    ).timeout(const Duration(seconds: 1));
     try {
       socket.write('$command\n');
       await socket.flush();
@@ -149,97 +131,21 @@ class ExternalControl {
     }
   }
 
-  static Future<Object?> request(
-    String method, [
-    Object? arguments,
-    Duration timeout = const Duration(seconds: 5),
-  ]) async {
-    final socket = await _connect();
+  static Future<void> _sendTcpCommand(int port, String command) async {
+    final socket = await Socket.connect(
+      InternetAddress.loopbackIPv4,
+      port,
+    ).timeout(const Duration(seconds: 1));
     try {
-      socket.writeln(jsonEncode({'method': method, 'arguments': arguments}));
+      socket.write('$command\n');
       await socket.flush();
-      final line = await socket
-          .cast<List<int>>()
-          .transform(utf8.decoder)
-          .transform(const LineSplitter())
-          .first
-          .timeout(timeout);
-      final response = jsonDecode(line) as Map<String, dynamic>;
-      if (response['ok'] != true) {
-        throw StateError(response['error']?.toString() ?? '网络面板请求失败');
-      }
-      return response['result'];
+    } on SocketException catch (e) {
+      if (!_isConnectionReset(e)) rethrow;
     } finally {
-      socket.destroy();
-    }
-  }
-
-  static Stream<void> get networkMonitorChanges async* {
-    while (true) {
-      Socket? socket;
       try {
-        socket = await _connect();
-        socket.writeln(jsonEncode({'method': 'networkMonitor.subscribe'}));
-        await socket.flush();
-        await for (final line
-            in socket
-                .cast<List<int>>()
-                .transform(utf8.decoder)
-                .transform(const LineSplitter())) {
-          final event = jsonDecode(line) as Map<String, dynamic>;
-          if (event['event'] == 'dataChanged') yield null;
-        }
-      } catch (_) {
-        await Future<void>.delayed(const Duration(milliseconds: 500));
-      } finally {
-        socket?.destroy();
-      }
-    }
-  }
-
-  static void setNetworkMonitorHandler(
-    Future<Object?> Function(String method, Object? arguments)? handler,
-  ) {
-    _networkMonitorHandler = handler;
-  }
-
-  static Future<void> notifyNetworkMonitorChanged() async {
-    final message = jsonEncode({'event': 'dataChanged'});
-    for (final socket in _networkMonitorSubscribers.toList()) {
-      try {
-        socket.writeln(message);
-        await socket.flush();
-      } catch (_) {
-        _closeSocket(socket);
-      }
-    }
-  }
-
-  static Future<Socket> _connect() async {
-    final socketPath = await appPath.controlSocketPath;
-    if (FileSystemEntity.typeSync(socketPath) !=
-        FileSystemEntityType.notFound) {
-      try {
-        return await Socket.connect(
-          InternetAddress(socketPath, type: InternetAddressType.unix),
-          0,
-        ).timeout(const Duration(seconds: 1));
+        await socket.close();
       } catch (_) {}
     }
-
-    final portFilePath = await appPath.controlPortFilePath;
-    if (await File(portFilePath).exists()) {
-      final port = int.tryParse(
-        (await File(portFilePath).readAsString()).trim(),
-      );
-      if (port != null) {
-        return Socket.connect(
-          InternetAddress.loopbackIPv4,
-          port,
-        ).timeout(const Duration(seconds: 1));
-      }
-    }
-    throw StateError('Bettbox is not running');
   }
 
   static bool _isConnectionReset(SocketException e) {

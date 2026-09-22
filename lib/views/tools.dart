@@ -18,6 +18,7 @@ import 'package:bett_box/views/config/network.dart';
 import 'package:bett_box/views/config/ntp.dart';
 import 'package:bett_box/views/config/sniffer.dart';
 import 'package:bett_box/views/config/tunnel.dart';
+import 'package:bett_box/views/connection/connections.dart';
 import 'package:bett_box/views/hotkey.dart';
 import 'package:bett_box/views/other_setting.dart';
 import 'package:bett_box/widgets/widgets.dart';
@@ -64,18 +65,21 @@ class ToolsView extends ConsumerStatefulWidget {
 
 class _ToolViewState extends ConsumerState<ToolsView> {
   Widget _buildNavigationPage(NavigationItem navigationItem) {
+    if (navigationItem.label == PageLabel.connections) {
+      return const ConnectionsView(respectCurrentPage: false);
+    }
     return navigationItem.builder(context);
   }
 
   Widget _buildNavigationMenuItem(NavigationItem navigationItem) {
     return ListItem.next(
       leading: navigationItem.icon,
-      title: Text(navigationItem.label.localizedName),
+      title: Text(Intl.message(navigationItem.label.name)),
       subtitle: navigationItem.description != null
           ? Text(Intl.message(navigationItem.description!))
           : null,
       delegate: NextDelegate(
-        title: navigationItem.label.localizedName,
+        title: Intl.message(navigationItem.label.name),
         builder: (_) => _buildNavigationPage(navigationItem),
         wrap: false,
       ),
@@ -197,15 +201,15 @@ class _ToolViewState extends ConsumerState<ToolsView> {
     for (final item in moreItems) {
       items.add(
         _SearchItem(
-          title: item.label.localizedName,
+          title: Intl.message(item.label.name),
           subtitle: item.description != null
               ? Intl.message(item.description!)
               : null,
-          category: item.label.isNetworkTool ? '网络' : appLocalizations.more,
+          category: appLocalizations.more,
           leading: item.icon,
           onTap: (context, _) => _pushPage(
             context,
-            item.label.localizedName,
+            Intl.message(item.label.name),
             _buildNavigationPage(item),
           ),
         ),
@@ -1336,26 +1340,22 @@ class _ToolViewState extends ConsumerState<ToolsView> {
     final searchResults = _query.isEmpty
         ? const <Widget>[]
         : _buildSearchResults(searchItems);
-    final networkItems = moreItems
-        .where((item) => item.label.isNetworkTool)
-        .toList();
-    final otherMoreItems = moreItems
-        .where((item) => !item.label.isNetworkTool)
-        .toList();
-
     final items = [
-      if (networkItems.isNotEmpty)
-        _buildModernSection(
-          context,
-          title: '网络',
-          items: networkItems.map(_buildNavigationMenuItem).toList(),
-        ),
-      if (otherMoreItems.isNotEmpty)
-        _buildModernSection(
-          context,
-          title: appLocalizations.more,
-          items: otherMoreItems.map(_buildNavigationMenuItem).toList(),
-        ),
+      Consumer(
+        builder: (_, ref, _) {
+          final state = ref.watch(moreToolsSelectorStateProvider);
+          if (state.navigationItems.isEmpty) {
+            return Container();
+          }
+          return _buildModernSection(
+            context,
+            title: appLocalizations.more,
+            items: state.navigationItems
+                .map((item) => _buildNavigationMenuItem(item))
+                .toList(),
+          );
+        },
+      ),
       _buildModernSection(
         context,
         title: appLocalizations.settings,

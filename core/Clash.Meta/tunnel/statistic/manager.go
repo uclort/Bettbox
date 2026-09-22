@@ -53,9 +53,6 @@ type Manager struct {
 
 func (m *Manager) Join(c Tracker) {
 	m.connections.Store(c.ID(), c)
-	if DefaultRequestNotify != nil {
-		DefaultRequestNotify(c)
-	}
 }
 
 func (m *Manager) Leave(c Tracker) {

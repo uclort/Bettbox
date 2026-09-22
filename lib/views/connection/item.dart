@@ -14,7 +14,6 @@ import 'package:bett_box/providers/providers.dart';
 
 final _iconCache = <String, Uint8List?>{};
 final _iconCacheKeys = <String>[];
-final _iconLoads = <String, Future<Uint8List?>>{};
 const _maxIconCacheSize = 50;
 Uint8List? _defaultIconCache;
 Future<Uint8List?>? _defaultIconFuture;
@@ -158,9 +157,8 @@ class TrackerInfoItem extends ConsumerWidget {
       ),
     );
     final icon = value
-        ? ProcessIcon(
+        ? _ProcessIcon(
             process: trackerInfo.metadata.process,
-            processPath: trackerInfo.metadata.processPath,
             onClick: onClickKeyword,
           )
         : null;
@@ -210,33 +208,20 @@ class TrackerInfoItem extends ConsumerWidget {
   }
 }
 
-Future<Uint8List?> _getPackageIcon(String process, String processPath) {
-  if (process.isEmpty && processPath.isEmpty) {
+Future<Uint8List?> _getPackageIcon(String process) async {
+  if (process.isEmpty) {
     return _getDefaultPackageIcon();
   }
-  final cacheKey = '$process\n$processPath';
-  if (_iconCache.containsKey(cacheKey)) {
-    return Future.value(_iconCache[cacheKey]);
+  final cachedIcon = _iconCache[process];
+  if (cachedIcon != null) {
+    return cachedIcon;
   }
-  return _iconLoads[cacheKey] ??=
-      () async {
-        var icon = await app.getPackageIcon(process, processPath: processPath);
-        if (icon == null && system.isMacOS) {
-          await Future<void>.delayed(const Duration(milliseconds: 120));
-          icon = await app.getPackageIcon(
-            process,
-            processPath: processPath,
-            forceRefresh: true,
-          );
-        }
-        if (icon == null && !system.isMacOS) {
-          return _getDefaultPackageIcon();
-        }
-        if (icon != null) _addToIconCache(cacheKey, icon);
-        return icon;
-      }().whenComplete(() {
-        _iconLoads.remove(cacheKey);
-      });
+  final icon = await app.getPackageIcon(process);
+  if (icon != null) {
+    _addToIconCache(process, icon);
+    return icon;
+  }
+  return _getDefaultPackageIcon();
 }
 
 Future<Uint8List?> _getDefaultPackageIcon() {
@@ -253,46 +238,37 @@ Future<Uint8List?> _getDefaultPackageIcon() {
   });
 }
 
-class ProcessIcon extends StatefulWidget {
+class _ProcessIcon extends StatefulWidget {
   final String process;
-  final String processPath;
-  final double size;
   final Function(String)? onClick;
 
-  const ProcessIcon({
-    super.key,
-    required this.process,
-    this.processPath = '',
-    this.size = 42,
-    this.onClick,
-  });
+  const _ProcessIcon({required this.process, this.onClick});
 
   @override
-  State<ProcessIcon> createState() => _ProcessIconState();
+  State<_ProcessIcon> createState() => _ProcessIconState();
 }
 
-class _ProcessIconState extends State<ProcessIcon> {
+class _ProcessIconState extends State<_ProcessIcon> {
   late Future<Uint8List?> _iconFuture;
 
   @override
   void initState() {
     super.initState();
-    _iconFuture = _getPackageIcon(widget.process, widget.processPath);
+    _iconFuture = _getPackageIcon(widget.process);
   }
 
   @override
-  void didUpdateWidget(ProcessIcon oldWidget) {
+  void didUpdateWidget(_ProcessIcon oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.process != widget.process ||
-        oldWidget.processPath != widget.processPath) {
-      _iconFuture = _getPackageIcon(widget.process, widget.processPath);
+    if (oldWidget.process != widget.process) {
+      _iconFuture = _getPackageIcon(widget.process);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
-    final cacheSize = (widget.size * devicePixelRatio).ceil();
+    final cacheSize = (42 * devicePixelRatio).ceil();
 
     return RepaintBoundary(
       child: GestureDetector(
@@ -302,16 +278,15 @@ class _ProcessIconState extends State<ProcessIcon> {
         },
         child: Container(
           margin: const EdgeInsets.only(top: 4),
-          width: widget.size,
-          height: widget.size,
+          width: 42,
+          height: 42,
           alignment: Alignment.center,
           child: FutureBuilder<Uint8List?>(
-            key: ValueKey('${widget.process}\n${widget.processPath}'),
             future: _iconFuture,
             builder: (context, snapshot) {
               final iconBytes = snapshot.data;
               if (iconBytes == null) {
-                return Icon(Icons.apps_outlined, size: widget.size);
+                return const SizedBox(width: 42, height: 42);
               }
               return Image(
                 image: ResizeImage(
@@ -320,8 +295,9 @@ class _ProcessIconState extends State<ProcessIcon> {
                   height: cacheSize,
                   allowUpscaling: false,
                 ),
-                width: widget.size,
-                height: widget.size,
+                width: 42,
+                height: 42,
+                gaplessPlayback: true,
               );
             },
           ),

@@ -212,7 +212,8 @@ public class TrayIcon: NSView {
         }
         sourceImage.isTemplate = true
         button.image = sourceImage
-        button.contentTintColor = isActive ? nil : Self.inactiveColor
+        button.contentTintColor = nil
+        button.appearsDisabled = !isActive
     }
 
     private func syncClickTargetFrame(_ button: NSStatusBarButton) {

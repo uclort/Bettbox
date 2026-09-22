@@ -87,8 +87,7 @@ class Requests extends _$Requests with AutoDisposeNotifierMixin {
 
   void addRequest(TrackerInfo value) {
     Future.microtask(() {
-      state = state.copyWith()
-        ..addOrReplace(value, (item) => item.id == value.id);
+      state = state.copyWith()..add(value);
     });
   }
 
