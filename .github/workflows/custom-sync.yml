@@ -244,7 +244,9 @@ jobs:
               "${bettbox_source}/core/Clash.Meta/constant/version.go"
           )"
           bundled_tag="v${bundled_version}"
-          if [[ "${bundled_tag}" != "${MIHOMO_TAG}" ]]; then
+          if [[ -z "${bundled_version}" ]]; then
+            echo "Bettbox 内置 Mihomo 版本由构建参数注入，源码中不携带静态版本；继续按上游核心树同步。"
+          elif [[ "${bundled_tag}" != "${MIHOMO_TAG}" ]]; then
             echo "Bettbox 内置 Mihomo 为 ${bundled_tag}，当前稳定版为 ${MIHOMO_TAG}。" >&2
             echo "为避免破坏 Bettbox 专用接口，本次停止更新并保留可用源码。" >&2
             exit 1

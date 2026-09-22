@@ -84,6 +84,7 @@
 - `uclort/Bettbox` 明确标记为非官方个人自定义版；GitHub 操作必须显式指定该仓库。
 - `custom-sync.yml` 与 `custom-build.yml` 仅支持手动触发；同步顺序为上游 Bettbox → 保留功能分支 → 私有 custom-mihomo → 自定义构建。
 - 构建可选择全平台、仅 macOS Apple Silicon 或仅 Android arm64-v8a；Android 构建同步静态更新源。
+- 内核同步兼容新版 Mihomo 将版本号改为构建时注入的模式；源码版本为空时按 Bettbox 上游核心树继续同步，仍执行 Snell v6 补丁与 Go 回归。
 - 自定义应用代码变化但未同步完整总账和发布增量时拒绝发布。
 
 ### 已删除的历史自定义功能
