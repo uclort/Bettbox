@@ -8,9 +8,7 @@
 import Cocoa
 
 public class TrayIcon: NSView {
-    private static var inactiveColor: NSColor {
-        NSColor.secondaryLabelColor
-    }
+    static let inactiveColor = NSColor(srgbRed: 0.60, green: 0.60, blue: 0.60, alpha: 1)
     private static let speedFontSize: CGFloat = 9.5
     private static let speedLineHeight: CGFloat = 10
     private static let speedPadding: CGFloat = 12
@@ -141,13 +139,6 @@ public class TrayIcon: NSView {
             .foregroundColor,
             range: fullRange
         )
-        if !active {
-            attributedTitle.addAttribute(
-                .foregroundColor,
-                value: Self.inactiveColor,
-                range: fullRange
-            )
-        }
 
         let textWidth = ceil(attributedTitle.size().width)
         let imageWidth = button.image?.size.width ?? 0
@@ -210,10 +201,30 @@ public class TrayIcon: NSView {
         guard let sourceImage else {
             return
         }
-        sourceImage.isTemplate = true
-        button.image = sourceImage
+        button.appearsDisabled = false
         button.contentTintColor = nil
-        button.appearsDisabled = !isActive
+        if isActive {
+            sourceImage.isTemplate = true
+            button.image = sourceImage
+        } else {
+            button.image = tintedImage(sourceImage, color: Self.inactiveColor)
+        }
+    }
+
+    private func tintedImage(_ image: NSImage, color: NSColor) -> NSImage {
+        let tintedImage = NSImage(size: image.size)
+        tintedImage.lockFocus()
+        color.setFill()
+        NSRect(origin: .zero, size: image.size).fill()
+        image.draw(
+            in: NSRect(origin: .zero, size: image.size),
+            from: .zero,
+            operation: .destinationIn,
+            fraction: 1
+        )
+        tintedImage.unlockFocus()
+        tintedImage.isTemplate = false
+        return tintedImage
     }
 
     private func syncClickTargetFrame(_ button: NSStatusBarButton) {

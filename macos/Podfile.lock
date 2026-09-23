@@ -2,7 +2,7 @@ PODS:
   - auto_updater_macos (0.0.1):
     - FlutterMacOS
     - Sparkle
-  - code_forge (10.0.0):
+  - code_forge (10.12.0):
     - FlutterMacOS
   - flutter_qjs (0.0.1):
     - FlutterMacOS
@@ -49,7 +49,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   auto_updater_macos: 3e3462c418fe4e731917eacd8d28eef7af84086d
-  code_forge: 80bb2da320b632313812696666477ddee9a9f486
+  code_forge: b5a5ab0b01a8de485a359a47ba30d6e40ec09fa8
   flutter_qjs: 1a3a4a23a9bb18d0583b5ee44d09ed9383a36e9f
   FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
   HotKey: e96d8a2ddbf4591131e2bb3f54e69554d90cdca6

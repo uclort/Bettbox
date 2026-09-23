@@ -52,12 +52,12 @@
 
 - 菜单栏提供系统代理、虚拟网卡、重启内核、重启软件、自动启动、亮屏锁、策略组和节点选择；左右键行为可分别配置为显示窗口或显示菜单。
 - 支持独立开启实时上传/下载速率；系统代理与虚拟网卡均关闭时立即归零并显示为未启用状态。
-- macOS 始终使用同一模板图标。启用时采用系统原生高亮；未启用时使用 `NSStatusBarButton.appearsDisabled` 的原生 off 外观，避免模板图标被绘制为纯黑。
+- macOS 启用时使用原生模板图标高亮；未启用时使用 60% 中性灰渲染图标，避免纯黑并比原生 disabled 外观更亮。右侧实时速率文案固定使用正常标签色，不跟随启停状态变灰。
 - 托盘一级菜单依次显示系统代理、虚拟网卡和重启内核；“显示窗口 / 系统代理 / 虚拟网卡 / 重启内核 / 退出”使用 `⌘M / ⌘S / ⌘E / ⌘R / ⌘Q`。
 - 二级菜单父项只展开子菜单；节点测速结果使用独立右对齐列。
 - 首次安装特权工具后原位刷新托盘；从后台显示窗口或从托盘重启内核后主动同步最终运行状态。
 - 系统代理管理器只关闭当前 Bettbox 进程成功启用过的代理，避免误关 Surge 等其他软件的系统代理。
-- 代码位于 `lib/common/tray.dart`、`lib/providers/state.dart`、`plugins/tray_manager/macos/Classes/TrayIcon.swift` 和 `plugins/proxy/lib/proxy.dart`；回归测试为 `test/common/tray_active_state_test.dart` 与 `test/plugins/tray_menu_open_state_test.dart`。
+- 代码位于 `lib/common/tray.dart`、`lib/providers/state.dart`、`plugins/tray_manager/macos/Classes/TrayIcon.swift` 和 `plugins/proxy/lib/proxy.dart`；回归测试为 `test/common/tray_active_state_test.dart`、`test/plugins/tray_menu_open_state_test.dart` 与 `macos/RunnerTests/RunnerTests.swift`。
 
 ### 统一启停交互
 
