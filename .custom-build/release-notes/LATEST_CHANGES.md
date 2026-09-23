@@ -1,3 +1,8 @@
+### 2026-09-23 修复 Option 点击临时显示隐藏策略组
+
+- 该功能未在精简中删除；修复 macOS 菜单栏点击事件未稳定携带 Option 修饰键状态时，隐藏策略组无法临时显示的问题。
+- Option 状态同时读取点击事件和当前键盘修饰键，恢复按住 Option 点击菜单栏图标临时显示隐藏项。
+
 ### 2026-09-23 修复 macOS 后台运行 Dock 图标常驻
 
 - 修复上游 `Optimize macOS window management` 后 macOS 跳过 `setSkipTaskbar` 导致窗口关闭后 Dock 图标常驻的问题。

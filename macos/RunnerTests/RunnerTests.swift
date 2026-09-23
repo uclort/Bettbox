@@ -44,4 +44,16 @@ class RunnerTests: XCTestCase {
     XCTAssertGreaterThan(button.attributedTitle.length, 0)
   }
 
+  func testTrayIconDetectsOptionFromEventOrCurrentKeyboardState() {
+    XCTAssertTrue(
+      TrayIcon.isOptionPressed(eventFlags: [.option], currentFlags: [])
+    )
+    XCTAssertTrue(
+      TrayIcon.isOptionPressed(eventFlags: [], currentFlags: [.option])
+    )
+    XCTAssertFalse(
+      TrayIcon.isOptionPressed(eventFlags: [], currentFlags: [])
+    )
+  }
+
 }

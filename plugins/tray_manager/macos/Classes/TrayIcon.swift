@@ -236,22 +236,36 @@ public class TrayIcon: NSView {
             button.toolTip  = toolTip
         }
     }
+
+    static func isOptionPressed(
+        eventFlags: NSEvent.ModifierFlags,
+        currentFlags: NSEvent.ModifierFlags
+    ) -> Bool {
+        eventFlags.contains(.option) || currentFlags.contains(.option)
+    }
+
+    private func isOptionPressed(for event: NSEvent) -> Bool {
+        Self.isOptionPressed(
+            eventFlags: event.modifierFlags,
+            currentFlags: NSEvent.modifierFlags
+        )
+    }
     
     public override func mouseDown(with event: NSEvent) {
         statusItem?.button?.highlight(true)
-        self.onTrayIconMouseDown!(event.modifierFlags.contains(.option))
+        self.onTrayIconMouseDown!(isOptionPressed(for: event))
     }
     
     public override func mouseUp(with event: NSEvent) {
         statusItem?.button?.highlight(false)
-        self.onTrayIconMouseUp!(event.modifierFlags.contains(.option))
+        self.onTrayIconMouseUp!(isOptionPressed(for: event))
     }
     
     public override func rightMouseDown(with event: NSEvent) {
-        self.onTrayIconRightMouseDown!(event.modifierFlags.contains(.option))
+        self.onTrayIconRightMouseDown!(isOptionPressed(for: event))
     }
     
     public override func rightMouseUp(with event: NSEvent) {
-        self.onTrayIconRightMouseUp!(event.modifierFlags.contains(.option))
+        self.onTrayIconRightMouseUp!(isOptionPressed(for: event))
     }
 }
