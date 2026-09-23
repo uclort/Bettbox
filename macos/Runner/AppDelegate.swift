@@ -19,6 +19,7 @@ class AppDelegate: FlutterAppDelegate {
     
     override func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if !flag {
+            NSApp.setActivationPolicy(.regular)
             for window in NSApp.windows {
                 if !window.isVisible {
                     window.setIsVisible(true)

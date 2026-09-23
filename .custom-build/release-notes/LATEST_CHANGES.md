@@ -1,3 +1,9 @@
+### 2026-09-23 修复 macOS 后台运行 Dock 图标常驻
+
+- 修复上游 `Optimize macOS window management` 后 macOS 跳过 `setSkipTaskbar` 导致窗口关闭后 Dock 图标常驻的问题。
+- 窗口隐藏或关闭到后台时切换为 `NSApplication.accessory`，应用继续驻留菜单栏但不再显示 Dock 图标；重新打开窗口时恢复 `.regular`。
+- 增加回归测试，验证窗口隐藏映射为移除任务栏/Dock 图标、窗口显示映射为恢复图标。
+
 ### 2026-09-23 恢复上游独立启停逻辑
 
 - 移除自定义统一启停判断：恢复上游独立 Start/Stop 卡片、可选首页独立开关、启动快捷键和托盘启动/停止菜单项。

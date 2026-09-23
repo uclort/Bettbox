@@ -7,6 +7,13 @@ import 'package:screen_retriever/screen_retriever.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 
+@visibleForTesting
+Future<void> syncDockIconVisibility({required bool isVisible}) {
+  // window_manager maps setSkipTaskbar(true) to NSApplication.accessory on
+  // macOS, which removes the Dock icon while the app keeps running in tray.
+  return windowManager.setSkipTaskbar(!isVisible);
+}
+
 class Window {
   Future<void> init() async {
     final props = globalState.config.windowProps;
@@ -54,10 +61,9 @@ class Window {
           });
         } catch (_) {}
         if (isPositionValid) {
-          await windowManager.setPosition(Offset(
-            physLeft / currentDpr,
-            physTop / currentDpr,
-          ));
+          await windowManager.setPosition(
+            Offset(physLeft / currentDpr, physTop / currentDpr),
+          );
         } else {
           await windowManager.setAlignment(Alignment.center);
         }
@@ -75,9 +81,7 @@ class Window {
     render?.resume();
     await windowManager.show();
     await windowManager.focus();
-    if (!system.isMacOS) {
-      await windowManager.setSkipTaskbar(false);
-    }
+    await syncDockIconVisibility(isVisible: true);
     await globalState.resumeForegroundUpdates();
     await globalState.appController.syncWakelockIfNeeded();
   }
@@ -103,9 +107,7 @@ class Window {
 
   Future<void> hide() async {
     await windowManager.hide();
-    if (!system.isMacOS) {
-      await windowManager.setSkipTaskbar(true);
-    }
+    await syncDockIconVisibility(isVisible: false);
     await globalState.handleBackground();
   }
 }

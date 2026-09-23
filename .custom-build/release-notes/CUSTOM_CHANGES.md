@@ -54,10 +54,11 @@
 - 支持独立开启实时上传/下载速率；系统代理与虚拟网卡均关闭时立即归零并显示为未启用状态。
 - macOS 启用时使用原生模板图标高亮；未启用时使用 60% 中性灰渲染图标，避免纯黑并比原生 disabled 外观更亮。右侧实时速率文案固定使用正常标签色，不跟随启停状态变灰。
 - 托盘一级菜单提供显示窗口、启动/停止、模式、策略组、系统代理、虚拟网卡和重启内核；“显示窗口 / 系统代理 / 虚拟网卡 / 重启内核 / 退出”使用 `⌘M / ⌘S / ⌘E / ⌘R / ⌘Q`。
+- macOS 窗口隐藏或关闭到后台时切换为 `NSApplication.accessory`，运行期间只保留菜单栏图标、不保留 Dock 图标；从托盘或 Dock 重新打开窗口时恢复 `.regular`。
 - 二级菜单父项只展开子菜单；节点测速结果使用独立右对齐列。
 - 首次安装特权工具后原位刷新托盘；从后台显示窗口或从托盘重启内核后主动同步最终运行状态。
 - 系统代理管理器只关闭当前 Bettbox 进程成功启用过的代理，避免误关 Surge 等其他软件的系统代理。
-- 代码位于 `lib/common/tray.dart`、`lib/providers/state.dart`、`plugins/tray_manager/macos/Classes/TrayIcon.swift` 和 `plugins/proxy/lib/proxy.dart`；回归测试为 `test/common/tray_active_state_test.dart`、`test/plugins/tray_menu_open_state_test.dart` 与 `macos/RunnerTests/RunnerTests.swift`。
+- 代码位于 `lib/common/tray.dart`、`lib/providers/state.dart`、`lib/common/window.dart`、`macos/Runner/AppDelegate.swift`、`plugins/tray_manager/macos/Classes/TrayIcon.swift` 和 `plugins/proxy/lib/proxy.dart`；回归测试为 `test/common/window_test.dart`、`test/common/tray_active_state_test.dart`、`test/plugins/tray_menu_open_state_test.dart` 与 `macos/RunnerTests/RunnerTests.swift`。
 
 ### 隐藏策略组
 
