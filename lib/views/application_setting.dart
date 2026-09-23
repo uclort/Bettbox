@@ -144,6 +144,29 @@ class HiddenItem extends ConsumerWidget {
   }
 }
 
+class ShowStartSwitchItem extends ConsumerWidget {
+  const ShowStartSwitchItem({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final showStartSwitch = ref.watch(
+      appSettingProvider.select((state) => state.showStartSwitch),
+    );
+    return ListItem.switchItem(
+      title: Text(appLocalizations.showStartSwitch),
+      subtitle: Text(appLocalizations.showStartSwitchDesc),
+      delegate: SwitchDelegate(
+        value: showStartSwitch,
+        onChanged: (value) {
+          ref
+              .read(appSettingProvider.notifier)
+              .updateState((state) => state.copyWith(showStartSwitch: value));
+        },
+      ),
+    );
+  }
+}
+
 class AlwaysShowTitleBarItem extends ConsumerWidget {
   const AlwaysShowTitleBarItem({super.key});
 
@@ -225,11 +248,12 @@ class ApplicationSettingView extends StatelessWidget {
     List<Widget> items = [
       AutoLaunchItem(),
       if (system.isDesktop) ...[SilentLaunchItem()],
-      if (system.isAndroid) AutoRunItem(),
+      AutoRunItem(),
       if (system.isAndroid) ...[HiddenItem()],
       if (system.isDesktop) ...[
         if (system.isWindows || system.isLinux) const AlwaysShowTitleBarItem(),
       ],
+      const ShowStartSwitchItem(),
       if (system.isAndroid) ...[NavBarHapticFeedbackItem()],
       CloseConnectionsItem(),
       UsageItem(),

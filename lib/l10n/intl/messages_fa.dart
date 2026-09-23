@@ -78,6 +78,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "action": MessageLookupByLibrary.simpleMessage("عملیات"),
     "action_mode": MessageLookupByLibrary.simpleMessage("تغییر حالت"),
     "action_proxy": MessageLookupByLibrary.simpleMessage("پروکسی سیستم"),
+    "action_start": MessageLookupByLibrary.simpleMessage("شروع / توقف"),
     "action_tun": MessageLookupByLibrary.simpleMessage("کارت شبکه مجازی (TUN)"),
     "action_view": MessageLookupByLibrary.simpleMessage("نمایش / پنهان"),
     "activeGoroutines": MessageLookupByLibrary.simpleMessage("Goroutines"),
@@ -1107,6 +1108,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "restartApp": MessageLookupByLibrary.simpleMessage(
       "راه‌اندازی مجدد برنامه",
     ),
+    "restartCoreDesc": MessageLookupByLibrary.simpleMessage(
+      "آیا هسته به صورت دستی راه‌اندازی مجدد شود؟",
+    ),
     "restartCoreTitle": MessageLookupByLibrary.simpleMessage(
       "راه‌اندازی مجدد هسته",
     ),
@@ -1254,8 +1258,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "اجازه به اتصال‌های همزمان TCP",
     ),
     "testUrl": MessageLookupByLibrary.simpleMessage("آدرس تست"),
-    "testingDelay": MessageLookupByLibrary.simpleMessage("در حال آزمایش"),
     "testing": MessageLookupByLibrary.simpleMessage("در حال بررسی"),
+    "testingDelay": MessageLookupByLibrary.simpleMessage("در حال آزمایش"),
     "textScale": MessageLookupByLibrary.simpleMessage("مقیاس متن"),
     "theme": MessageLookupByLibrary.simpleMessage("پوسته"),
     "themeColor": MessageLookupByLibrary.simpleMessage("رنگ پوسته"),

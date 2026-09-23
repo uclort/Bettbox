@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:bett_box/state.dart';
@@ -6,7 +7,6 @@ import 'package:defer_pointer/defer_pointer.dart';
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/providers/providers.dart';
-import 'package:bett_box/views/dashboard/widgets/start_button.dart';
 import 'package:bett_box/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -86,6 +86,9 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   }
 
   List<Widget> _buildActions() {
+    final showStartSwitch = ref.watch(
+      appSettingProvider.select((state) => state.showStartSwitch),
+    );
     return [
       _buildIsEdit((isEdit) {
         return isEdit
@@ -125,6 +128,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
           ),
         ),
       ),
+      if (showStartSwitch) _DashboardStartSwitch(key: _startSwitchKey),
     ];
   }
 
@@ -201,10 +205,6 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     final columns = max(4 * ((dashboardState.viewWidth / 320).ceil()), 8);
     final spacing = 16.ap;
     final isMobileView = ref.watch(isMobileViewProvider);
-    final floatingBottomBarReserve = isMobileView
-        ? getFloatingBottomBarReserveHeight(context)
-        : 0.0;
-    final androidStartButtonReserve = system.isAndroid ? 72.0 : 0.0;
     final children = [
       ...dashboardState.dashboardWidgets
           .where(
@@ -226,21 +226,13 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
       title:
           ref.watch(customDashboardTitleProvider) ?? appLocalizations.dashboard,
       actions: _buildActions(),
-      floatingActionButton: system.isAndroid
-          ? Padding(
-              padding: EdgeInsets.only(
-                bottom: isMobileView
-                    ? getFloatingBottomBarFABReserveHeight(context)
-                    : 0,
-              ),
-              child: const AndroidStartButton(),
-            )
-          : null,
       body: Align(
         alignment: Alignment.topCenter,
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16).copyWith(
-            bottom: 16 + floatingBottomBarReserve + androidStartButtonReserve,
+            bottom:
+                16 +
+                (isMobileView ? getFloatingBottomBarReserveHeight(context) : 0),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -464,7 +456,7 @@ class _DashboardTitleDialogState extends State<_DashboardTitleDialog> {
 }
 
 class _DashboardStartSwitch extends ConsumerStatefulWidget {
-  const _DashboardStartSwitch();
+  const _DashboardStartSwitch({super.key});
 
   @override
   ConsumerState<_DashboardStartSwitch> createState() =>
@@ -492,8 +484,7 @@ class _DashboardStartSwitchState extends ConsumerState<_DashboardStartSwitch> {
   }
 
   void _onFocusChange() {
-    globalState.isDashboardStartSwitchFocused =
-        _focusNode?.hasFocus ?? false;
+    globalState.isDashboardStartSwitchFocused = _focusNode?.hasFocus ?? false;
   }
 
   void requestFocus() {
@@ -533,7 +524,11 @@ class _DashboardStartSwitchState extends ConsumerState<_DashboardStartSwitch> {
     final displayStart = isSmartStopped ? false : (_optimisticStart ?? isStart);
 
     final canPress =
-        state.isInit && state.hasProfile && !_isDisabled && !isRestarting && !isSmartStopped;
+        state.isInit &&
+        state.hasProfile &&
+        !_isDisabled &&
+        !isRestarting &&
+        !isSmartStopped;
 
     final theme = Theme.of(context);
 

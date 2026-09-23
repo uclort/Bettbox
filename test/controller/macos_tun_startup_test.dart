@@ -322,20 +322,6 @@ void main() {
     });
   });
 
-  test('系统代理或 TUN 任一开启时桌面内核就应运行', () {
-    for (final systemProxy in [false, true]) {
-      for (final tunEnabled in [false, true]) {
-        expect(
-          shouldRunDesktopCore(
-            systemProxy: systemProxy,
-            tunEnabled: tunEnabled,
-          ),
-          systemProxy || tunEnabled,
-        );
-      }
-    }
-  });
-
   test('只识别会与 macOS TUN 启动冲突的分流路由', () {
     const conflictingRoute = '''
 destination: 1.0.0.0

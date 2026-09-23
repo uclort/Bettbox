@@ -6218,6 +6218,36 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Start/Stop`
+  String get action_start {
+    return Intl.message('Start/Stop', name: 'action_start', desc: '', args: []);
+  }
+
+  /// `Power`
+  String get powerSwitch {
+    return Intl.message('Power', name: 'powerSwitch', desc: '', args: []);
+  }
+
+  /// `Service Ready`
+  String get serviceReady {
+    return Intl.message(
+      'Service Ready',
+      name: 'serviceReady',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Manually restart the core?`
+  String get restartCoreDesc {
+    return Intl.message(
+      'Manually restart the core?',
+      name: 'restartCoreDesc',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

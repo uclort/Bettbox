@@ -82,6 +82,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "action": MessageLookupByLibrary.simpleMessage("Action"),
     "action_mode": MessageLookupByLibrary.simpleMessage("Switch Mode"),
     "action_proxy": MessageLookupByLibrary.simpleMessage("System Proxy"),
+    "action_start": MessageLookupByLibrary.simpleMessage("Start/Stop"),
     "action_tun": MessageLookupByLibrary.simpleMessage("TUN"),
     "action_view": MessageLookupByLibrary.simpleMessage("Show/Hide"),
     "activeGoroutines": MessageLookupByLibrary.simpleMessage("Goroutines"),
@@ -1089,6 +1090,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "restart": MessageLookupByLibrary.simpleMessage("Restart"),
     "restartApp": MessageLookupByLibrary.simpleMessage("Restart App"),
+    "restartCoreDesc": MessageLookupByLibrary.simpleMessage(
+      "Manually restart the core?",
+    ),
     "restartCoreTitle": MessageLookupByLibrary.simpleMessage("Restart Core"),
     "restartTip": MessageLookupByLibrary.simpleMessage(
       "Restart TUN for changes to take effect",
@@ -1230,8 +1234,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "Allow concurrent TCP connections",
     ),
     "testUrl": MessageLookupByLibrary.simpleMessage("Test URL"),
-    "testingDelay": MessageLookupByLibrary.simpleMessage("Testing"),
     "testing": MessageLookupByLibrary.simpleMessage("Testing"),
+    "testingDelay": MessageLookupByLibrary.simpleMessage("Testing"),
     "textScale": MessageLookupByLibrary.simpleMessage("Text Scaling"),
     "theme": MessageLookupByLibrary.simpleMessage("Theme"),
     "themeColor": MessageLookupByLibrary.simpleMessage("Theme Color"),

@@ -764,5 +764,9 @@
   "tvScanManualUrl": "スマホのブラウザに直接入力も可能：",
   "tvScanWaiting": "スマホからのプッシュを待機中...",
   "tvScanSuccess": "設定がプッシュされました。インポート中...",
-  "tvScanNoNetwork": "利用可能なLANが見つかりません。Wi-Fiを確認してください"
+  "tvScanNoNetwork": "利用可能なLANが見つかりません。Wi-Fiを確認してください",
+  "action_start": "開始 / 停止",
+  "powerSwitch": "電源スイッチ",
+  "serviceReady": "サービス準備完了",
+  "restartCoreDesc": "カーネルを手動で再起動しますか？"
 }

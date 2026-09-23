@@ -152,6 +152,19 @@ class Tray {
         },
       );
       menuItems.add(showMenuItem);
+      final startMenuItem = MenuItem.checkbox(
+        key: 'start-stop',
+        label: trayState.isStart
+            ? appLocalizations.stop
+            : appLocalizations.start,
+        onClick: (_) async {
+          final appController = globalState.appController;
+          await appController.updateStatus(!globalState.isStart);
+          await appController.updateTray(false, false, true);
+        },
+        checked: false,
+      );
+      menuItems.add(startMenuItem);
       menuItems.add(MenuItem.separator());
       for (final mode in Mode.values) {
         menuItems.add(

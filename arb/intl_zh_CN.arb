@@ -765,5 +765,9 @@
   "tvScanManualUrl": "手机浏览器也可直接访问：",
   "tvScanWaiting": "等待手机推送配置中...",
   "tvScanSuccess": "配置推送成功，正在导入...",
-  "tvScanNoNetwork": "未检测到可用的局域网，请检查 Wi-Fi"
+  "tvScanNoNetwork": "未检测到可用的局域网，请检查 Wi-Fi",
+  "action_start": "启动/停止",
+  "powerSwitch": "启动开关",
+  "serviceReady": "服务已就绪",
+  "restartCoreDesc": "是否手动重启内核？"
 }

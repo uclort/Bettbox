@@ -85,6 +85,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "action": MessageLookupByLibrary.simpleMessage("Действие"),
     "action_mode": MessageLookupByLibrary.simpleMessage("Переключить режим"),
     "action_proxy": MessageLookupByLibrary.simpleMessage("Системный прокси"),
+    "action_start": MessageLookupByLibrary.simpleMessage("Запуск/Остановка"),
     "action_tun": MessageLookupByLibrary.simpleMessage("Режим TUN"),
     "action_view": MessageLookupByLibrary.simpleMessage("Показать/Скрыть"),
     "activeGoroutines": MessageLookupByLibrary.simpleMessage("Goroutines"),
@@ -1122,6 +1123,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "restart": MessageLookupByLibrary.simpleMessage("Перезапуск"),
     "restartApp": MessageLookupByLibrary.simpleMessage("Перезапустить"),
+    "restartCoreDesc": MessageLookupByLibrary.simpleMessage(
+      "Перезапустить ядро вручную?",
+    ),
     "restartCoreTitle": MessageLookupByLibrary.simpleMessage("Перезапуск ядра"),
     "restartTip": MessageLookupByLibrary.simpleMessage(
       "Изменения вступят в силу после перезапуска TUN",
@@ -1271,8 +1275,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "Разрешить параллельные TCP-соединения",
     ),
     "testUrl": MessageLookupByLibrary.simpleMessage("URL теста"),
-    "testingDelay": MessageLookupByLibrary.simpleMessage("Тестирование"),
     "testing": MessageLookupByLibrary.simpleMessage("Проверка"),
+    "testingDelay": MessageLookupByLibrary.simpleMessage("Тестирование"),
     "textScale": MessageLookupByLibrary.simpleMessage("Масштаб текста"),
     "theme": MessageLookupByLibrary.simpleMessage("Тема"),
     "themeColor": MessageLookupByLibrary.simpleMessage("Цвет темы"),

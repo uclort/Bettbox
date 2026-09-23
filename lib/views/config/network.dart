@@ -64,8 +64,10 @@ class TUNItem extends ConsumerWidget {
       subtitle: Text(appLocalizations.tunDesc),
       delegate: SwitchDelegate(
         value: enable,
-        onChanged: (value) async {
-          await globalState.appController.updateTun(value);
+        onChanged: (value) {
+          ref
+              .read(patchClashConfigProvider.notifier)
+              .updateState((state) => state.copyWith.tun(enable: value));
         },
       ),
     );
@@ -134,8 +136,10 @@ class SystemProxyItem extends ConsumerWidget {
       subtitle: Text(appLocalizations.systemProxyDesc),
       delegate: SwitchDelegate(
         value: systemProxy,
-        onChanged: (bool value) async {
-          await globalState.appController.updateSystemProxy(value);
+        onChanged: (bool value) {
+          ref
+              .read(networkSettingProvider.notifier)
+              .updateState((state) => state.copyWith(systemProxy: value));
         },
       ),
     );

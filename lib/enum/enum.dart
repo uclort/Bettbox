@@ -340,7 +340,7 @@ enum DashboardWidget {
   mediaUnlock(GridItem(crossAxisCellCount: 8, child: MediaUnlock())),
   mediaUnlockSmall(GridItem(crossAxisCellCount: 4, child: MediaUnlockSmall())),
   startButton(
-    GridItem(crossAxisCellCount: 4, isDeletable: false, child: RunTime()),
+    GridItem(crossAxisCellCount: 4, isDeletable: false, child: StartButton()),
   );
 
   final GridItem widget;

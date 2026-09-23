@@ -764,5 +764,9 @@
   "tvScanManualUrl": "스마트폰 브라우저에 직접 입력할 수도 있습니다:",
   "tvScanWaiting": "스마트폰에서 프로필 푸시 대기 중...",
   "tvScanSuccess": "프로필이 푸시되었습니다. 가져오는 중...",
-  "tvScanNoNetwork": "사용 가능한 LAN을 찾을 수 없습니다. Wi-Fi를 확인하세요"
+  "tvScanNoNetwork": "사용 가능한 LAN을 찾을 수 없습니다. Wi-Fi를 확인하세요",
+  "action_start": "시작 / 정지",
+  "powerSwitch": "전원 스위치",
+  "serviceReady": "서비스 준비 완료",
+  "restartCoreDesc": "코어를 수동으로 재시작하시겠습니까?"
 }

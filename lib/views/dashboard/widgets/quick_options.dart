@@ -1,6 +1,5 @@
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/providers/config.dart';
-import 'package:bett_box/state.dart';
 import 'package:bett_box/views/config/network.dart';
 import 'package:bett_box/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -68,8 +67,12 @@ class TUNButton extends StatelessWidget {
 
                   return Switch(
                     value: enable,
-                    onChanged: (value) async {
-                      await globalState.appController.updateTun(value);
+                    onChanged: (value) {
+                      ref
+                          .read(patchClashConfigProvider.notifier)
+                          .updateState(
+                            (state) => state.copyWith.tun(enable: value),
+                          );
                     },
                   );
                 },
@@ -138,8 +141,12 @@ class SystemProxyButton extends StatelessWidget {
                   return Switch(
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     value: systemProxy,
-                    onChanged: (value) async {
-                      await globalState.appController.updateSystemProxy(value);
+                    onChanged: (value) {
+                      ref
+                          .read(networkSettingProvider.notifier)
+                          .updateState(
+                            (state) => state.copyWith(systemProxy: value),
+                          );
                     },
                   );
                 },

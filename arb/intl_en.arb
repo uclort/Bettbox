@@ -763,5 +763,9 @@
   "tvScanManualUrl": "Or enter directly in phone browser:",
   "tvScanWaiting": "Waiting for profile from phone...",
   "tvScanSuccess": "Profile received, importing...",
-  "tvScanNoNetwork": "No available LAN detected, please check Wi-Fi"
+  "tvScanNoNetwork": "No available LAN detected, please check Wi-Fi",
+  "action_start": "Start/Stop",
+  "powerSwitch": "Power",
+  "serviceReady": "Service Ready",
+  "restartCoreDesc": "Manually restart the core?"
 }
