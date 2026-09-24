@@ -7,6 +7,12 @@ import (
 	"github.com/metacubex/mihomo/config"
 )
 
+func TestResetConnectionsMethodMatchesDartAction(t *testing.T) {
+	if resetConnectionsMethod != "resetConnections" {
+		t.Fatalf("resetConnections IPC 方法名不匹配：%q", resetConnectionsMethod)
+	}
+}
+
 func TestMarshalInlineProviderContent(t *testing.T) {
 	rawConfig := config.DefaultRawConfig()
 	rawConfig.ProxyProvider = map[string]map[string]any{

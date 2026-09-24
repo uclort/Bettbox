@@ -360,6 +360,10 @@ class AppController {
           throw StateError('Core failed to close connections');
         }
         if (recoveryCancelled()) return;
+        if (!await clashCore.resetConnections()) {
+          throw StateError('Core failed to reset DNS connections');
+        }
+        if (recoveryCancelled()) return;
 
         // TUN 临时关闭期间先恢复物理网卡 DNS，避免恢复失败后系统无网络。
         await macOS?.updateDns(true, serviceName: networkState.serviceName);

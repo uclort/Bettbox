@@ -1,3 +1,9 @@
+### 2026-09-24 修复 DIRECT DNS 连接池失效
+
+- 修复 DIRECT 命中规则后真实域名解析持续超时，而 GLOBAL 仍可用的问题。
+- macOS 网络恢复除关闭业务连接和清理 DNS/Fake-IP 缓存外，显式重建 Mihomo DoH/DoT resolver 连接池。
+- 修正 `resetConnections` 桌面 IPC 方法名不一致及 Dart 层无法等待执行结果的问题。
+
 ### 2026-09-23 修复 Option 点击临时显示隐藏策略组
 
 - 该功能未在精简中删除；修复 macOS 菜单栏点击事件未稳定携带 Option 修饰键状态时，隐藏策略组无法临时显示的问题。

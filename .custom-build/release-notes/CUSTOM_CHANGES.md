@@ -43,7 +43,7 @@
 - 桌面切换 TUN 栈使用串行核心重启；失效 IPC socket 立即丢弃，异常退出记录退出码和 stderr。
 - macOS 开启 TUN 时自动托管当前网络服务 DNS，关闭 TUN、停止或退出时恢复原 DNS；下次启动会清理残留托管状态。
 - 系统唤醒、Wi-Fi 切换或默认出口租约变化后，通过网卡、网关、地址、网络服务和 DHCP 信息生成的指纹识别真实网络变化。
-- 等待网络稳定后迁移托管 DNS、关闭旧连接、刷新 DNS/Fake-IP，并按需停止监听后重建 TUN；恢复任务支持代际取消和一次重试。
+- 等待网络稳定后迁移托管 DNS、关闭旧连接、重建 Mihomo resolver 的 DoH/DoT 连接池、刷新 DNS/Fake-IP，并按需停止监听后重建 TUN；桌面 IPC 的 `resetConnections` 方法名与 Dart 调用保持一致，恢复任务支持代际取消和一次重试。
 - 启动 TUN 前检查其他 VPN 遗留的 `1.0.0.0/8` utun 路由；发现冲突时保持关闭并提示接口。
 - macOS TUN 关闭竞态的 `ENOTSOCK` 按标准关闭处理，避免旧批量读协程日志风暴和 CPU 满载；Mixed/GVisor 所需方法集继续保留，并兼容 sing-tun 新增的 Darwin `BatchSize` 接口。
 - 主要测试为 `test/application/macos_network_recovery_test.dart`、`test/controller/macos_tun_startup_test.dart`、`test/models/clash_config_test.dart` 及 `core/Clash.Meta/listener/sing_tun` 定向测试。

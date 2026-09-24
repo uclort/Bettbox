@@ -194,8 +194,8 @@ class ClashCore {
     return await clashInterface.closeConnections();
   }
 
-  void resetConnections() {
-    clashInterface.resetConnections();
+  Future<bool> resetConnections() async {
+    return await clashInterface.resetConnections();
   }
 
   Future<List<ExternalProvider>> getExternalProviders() async {
