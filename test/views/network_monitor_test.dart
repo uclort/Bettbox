@@ -6,6 +6,7 @@ import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/models.dart';
 import 'package:bett_box/views/connection/item.dart';
 import 'package:bett_box/views/network_monitor_data.dart';
+import 'package:bett_box/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -37,6 +38,10 @@ TrackerInfo _tracker({
 }
 
 void main() {
+  setUpAll(() async {
+    await AppLocalizations.load(const Locale('zh', 'CN'));
+  });
+
   testWidgets('HarmonyOS Sans 使用正常宽度的空格字形', (tester) async {
     final loader = FontLoader('HarmonyOS_Sans_Test')
       ..addFont(rootBundle.load('assets/fonts/HarmonyOS_Sans_SC_Regular.ttf'));
@@ -215,8 +220,11 @@ void main() {
     expect(labels, isNot(contains(PageLabel.requests)));
     expect(labels, isNot(contains(PageLabel.connections)));
     expect(labels, isNot(contains(PageLabel.logs)));
-    expect(PageLabel.networkMonitor.localizedName, '面板');
-    expect(PageLabel.networkMonitorView.localizedName, '面板');
+    expect(
+      PageLabel.networkMonitor.localizedName,
+      PageLabel.networkMonitorView.localizedName,
+    );
+    expect(PageLabel.networkMonitor.localizedName, isNotEmpty);
     expect(MonitorPage.values, [
       MonitorPage.requests,
       MonitorPage.connections,

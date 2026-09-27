@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:bett_box/common/common.dart';
+import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/common.dart';
 import 'package:bett_box/providers/config.dart';
-import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class GoogleBottomNavBar extends ConsumerWidget {
@@ -35,7 +35,7 @@ class GoogleBottomNavBar extends ConsumerWidget {
         .map(
           (e) => GButton(
             icon: _extractIconData(e.icon),
-            text: Intl.message(e.label.name),
+            text: e.label.localizedName,
           ),
         )
         .toList();

@@ -4,6 +4,10 @@
 - 恢复连接加入/离开通知、连接级 DNS/规则/出站链路追踪、Sub-Store 固定规则管理和私有 `uclort-desktop.js` / `uclort-sukka.js` 覆写脚本；私有 custom-mihomo 同步提交更新为 `5a0477bb0ffb88eb8e3a30239eda1960112cadb5`。
 - 恢复统一启停交互：桌面系统代理或 TUN 任一开启即启动核心，均关闭即停止核心；移除独立启动/停止入口和启动热键，Android 首页恢复悬浮总开关并避让底部导航。
 
+### 2026-09-27 修复移动端导航本地化
+
+- Android 底部导航改用 `localizedName` 展示网络面板标签，避免显示 `networkMonitorView` 枚举名；网络面板标签接入现有 `onlinePanel` 多语言文案。
+
 ### 2026-09-27 优化 macOS Dock 图标展示规则
 
 - 移除 macOS“常驻 DOCK”开关；Dock 图标改为完全跟随窗口状态，窗口显示或最小化时出现，关闭到托盘或静默启动时隐藏。

@@ -86,7 +86,7 @@
 ### 网络面板
 
 - macOS、Windows 和 Linux 导航保留一个“面板”tab，点击以同一可执行文件的 `--network-panel` 参数启动独立进程；面板使用专属 Dock/任务栏图标，关闭面板不影响主窗口，主进程退出或管道断开时自动关闭面板。
-- Android 不再把网络功能顺序平铺到“更多”；“更多 → 查看”分组只提供一个“面板”二级页，进入后在面板内部切换最近请求、活动连接、DNS、设备、流量统计、日志和 Sub-Store 七个 tab。
+- Android 不再把网络功能顺序平铺到“更多”；“更多 → 查看”分组只提供一个“面板”二级页，进入后在面板内部切换最近请求、活动连接、DNS、设备、流量统计、日志和 Sub-Store 七个 tab；移动端底部导航使用本地化标签，不再显示枚举名。
 - 独立面板进程不初始化 Mihomo、单例锁或托盘，通过 `ExternalControl` 本地 UDS/TCP 通道读取请求、连接和日志并执行清理/断连；请求与日志变更使用持久订阅主动通知，事件刷新限制为 250 ms。
 - 请求与连接按 Mihomo `TrackerInfo` 的进程、来源、目标、协议、规则、出站链和状态动态分类，支持全文搜索、移动端筛选、右键生成规则、当前配置追加/覆盖规则和独立详情；状态按活动快照、真实出站 socket、`REJECT` 和链路终态区分。
 - DNS 页由当前生效配置读取 `default-nameserver / nameserver / fallback / proxy-server-nameserver / direct-nameserver / nameserver-policy / hosts`，并合并系统 Hosts、运行缓存、Fake-IP 与出站节点 DNS；支持同时清理 DNS 缓存和 Fake-IP。
@@ -94,7 +94,7 @@
 - 日志页按实际级别分类；Sub-Store 页支持凭据历史、固定规则读取/新增/修改/删除/拖动排序，保存前重新读取远端脚本并仅替换 `BETTBOX_CUSTOM_RULES`。
 - 选中请求或连接后展开可拖动详情，区分客户端、目标、Fake-IP、实际出站本地/远端地址、GeoIP/ASN 和完整策略链；macOS 通过 `NSWorkspace` 读取进程图标，并发请求合并且复用历史 `.app` 路径。
 - custom-mihomo 为每条连接保存 DNS 逐服务器尝试、规则匹配、策略链和真实 socket 建立事件，`TrackerInfo` 返回 `trace / outboundLocalAddress / outboundRemoteAddress`；连接加入与离开均发送同 ID 通知，请求记录按 ID 原位更新。
-- 代码位于 `lib/views/network_monitor*.dart`、`lib/common/window.dart`、`lib/common/external_control.dart`、`lib/common/navigation.dart`、`lib/views/network_monitor_navigation.dart` 和 `lib/common/tray.dart`；回归测试为 `test/views/network_monitor_test.dart`、`core/Clash.Meta/tunnel/statistic/manager_notify_test.go` 及私有内核 `constant / dns / tunnel / tunnel/statistic` 测试。
+- 代码位于 `lib/views/network_monitor*.dart`、`lib/common/window.dart`、`lib/common/external_control.dart`、`lib/common/navigation.dart`、`lib/views/network_monitor_navigation.dart`、`lib/enum/enum.dart`、`lib/widgets/google_bottom_nav_bar.dart` 和 `lib/common/tray.dart`；回归测试为 `test/views/network_monitor_test.dart`、`core/Clash.Meta/tunnel/statistic/manager_notify_test.go` 及私有内核 `constant / dns / tunnel / tunnel/statistic` 测试。
 
 ### 统一启停交互
 

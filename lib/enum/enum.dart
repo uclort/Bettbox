@@ -396,7 +396,7 @@ extension PageLabelExtension on PageLabel {
         return appLocalizations.navConnections;
       case PageLabel.networkMonitor:
       case PageLabel.networkMonitorView:
-        return '面板';
+        return appLocalizations.onlinePanel;
     }
   }
 }
