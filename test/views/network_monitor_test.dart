@@ -6,6 +6,7 @@ import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/models.dart';
 import 'package:bett_box/views/connection/item.dart';
 import 'package:bett_box/views/network_monitor_data.dart';
+import 'package:bett_box/views/tools.dart';
 import 'package:bett_box/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -217,6 +218,11 @@ void main() {
     );
     expect(desktopMonitor.modes, [NavigationItemMode.desktop]);
     expect(embeddedMonitor.modes, [NavigationItemMode.more]);
+    expect(navigationItemLocalizedTitle(embeddedMonitor), '在线面板');
+    expect(
+      navigationItemLocalizedTitle(embeddedMonitor),
+      isNot(PageLabel.networkMonitorView.name),
+    );
     expect(labels, isNot(contains(PageLabel.requests)));
     expect(labels, isNot(contains(PageLabel.connections)));
     expect(labels, isNot(contains(PageLabel.logs)));

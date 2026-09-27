@@ -31,6 +31,10 @@ import 'backup_and_recovery.dart';
 import 'developer.dart';
 import 'theme.dart';
 
+String navigationItemLocalizedTitle(NavigationItem item) {
+  return item.label.localizedName;
+}
+
 class _SearchItem {
   final String title;
   final String? subtitle;
@@ -72,14 +76,15 @@ class _ToolViewState extends ConsumerState<ToolsView> {
   }
 
   Widget _buildNavigationMenuItem(NavigationItem navigationItem) {
+    final title = navigationItemLocalizedTitle(navigationItem);
     return ListItem.next(
       leading: navigationItem.icon,
-      title: Text(Intl.message(navigationItem.label.name)),
+      title: Text(title),
       subtitle: navigationItem.description != null
           ? Text(Intl.message(navigationItem.description!))
           : null,
       delegate: NextDelegate(
-        title: Intl.message(navigationItem.label.name),
+        title: title,
         builder: (_) => _buildNavigationPage(navigationItem),
         wrap: false,
       ),
@@ -199,19 +204,17 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         '$settingsCategory/${appLocalizations.otherSettings}';
 
     for (final item in moreItems) {
+      final title = navigationItemLocalizedTitle(item);
       items.add(
         _SearchItem(
-          title: Intl.message(item.label.name),
+          title: title,
           subtitle: item.description != null
               ? Intl.message(item.description!)
               : null,
           category: appLocalizations.more,
           leading: item.icon,
-          onTap: (context, _) => _pushPage(
-            context,
-            Intl.message(item.label.name),
-            _buildNavigationPage(item),
-          ),
+          onTap: (context, _) =>
+              _pushPage(context, title, _buildNavigationPage(item)),
         ),
       );
     }
