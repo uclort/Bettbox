@@ -32,9 +32,9 @@
 
 ### 应用内更新
 
-- “关于本机 → 查找更新”检查 `uclort/Bettbox` 已发布的最新自定义 Release。
+- “关于本机 → 查找更新”检查 `uclort/Bettbox` 已发布的最新自定义 Release；“Github Releases”直接打开该仓库的 Releases 页面。
 - macOS 使用 Sparkle、Windows 使用 WinSparkle；安装前继续执行内核、代理和系统 DNS 退出清理。
-- Android 使用 arm64-v8a 固定签名 APK，校验 SHA-256 后调用系统安装器；更新检查读取 `custom-update-feed` 分支静态 JSON，避免 GitHub Releases API 匿名限流。
+- Android 使用 arm64-v8a 固定签名 APK，校验 SHA-256 后通过独立 `FileProvider` URI 调用系统安装器；安装器无法打开时显示失败提示，发布前校验 Provider 与 `app_updates` 路径配置。更新检查读取 `custom-update-feed` 分支静态 JSON，避免 GitHub Releases API 匿名限流。
 - 自动检查与手动检查使用同一发布源，草稿 Release 不会被识别为可用更新。
 
 ### macOS TUN、DNS 与唤醒恢复

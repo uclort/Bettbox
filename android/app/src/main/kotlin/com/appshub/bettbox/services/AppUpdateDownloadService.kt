@@ -475,17 +475,17 @@ class AppUpdateDownloadService : Service() {
             ) {
                 return false
             }
-            val uri: Uri = FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileProvider",
-                file,
-            )
-            val intent = Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(uri, "application/vnd.android.package-archive")
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
             return runCatching {
+                val uri: Uri = FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.fileProvider",
+                    file,
+                )
+                val intent = Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri, "application/vnd.android.package-archive")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
                 context.startActivity(intent)
                 true
             }.getOrDefault(false)

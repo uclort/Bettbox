@@ -36,8 +36,9 @@ class AboutView extends StatelessWidget {
           left: _LinkGridTile(
             title: 'Github Releases',
             icon: Icons.star,
-            onTap: () =>
-                globalState.openUrl('https://github.com/$updateRepository'),
+            onTap: () => globalState.openUrl(
+              'https://github.com/$updateRepository/releases',
+            ),
           ),
           right: _LinkGridTile(
             title: appLocalizations.checkUpdate,

@@ -253,7 +253,11 @@ class _AndroidUpdateProgressDialogState
     final installed = await app.installDownloadedAppUpdate(_state.releaseTag);
     if (mounted) {
       setState(() => _busy = false);
-      if (installed) Navigator.of(context).pop();
+      if (installed) {
+        Navigator.of(context).pop();
+      } else {
+        globalState.showNotifier('无法打开系统安装程序，请检查“安装未知应用”权限。');
+      }
     }
   }
 

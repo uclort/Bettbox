@@ -1,5 +1,6 @@
-### 2026-09-27 同步上游 Bettbox 1.19.3
+### 2026-09-27 修复 Android 下载后无法安装 APK
 
-- 同步官方 `appshubcc/Bettbox` 的 `main@26865630fef4`，纳入最新核心、WebDAV 多版本备份与轻量加密、Windows 便携模式、局域网用户验证、代理列表自动吸顶及媒体解锁检测修复。
-- 删除自定义“关闭窗口后强制隐藏 Dock 图标”实现及其回归测试，改用上游“常驻 Dock”配置、启动状态恢复和 `window_ext` 动态切换逻辑。
-- 保留 WebDAV 共享配置边界、macOS TUN/DNS 恢复、隐藏策略组、Inline Provider、应用内更新、菜单栏增强、系统代理所有权保护、Snell v6 与接口 DNS 等自定义能力。
+- 修复同步上游后 Android 更新专用 `FileProvider` 与路径配置被删除，导致 APK 下载完成后无法生成安装 URI、点击“立即安装”没有反应的问题。
+- 安装 URI 仅开放应用私有目录下的 `app_updates`，并在系统安装器无法启动时显示“安装未知应用”权限提示。
+- 修正 Android 关于页“Github Releases”入口，直接打开 `uclort/Bettbox` 的 Releases 页面，不再停留在仓库首页。
+- 自定义发布流程新增 Android 更新 Provider 配置校验，避免后续上游同步再次静默删除安装能力。

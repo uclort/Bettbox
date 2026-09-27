@@ -283,6 +283,13 @@ jobs:
             fi
           done
 
+          manifest="android/app/src/main/AndroidManifest.xml"
+          file_paths="android/app/src/main/res/xml/file_paths.xml"
+          grep -Fq 'android:name="androidx.core.content.FileProvider"' "${manifest}"
+          grep -Fq 'android:authorities="${applicationId}.fileProvider"' "${manifest}"
+          grep -Fq 'android:resource="@xml/file_paths"' "${manifest}"
+          grep -Fq 'path="app_updates/"' "${file_paths}"
+
           git fetch --force --tags origin
           previous_release="$(
             gh release list \
