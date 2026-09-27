@@ -26,7 +26,7 @@ class NetworkMonitorEmbeddedNavigationView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => CommonScaffold(
-    title: '面板',
+    title: '网络面板',
     body: const NetworkMonitorView(embedded: true, mobile: true),
   );
 }

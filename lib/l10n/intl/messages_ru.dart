@@ -794,6 +794,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "navConnections": MessageLookupByLibrary.simpleMessage("Соединения"),
     "navTools": MessageLookupByLibrary.simpleMessage("Еще"),
     "network": MessageLookupByLibrary.simpleMessage("Сеть"),
+    "networkMonitorTab": MessageLookupByLibrary.simpleMessage("Панель"),
+    "networkPanel": MessageLookupByLibrary.simpleMessage("Сетевая панель"),
+    "networkPanelDesc": MessageLookupByLibrary.simpleMessage(
+      "Просмотр сетевых запросов, подключений и трафика",
+    ),
     "networkDesc": MessageLookupByLibrary.simpleMessage("Настройки сети"),
     "networkDetection": MessageLookupByLibrary.simpleMessage("IP сети"),
     "networkErrorRetryLater": MessageLookupByLibrary.simpleMessage(

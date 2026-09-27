@@ -204,7 +204,26 @@ void main() {
     await tester.pump();
   });
 
-  test('桌面保留面板 tab，更多查看分组只保留一个面板二级页', () {
+  test('网络面板菜单名称覆盖全部支持语言', () async {
+    const locales = [
+      Locale('en'),
+      Locale('fa'),
+      Locale('ja'),
+      Locale('ko'),
+      Locale('ru'),
+      Locale('zh', 'CN'),
+      Locale('zh', 'TC'),
+    ];
+    for (final locale in locales) {
+      await AppLocalizations.load(locale);
+      expect(AppLocalizations.current.networkMonitorTab, isNotEmpty);
+      expect(AppLocalizations.current.networkPanel, isNotEmpty);
+      expect(AppLocalizations.current.networkPanelDesc, isNotEmpty);
+    }
+    await AppLocalizations.load(const Locale('zh', 'CN'));
+  });
+
+  test('桌面保留面板 tab，其他入口统一使用网络面板', () {
     final items = navigation.getItems(hasProxies: true);
     final labels = items.map((item) => item.label).toSet();
 
@@ -218,7 +237,11 @@ void main() {
     );
     expect(desktopMonitor.modes, [NavigationItemMode.desktop]);
     expect(embeddedMonitor.modes, [NavigationItemMode.more]);
-    expect(navigationItemLocalizedTitle(embeddedMonitor), '在线面板');
+    expect(navigationItemLocalizedTitle(desktopMonitor), '面板');
+    expect(navigationItemLocalizedTitle(embeddedMonitor), '网络面板');
+    expect(AppLocalizations.current.onlinePanel, '在线面板');
+    expect(embeddedMonitor.description, 'networkPanelDesc');
+    expect(AppLocalizations.current.networkPanelDesc, '查看网络请求、连接和流量信息');
     expect(
       navigationItemLocalizedTitle(embeddedMonitor),
       isNot(PageLabel.networkMonitorView.name),
@@ -228,9 +251,8 @@ void main() {
     expect(labels, isNot(contains(PageLabel.logs)));
     expect(
       PageLabel.networkMonitor.localizedName,
-      PageLabel.networkMonitorView.localizedName,
+      isNot(PageLabel.networkMonitorView.localizedName),
     );
-    expect(PageLabel.networkMonitor.localizedName, isNotEmpty);
     expect(MonitorPage.values, [
       MonitorPage.requests,
       MonitorPage.connections,

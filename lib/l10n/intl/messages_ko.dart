@@ -622,6 +622,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "navConnections": MessageLookupByLibrary.simpleMessage("연결"),
     "navTools": MessageLookupByLibrary.simpleMessage("도구"),
     "network": MessageLookupByLibrary.simpleMessage("네트워크"),
+    "networkMonitorTab": MessageLookupByLibrary.simpleMessage("패널"),
+    "networkPanel": MessageLookupByLibrary.simpleMessage("네트워크 패널"),
+    "networkPanelDesc": MessageLookupByLibrary.simpleMessage(
+      "네트워크 요청, 연결 및 트래픽 보기",
+    ),
     "networkDesc": MessageLookupByLibrary.simpleMessage("네트워크 관련 설정 변경"),
     "networkDetection": MessageLookupByLibrary.simpleMessage("네트워크 진단"),
     "networkErrorRetryLater": MessageLookupByLibrary.simpleMessage(

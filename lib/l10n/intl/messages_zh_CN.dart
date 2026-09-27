@@ -554,6 +554,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "navConnections": MessageLookupByLibrary.simpleMessage("连接"),
     "navTools": MessageLookupByLibrary.simpleMessage("更多"),
     "network": MessageLookupByLibrary.simpleMessage("网络"),
+    "networkMonitorTab": MessageLookupByLibrary.simpleMessage("面板"),
+    "networkPanel": MessageLookupByLibrary.simpleMessage("网络面板"),
+    "networkPanelDesc": MessageLookupByLibrary.simpleMessage(
+      "查看网络请求、连接和流量信息",
+    ),
     "networkDesc": MessageLookupByLibrary.simpleMessage("修改网络相关设置"),
     "networkDetection": MessageLookupByLibrary.simpleMessage("网络检测"),
     "networkErrorRetryLater": MessageLookupByLibrary.simpleMessage(

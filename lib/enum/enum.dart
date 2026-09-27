@@ -395,8 +395,9 @@ extension PageLabelExtension on PageLabel {
       case PageLabel.connections:
         return appLocalizations.navConnections;
       case PageLabel.networkMonitor:
+        return appLocalizations.networkMonitorTab;
       case PageLabel.networkMonitorView:
-        return appLocalizations.onlinePanel;
+        return appLocalizations.networkPanel;
     }
   }
 }

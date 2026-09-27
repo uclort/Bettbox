@@ -48,6 +48,7 @@ class Navigation {
       NavigationItem(
         icon: const Icon(Icons.monitor_heart_outlined),
         label: PageLabel.networkMonitorView,
+        description: 'networkPanelDesc',
         builder: (_) => const NetworkMonitorEmbeddedNavigationView(),
         modes: const [NavigationItemMode.more],
       ),

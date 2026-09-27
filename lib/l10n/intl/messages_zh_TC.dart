@@ -564,6 +564,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "navConnections": MessageLookupByLibrary.simpleMessage("連線"),
     "navTools": MessageLookupByLibrary.simpleMessage("更多"),
     "network": MessageLookupByLibrary.simpleMessage("網路"),
+    "networkMonitorTab": MessageLookupByLibrary.simpleMessage("面板"),
+    "networkPanel": MessageLookupByLibrary.simpleMessage("網路面板"),
+    "networkPanelDesc": MessageLookupByLibrary.simpleMessage(
+      "查看網路請求、連線與流量資訊",
+    ),
     "networkDesc": MessageLookupByLibrary.simpleMessage("修改網路相關設定"),
     "networkDetection": MessageLookupByLibrary.simpleMessage("網路檢測"),
     "networkErrorRetryLater": MessageLookupByLibrary.simpleMessage(

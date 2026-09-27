@@ -164,6 +164,36 @@ class AppLocalizations {
     );
   }
 
+  /// `Panel`
+  String get networkMonitorTab {
+    return Intl.message(
+      'Panel',
+      name: 'networkMonitorTab',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Network Panel`
+  String get networkPanel {
+    return Intl.message(
+      'Network Panel',
+      name: 'networkPanel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `View network requests, connections, and traffic`
+  String get networkPanelDesc {
+    return Intl.message(
+      'View network requests, connections, and traffic',
+      name: 'networkPanelDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Traffic Usage`
   String get trafficUsage {
     return Intl.message(

@@ -769,6 +769,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "navConnections": MessageLookupByLibrary.simpleMessage("Active"),
     "navTools": MessageLookupByLibrary.simpleMessage("More"),
     "network": MessageLookupByLibrary.simpleMessage("Network"),
+    "networkMonitorTab": MessageLookupByLibrary.simpleMessage("Panel"),
+    "networkPanel": MessageLookupByLibrary.simpleMessage("Network Panel"),
+    "networkPanelDesc": MessageLookupByLibrary.simpleMessage(
+      "View network requests, connections, and traffic",
+    ),
     "networkDesc": MessageLookupByLibrary.simpleMessage(
       "Modify network-related settings",
     ),

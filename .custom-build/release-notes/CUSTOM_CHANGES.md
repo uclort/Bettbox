@@ -86,7 +86,7 @@
 ### 网络面板
 
 - macOS、Windows 和 Linux 导航保留一个“面板”tab，点击以同一可执行文件的 `--network-panel` 参数启动独立进程；面板使用专属 Dock/任务栏图标，关闭面板不影响主窗口，主进程退出或管道断开时自动关闭面板。
-- Android 不再把网络功能顺序平铺到“更多”；“更多 → 查看”分组只提供一个“面板”二级页，进入后在面板内部切换最近请求、活动连接、DNS、设备、流量统计、日志和 Sub-Store 七个 tab；移动端底部导航、“更多”列表、详情标题和搜索结果统一使用本地化标签，不再显示 `networkMonitorView` 枚举名。
+- Android 不再把网络功能顺序平铺到“更多”；“更多 → 查看”分组只提供一个“网络面板”二级页，并显示“查看网络请求、连接和流量信息”副标题，进入后在面板内部切换最近请求、活动连接、DNS、设备、流量统计、日志和 Sub-Store 七个 tab；桌面端主导航的大 tab 保持简洁的“面板”，同一网络监控功能的其他入口统一使用“网络面板”，首页“在线面板”属于另一项功能并保持不变。
 - 独立面板进程不初始化 Mihomo、单例锁或托盘，通过 `ExternalControl` 本地 UDS/TCP 通道读取请求、连接和日志并执行清理/断连；请求与日志变更使用持久订阅主动通知，事件刷新限制为 250 ms。
 - 请求与连接按 Mihomo `TrackerInfo` 的进程、来源、目标、协议、规则、出站链和状态动态分类，支持全文搜索、移动端筛选、右键生成规则、当前配置追加/覆盖规则和独立详情；状态按活动快照、真实出站 socket、`REJECT` 和链路终态区分。
 - DNS 页由当前生效配置读取 `default-nameserver / nameserver / fallback / proxy-server-nameserver / direct-nameserver / nameserver-policy / hosts`，并合并系统 Hosts、运行缓存、Fake-IP 与出站节点 DNS；支持同时清理 DNS 缓存和 Fake-IP。

@@ -771,6 +771,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "navConnections": MessageLookupByLibrary.simpleMessage("اتصالات"),
     "navTools": MessageLookupByLibrary.simpleMessage("ابزارها"),
     "network": MessageLookupByLibrary.simpleMessage("شبکه"),
+    "networkMonitorTab": MessageLookupByLibrary.simpleMessage("پنل"),
+    "networkPanel": MessageLookupByLibrary.simpleMessage("پنل شبکه"),
+    "networkPanelDesc": MessageLookupByLibrary.simpleMessage(
+      "مشاهده درخواست‌ها، اتصال‌ها و ترافیک شبکه",
+    ),
     "networkDesc": MessageLookupByLibrary.simpleMessage("تغییر تنظیمات شبکه"),
     "networkDetection": MessageLookupByLibrary.simpleMessage("تست شبکه"),
     "networkErrorRetryLater": MessageLookupByLibrary.simpleMessage(
