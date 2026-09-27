@@ -3,6 +3,7 @@ import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/models.dart';
 import 'package:bett_box/providers/providers.dart';
 import 'package:bett_box/state.dart';
+import 'package:bett_box/views/config/user_auth.dart';
 import 'package:bett_box/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -463,6 +464,10 @@ class Ipv6Item extends ConsumerWidget {
 class AllowLanItem extends ConsumerWidget {
   const AllowLanItem({super.key});
 
+  Future<void> _showUserAuthDialog() async {
+    await globalState.showCommonDialog(child: const UserAuthDialog());
+  }
+
   @override
   Widget build(BuildContext context, ref) {
     final allowLan = ref.watch(
@@ -470,7 +475,31 @@ class AllowLanItem extends ConsumerWidget {
     );
     return ListItem.switchItem(
       leading: const Icon(Icons.device_hub),
-      title: Text(appLocalizations.allowLan),
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(appLocalizations.allowLan),
+          Tooltip(
+            message: appLocalizations.userAuth,
+            child: Material(
+              color: Colors.transparent,
+              child: InkResponse(
+                radius: 16,
+                highlightShape: BoxShape.circle,
+                onTap: _showUserAuthDialog,
+                child: Padding(
+                  padding: const EdgeInsets.all(7),
+                  child: Icon(
+                    Icons.settings_outlined,
+                    size: 18,
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
       subtitle: Text(appLocalizations.allowLanDesc),
       delegate: SwitchDelegate(
         value: allowLan,
@@ -483,6 +512,7 @@ class AllowLanItem extends ConsumerWidget {
     );
   }
 }
+
 
 class UnifiedDelayItem extends ConsumerWidget {
   const UnifiedDelayItem({super.key});
@@ -560,38 +590,6 @@ class TcpConcurrentItem extends ConsumerWidget {
           ref
               .read(patchClashConfigProvider.notifier)
               .updateState((state) => state.copyWith(tcpConcurrent: value));
-        },
-      ),
-    );
-  }
-}
-
-class GeodataLoaderItem extends ConsumerWidget {
-  const GeodataLoaderItem({super.key});
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final isMemconservative = ref.watch(
-      patchClashConfigProvider.select(
-        (state) => state.geodataLoader == GeodataLoader.memconservative,
-      ),
-    );
-    return ListItem.switchItem(
-      leading: const Icon(Icons.memory),
-      title: Text(appLocalizations.geodataLoader),
-      subtitle: Text(appLocalizations.geodataLoaderDesc),
-      delegate: SwitchDelegate(
-        value: isMemconservative,
-        onChanged: (bool value) async {
-          ref
-              .read(patchClashConfigProvider.notifier)
-              .updateState(
-                (state) => state.copyWith(
-                  geodataLoader: value
-                      ? GeodataLoader.memconservative
-                      : GeodataLoader.standard,
-                ),
-              );
         },
       ),
     );
@@ -781,7 +779,6 @@ List<Widget> get generalItems => generateSection(
     const UnifiedDelayItem(),
     const FindProcessItem(),
     const TcpConcurrentItem(),
-    const GeodataLoaderItem(),
     const ExternalControllerItem(),
   ],
 );

@@ -49,16 +49,15 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m13(count) => "${count} 件選択中";
 
-  static String m14(interface) =>
-      "別の VPN/TUN がまだ実行中です（${interface}）。終了してから再試行してください。";
+  static String m14(label) => "${label} は有効なURLである必要があります";
 
-  static String m15(progress) => "アップデートをダウンロード中：${progress}%";
+  static String m15(count) => "${Intl.plural(count, other: '年')}";
 
-  static String m16(message) => "アップデートに失敗しました：${message}";
+  static String _custom_tunRouteConflict(interface) => "別の VPN/TUN がまだ実行中です（${interface}）。終了してから再試行してください。";
 
-  static String m17(label) => "${label} は有効なURLである必要があります";
+  static String _custom_updateDownloading(progress) => "アップデートをダウンロード中：${progress}%";
 
-  static String m18(count) => "${Intl.plural(count, other: '年')}";
+  static String _custom_updateFailed(message) => "アップデートに失敗しました：${message}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -85,6 +84,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "addProfile": MessageLookupByLibrary.simpleMessage("プロファイル追加"),
     "addRule": MessageLookupByLibrary.simpleMessage("ルール追加"),
     "addTunnel": MessageLookupByLibrary.simpleMessage("転送追加"),
+    "addUser": MessageLookupByLibrary.simpleMessage("ユーザーを追加"),
     "addedOriginRules": MessageLookupByLibrary.simpleMessage("元のルールに追加"),
     "address": MessageLookupByLibrary.simpleMessage("アドレス"),
     "addressHelp": MessageLookupByLibrary.simpleMessage("WebDAVサーバーアドレス"),
@@ -144,6 +144,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoRun": MessageLookupByLibrary.simpleMessage("自動接続"),
     "autoRunDesc": MessageLookupByLibrary.simpleMessage("アプリ起動時に自動でプロキシに接続"),
     "autoScroll": MessageLookupByLibrary.simpleMessage("自動スクロール"),
+    "autoSetSystemDns": MessageLookupByLibrary.simpleMessage("システムDNSを自動設定"),
+    "autoStickyHeader": MessageLookupByLibrary.simpleMessage("自動固定ヘッダー"),
     "autoUpdate": MessageLookupByLibrary.simpleMessage("自動更新"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage("自動更新間隔（分）"),
     "back": MessageLookupByLibrary.simpleMessage("戻る"),
@@ -339,9 +341,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "domain": MessageLookupByLibrary.simpleMessage("組織 / ドメイン"),
     "doubleBounce": MessageLookupByLibrary.simpleMessage("ダブルバウンス"),
     "download": MessageLookupByLibrary.simpleMessage("受信"),
-    "downloadAndInstall": MessageLookupByLibrary.simpleMessage(
-      "ダウンロードしてインストール",
-    ),
     "dozeSuspend": MessageLookupByLibrary.simpleMessage("スリープ連携"),
     "dozeSuspendDesc": MessageLookupByLibrary.simpleMessage(
       "OSのDozeスリープモードに同期",
@@ -349,13 +348,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "dualRing": MessageLookupByLibrary.simpleMessage("デュアルリング"),
     "edit": MessageLookupByLibrary.simpleMessage("編集"),
     "editTunnel": MessageLookupByLibrary.simpleMessage("転送編集"),
+    "editUser": MessageLookupByLibrary.simpleMessage("ユーザーを編集"),
     "emptyTip": m3,
     "enableCrashReport": MessageLookupByLibrary.simpleMessage("クラッシュ分析"),
     "enableCrashReportDesc": MessageLookupByLibrary.simpleMessage(
       "必要に応じてクラッシュログを送信",
     ),
     "enableOverride": MessageLookupByLibrary.simpleMessage("オーバーライド有効化"),
-    "enableTraySpeed": MessageLookupByLibrary.simpleMessage("通信速度の表示"),
+    "enableTraySpeed": MessageLookupByLibrary.simpleMessage("速度表示"),
     "enableTraySpeedDesc": MessageLookupByLibrary.simpleMessage(
       "メニューバーにアップロード/ダウンロード速度を表示",
     ),
@@ -494,6 +494,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "icon": MessageLookupByLibrary.simpleMessage("画像"),
     "iconConfiguration": MessageLookupByLibrary.simpleMessage("画像設定"),
+    "iconConfigurationDesc": MessageLookupByLibrary.simpleMessage(
+      "プロキシグループのICONアイコンをカスタマイズ",
+    ),
     "iconStyle": MessageLookupByLibrary.simpleMessage("アイコンスタイル"),
     "import": MessageLookupByLibrary.simpleMessage("インポート"),
     "importFailed": MessageLookupByLibrary.simpleMessage("インポート失敗"),
@@ -523,6 +526,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "just": MessageLookupByLibrary.simpleMessage("たった今"),
     "keepAliveIntervalDesc": MessageLookupByLibrary.simpleMessage(
       "TCP Keep-Alive間隔",
+    ),
+    "keepDockIcon": MessageLookupByLibrary.simpleMessage("Dockに常駐"),
+    "keepDockIconDesc": MessageLookupByLibrary.simpleMessage(
+      "Dock にアプリアイコンを表示",
     ),
     "key": MessageLookupByLibrary.simpleMessage("キー"),
     "language": MessageLookupByLibrary.simpleMessage("言語"),
@@ -630,6 +637,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkType": MessageLookupByLibrary.simpleMessage("ネットワーク種別"),
     "neutralScheme": MessageLookupByLibrary.simpleMessage("ニュートラル"),
     "noAnimation": MessageLookupByLibrary.simpleMessage("デフォルト"),
+    "noBackupFileFound": MessageLookupByLibrary.simpleMessage(
+      "バックアップファイルが見つかりません",
+    ),
     "noData": MessageLookupByLibrary.simpleMessage("データがありません"),
     "noHotKey": MessageLookupByLibrary.simpleMessage("ショートカットキーなし"),
     "noIcon": MessageLookupByLibrary.simpleMessage("アイコンなし"),
@@ -902,6 +912,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "パスワードをクリップボードにコピーしました",
     ),
     "selectAll": MessageLookupByLibrary.simpleMessage("すべて選択"),
+    "selectBackupVersion": MessageLookupByLibrary.simpleMessage(
+      "バックアップバージョンの選択",
+    ),
     "selected": MessageLookupByLibrary.simpleMessage("選択済み"),
     "selectedCountTitle": m13,
     "serviceReady": MessageLookupByLibrary.simpleMessage("サービス準備完了"),
@@ -909,8 +922,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "settings": MessageLookupByLibrary.simpleMessage("設定"),
     "show": MessageLookupByLibrary.simpleMessage("表示"),
     "showHiddenItems": MessageLookupByLibrary.simpleMessage("非表示項目を表示"),
-    "showMenu": MessageLookupByLibrary.simpleMessage("メニューを表示"),
-    "showPanel": MessageLookupByLibrary.simpleMessage("パネルを表示"),
+    "showMenu": MessageLookupByLibrary.simpleMessage("メニューを開く"),
+    "showPanel": MessageLookupByLibrary.simpleMessage("ウィンドウを表示"),
     "showStartSwitch": MessageLookupByLibrary.simpleMessage("単独スイッチ表示"),
     "showStartSwitchDesc": MessageLookupByLibrary.simpleMessage(
       "ホーム画面に独立したON/OFFボタンを表示",
@@ -923,6 +936,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "size": MessageLookupByLibrary.simpleMessage("サイズ"),
     "skipDomain": MessageLookupByLibrary.simpleMessage("除外ドメイン"),
     "skipDstAddress": MessageLookupByLibrary.simpleMessage("除外宛先IP"),
+    "skipLocalAuth": MessageLookupByLibrary.simpleMessage("ローカル認証をスキップ"),
+    "skipLocalAuthDesc": MessageLookupByLibrary.simpleMessage(
+      "ローカル端末からの認証なしアクセスを許可",
+    ),
     "skipSrcAddress": MessageLookupByLibrary.simpleMessage("除外送信元IP"),
     "smartAutoStop": MessageLookupByLibrary.simpleMessage("スマート自動停止"),
     "smartAutoStopDesc": MessageLookupByLibrary.simpleMessage(
@@ -992,7 +1009,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "tcpConcurrentDesc": MessageLookupByLibrary.simpleMessage("TCPの同時並列接続を許可"),
     "testUrl": MessageLookupByLibrary.simpleMessage("テストURL"),
     "testing": MessageLookupByLibrary.simpleMessage("検出中"),
-    "testingDelay": MessageLookupByLibrary.simpleMessage("テスト中"),
     "textScale": MessageLookupByLibrary.simpleMessage("テキスト倍率"),
     "theme": MessageLookupByLibrary.simpleMessage("テーマ"),
     "themeColor": MessageLookupByLibrary.simpleMessage("テーマカラー"),
@@ -1013,7 +1029,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "totalTraffic": MessageLookupByLibrary.simpleMessage("総通信量"),
     "tproxyPort": MessageLookupByLibrary.simpleMessage("Tproxyポート"),
     "trafficUsage": MessageLookupByLibrary.simpleMessage("通信量統計"),
-    "trayClickBehavior": MessageLookupByLibrary.simpleMessage("トレイのクリック動作"),
+    "trayClickBehavior": MessageLookupByLibrary.simpleMessage("トレイクリック動作"),
+    "trayEnhancement": MessageLookupByLibrary.simpleMessage("トレイ拡張"),
+    "trayEnhancementDesc": MessageLookupByLibrary.simpleMessage(
+      "システムトレイメニューでプロキシグループを操作",
+    ),
     "trayIconInvert": MessageLookupByLibrary.simpleMessage("トレイアイコン反転"),
     "trayIconInvertDesc": MessageLookupByLibrary.simpleMessage(
       "現在のトレイアイコンの色を反転設定",
@@ -1026,7 +1046,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunEnableRequireAdmin": MessageLookupByLibrary.simpleMessage(
       "TUN仮想NIC機能の有効化には管理者（ROOT）権限が必要です",
     ),
-    "tunRouteConflict": m14,
     "tunVirtualAddress": MessageLookupByLibrary.simpleMessage(
       "TUN 仮想ネットワークアダプター",
     ),
@@ -1083,21 +1102,24 @@ class MessageLookup extends MessageLookupByLibrary {
     "unnamed": MessageLookupByLibrary.simpleMessage("無題"),
     "unpin": MessageLookupByLibrary.simpleMessage("固定解除"),
     "update": MessageLookupByLibrary.simpleMessage("更新"),
-    "updateDownloading": m15,
-    "updateFailed": m16,
-    "updateInstalling": MessageLookupByLibrary.simpleMessage(
-      "システムインストーラーを開いています...",
-    ),
     "updateTime": MessageLookupByLibrary.simpleMessage("更新日時"),
     "upload": MessageLookupByLibrary.simpleMessage("送信"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("URLから設定を取得"),
-    "urlTip": m17,
+    "urlTip": m14,
     "useGlobalScriptOverride": MessageLookupByLibrary.simpleMessage(
       "グローバルスクリプトオーバーライドを使用",
     ),
     "useHosts": MessageLookupByLibrary.simpleMessage("Hostsを使用"),
     "useSystemHosts": MessageLookupByLibrary.simpleMessage("システムHostsを使用"),
+    "userAuth": MessageLookupByLibrary.simpleMessage("ユーザー認証"),
+    "userAuthEmpty": MessageLookupByLibrary.simpleMessage(
+      "認証ユーザーが設定されていません。LAN接続には資格情報が不要です",
+    ),
+    "username": MessageLookupByLibrary.simpleMessage("ユーザー名"),
+    "usernameCannotContainColon": MessageLookupByLibrary.simpleMessage(
+      "ユーザー名にコロン（:）を含めることはできません",
+    ),
     "value": MessageLookupByLibrary.simpleMessage("値"),
     "vibrantScheme": MessageLookupByLibrary.simpleMessage("バイブラント"),
     "view": MessageLookupByLibrary.simpleMessage("表示"),
@@ -1122,6 +1144,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "whitelistMode": MessageLookupByLibrary.simpleMessage("ホワイトリストモード"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("システムへ適用"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage("管理者権限が必要です"),
-    "years": m18,
+    "years": m15,
+    "testingDelay": MessageLookupByLibrary.simpleMessage("テスト中"),
+    "tunRouteConflict": _custom_tunRouteConflict,
+    "downloadAndInstall": MessageLookupByLibrary.simpleMessage("ダウンロードしてインストール"),
+    "updateDownloading": _custom_updateDownloading,
+    "updateInstalling": MessageLookupByLibrary.simpleMessage("システムインストーラーを開いています..."),
+    "updateFailed": _custom_updateFailed,
   };
 }

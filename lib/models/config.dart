@@ -188,6 +188,7 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(false) bool disclaimerAccepted,
     @Default(true) bool minimizeOnExit,
     @Default(false) bool hidden,
+    @Default(true) bool keepDockIcon,
     @Default(false) bool developerMode,
     @Default(false) bool enableHighRefreshRate,
     @Default(RecoveryStrategy.compatible) RecoveryStrategy recoveryStrategy,
@@ -333,6 +334,7 @@ abstract class ProxiesStyle with _$ProxiesStyle {
     @Default(DelayAnimationType.none) DelayAnimationType delayAnimation,
     @Default({}) Map<String, String> iconMap,
     @Default(250) int concurrencyLimit,
+    @Default(true) bool autoStickyHeader,
     @Default(false) bool showHiddenItems,
     @Default(false) bool hasCustomizedStyle,
   }) = _ProxiesStyle;

@@ -48,6 +48,7 @@ _AppSettingProps _$AppSettingPropsFromJson(
   disclaimerAccepted: json['disclaimerAccepted'] as bool? ?? false,
   minimizeOnExit: json['minimizeOnExit'] as bool? ?? true,
   hidden: json['hidden'] as bool? ?? false,
+  keepDockIcon: json['keepDockIcon'] as bool? ?? true,
   developerMode: json['developerMode'] as bool? ?? false,
   enableHighRefreshRate: json['enableHighRefreshRate'] as bool? ?? false,
   recoveryStrategy:
@@ -93,6 +94,7 @@ Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
       'disclaimerAccepted': instance.disclaimerAccepted,
       'minimizeOnExit': instance.minimizeOnExit,
       'hidden': instance.hidden,
+      'keepDockIcon': instance.keepDockIcon,
       'developerMode': instance.developerMode,
       'enableHighRefreshRate': instance.enableHighRefreshRate,
       'recoveryStrategy': _$RecoveryStrategyEnumMap[instance.recoveryStrategy]!,
@@ -143,6 +145,7 @@ const _$MediaPlatformEnumMap = {
   MediaPlatform.netflix: 'netflix',
   MediaPlatform.disney: 'disney',
   MediaPlatform.youtube: 'youtube',
+  MediaPlatform.youtubemusic: 'youtubemusic',
   MediaPlatform.spotify: 'spotify',
   MediaPlatform.tiktok: 'tiktok',
   MediaPlatform.iqiyi: 'iqiyi',
@@ -377,6 +380,7 @@ _ProxiesStyle _$ProxiesStyleFromJson(Map<String, dynamic> json) =>
           ) ??
           const {},
       concurrencyLimit: (json['concurrencyLimit'] as num?)?.toInt() ?? 250,
+      autoStickyHeader: json['autoStickyHeader'] as bool? ?? true,
       showHiddenItems: json['showHiddenItems'] as bool? ?? false,
       hasCustomizedStyle: json['hasCustomizedStyle'] as bool? ?? false,
     );
@@ -391,6 +395,7 @@ Map<String, dynamic> _$ProxiesStyleToJson(_ProxiesStyle instance) =>
       'delayAnimation': _$DelayAnimationTypeEnumMap[instance.delayAnimation]!,
       'iconMap': instance.iconMap,
       'concurrencyLimit': instance.concurrencyLimit,
+      'autoStickyHeader': instance.autoStickyHeader,
       'showHiddenItems': instance.showHiddenItems,
       'hasCustomizedStyle': instance.hasCustomizedStyle,
     };

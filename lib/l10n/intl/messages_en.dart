@@ -53,17 +53,16 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m13(count) => "${count} items selected";
 
-  static String m14(interface) =>
-      "Another VPN/TUN is still active (${interface}). Turn it off and try again.";
+  static String m14(label) => "${label} must be a URL";
 
-  static String m15(progress) => "Downloading update: ${progress}%";
-
-  static String m16(message) => "Update failed: ${message}";
-
-  static String m17(label) => "${label} must be a URL";
-
-  static String m18(count) =>
+  static String m15(count) =>
       "${Intl.plural(count, one: 'year', other: 'years')}";
+
+  static String _custom_tunRouteConflict(interface) => "Another VPN/TUN is still active (${interface}). Turn it off and try again.";
+
+  static String _custom_updateDownloading(progress) => "Downloading update: ${progress}%";
+
+  static String _custom_updateFailed(message) => "Update failed: ${message}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -90,6 +89,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "addProfile": MessageLookupByLibrary.simpleMessage("Add Profile"),
     "addRule": MessageLookupByLibrary.simpleMessage("Add Rule"),
     "addTunnel": MessageLookupByLibrary.simpleMessage("Add Forwarding"),
+    "addUser": MessageLookupByLibrary.simpleMessage("Add User"),
     "addedOriginRules": MessageLookupByLibrary.simpleMessage(
       "Append to Original Rules",
     ),
@@ -179,6 +179,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Connect on app launch",
     ),
     "autoScroll": MessageLookupByLibrary.simpleMessage("Auto Scroll"),
+    "autoSetSystemDns": MessageLookupByLibrary.simpleMessage(
+      "Auto Set System DNS",
+    ),
+    "autoStickyHeader": MessageLookupByLibrary.simpleMessage(
+      "Auto Sticky Header",
+    ),
     "autoUpdate": MessageLookupByLibrary.simpleMessage("Auto Update"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage(
       "Auto update interval (min)",
@@ -420,9 +426,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "domain": MessageLookupByLibrary.simpleMessage("Organization / Domain"),
     "doubleBounce": MessageLookupByLibrary.simpleMessage("Double Bounce"),
     "download": MessageLookupByLibrary.simpleMessage("Download"),
-    "downloadAndInstall": MessageLookupByLibrary.simpleMessage(
-      "Download and Install",
-    ),
     "dozeSuspend": MessageLookupByLibrary.simpleMessage("Doze Support"),
     "dozeSuspendDesc": MessageLookupByLibrary.simpleMessage(
       "Sync with system Doze mode",
@@ -430,6 +433,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "dualRing": MessageLookupByLibrary.simpleMessage("Dual Ring"),
     "edit": MessageLookupByLibrary.simpleMessage("Edit"),
     "editTunnel": MessageLookupByLibrary.simpleMessage("Edit Forwarding"),
+    "editUser": MessageLookupByLibrary.simpleMessage("Edit User"),
     "emptyTip": m3,
     "enableCrashReport": MessageLookupByLibrary.simpleMessage(
       "Crash Analytics",
@@ -438,7 +442,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Upload crash logs when needed",
     ),
     "enableOverride": MessageLookupByLibrary.simpleMessage("Enable Override"),
-    "enableTraySpeed": MessageLookupByLibrary.simpleMessage("Network Speed"),
+    "enableTraySpeed": MessageLookupByLibrary.simpleMessage("Tray Speed"),
     "enableTraySpeedDesc": MessageLookupByLibrary.simpleMessage(
       "Display upload and download rates in the menu bar",
     ),
@@ -615,6 +619,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "iconConfiguration": MessageLookupByLibrary.simpleMessage(
       "Icon Configuration",
     ),
+    "iconConfigurationDesc": MessageLookupByLibrary.simpleMessage(
+      "Customize proxy group ICON icons",
+    ),
     "iconStyle": MessageLookupByLibrary.simpleMessage("Icon Style"),
     "import": MessageLookupByLibrary.simpleMessage("Import"),
     "importFailed": MessageLookupByLibrary.simpleMessage("Import failed"),
@@ -652,6 +659,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "just": MessageLookupByLibrary.simpleMessage("Just now"),
     "keepAliveIntervalDesc": MessageLookupByLibrary.simpleMessage(
       "TCP keep-alive interval",
+    ),
+    "keepDockIcon": MessageLookupByLibrary.simpleMessage("Keep in Dock"),
+    "keepDockIconDesc": MessageLookupByLibrary.simpleMessage(
+      "Keep the app icon in the Dock",
     ),
     "key": MessageLookupByLibrary.simpleMessage("Key"),
     "language": MessageLookupByLibrary.simpleMessage("Language"),
@@ -787,6 +798,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkType": MessageLookupByLibrary.simpleMessage("Network Type"),
     "neutralScheme": MessageLookupByLibrary.simpleMessage("Neutral"),
     "noAnimation": MessageLookupByLibrary.simpleMessage("Default"),
+    "noBackupFileFound": MessageLookupByLibrary.simpleMessage(
+      "No backup file found",
+    ),
     "noData": MessageLookupByLibrary.simpleMessage("No Data"),
     "noHotKey": MessageLookupByLibrary.simpleMessage("No Hotkeys"),
     "noIcon": MessageLookupByLibrary.simpleMessage("No Icon"),
@@ -1129,6 +1143,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Secret copied to clipboard",
     ),
     "selectAll": MessageLookupByLibrary.simpleMessage("Select All"),
+    "selectBackupVersion": MessageLookupByLibrary.simpleMessage(
+      "Select Backup Version",
+    ),
     "selected": MessageLookupByLibrary.simpleMessage("Selected"),
     "selectedCountTitle": m13,
     "serviceReady": MessageLookupByLibrary.simpleMessage("Service Ready"),
@@ -1138,8 +1155,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "showHiddenItems": MessageLookupByLibrary.simpleMessage(
       "Show Hidden Items",
     ),
-    "showMenu": MessageLookupByLibrary.simpleMessage("Show Menu"),
-    "showPanel": MessageLookupByLibrary.simpleMessage("Show Panel"),
+    "showMenu": MessageLookupByLibrary.simpleMessage("Open Menu"),
+    "showPanel": MessageLookupByLibrary.simpleMessage("Show Window"),
     "showStartSwitch": MessageLookupByLibrary.simpleMessage("Linkage Switch"),
     "showStartSwitchDesc": MessageLookupByLibrary.simpleMessage(
       "Display independent switch button on the homepage",
@@ -1153,6 +1170,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "skipDomain": MessageLookupByLibrary.simpleMessage("Skip Domain"),
     "skipDstAddress": MessageLookupByLibrary.simpleMessage(
       "Skip Destination IP",
+    ),
+    "skipLocalAuth": MessageLookupByLibrary.simpleMessage(
+      "Skip Local Authentication",
+    ),
+    "skipLocalAuthDesc": MessageLookupByLibrary.simpleMessage(
+      "Allow local machine to access proxy without credentials",
     ),
     "skipSrcAddress": MessageLookupByLibrary.simpleMessage("Skip Source IP"),
     "smartAutoStop": MessageLookupByLibrary.simpleMessage("Smart Auto-Stop"),
@@ -1196,7 +1219,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "stackMode": MessageLookupByLibrary.simpleMessage("Stack Mode"),
     "standard": MessageLookupByLibrary.simpleMessage("Standard"),
     "start": MessageLookupByLibrary.simpleMessage("Start"),
-    "startTest": MessageLookupByLibrary.simpleMessage("Start Test"),
+    "startTest": MessageLookupByLibrary.simpleMessage("Delay Test"),
     "startVpn": MessageLookupByLibrary.simpleMessage("Starting..."),
     "status": MessageLookupByLibrary.simpleMessage("Status"),
     "statusDesc": MessageLookupByLibrary.simpleMessage(
@@ -1235,7 +1258,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "testUrl": MessageLookupByLibrary.simpleMessage("Test URL"),
     "testing": MessageLookupByLibrary.simpleMessage("Testing"),
-    "testingDelay": MessageLookupByLibrary.simpleMessage("Testing"),
     "textScale": MessageLookupByLibrary.simpleMessage("Text Scaling"),
     "theme": MessageLookupByLibrary.simpleMessage("Theme"),
     "themeColor": MessageLookupByLibrary.simpleMessage("Theme Color"),
@@ -1263,6 +1285,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayClickBehavior": MessageLookupByLibrary.simpleMessage(
       "Tray Click Behavior",
     ),
+    "trayEnhancement": MessageLookupByLibrary.simpleMessage("Tray Enhancement"),
+    "trayEnhancementDesc": MessageLookupByLibrary.simpleMessage(
+      "Control proxy groups in system tray menu",
+    ),
     "trayIconInvert": MessageLookupByLibrary.simpleMessage("Invert Tray Icon"),
     "trayIconInvertDesc": MessageLookupByLibrary.simpleMessage(
       "Invert the current tray icon color",
@@ -1277,7 +1303,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunEnableRequireAdmin": MessageLookupByLibrary.simpleMessage(
       "Enabling the TUN virtual network adapter requires Administrator or ROOT privileges.",
     ),
-    "tunRouteConflict": m14,
     "tunVirtualAddress": MessageLookupByLibrary.simpleMessage(
       "TUN Virtual Network Adapter",
     ),
@@ -1340,21 +1365,24 @@ class MessageLookup extends MessageLookupByLibrary {
     "unnamed": MessageLookupByLibrary.simpleMessage("Unnamed"),
     "unpin": MessageLookupByLibrary.simpleMessage("Unpin"),
     "update": MessageLookupByLibrary.simpleMessage("Update"),
-    "updateDownloading": m15,
-    "updateFailed": m16,
-    "updateInstalling": MessageLookupByLibrary.simpleMessage(
-      "Opening the system installer...",
-    ),
     "updateTime": MessageLookupByLibrary.simpleMessage("Update Time"),
     "upload": MessageLookupByLibrary.simpleMessage("Upload"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("Get profile via URL"),
-    "urlTip": m17,
+    "urlTip": m14,
     "useGlobalScriptOverride": MessageLookupByLibrary.simpleMessage(
       "Use Global Script Override",
     ),
     "useHosts": MessageLookupByLibrary.simpleMessage("Use Hosts"),
     "useSystemHosts": MessageLookupByLibrary.simpleMessage("Use System Hosts"),
+    "userAuth": MessageLookupByLibrary.simpleMessage("User Authentication"),
+    "userAuthEmpty": MessageLookupByLibrary.simpleMessage(
+      "No authentication configured, LAN connections do not require credentials",
+    ),
+    "username": MessageLookupByLibrary.simpleMessage("Username"),
+    "usernameCannotContainColon": MessageLookupByLibrary.simpleMessage(
+      "Username cannot contain colons",
+    ),
     "value": MessageLookupByLibrary.simpleMessage("Value"),
     "vibrantScheme": MessageLookupByLibrary.simpleMessage("Vibrant"),
     "view": MessageLookupByLibrary.simpleMessage("View"),
@@ -1387,6 +1415,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "Requires administrator privileges",
     ),
-    "years": m18,
+    "years": m15,
+    "testingDelay": MessageLookupByLibrary.simpleMessage("Testing"),
+    "tunRouteConflict": _custom_tunRouteConflict,
+    "downloadAndInstall": MessageLookupByLibrary.simpleMessage("Download and Install"),
+    "updateDownloading": _custom_updateDownloading,
+    "updateInstalling": MessageLookupByLibrary.simpleMessage("Opening the system installer..."),
+    "updateFailed": _custom_updateFailed,
   };
 }

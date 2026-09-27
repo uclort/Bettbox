@@ -1,1 +1,1 @@
-修复 macOS 后台运行时 Dock 图标常驻问题
+同步上游 Bettbox 1.19.3，并采用可配置的 macOS Dock 图标逻辑

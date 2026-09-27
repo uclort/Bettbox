@@ -11,6 +11,7 @@ import 'package:bett_box/plugins/vpn.dart';
 import 'package:bett_box/state.dart';
 import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:synchronized/synchronized.dart';
@@ -37,14 +38,16 @@ Future<void> main(List<String> args) async {
     exit(0);
   }
 
-  if (system.isMacOS) {
+  if (system.isMacOS || appPath.isPortable) {
     final acquire = await singleInstanceLock.acquire();
     if (!acquire) {
       commonPrint.log(
         'SingleInstanceLock: another instance detected or lock failed, exiting',
       );
-      await _sendControlCommand('show');
-      await Future.delayed(const Duration(milliseconds: 100));
+      if (!appPath.isPortable) {
+        await _sendControlCommand('show');
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
       exit(0);
     }
   }
@@ -92,6 +95,7 @@ Future<void> _runApp() async {
     } catch (e) {
       commonPrint.log('Failed to set high refresh rate: $e');
     }
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
   await android?.init();
 

@@ -148,10 +148,13 @@ class ApplicationState extends ConsumerState<Application>
       _lastMacOSNetworkFingerprint = networkState?.fingerprint;
       _macOSNetworkRecoveryReady = true;
     }
-    try {
-      await ExternalControl.start();
-    } catch (e) {
-      commonPrint.log('ExternalControl start failed: $e');
+    if (!appPath.isPortable) {
+      try {
+        await ExternalControl.start();
+      } catch (e) {
+        commonPrint.log('ExternalControl start failed: $e');
+      }
+    }
     }
     globalState.appController.initLink();
     if (system.isAndroid) {

@@ -1,39 +1,5 @@
-### 2026-09-24 修复 DIRECT DNS 连接池失效
+### 2026-09-27 同步上游 Bettbox 1.19.3
 
-- 修复 DIRECT 命中规则后真实域名解析持续超时，而 GLOBAL 仍可用的问题。
-- macOS 网络恢复除关闭业务连接和清理 DNS/Fake-IP 缓存外，显式重建 Mihomo DoH/DoT resolver 连接池。
-- 修正 `resetConnections` 桌面 IPC 方法名不一致及 Dart 层无法等待执行结果的问题。
-
-### 2026-09-23 修复 Option 点击临时显示隐藏策略组
-
-- 该功能未在精简中删除；修复 macOS 菜单栏点击事件未稳定携带 Option 修饰键状态时，隐藏策略组无法临时显示的问题。
-- Option 状态同时读取点击事件和当前键盘修饰键，恢复按住 Option 点击菜单栏图标临时显示隐藏项。
-
-### 2026-09-23 修复 macOS 后台运行 Dock 图标常驻
-
-- 修复上游 `Optimize macOS window management` 后 macOS 跳过 `setSkipTaskbar` 导致窗口关闭后 Dock 图标常驻的问题。
-- 窗口隐藏或关闭到后台时切换为 `NSApplication.accessory`，应用继续驻留菜单栏但不再显示 Dock 图标；重新打开窗口时恢复 `.regular`。
-- 增加回归测试，验证窗口隐藏映射为移除任务栏/Dock 图标、窗口显示映射为恢复图标。
-
-### 2026-09-23 恢复上游独立启停逻辑
-
-- 移除自定义统一启停判断：恢复上游独立 Start/Stop 卡片、可选首页独立开关、启动快捷键和托盘启动/停止菜单项。
-- 系统代理与 TUN 开关恢复上游语义，只修改各自配置，不再隐式启动或停止内核；保留 macOS TUN 路由冲突检查、串行核心重启、DNS 托管和唤醒恢复等修复。
-- 删除 Android 首页悬浮总开关，恢复上游仪表盘布局与启动卡片。
-- 恢复上游 Auto Run、Show Start Switch 设置入口及相关多语言文案。
-
-### 2026-09-23 macOS 托盘状态微调
-
-- 未启用状态下的 macOS 菜单栏图标从原生 disabled 外观调整为 60% 中性灰，保持灰色语义但整体更亮。
-- 右侧实时上传/下载速率文案固定保持正常标签色，不再在 Bettbox 未启用时跟随图标变灰。
-
-### 2026-09-22 自定义功能精简与菜单栏图标修复
-
-- 同步官方 `appshubcc/Bettbox` 的 `main@55067fafb0fb`，纳入 1.19.3、Android TV 二维码导入、延迟动画、媒体解锁检测、平台图标和核心更新；冲突处继续保留 WebDAV 边界、macOS TUN/DNS 恢复、统一启停和托盘点击行为。
-- 融合上游启动修复：Provider 刷新移入后台加载，核心重启同时保留自定义旧进程隔离与上游 Windows helper 停止；网络页按平台展示设置，macOS 自动 DNS 开关继续移除。
-- 修正自定义内核同步流程：新版 Mihomo 的源码版本由构建参数注入，同步校验不再把空版本误判为 `v`，继续按上游核心树应用 Snell v6 并执行回归。
-- 按保留清单精简自定义版：继续保留 WebDAV 共享边界、macOS TUN/DNS 与唤醒恢复、统一启停、隐藏策略组、Inline Provider 查看、应用内更新、自定义构建、系统代理所有权保护、HarmonyOS Sans 空格修复、Snell v6 及接口 DNS。
-- 删除独立网络面板及其最近请求、连接、DNS、设备、流量、日志、规则生成和 Sub-Store 管理页面；同时删除独立进程、IPC、专属图标、导航/托盘入口和对应测试。
-- 删除 TrackerInfo 连接链路扩展、连接加入通知以及私有 custom-mihomo 覆写脚本；请求、连接和进程图标展示恢复 Bettbox 上游实现。
-- macOS 未启用菜单栏图标改用 `NSStatusBarButton.appearsDisabled` 原生 off 状态，继续保留模板图标；解决最新包中未启动状态仍显示纯黑的问题，实时速率文字继续使用系统次级标签灰色。
-- 自定义功能总账已重写为当前仍保留的能力，移除不再维护的历史实现说明。
+- 同步官方 `appshubcc/Bettbox` 的 `main@26865630fef4`，纳入最新核心、WebDAV 多版本备份与轻量加密、Windows 便携模式、局域网用户验证、代理列表自动吸顶及媒体解锁检测修复。
+- 删除自定义“关闭窗口后强制隐藏 Dock 图标”实现及其回归测试，改用上游“常驻 Dock”配置、启动状态恢复和 `window_ext` 动态切换逻辑。
+- 保留 WebDAV 共享配置边界、macOS TUN/DNS 恢复、隐藏策略组、Inline Provider、应用内更新、菜单栏增强、系统代理所有权保护、Snell v6 与接口 DNS 等自定义能力。

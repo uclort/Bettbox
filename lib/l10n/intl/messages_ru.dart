@@ -54,17 +54,16 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m13(count) => "Выбрано: ${count}";
 
-  static String m14(interface) =>
-      "Другая VPN/TUN всё ещё активна (${interface}). Отключите её и повторите попытку.";
+  static String m14(label) => "${label} должен быть URL";
 
-  static String m15(progress) => "Загрузка обновления: ${progress}%";
-
-  static String m16(message) => "Ошибка обновления: ${message}";
-
-  static String m17(label) => "${label} должен быть URL";
-
-  static String m18(count) =>
+  static String m15(count) =>
       "${Intl.plural(count, one: 'год', few: 'года', many: 'лет', other: 'лет')}";
+
+  static String _custom_tunRouteConflict(interface) => "Другая VPN/TUN всё ещё активна (${interface}). Отключите её и повторите попытку.";
+
+  static String _custom_updateDownloading(progress) => "Загрузка обновления: ${progress}%";
+
+  static String _custom_updateFailed(message) => "Ошибка обновления: ${message}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -95,6 +94,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "addTunnel": MessageLookupByLibrary.simpleMessage(
       "Добавить перенаправление",
     ),
+    "addUser": MessageLookupByLibrary.simpleMessage("Добавить пользователя"),
     "addedOriginRules": MessageLookupByLibrary.simpleMessage(
       "Добавить к исходным правилам",
     ),
@@ -182,6 +182,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Подключаться при запуске приложения",
     ),
     "autoScroll": MessageLookupByLibrary.simpleMessage("Автопрокрутка"),
+    "autoSetSystemDns": MessageLookupByLibrary.simpleMessage(
+      "Автоматически настроить системный DNS",
+    ),
+    "autoStickyHeader": MessageLookupByLibrary.simpleMessage(
+      "Автозакрепление заголовка",
+    ),
     "autoUpdate": MessageLookupByLibrary.simpleMessage("Автообновление"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage(
       "Интервал автообновления (минуты)",
@@ -429,9 +435,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "domain": MessageLookupByLibrary.simpleMessage("Домен"),
     "doubleBounce": MessageLookupByLibrary.simpleMessage("Двойной отскок"),
     "download": MessageLookupByLibrary.simpleMessage("Загрузка"),
-    "downloadAndInstall": MessageLookupByLibrary.simpleMessage(
-      "Скачать и установить",
-    ),
     "dozeSuspend": MessageLookupByLibrary.simpleMessage("Поддержка Doze"),
     "dozeSuspendDesc": MessageLookupByLibrary.simpleMessage(
       "Синхронизация с режимом сна Android",
@@ -440,6 +443,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "edit": MessageLookupByLibrary.simpleMessage("Редактировать"),
     "editTunnel": MessageLookupByLibrary.simpleMessage(
       "Изменить перенаправление",
+    ),
+    "editUser": MessageLookupByLibrary.simpleMessage(
+      "Редактировать пользователя",
     ),
     "emptyTip": m3,
     "enableCrashReport": MessageLookupByLibrary.simpleMessage("Анализ сбоев"),
@@ -638,6 +644,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "iconConfiguration": MessageLookupByLibrary.simpleMessage(
       "Настройка иконки",
     ),
+    "iconConfigurationDesc": MessageLookupByLibrary.simpleMessage(
+      "Настройка значков ICON групп прокси",
+    ),
     "iconStyle": MessageLookupByLibrary.simpleMessage("Стиль иконок"),
     "import": MessageLookupByLibrary.simpleMessage("Импорт"),
     "importFailed": MessageLookupByLibrary.simpleMessage("Ошибка импорта"),
@@ -673,6 +682,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "just": MessageLookupByLibrary.simpleMessage("Только что"),
     "keepAliveIntervalDesc": MessageLookupByLibrary.simpleMessage(
       "Интервал TCP keep-alive",
+    ),
+    "keepDockIcon": MessageLookupByLibrary.simpleMessage("Закрепить в Dock"),
+    "keepDockIconDesc": MessageLookupByLibrary.simpleMessage(
+      "Сохранять иконку приложения в Dock",
     ),
     "key": MessageLookupByLibrary.simpleMessage("Ключ"),
     "language": MessageLookupByLibrary.simpleMessage("Язык"),
@@ -808,6 +821,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkType": MessageLookupByLibrary.simpleMessage("Тип сети"),
     "neutralScheme": MessageLookupByLibrary.simpleMessage("Нейтральный"),
     "noAnimation": MessageLookupByLibrary.simpleMessage("По умолчанию"),
+    "noBackupFileFound": MessageLookupByLibrary.simpleMessage(
+      "Файл резервной копии не найден",
+    ),
     "noData": MessageLookupByLibrary.simpleMessage("Нет данных"),
     "noHotKey": MessageLookupByLibrary.simpleMessage("Нет горячих клавиш"),
     "noIcon": MessageLookupByLibrary.simpleMessage("Без иконок"),
@@ -1162,6 +1178,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Пароль скопирован в буфер обмена",
     ),
     "selectAll": MessageLookupByLibrary.simpleMessage("Выбрать все"),
+    "selectBackupVersion": MessageLookupByLibrary.simpleMessage(
+      "Выберите версию резервной копии",
+    ),
     "selected": MessageLookupByLibrary.simpleMessage("Выбрано"),
     "selectedCountTitle": m13,
     "serviceReady": MessageLookupByLibrary.simpleMessage("Служба готова"),
@@ -1186,6 +1205,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "skipDomain": MessageLookupByLibrary.simpleMessage("Пропустить домены"),
     "skipDstAddress": MessageLookupByLibrary.simpleMessage(
       "Пропустить IP назначения",
+    ),
+    "skipLocalAuth": MessageLookupByLibrary.simpleMessage(
+      "Пропустить локальную аутентификацию",
+    ),
+    "skipLocalAuthDesc": MessageLookupByLibrary.simpleMessage(
+      "Разрешить локальному устройству доступ к прокси без учетных данных",
     ),
     "skipSrcAddress": MessageLookupByLibrary.simpleMessage(
       "Пропустить IP источника",
@@ -1276,7 +1301,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "testUrl": MessageLookupByLibrary.simpleMessage("URL теста"),
     "testing": MessageLookupByLibrary.simpleMessage("Проверка"),
-    "testingDelay": MessageLookupByLibrary.simpleMessage("Тестирование"),
     "textScale": MessageLookupByLibrary.simpleMessage("Масштаб текста"),
     "theme": MessageLookupByLibrary.simpleMessage("Тема"),
     "themeColor": MessageLookupByLibrary.simpleMessage("Цвет темы"),
@@ -1306,6 +1330,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayClickBehavior": MessageLookupByLibrary.simpleMessage(
       "Действие при нажатии на значок",
     ),
+    "trayEnhancement": MessageLookupByLibrary.simpleMessage("Улучшение трея"),
+    "trayEnhancementDesc": MessageLookupByLibrary.simpleMessage(
+      "Управление группами прокси в меню системного трея",
+    ),
     "trayIconInvert": MessageLookupByLibrary.simpleMessage(
       "Инвертировать значок трея",
     ),
@@ -1320,9 +1348,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "Использовать TUN для перехвата трафика устройства",
     ),
     "tunEnableRequireAdmin": MessageLookupByLibrary.simpleMessage(
-      "Для включения виртуального адаптера TUN требуются права администратора или ROOT.",
+      "Для включения режима TUN требуются права администратора или ROOT.",
     ),
-    "tunRouteConflict": m14,
     "tunVirtualAddress": MessageLookupByLibrary.simpleMessage(
       "Адрес виртуального сетевого адаптера TUN",
     ),
@@ -1395,22 +1422,27 @@ class MessageLookup extends MessageLookupByLibrary {
     "unnamed": MessageLookupByLibrary.simpleMessage("Без имени"),
     "unpin": MessageLookupByLibrary.simpleMessage("Открепить"),
     "update": MessageLookupByLibrary.simpleMessage("Обновить"),
-    "updateDownloading": m15,
-    "updateFailed": m16,
-    "updateInstalling": MessageLookupByLibrary.simpleMessage(
-      "Открытие системного установщика...",
-    ),
     "updateTime": MessageLookupByLibrary.simpleMessage("Время обновления"),
     "upload": MessageLookupByLibrary.simpleMessage("Отправка"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("Получить профиль по URL"),
-    "urlTip": m17,
+    "urlTip": m14,
     "useGlobalScriptOverride": MessageLookupByLibrary.simpleMessage(
       "Глобальное переопределение",
     ),
     "useHosts": MessageLookupByLibrary.simpleMessage("Использовать hosts"),
     "useSystemHosts": MessageLookupByLibrary.simpleMessage(
       "Использовать системные hosts",
+    ),
+    "userAuth": MessageLookupByLibrary.simpleMessage(
+      "Аутентификация пользователей",
+    ),
+    "userAuthEmpty": MessageLookupByLibrary.simpleMessage(
+      "Пользователи аутентификации не настроены, подключение по LAN не требует учетных данных",
+    ),
+    "username": MessageLookupByLibrary.simpleMessage("Имя пользователя"),
+    "usernameCannotContainColon": MessageLookupByLibrary.simpleMessage(
+      "Имя пользователя не может содержать двоеточие",
     ),
     "value": MessageLookupByLibrary.simpleMessage("Значение"),
     "vibrantScheme": MessageLookupByLibrary.simpleMessage("Яркий"),
@@ -1446,6 +1478,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "Требуются права администратора",
     ),
-    "years": m18,
+    "years": m15,
+    "testingDelay": MessageLookupByLibrary.simpleMessage("Тестирование"),
+    "tunRouteConflict": _custom_tunRouteConflict,
+    "downloadAndInstall": MessageLookupByLibrary.simpleMessage("Скачать и установить"),
+    "updateDownloading": _custom_updateDownloading,
+    "updateInstalling": MessageLookupByLibrary.simpleMessage("Открытие системного установщика..."),
+    "updateFailed": _custom_updateFailed,
   };
 }

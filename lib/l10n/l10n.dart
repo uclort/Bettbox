@@ -539,6 +539,46 @@ class AppLocalizations {
     );
   }
 
+  /// `Keep in Dock`
+  String get keepDockIcon {
+    return Intl.message(
+      'Keep in Dock',
+      name: 'keepDockIcon',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Keep the app icon in the Dock`
+  String get keepDockIconDesc {
+    return Intl.message(
+      'Keep the app icon in the Dock',
+      name: 'keepDockIconDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Tray Enhancement`
+  String get trayEnhancement {
+    return Intl.message(
+      'Tray Enhancement',
+      name: 'trayEnhancement',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Control proxy groups in system tray menu`
+  String get trayEnhancementDesc {
+    return Intl.message(
+      'Control proxy groups in system tray menu',
+      name: 'trayEnhancementDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Tray Click Behavior`
   String get trayClickBehavior {
     return Intl.message(
@@ -569,20 +609,20 @@ class AppLocalizations {
     );
   }
 
-  /// `Show Panel`
+  /// `Show Window`
   String get showPanel {
-    return Intl.message('Show Panel', name: 'showPanel', desc: '', args: []);
+    return Intl.message('Show Window', name: 'showPanel', desc: '', args: []);
   }
 
-  /// `Show Menu`
+  /// `Open Menu`
   String get showMenu {
-    return Intl.message('Show Menu', name: 'showMenu', desc: '', args: []);
+    return Intl.message('Open Menu', name: 'showMenu', desc: '', args: []);
   }
 
-  /// `Network Speed`
+  /// `Tray Speed`
   String get enableTraySpeed {
     return Intl.message(
-      'Network Speed',
+      'Tray Speed',
       name: 'enableTraySpeed',
       desc: '',
       args: [],
@@ -1754,6 +1794,26 @@ class AppLocalizations {
     );
   }
 
+  /// `Select Backup Version`
+  String get selectBackupVersion {
+    return Intl.message(
+      'Select Backup Version',
+      name: 'selectBackupVersion',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No backup file found`
+  String get noBackupFileFound {
+    return Intl.message(
+      'No backup file found',
+      name: 'noBackupFileFound',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Restore Successful`
   String get recoverySuccess {
     return Intl.message(
@@ -2199,14 +2259,9 @@ class AppLocalizations {
     return Intl.message('Test URL', name: 'testUrl', desc: '', args: []);
   }
 
-  /// `Start Test`
+  /// `Delay Test`
   String get startTest {
-    return Intl.message('Start Test', name: 'startTest', desc: '', args: []);
-  }
-
-  /// `Testing`
-  String get testingDelay {
-    return Intl.message('Testing', name: 'testingDelay', desc: '', args: []);
+    return Intl.message('Delay Test', name: 'startTest', desc: '', args: []);
   }
 
   /// `Add Profile`
@@ -2859,6 +2914,11 @@ class AppLocalizations {
     return Intl.message('Stop', name: 'stop', desc: '', args: []);
   }
 
+  /// `Power`
+  String get powerSwitch {
+    return Intl.message('Power', name: 'powerSwitch', desc: '', args: []);
+  }
+
   /// `Uptime`
   String get runTime {
     return Intl.message('Uptime', name: 'runTime', desc: '', args: []);
@@ -2869,6 +2929,16 @@ class AppLocalizations {
     return Intl.message(
       'Please add a profile first',
       name: 'checkOrAddProfile',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Service Ready`
+  String get serviceReady {
+    return Intl.message(
+      'Service Ready',
+      name: 'serviceReady',
       desc: '',
       args: [],
     );
@@ -3994,6 +4064,11 @@ class AppLocalizations {
     return Intl.message('Show/Hide', name: 'action_view', desc: '', args: []);
   }
 
+  /// `Start/Stop`
+  String get action_start {
+    return Intl.message('Start/Stop', name: 'action_start', desc: '', args: []);
+  }
+
   /// `Switch Mode`
   String get action_mode {
     return Intl.message('Switch Mode', name: 'action_mode', desc: '', args: []);
@@ -4289,6 +4364,16 @@ class AppLocalizations {
     return Intl.message(
       'Icon Configuration',
       name: 'iconConfiguration',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Customize proxy group ICON icons`
+  String get iconConfigurationDesc {
+    return Intl.message(
+      'Customize proxy group ICON icons',
+      name: 'iconConfigurationDesc',
       desc: '',
       args: [],
     );
@@ -5209,6 +5294,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Auto Set System DNS`
+  String get autoSetSystemDns {
+    return Intl.message(
+      'Auto Set System DNS',
+      name: 'autoSetSystemDns',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Details`
   String get details {
     return Intl.message('Details', name: 'details', desc: '', args: []);
@@ -5399,16 +5494,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Another VPN/TUN is still active ({interface}). Turn it off and try again.`
-  String tunRouteConflict(Object interface) {
-    return Intl.message(
-      'Another VPN/TUN is still active ($interface). Turn it off and try again.',
-      name: 'tunRouteConflict',
-      desc: '',
-      args: [interface],
-    );
-  }
-
   /// `Restart TUN for changes to take effect`
   String get restartTip {
     return Intl.message(
@@ -5429,6 +5514,16 @@ class AppLocalizations {
     return Intl.message(
       'Restart Core',
       name: 'restartCoreTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Manually restart the core?`
+  String get restartCoreDesc {
+    return Intl.message(
+      'Manually restart the core?',
+      name: 'restartCoreDesc',
       desc: '',
       args: [],
     );
@@ -5574,6 +5669,16 @@ class AppLocalizations {
     return Intl.message('Wrap Lines', name: 'lineWrap', desc: '', args: []);
   }
 
+  /// `Auto Sticky Header`
+  String get autoStickyHeader {
+    return Intl.message(
+      'Auto Sticky Header',
+      name: 'autoStickyHeader',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Show Hidden Items`
   String get showHiddenItems {
     return Intl.message(
@@ -5581,46 +5686,6 @@ class AppLocalizations {
       name: 'showHiddenItems',
       desc: '',
       args: [],
-    );
-  }
-
-  /// `Download and Install`
-  String get downloadAndInstall {
-    return Intl.message(
-      'Download and Install',
-      name: 'downloadAndInstall',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Downloading update: {progress}%`
-  String updateDownloading(Object progress) {
-    return Intl.message(
-      'Downloading update: $progress%',
-      name: 'updateDownloading',
-      desc: '',
-      args: [progress],
-    );
-  }
-
-  /// `Opening the system installer...`
-  String get updateInstalling {
-    return Intl.message(
-      'Opening the system installer...',
-      name: 'updateInstalling',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Update failed: {message}`
-  String updateFailed(Object message) {
-    return Intl.message(
-      'Update failed: $message',
-      name: 'updateFailed',
-      desc: '',
-      args: [message],
     );
   }
 
@@ -6219,33 +6284,118 @@ class AppLocalizations {
     );
   }
 
-  /// `Start/Stop`
-  String get action_start {
-    return Intl.message('Start/Stop', name: 'action_start', desc: '', args: []);
-  }
-
-  /// `Power`
-  String get powerSwitch {
-    return Intl.message('Power', name: 'powerSwitch', desc: '', args: []);
-  }
-
-  /// `Service Ready`
-  String get serviceReady {
+  /// `User Authentication`
+  String get userAuth {
     return Intl.message(
-      'Service Ready',
-      name: 'serviceReady',
+      'User Authentication',
+      name: 'userAuth',
       desc: '',
       args: [],
     );
   }
 
-  /// `Manually restart the core?`
-  String get restartCoreDesc {
+  /// `Skip Local Authentication`
+  String get skipLocalAuth {
     return Intl.message(
-      'Manually restart the core?',
-      name: 'restartCoreDesc',
+      'Skip Local Authentication',
+      name: 'skipLocalAuth',
       desc: '',
       args: [],
+    );
+  }
+
+  /// `Allow local machine to access proxy without credentials`
+  String get skipLocalAuthDesc {
+    return Intl.message(
+      'Allow local machine to access proxy without credentials',
+      name: 'skipLocalAuthDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Username`
+  String get username {
+    return Intl.message('Username', name: 'username', desc: '', args: []);
+  }
+
+  /// `Add User`
+  String get addUser {
+    return Intl.message('Add User', name: 'addUser', desc: '', args: []);
+  }
+
+  /// `Edit User`
+  String get editUser {
+    return Intl.message('Edit User', name: 'editUser', desc: '', args: []);
+  }
+
+  /// `No authentication configured, LAN connections do not require credentials`
+  String get userAuthEmpty {
+    return Intl.message(
+      'No authentication configured, LAN connections do not require credentials',
+      name: 'userAuthEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Username cannot contain colons`
+  String get usernameCannotContainColon {
+    return Intl.message(
+      'Username cannot contain colons',
+      name: 'usernameCannotContainColon',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Testing`
+  String get testingDelay {
+    return Intl.message('Testing', name: 'testingDelay', desc: '', args: []);
+  }
+  /// `Another VPN/TUN is still active ({interface}). Turn it off and try again.`
+  String tunRouteConflict(Object interface) {
+    return Intl.message(
+      'Another VPN/TUN is still active ($interface). Turn it off and try again.',
+      name: 'tunRouteConflict',
+      desc: '',
+      args: [interface],
+    );
+  }
+  /// `Download and Install`
+  String get downloadAndInstall {
+    return Intl.message(
+      'Download and Install',
+      name: 'downloadAndInstall',
+      desc: '',
+      args: [],
+    );
+  }
+  /// `Downloading update: {progress}%`
+  String updateDownloading(Object progress) {
+    return Intl.message(
+      'Downloading update: $progress%',
+      name: 'updateDownloading',
+      desc: '',
+      args: [progress],
+    );
+  }
+  /// `Opening the system installer...`
+  String get updateInstalling {
+    return Intl.message(
+      'Opening the system installer...',
+      name: 'updateInstalling',
+      desc: '',
+      args: [],
+    );
+  }
+  /// `Update failed: {message}`
+  String updateFailed(Object message) {
+    return Intl.message(
+      'Update failed: $message',
+      name: 'updateFailed',
+      desc: '',
+      args: [message],
     );
   }
 }

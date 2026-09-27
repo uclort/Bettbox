@@ -49,15 +49,15 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m13(count) => "已選擇 ${count} 項";
 
-  static String m14(interface) => "偵測到其他 VPN/TUN 仍在運行（${interface}），請關閉後重試。";
+  static String m14(label) => "${label}必須為 URL";
 
-  static String m15(progress) => "正在下載更新：${progress}%";
+  static String m15(count) => "${Intl.plural(count, other: '年')}";
 
-  static String m16(message) => "更新失敗：${message}";
+  static String _custom_tunRouteConflict(interface) => "偵測到其他 VPN/TUN 仍在運行（${interface}），請關閉後重試。";
 
-  static String m17(label) => "${label}必須為 URL";
+  static String _custom_updateDownloading(progress) => "正在下載更新：${progress}%";
 
-  static String m18(count) => "${Intl.plural(count, other: '年')}";
+  static String _custom_updateFailed(message) => "更新失敗：${message}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -82,6 +82,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "addProfile": MessageLookupByLibrary.simpleMessage("新增配置"),
     "addRule": MessageLookupByLibrary.simpleMessage("新增規則"),
     "addTunnel": MessageLookupByLibrary.simpleMessage("新增轉發"),
+    "addUser": MessageLookupByLibrary.simpleMessage("新增用戶"),
     "addedOriginRules": MessageLookupByLibrary.simpleMessage("附加到原始規則"),
     "address": MessageLookupByLibrary.simpleMessage("地址"),
     "addressHelp": MessageLookupByLibrary.simpleMessage("WebDAV 伺服器位址"),
@@ -135,6 +136,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoRun": MessageLookupByLibrary.simpleMessage("自動連線"),
     "autoRunDesc": MessageLookupByLibrary.simpleMessage("應用打開後自動連線"),
     "autoScroll": MessageLookupByLibrary.simpleMessage("自動滾動"),
+    "autoSetSystemDns": MessageLookupByLibrary.simpleMessage("自動設定系統 DNS"),
+    "autoStickyHeader": MessageLookupByLibrary.simpleMessage("自動吸頂"),
     "autoUpdate": MessageLookupByLibrary.simpleMessage("自動更新"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage("自動更新間隔（分鐘）"),
     "back": MessageLookupByLibrary.simpleMessage("返回"),
@@ -304,7 +307,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "domain": MessageLookupByLibrary.simpleMessage("組織 / 域名"),
     "doubleBounce": MessageLookupByLibrary.simpleMessage("雙重彈奏"),
     "download": MessageLookupByLibrary.simpleMessage("下載"),
-    "downloadAndInstall": MessageLookupByLibrary.simpleMessage("下載並安裝"),
     "dozeSuspend": MessageLookupByLibrary.simpleMessage("休眠支援"),
     "dozeSuspendDesc": MessageLookupByLibrary.simpleMessage(
       "開啟後同步系統 Doze 休眠模式",
@@ -312,6 +314,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "dualRing": MessageLookupByLibrary.simpleMessage("雙環迴旋"),
     "edit": MessageLookupByLibrary.simpleMessage("編輯"),
     "editTunnel": MessageLookupByLibrary.simpleMessage("編輯轉發"),
+    "editUser": MessageLookupByLibrary.simpleMessage("編輯用戶"),
     "emptyTip": m3,
     "enableCrashReport": MessageLookupByLibrary.simpleMessage("應用崩潰分析"),
     "enableCrashReportDesc": MessageLookupByLibrary.simpleMessage(
@@ -449,6 +452,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "icon": MessageLookupByLibrary.simpleMessage("圖片"),
     "iconConfiguration": MessageLookupByLibrary.simpleMessage("圖片設定"),
+    "iconConfigurationDesc": MessageLookupByLibrary.simpleMessage(
+      "自訂代理組 ICON 圖示",
+    ),
     "iconStyle": MessageLookupByLibrary.simpleMessage("圖示樣式"),
     "import": MessageLookupByLibrary.simpleMessage("匯入"),
     "importFailed": MessageLookupByLibrary.simpleMessage("匯入失敗"),
@@ -475,6 +481,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "itemsCount": m6,
     "just": MessageLookupByLibrary.simpleMessage("剛剛"),
     "keepAliveIntervalDesc": MessageLookupByLibrary.simpleMessage("TCP 保持活動間隔"),
+    "keepDockIcon": MessageLookupByLibrary.simpleMessage("常駐DOCK"),
+    "keepDockIconDesc": MessageLookupByLibrary.simpleMessage("在 Dock 欄保留應用圖標"),
     "key": MessageLookupByLibrary.simpleMessage("鍵"),
     "language": MessageLookupByLibrary.simpleMessage("語言"),
     "lastEdit": MessageLookupByLibrary.simpleMessage("上次編輯"),
@@ -577,6 +585,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkType": MessageLookupByLibrary.simpleMessage("網路類型"),
     "neutralScheme": MessageLookupByLibrary.simpleMessage("中性"),
     "noAnimation": MessageLookupByLibrary.simpleMessage("預設"),
+    "noBackupFileFound": MessageLookupByLibrary.simpleMessage("未找到備份檔案"),
     "noData": MessageLookupByLibrary.simpleMessage("暫無資料"),
     "noHotKey": MessageLookupByLibrary.simpleMessage("暫無快捷鍵"),
     "noIcon": MessageLookupByLibrary.simpleMessage("無圖示"),
@@ -819,6 +828,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "seconds": MessageLookupByLibrary.simpleMessage("秒"),
     "secretCopied": MessageLookupByLibrary.simpleMessage("密碼已複製到剪貼簿"),
     "selectAll": MessageLookupByLibrary.simpleMessage("全選"),
+    "selectBackupVersion": MessageLookupByLibrary.simpleMessage("選擇備份版本"),
     "selected": MessageLookupByLibrary.simpleMessage("已選擇"),
     "selectedCountTitle": m13,
     "serviceReady": MessageLookupByLibrary.simpleMessage("服務已就緒"),
@@ -836,6 +846,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "size": MessageLookupByLibrary.simpleMessage("尺寸"),
     "skipDomain": MessageLookupByLibrary.simpleMessage("跳過網域"),
     "skipDstAddress": MessageLookupByLibrary.simpleMessage("跳過目標 IP"),
+    "skipLocalAuth": MessageLookupByLibrary.simpleMessage("跳過本機驗證"),
+    "skipLocalAuthDesc": MessageLookupByLibrary.simpleMessage("允許本機免密存取代理"),
     "skipSrcAddress": MessageLookupByLibrary.simpleMessage("跳過來源 IP"),
     "smartAutoStop": MessageLookupByLibrary.simpleMessage("智慧啟停"),
     "smartAutoStopDesc": MessageLookupByLibrary.simpleMessage("連線指定網路後停止代理服務"),
@@ -920,6 +932,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "tproxyPort": MessageLookupByLibrary.simpleMessage("Tproxy 連接埠"),
     "trafficUsage": MessageLookupByLibrary.simpleMessage("流量統計"),
     "trayClickBehavior": MessageLookupByLibrary.simpleMessage("托盤點擊行為"),
+    "trayEnhancement": MessageLookupByLibrary.simpleMessage("托盤增強"),
+    "trayEnhancementDesc": MessageLookupByLibrary.simpleMessage(
+      "在系統托盤區菜單中控制代理組",
+    ),
     "trayIconInvert": MessageLookupByLibrary.simpleMessage("托盤反轉"),
     "trayIconInvertDesc": MessageLookupByLibrary.simpleMessage(
       "針對目前托盤圖示顏色取反設定",
@@ -930,7 +946,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunEnableRequireAdmin": MessageLookupByLibrary.simpleMessage(
       "啟用 TUN 虛擬網卡功能需要管理員或 Root 權限",
     ),
-    "tunRouteConflict": m14,
     "tunVirtualAddress": MessageLookupByLibrary.simpleMessage("TUN 虛擬網卡位址"),
     "tunnel": MessageLookupByLibrary.simpleMessage("Tunnel"),
     "tunnelAddress": MessageLookupByLibrary.simpleMessage("監聽地址"),
@@ -975,19 +990,22 @@ class MessageLookup extends MessageLookupByLibrary {
     "unnamed": MessageLookupByLibrary.simpleMessage("未命名"),
     "unpin": MessageLookupByLibrary.simpleMessage("取消置頂"),
     "update": MessageLookupByLibrary.simpleMessage("更新"),
-    "updateDownloading": m15,
-    "updateFailed": m16,
-    "updateInstalling": MessageLookupByLibrary.simpleMessage("正在開啟系統安裝程式..."),
     "updateTime": MessageLookupByLibrary.simpleMessage("更新時間"),
     "upload": MessageLookupByLibrary.simpleMessage("上傳"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("透過 URL 獲取設定檔"),
-    "urlTip": m17,
+    "urlTip": m14,
     "useGlobalScriptOverride": MessageLookupByLibrary.simpleMessage(
       "使用全域指令碼覆寫",
     ),
     "useHosts": MessageLookupByLibrary.simpleMessage("使用 Hosts"),
     "useSystemHosts": MessageLookupByLibrary.simpleMessage("使用系統 Hosts"),
+    "userAuth": MessageLookupByLibrary.simpleMessage("用戶驗證"),
+    "userAuthEmpty": MessageLookupByLibrary.simpleMessage("未設定驗證用戶，局域網連線無需憑據"),
+    "username": MessageLookupByLibrary.simpleMessage("使用者名稱"),
+    "usernameCannotContainColon": MessageLookupByLibrary.simpleMessage(
+      "使用者名稱不能包含冒號",
+    ),
     "value": MessageLookupByLibrary.simpleMessage("值"),
     "vibrantScheme": MessageLookupByLibrary.simpleMessage("活力"),
     "view": MessageLookupByLibrary.simpleMessage("查看"),
@@ -1012,6 +1030,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "whitelistMode": MessageLookupByLibrary.simpleMessage("白名單模式"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("寫入系統"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage("需要管理員權限"),
-    "years": m18,
+    "years": m15,
+    "tunRouteConflict": _custom_tunRouteConflict,
+    "downloadAndInstall": MessageLookupByLibrary.simpleMessage("下載並安裝"),
+    "updateDownloading": _custom_updateDownloading,
+    "updateInstalling": MessageLookupByLibrary.simpleMessage("正在開啟系統安裝程式..."),
+    "updateFailed": _custom_updateFailed,
   };
 }
