@@ -4,17 +4,25 @@ import window_ext
 
 @main
 class AppDelegate: FlutterAppDelegate {
+    private var isNetworkPanel: Bool {
+        CommandLine.arguments.contains("--network-panel")
+    }
 
     override func applicationWillFinishLaunching(_ notification: Notification) {
-        DockIconVisibility.update(hasWindow: false)
+        if !isNetworkPanel {
+            DockIconVisibility.update(hasWindow: false)
+        }
         super.applicationWillFinishLaunching(notification)
     }
 
     override func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        return false
+        return isNetworkPanel
     }
 
     override func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        if isNetworkPanel {
+            return .terminateNow
+        }
         WindowExtPlugin.instance?.handleShouldTerminate()
         return .terminateCancel
     }
@@ -25,7 +33,9 @@ class AppDelegate: FlutterAppDelegate {
 
     override func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if !flag {
-            DockIconVisibility.update(hasWindow: true)
+            if !isNetworkPanel {
+                DockIconVisibility.update(hasWindow: true)
+            }
             for window in NSApp.windows {
                 if !window.isVisible {
                     window.setIsVisible(true)
@@ -33,7 +43,9 @@ class AppDelegate: FlutterAppDelegate {
                 window.makeKeyAndOrderFront(self)
                 NSApp.activate(ignoringOtherApps: true)
             }
-            DockIconVisibility.synchronize()
+            if !isNetworkPanel {
+                DockIconVisibility.synchronize()
+            }
         }
         return true
     }

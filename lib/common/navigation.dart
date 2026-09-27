@@ -38,20 +38,18 @@ class Navigation {
             ProfilesView(key: const GlobalObjectKey(PageLabel.profiles)),
       ),
       NavigationItem(
-        icon: Icon(Icons.view_timeline),
-        label: PageLabel.requests,
-        builder: (_) =>
-            RequestsView(key: const GlobalObjectKey(PageLabel.requests)),
-        description: 'requestsDesc',
-        modes: [NavigationItemMode.desktop, NavigationItemMode.more],
+        icon: const Icon(Icons.monitor_heart_outlined),
+        label: PageLabel.networkMonitor,
+        builder: (_) => NetworkMonitorNavigationView(
+          key: const GlobalObjectKey(PageLabel.networkMonitor),
+        ),
+        modes: const [NavigationItemMode.desktop],
       ),
       NavigationItem(
-        icon: Icon(Icons.ballot),
-        label: PageLabel.connections,
-        builder: (_) =>
-            ConnectionsView(key: const GlobalObjectKey(PageLabel.connections)),
-        description: 'connectionsDesc',
-        modes: [NavigationItemMode.desktop, NavigationItemMode.more],
+        icon: const Icon(Icons.monitor_heart_outlined),
+        label: PageLabel.networkMonitorView,
+        builder: (_) => const NetworkMonitorEmbeddedNavigationView(),
+        modes: const [NavigationItemMode.more],
       ),
       NavigationItem(
         icon: Icon(Icons.storage),
@@ -68,13 +66,6 @@ class Navigation {
         builder: (_) =>
             ScriptsView(key: const GlobalObjectKey(PageLabel.script)),
         modes: [NavigationItemMode.more],
-      ),
-      NavigationItem(
-        icon: const Icon(Icons.adb),
-        label: PageLabel.logs,
-        builder: (_) => LogsView(key: const GlobalObjectKey(PageLabel.logs)),
-        description: 'logsDesc',
-        modes: [NavigationItemMode.desktop, NavigationItemMode.more],
       ),
       NavigationItem(
         icon: Icon(Icons.construction),

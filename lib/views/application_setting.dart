@@ -248,12 +248,11 @@ class ApplicationSettingView extends StatelessWidget {
     List<Widget> items = [
       AutoLaunchItem(),
       if (system.isDesktop) ...[SilentLaunchItem()],
-      AutoRunItem(),
+      if (system.isAndroid) AutoRunItem(),
       if (system.isAndroid) ...[HiddenItem()],
       if (system.isDesktop) ...[
         if (system.isWindows || system.isLinux) const AlwaysShowTitleBarItem(),
       ],
-      const ShowStartSwitchItem(),
       if (system.isAndroid) ...[NavBarHapticFeedbackItem()],
       CloseConnectionsItem(),
       UsageItem(),

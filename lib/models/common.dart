@@ -76,6 +76,9 @@ abstract class TrackerInfo with _$TrackerInfo {
     required List<String> chains,
     required String rule,
     required String rulePayload,
+    @Default('') String outboundLocalAddress,
+    @Default('') String outboundRemoteAddress,
+    @Default([]) List<Map<String, Object?>> trace,
     int? downloadSpeed,
     int? uploadSpeed,
   }) = _TrackerInfo;

@@ -105,7 +105,7 @@ final logsProvider = AutoDisposeNotifierProvider<Logs, FixedList<Log>>.internal(
 );
 
 typedef _$Logs = AutoDisposeNotifier<FixedList<Log>>;
-String _$requestsHash() => r'571bd35e2f40137b64cb903e059c0bf7583dbcf5';
+String _$requestsHash() => r'a8c21af15b0691eafdf32579391cdff20ef0dab3';
 
 /// See also [Requests].
 @ProviderFor(Requests)

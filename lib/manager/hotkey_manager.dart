@@ -33,13 +33,13 @@ class _HotKeyManagerState extends ConsumerState<HotKeyManager> {
       case HotAction.mode:
         globalState.appController.updateMode();
       case HotAction.start:
-        globalState.appController.updateStart();
+        return;
       case HotAction.view:
         globalState.appController.updateVisible();
       case HotAction.proxy:
-        globalState.appController.updateSystemProxy();
+        await globalState.appController.updateSystemProxy();
       case HotAction.tun:
-        globalState.appController.updateTun();
+        await globalState.appController.updateTun();
     }
   }
 
@@ -49,7 +49,9 @@ class _HotKeyManagerState extends ConsumerState<HotKeyManager> {
     await hotKeyManager.unregisterAll();
     final hotkeyActionHandles = hotKeyActions
         .where((hotKeyAction) {
-          return hotKeyAction.key != null && hotKeyAction.modifiers.isNotEmpty;
+          return hotKeyAction.action != HotAction.start &&
+              hotKeyAction.key != null &&
+              hotKeyAction.modifiers.isNotEmpty;
         })
         .map<Future>((hotKeyAction) async {
           final modifiers = hotKeyAction.modifiers

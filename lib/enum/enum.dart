@@ -340,7 +340,7 @@ enum DashboardWidget {
   mediaUnlock(GridItem(crossAxisCellCount: 8, child: MediaUnlock())),
   mediaUnlockSmall(GridItem(crossAxisCellCount: 4, child: MediaUnlockSmall())),
   startButton(
-    GridItem(crossAxisCellCount: 4, isDeletable: false, child: StartButton()),
+    GridItem(crossAxisCellCount: 4, isDeletable: false, child: RunTime()),
   );
 
   final GridItem widget;
@@ -369,6 +369,8 @@ enum PageLabel {
   resources,
   script,
   connections,
+  networkMonitor,
+  networkMonitorView,
 }
 
 extension PageLabelExtension on PageLabel {
@@ -392,6 +394,9 @@ extension PageLabelExtension on PageLabel {
         return appLocalizations.script;
       case PageLabel.connections:
         return appLocalizations.navConnections;
+      case PageLabel.networkMonitor:
+      case PageLabel.networkMonitorView:
+        return '面板';
     }
   }
 }

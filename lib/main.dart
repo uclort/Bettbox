@@ -23,6 +23,7 @@ import 'common/common.dart';
 import 'common/external_control.dart';
 import 'common/network_matcher.dart';
 import 'models/models.dart';
+import 'views/network_monitor.dart';
 
 ReceivePort? _serviceReceiverPort;
 ReceivePort? _messageReceiverPort;
@@ -30,6 +31,11 @@ ReceivePort? _messageReceiverPort;
 Future<void> main(List<String> args) async {
   globalState.isService = false;
   WidgetsFlutterBinding.ensureInitialized();
+
+  if (system.isDesktop && args.contains('--network-panel')) {
+    await runNetworkMonitorProcess();
+    return;
+  }
 
   if (system.isDesktop &&
       (args.contains('--exit') || args.contains('--restart'))) {

@@ -15,6 +15,15 @@
 - 本地导入导出继续使用完整备份语义；历史完整 WebDAV 包恢复时同样只应用共享配置字段。
 - 代码位于 `lib/controller.dart`、`lib/models/config.dart` 与 `lib/views/backup_and_recovery.dart`；回归测试为 `test/models/webdav_shared_config_test.dart`。
 
+### 私有覆写脚本
+
+- `scripts/uclort-desktop.js` 与 `scripts/uclort-sukka.js` 保存在私有 `uclort/custom-mihomo` 仓库，包含私有订阅与内网信息，不提交到公开 Bettbox；当前同步提交为 `5a0477bb0ffb88eb8e3a30239eda1960112cadb5`。
+- `uclort-desktop.js` 保留源节点与 Provider，过滤套餐/流量提示节点，按地区与倍率排序，重建 Global、Apple、Emby、抓包、CC 内网和 Fallback 分组；`latencyTestUrl` 统一 Provider 健康检查和策略组测速地址。
+- `uclort-sukka.js` 以 `Uclort.conf` 为基准接入 Sukka 官方 Mihomo `domainset / non_ip / ip` 规则集；Bettbox 运行端口、TUN 启停和栈模式沿用客户端当前状态，源 hosts 仅按保护条件替换节点服务器域名。
+- 固定自定义规则统一放在 `BETTBOX_CUSTOM_RULES`，支持可选说明注释；网络面板通过 Sub-Store wholeFile/file API 读取、追加、修改、删除和拖动排序，保存前重新读取远端脚本，避免覆盖其他改动。
+- `CC-intranet-en5` 使用 `dns-follow-interface: true` 与 `allow-other-interface: true`；CC 内网由 `ruleOptionsEnable.CC内网` 单一开关控制，关闭时恢复 `10.0.0.0/8` DIRECT。
+- 修改后至少运行 `node --check scripts/uclort-desktop.js`、`node --check scripts/uclort-sukka.js`、`node scripts/uclort-sukka.test.js`，并通过 Bettbox 实际导入 URL 与远端文件逐字节校验。
+
 ### Mihomo：direct proxy 跟随接口 DNS
 
 - direct proxy 支持 `dns-follow-interface`；仅在配置 `interface-name` 时生效，省略默认为 `true`。
@@ -28,7 +37,7 @@
 - 私有 `uclort/custom-mihomo` 以 Bettbox 当前内置 Mihomo 源码树为输入，应用 `patches/opensnell-v6.patch` 后供构建替换使用。
 - Snell v6 支持 `version: 6` 及 `default / unshaped / unsafe-raw` 模式；补丁来源与许可证记录在私有仓库的 `OPEN-SNELL-V6` 和 `THIRD_PARTY_NOTICES.md`。
 - `.custom-build/metadata/custom-mihomo-commit` 固定每次构建使用的私有内核提交；构建前校验 Bettbox 核心树、Mihomo 版本和 Snell 补丁摘要。
-- 同步后至少运行 `go test ./transport/snell ./adapter/outbound ./component/dialer ./component/dhcp ./dns ./listener/sing_tun`。
+- 同步后至少运行 `go test ./transport/snell ./adapter/outbound ./component/dialer ./component/dhcp ./dns ./listener/sing_tun ./constant ./tunnel ./tunnel/statistic`。
 
 ### 应用内更新
 
@@ -54,7 +63,7 @@
 - Dock 图标完全跟随主窗口状态：窗口显示或最小化时显示，窗口关闭到托盘或静默启动时隐藏；不再提供“常驻 DOCK”开关，也不读取历史偏好。代码位于 `plugins/window_ext/macos/Classes/WindowExtPlugin.swift`、`macos/Runner/AppDelegate.swift` 与 `macos/Runner/MainFlutterWindow.swift`，策略映射测试位于 `macos/RunnerTests/RunnerTests.swift`。
 - 支持独立开启实时上传/下载速率；系统代理与虚拟网卡均关闭时立即归零并显示为未启用状态。
 - macOS 启用时使用原生模板图标高亮；未启用时使用 60% 中性灰渲染图标，避免纯黑并比原生 disabled 外观更亮。右侧实时速率文案固定使用正常标签色，不跟随启停状态变灰。
-- 托盘一级菜单提供显示窗口、启动/停止、模式、策略组、系统代理、虚拟网卡和重启内核；“显示窗口 / 系统代理 / 虚拟网卡 / 重启内核 / 退出”使用 `⌘M / ⌘S / ⌘E / ⌘R / ⌘Q`。
+- 托盘一级菜单提供显示窗口、网络面板、模式、策略组、系统代理、虚拟网卡和重启内核；“显示窗口 / 网络面板 / 系统代理 / 虚拟网卡 / 重启内核 / 退出”使用 `⌘M / ⌘D / ⌘S / ⌘E / ⌘R / ⌘Q`。
 - 二级菜单父项只展开子菜单；节点测速结果使用独立右对齐列。
 - 首次安装特权工具后原位刷新托盘；从后台显示窗口或从托盘重启内核后主动同步最终运行状态。
 - 系统代理管理器只关闭当前 Bettbox 进程成功启用过的代理，避免误关 Surge 等其他软件的系统代理。
@@ -74,6 +83,26 @@
 
 - 内置 HarmonyOS Sans 补齐标准 U+0020 空格字形，避免列表、详情和输入框出现异常大的词间距。
 
+### 网络面板
+
+- macOS、Windows 和 Linux 导航保留一个“面板”tab，点击以同一可执行文件的 `--network-panel` 参数启动独立进程；面板使用专属 Dock/任务栏图标，关闭面板不影响主窗口，主进程退出或管道断开时自动关闭面板。
+- Android 不再把网络功能顺序平铺到“更多”；“更多 → 查看”分组只提供一个“面板”二级页，进入后在面板内部切换最近请求、活动连接、DNS、设备、流量统计、日志和 Sub-Store 七个 tab。
+- 独立面板进程不初始化 Mihomo、单例锁或托盘，通过 `ExternalControl` 本地 UDS/TCP 通道读取请求、连接和日志并执行清理/断连；请求与日志变更使用持久订阅主动通知，事件刷新限制为 250 ms。
+- 请求与连接按 Mihomo `TrackerInfo` 的进程、来源、目标、协议、规则、出站链和状态动态分类，支持全文搜索、移动端筛选、右键生成规则、当前配置追加/覆盖规则和独立详情；状态按活动快照、真实出站 socket、`REJECT` 和链路终态区分。
+- DNS 页由当前生效配置读取 `default-nameserver / nameserver / fallback / proxy-server-nameserver / direct-nameserver / nameserver-policy / hosts`，并合并系统 Hosts、运行缓存、Fake-IP 与出站节点 DNS；支持同时清理 DNS 缓存和 Fake-IP。
+- 设备页只展示内核可确认的进程、来源地址和活动/历史状态；流量页调用 `getTraffic / getTotalTraffic` 展示实时与累计上传下载，不将有限环形历史误算为总流量。
+- 日志页按实际级别分类；Sub-Store 页支持凭据历史、固定规则读取/新增/修改/删除/拖动排序，保存前重新读取远端脚本并仅替换 `BETTBOX_CUSTOM_RULES`。
+- 选中请求或连接后展开可拖动详情，区分客户端、目标、Fake-IP、实际出站本地/远端地址、GeoIP/ASN 和完整策略链；macOS 通过 `NSWorkspace` 读取进程图标，并发请求合并且复用历史 `.app` 路径。
+- custom-mihomo 为每条连接保存 DNS 逐服务器尝试、规则匹配、策略链和真实 socket 建立事件，`TrackerInfo` 返回 `trace / outboundLocalAddress / outboundRemoteAddress`；连接加入与离开均发送同 ID 通知，请求记录按 ID 原位更新。
+- 代码位于 `lib/views/network_monitor*.dart`、`lib/common/window.dart`、`lib/common/external_control.dart`、`lib/common/navigation.dart`、`lib/views/network_monitor_navigation.dart` 和 `lib/common/tray.dart`；回归测试为 `test/views/network_monitor_test.dart`、`core/Clash.Meta/tunnel/statistic/manager_notify_test.go` 及私有内核 `constant / dns / tunnel / tunnel/statistic` 测试。
+
+### 统一启停交互
+
+- 桌面端系统代理或 TUN 任一开启即启动核心，两者均关闭即停止核心；设置页、快捷卡片和托盘开关都调用 `updateSystemProxy` / `updateTun` 联动方法。
+- 移除桌面独立启动/停止入口、启动热键和“联动开关”设置；托盘保留网络面板、系统代理、TUN、重启内核等入口。
+- Android 首页保留一个悬浮总开关，并避让底部导航与页面滚动内容；启动时间卡片仅作为非独立启停的运行时长展示，不再提供桌面独立启停操作。
+- 回归测试为 `test/controller/macos_tun_startup_test.dart`。
+
 ### 自定义构建与发布
 
 - `uclort/Bettbox` 明确标记为非官方个人自定义版；GitHub 操作必须显式指定该仓库。
@@ -84,8 +113,4 @@
 
 ### 已删除的历史自定义功能
 
-- 独立网络面板、Sub-Store 固定规则管理、网络面板专属图标与独立进程/IPC 已删除。
-- custom-mihomo 私有覆写脚本 `uclort-desktop.js`、`uclort-sukka.js` 及其测试已删除。
-- 连接级 DNS/规则/出站链路追踪与连接加入通知已删除，请求和连接页面恢复 Bettbox 上游实现。
 - 旧自定义节点测速并发、缓存、诊断和 Provider 生命周期改造此前已删除，继续使用 Bettbox 上游实现。
-- 统一启停交互与 Android 首页悬浮总开关已删除，恢复 Bettbox 上游的独立启动/停止、首页开关和系统代理/TUN 独立开关逻辑。

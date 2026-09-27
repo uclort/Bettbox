@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math';
 
 import 'package:bett_box/state.dart';
@@ -7,6 +6,7 @@ import 'package:defer_pointer/defer_pointer.dart';
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/providers/providers.dart';
+import 'package:bett_box/views/dashboard/widgets/start_button.dart';
 import 'package:bett_box/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,29 +48,11 @@ class DashboardView extends ConsumerStatefulWidget {
 
 class _DashboardViewState extends ConsumerState<DashboardView> {
   final key = GlobalKey<SuperGridState>();
-  final GlobalKey<_DashboardStartSwitchState> _startSwitchKey = GlobalKey();
   final _isEditNotifier = ValueNotifier<bool>(false);
   final _addedWidgetsNotifier = ValueNotifier<List<GridItem>>([]);
 
   @override
-  void initState() {
-    super.initState();
-    if (globalState.isAndroidTV) {
-      globalState.focusDashboardStartSwitch = _requestStartSwitchFocus;
-    }
-  }
-
-  void _requestStartSwitchFocus() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _startSwitchKey.currentState?.requestFocus();
-    });
-  }
-
-  @override
   void dispose() {
-    if (globalState.focusDashboardStartSwitch == _requestStartSwitchFocus) {
-      globalState.focusDashboardStartSwitch = null;
-    }
     _isEditNotifier.dispose();
     _addedWidgetsNotifier.dispose();
     super.dispose();
@@ -86,9 +68,6 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   }
 
   List<Widget> _buildActions() {
-    final showStartSwitch = ref.watch(
-      appSettingProvider.select((state) => state.showStartSwitch),
-    );
     return [
       _buildIsEdit((isEdit) {
         return isEdit
@@ -128,7 +107,6 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
           ),
         ),
       ),
-      if (showStartSwitch) _DashboardStartSwitch(key: _startSwitchKey),
     ];
   }
 
@@ -205,6 +183,10 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     final columns = max(4 * ((dashboardState.viewWidth / 320).ceil()), 8);
     final spacing = 16.ap;
     final isMobileView = ref.watch(isMobileViewProvider);
+    final floatingBottomBarReserve = isMobileView
+        ? getFloatingBottomBarReserveHeight(context)
+        : 0.0;
+    final androidStartButtonReserve = system.isAndroid ? 72.0 : 0.0;
     final children = [
       ...dashboardState.dashboardWidgets
           .where(
@@ -226,13 +208,21 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
       title:
           ref.watch(customDashboardTitleProvider) ?? appLocalizations.dashboard,
       actions: _buildActions(),
+      floatingActionButton: system.isAndroid
+          ? Padding(
+              padding: EdgeInsets.only(
+                bottom: isMobileView
+                    ? getFloatingBottomBarFABReserveHeight(context)
+                    : 0,
+              ),
+              child: const AndroidStartButton(),
+            )
+          : null,
       body: Align(
         alignment: Alignment.topCenter,
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16).copyWith(
-            bottom:
-                16 +
-                (isMobileView ? getFloatingBottomBarReserveHeight(context) : 0),
+            bottom: 16 + floatingBottomBarReserve + androidStartButtonReserve,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -450,115 +440,6 @@ class _DashboardTitleDialogState extends State<_DashboardTitleDialog> {
           ),
           onChanged: _validate,
         ),
-      ),
-    );
-  }
-}
-
-class _DashboardStartSwitch extends ConsumerStatefulWidget {
-  const _DashboardStartSwitch({super.key});
-
-  @override
-  ConsumerState<_DashboardStartSwitch> createState() =>
-      _DashboardStartSwitchState();
-}
-
-class _DashboardStartSwitchState extends ConsumerState<_DashboardStartSwitch> {
-  bool _isDisabled = false;
-  bool? _optimisticStart;
-  FocusNode? _focusNode;
-
-  @override
-  void initState() {
-    super.initState();
-    if (globalState.isAndroidTV) {
-      _focusNode = FocusNode()..addListener(_onFocusChange);
-    }
-  }
-
-  @override
-  void dispose() {
-    _focusNode?.removeListener(_onFocusChange);
-    _focusNode?.dispose();
-    super.dispose();
-  }
-
-  void _onFocusChange() {
-    globalState.isDashboardStartSwitchFocused = _focusNode?.hasFocus ?? false;
-  }
-
-  void requestFocus() {
-    _focusNode?.requestFocus();
-  }
-
-  void _handleStart() async {
-    if (_isDisabled) return;
-    final isStart = ref.read(runTimeProvider) != null;
-    final newState = !isStart;
-    setState(() {
-      _isDisabled = true;
-      _optimisticStart = newState;
-    });
-
-    try {
-      await globalState.appController.updateStatus(newState);
-    } catch (e) {
-      commonPrint.log('updateStatus failed: $e');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isDisabled = false;
-          _optimisticStart = null;
-        });
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final state = ref.watch(startButtonSelectorStateProvider);
-    final isRestarting = ref.watch(isRestartingCoreProvider);
-    final isSmartStopped = ref.watch(isSmartStoppedProvider);
-    final runTime = ref.watch(runTimeProvider);
-    final isStart = runTime != null;
-    final displayStart = isSmartStopped ? false : (_optimisticStart ?? isStart);
-
-    final canPress =
-        state.isInit &&
-        state.hasProfile &&
-        !_isDisabled &&
-        !isRestarting &&
-        !isSmartStopped;
-
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: Switch(
-        focusNode: _focusNode,
-        value: displayStart,
-        onChanged: canPress ? (_) => _handleStart() : null,
-        thumbColor: WidgetStateProperty.resolveWith<Color?>((states) {
-          if (states.contains(WidgetState.selected) &&
-              !states.contains(WidgetState.disabled)) {
-            return theme.colorScheme.primary;
-          }
-          return null;
-        }),
-        trackColor: WidgetStateProperty.resolveWith<Color?>((states) {
-          if (states.contains(WidgetState.selected) &&
-              !states.contains(WidgetState.disabled)) {
-            return theme.colorScheme.primary.withValues(alpha: 0.2);
-          }
-          return null;
-        }),
-        trackOutlineColor: WidgetStateProperty.resolveWith<Color?>((states) {
-          if (states.contains(WidgetState.selected) &&
-              !states.contains(WidgetState.disabled)) {
-            return Colors.transparent;
-          }
-          return null;
-        }),
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/models.dart';
 import 'package:bett_box/state.dart';
+import 'package:bett_box/views/network_monitor.dart';
 import 'package:bett_box/views/proxies/common.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -152,19 +153,6 @@ class Tray {
         },
       );
       menuItems.add(showMenuItem);
-      final startMenuItem = MenuItem.checkbox(
-        key: 'start-stop',
-        label: trayState.isStart
-            ? appLocalizations.stop
-            : appLocalizations.start,
-        onClick: (_) async {
-          final appController = globalState.appController;
-          await appController.updateStatus(!globalState.isStart);
-          await appController.updateTray(false, false, true);
-        },
-        checked: false,
-      );
-      menuItems.add(startMenuItem);
       menuItems.add(MenuItem.separator());
       for (final mode in Mode.values) {
         menuItems.add(
@@ -242,6 +230,20 @@ class Tray {
       if (menuGroups.isNotEmpty) {
         menuItems.add(MenuItem.separator());
       }
+      menuItems.add(
+        MenuItem(
+          key: 'shortcut:command-d',
+          label: '网络面板',
+          onClick: (_) async {
+            try {
+              await openNetworkMonitorWindow();
+            } catch (error) {
+              globalState.showNotifier('打开网络面板失败：$error');
+            }
+          },
+        ),
+      );
+      menuItems.add(MenuItem.separator());
       menuItems.add(
         MenuItem.checkbox(
           key: 'shortcut:command-s',

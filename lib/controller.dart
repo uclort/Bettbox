@@ -109,6 +109,14 @@ bool shouldUseManagedMacOSDns({
   return isRunning && tunEnabled;
 }
 
+@visibleForTesting
+bool shouldRunDesktopCore({
+  required bool systemProxy,
+  required bool tunEnabled,
+}) {
+  return systemProxy || tunEnabled;
+}
+
 class AppController {
   int? lastProfileModified;
 
@@ -1343,6 +1351,7 @@ class AppController {
 
     try {
       if (system.isDesktop) {
+        await networkMonitorProcess.close();
         try {
           await trayManager.destroy();
         } catch (e) {
@@ -1695,7 +1704,12 @@ class AppController {
     final hasProfile = _ref.read(currentProfileProvider) != null;
     final shouldStart =
         hasProfile &&
-        (globalState.isStart || _ref.read(appSettingProvider).autoRun);
+        (system.isDesktop
+            ? shouldRunDesktopCore(
+                systemProxy: _ref.read(networkSettingProvider).systemProxy,
+                tunEnabled: _ref.read(patchClashConfigProvider).tun.enable,
+              )
+            : globalState.isStart || _ref.read(appSettingProvider).autoRun);
 
     if (shouldStart) {
       try {
@@ -1706,6 +1720,9 @@ class AppController {
         addCheckIpNumDebounce();
       }
     } else {
+      if (system.isDesktop && globalState.isStart) {
+        await updateStatus(false);
+      }
       await applyProfile();
       addCheckIpNumDebounce();
     }
@@ -1982,32 +1999,56 @@ class AppController {
     });
   }
 
-  Future<void> updateTun() async {
-    final target = !_ref.read(patchClashConfigProvider).tun.enable;
+  Future<void> updateTun([bool? enabled]) async {
+    final current = _ref.read(patchClashConfigProvider).tun.enable;
+    final target = enabled ?? !current;
+    if (target == current) return;
     if (await _blockConflictingMacOSTun(target)) return;
 
     _ref
         .read(patchClashConfigProvider.notifier)
         .updateState((state) => state.copyWith.tun(enable: target));
-    if (system.isLinux && globalState.backgroundMode.value) {
-      unawaited(updateClashConfig());
-    } else {
-      updateClashConfigDebounce();
+    if (!system.isDesktop) return;
+
+    final shouldRun = shouldRunDesktopCore(
+      systemProxy: _ref.read(networkSettingProvider).systemProxy,
+      tunEnabled: target,
+    );
+    final isRunning = system.isMacOS
+        ? globalState.isStart
+        : _ref.read(runTimeProvider.notifier).isStart;
+    try {
+      if (shouldRun != isRunning) {
+        await updateStatus(shouldRun);
+      } else if (isRunning) {
+        await updateClashConfig();
+      }
+    } finally {
+      await updateTray(false, false, true);
     }
-    await updateTray(false, false, true);
   }
 
-  Future<void> updateSystemProxy() async {
+  Future<void> updateSystemProxy([bool? enabled]) async {
+    final current = _ref.read(networkSettingProvider).systemProxy;
+    final target = enabled ?? !current;
+    if (target == current) return;
     _ref
         .read(networkSettingProvider.notifier)
-        .updateState(
-          (state) => state.copyWith(systemProxy: !state.systemProxy),
-        );
-    await updateTray(false, false, true);
-  }
+        .updateState((state) => state.copyWith(systemProxy: target));
+    if (!system.isDesktop) return;
 
-  void updateStart() {
-    updateStatus(!_ref.read(runTimeProvider.notifier).isStart);
+    final shouldRun = shouldRunDesktopCore(
+      systemProxy: target,
+      tunEnabled: _ref.read(patchClashConfigProvider).tun.enable,
+    );
+    final isRunning = system.isMacOS
+        ? globalState.isStart
+        : _ref.read(runTimeProvider.notifier).isStart;
+    try {
+      if (shouldRun != isRunning) await updateStatus(shouldRun);
+    } finally {
+      await updateTray(false, false, true);
+    }
   }
 
   Future<List<Package>> getPackages({bool forceRefresh = false}) async {

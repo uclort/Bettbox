@@ -447,16 +447,17 @@ class _ToolViewState extends ConsumerState<ToolsView> {
             const ApplicationSettingView(),
           ),
         ),
-      _SearchItem(
-        title: appLocalizations.autoRun,
-        subtitle: appLocalizations.autoRunDesc,
-        category: appCategory,
-        onTap: (context, _) => _pushPage(
-          context,
-          appLocalizations.application,
-          const ApplicationSettingView(),
+      if (system.isAndroid)
+        _SearchItem(
+          title: appLocalizations.autoRun,
+          subtitle: appLocalizations.autoRunDesc,
+          category: appCategory,
+          onTap: (context, _) => _pushPage(
+            context,
+            appLocalizations.application,
+            const ApplicationSettingView(),
+          ),
         ),
-      ),
       if (system.isAndroid)
         _SearchItem(
           title: appLocalizations.exclude,
@@ -479,16 +480,6 @@ class _ToolViewState extends ConsumerState<ToolsView> {
             const ApplicationSettingView(),
           ),
         ),
-      _SearchItem(
-        title: appLocalizations.showStartSwitch,
-        subtitle: appLocalizations.showStartSwitchDesc,
-        category: appCategory,
-        onTap: (context, _) => _pushPage(
-          context,
-          appLocalizations.application,
-          const ApplicationSettingView(),
-        ),
-      ),
       if (system.isAndroid)
         _SearchItem(
           title: appLocalizations.navBarHapticFeedback,
