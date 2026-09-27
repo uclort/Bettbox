@@ -155,7 +155,6 @@ class ApplicationState extends ConsumerState<Application>
         commonPrint.log('ExternalControl start failed: $e');
       }
     }
-    }
     globalState.appController.initLink();
     if (system.isAndroid) {
       app.initShortcuts();
