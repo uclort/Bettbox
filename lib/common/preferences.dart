@@ -89,9 +89,8 @@ class Preferences {
     }
 
     if (Platform.isMacOS &&
-        selectedConfig != null &&
-        preferences?.getBool('keepDockIcon') != selectedConfig.appSetting.keepDockIcon) {
-      await preferences?.setBool('keepDockIcon', selectedConfig.appSetting.keepDockIcon);
+        preferences?.containsKey('keepDockIcon') == true) {
+      await preferences?.remove('keepDockIcon');
     }
 
     return selectedConfig;
@@ -100,9 +99,6 @@ class Preferences {
   Future<bool> saveConfig(Config config) async {
     final preferences = await sharedPreferencesCompleter.future;
     await preferences?.setBool('autoLaunch', config.appSetting.autoLaunch);
-    if (Platform.isMacOS) {
-      await preferences?.setBool('keepDockIcon', config.appSetting.keepDockIcon);
-    }
 
     final jsonStr = json.encode(config);
 

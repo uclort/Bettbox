@@ -539,26 +539,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Keep in Dock`
-  String get keepDockIcon {
-    return Intl.message(
-      'Keep in Dock',
-      name: 'keepDockIcon',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Keep the app icon in the Dock`
-  String get keepDockIconDesc {
-    return Intl.message(
-      'Keep the app icon in the Dock',
-      name: 'keepDockIconDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Tray Enhancement`
   String get trayEnhancement {
     return Intl.message(

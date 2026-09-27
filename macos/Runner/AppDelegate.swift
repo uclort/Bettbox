@@ -6,9 +6,7 @@ import window_ext
 class AppDelegate: FlutterAppDelegate {
 
     override func applicationWillFinishLaunching(_ notification: Notification) {
-        if UserDefaults.standard.object(forKey: "flutter.keepDockIcon") as? Bool == false {
-            NSApp.setActivationPolicy(.accessory)
-        }
+        DockIconVisibility.update(hasWindow: false)
         super.applicationWillFinishLaunching(notification)
     }
 
@@ -27,6 +25,7 @@ class AppDelegate: FlutterAppDelegate {
 
     override func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if !flag {
+            DockIconVisibility.update(hasWindow: true)
             for window in NSApp.windows {
                 if !window.isVisible {
                     window.setIsVisible(true)
@@ -34,6 +33,7 @@ class AppDelegate: FlutterAppDelegate {
                 window.makeKeyAndOrderFront(self)
                 NSApp.activate(ignoringOtherApps: true)
             }
+            DockIconVisibility.synchronize()
         }
         return true
     }

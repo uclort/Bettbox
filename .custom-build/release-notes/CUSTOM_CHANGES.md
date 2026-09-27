@@ -51,6 +51,7 @@
 ### macOS 菜单栏与托盘
 
 - 菜单栏提供系统代理、虚拟网卡、重启内核、重启软件、自动启动、亮屏锁、策略组和节点选择；左右键行为可分别配置为显示窗口或显示菜单。
+- Dock 图标完全跟随主窗口状态：窗口显示或最小化时显示，窗口关闭到托盘或静默启动时隐藏；不再提供“常驻 DOCK”开关，也不读取历史偏好。代码位于 `plugins/window_ext/macos/Classes/WindowExtPlugin.swift`、`macos/Runner/AppDelegate.swift` 与 `macos/Runner/MainFlutterWindow.swift`，策略映射测试位于 `macos/RunnerTests/RunnerTests.swift`。
 - 支持独立开启实时上传/下载速率；系统代理与虚拟网卡均关闭时立即归零并显示为未启用状态。
 - macOS 启用时使用原生模板图标高亮；未启用时使用 60% 中性灰渲染图标，避免纯黑并比原生 disabled 外观更亮。右侧实时速率文案固定使用正常标签色，不跟随启停状态变灰。
 - 托盘一级菜单提供显示窗口、启动/停止、模式、策略组、系统代理、虚拟网卡和重启内核；“显示窗口 / 系统代理 / 虚拟网卡 / 重启内核 / 退出”使用 `⌘M / ⌘S / ⌘E / ⌘R / ⌘Q`。

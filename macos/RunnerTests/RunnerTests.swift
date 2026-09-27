@@ -2,6 +2,7 @@ import FlutterMacOS
 import Cocoa
 import XCTest
 @testable import tray_manager
+import window_ext
 
 class RunnerTests: XCTestCase {
 
@@ -53,6 +54,17 @@ class RunnerTests: XCTestCase {
     )
     XCTAssertFalse(
       TrayIcon.isOptionPressed(eventFlags: [], currentFlags: [])
+    )
+  }
+
+  func testDockIconPolicyFollowsWindowPresence() {
+    XCTAssertEqual(
+      DockIconVisibility.activationPolicy(hasWindow: true),
+      .regular
+    )
+    XCTAssertEqual(
+      DockIconVisibility.activationPolicy(hasWindow: false),
+      .accessory
     )
   }
 

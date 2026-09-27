@@ -39,10 +39,6 @@ class WindowExtManager {
   void removeListener(WindowExtListener listener) {
     _listeners.remove(listener);
   }
-
-  Future<void> setDockIconVisible(bool visible) {
-    return _channel.invokeMethod('setDockIconVisible', visible);
-  }
 }
 
 final windowExtManager = WindowExtManager.instance;

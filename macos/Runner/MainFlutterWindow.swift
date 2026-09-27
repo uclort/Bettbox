@@ -2,6 +2,7 @@ import Cocoa
 import FlutterMacOS
 import window_manager
 import LaunchAtLogin
+import window_ext
 
 class MainFlutterWindow: NSWindow {
     private var appMethodChannel: FlutterMethodChannel?
@@ -50,6 +51,10 @@ class MainFlutterWindow: NSWindow {
     override public func order(_ place: NSWindow.OrderingMode, relativeTo otherWin: Int) {
         super.order(place, relativeTo: otherWin)
         hiddenWindowAtLaunch()
+        DispatchQueue.main.async {
+            // BETTBOX-CUSTOM: 等窗口排序完成后，以最终状态同步 Dock。
+            DockIconVisibility.synchronize()
+        }
     }
 
     private func setupSystemWakeNotification() {

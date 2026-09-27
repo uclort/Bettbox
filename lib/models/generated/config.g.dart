@@ -48,7 +48,6 @@ _AppSettingProps _$AppSettingPropsFromJson(
   disclaimerAccepted: json['disclaimerAccepted'] as bool? ?? false,
   minimizeOnExit: json['minimizeOnExit'] as bool? ?? true,
   hidden: json['hidden'] as bool? ?? false,
-  keepDockIcon: json['keepDockIcon'] as bool? ?? true,
   developerMode: json['developerMode'] as bool? ?? false,
   enableHighRefreshRate: json['enableHighRefreshRate'] as bool? ?? false,
   recoveryStrategy:
@@ -94,7 +93,6 @@ Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
       'disclaimerAccepted': instance.disclaimerAccepted,
       'minimizeOnExit': instance.minimizeOnExit,
       'hidden': instance.hidden,
-      'keepDockIcon': instance.keepDockIcon,
       'developerMode': instance.developerMode,
       'enableHighRefreshRate': instance.enableHighRefreshRate,
       'recoveryStrategy': _$RecoveryStrategyEnumMap[instance.recoveryStrategy]!,
