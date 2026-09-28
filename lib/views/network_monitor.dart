@@ -351,18 +351,17 @@ class _NetworkMonitorHostState extends ConsumerState<NetworkMonitorHost> {
     super.dispose();
   }
 
-  Future<Map<String, Object?>> _snapshot({bool includeTraffic = false}) async {
+  Future<Map<String, Object?>> _snapshot() async {
     return _snapshotReader.read(
       requests: ref.read(requestsProvider).list,
       logs: ref.read(logsProvider).list,
-      includeTraffic: includeTraffic,
     );
   }
 
   Future<Object?> _handleMethodCall(String method, Object? arguments) async {
     switch (method) {
       case 'snapshot':
-        return _snapshot(includeTraffic: arguments == true);
+        return _snapshot();
       case 'connectionsSnapshot':
         return (await clashCore.getConnections())
             .map(monitorTrackerToJson)
@@ -479,7 +478,6 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
   final _snapshotReader = NetworkMonitorSnapshotReader();
   Timer? _fallbackTimer;
   Timer? _connectionsTimer;
-  Timer? _trafficTimer;
   Timer? _eventRefreshTimer;
   StreamSubscription<void>? _networkMonitorSubscription;
   ProviderSubscription<List<TrackerInfo>>? _requestsSubscription;
@@ -493,10 +491,6 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
   String? _trackerFilter;
   String _sidebarFilter = '';
   String _query = '';
-  int _trafficUp = 0;
-  int _trafficDown = 0;
-  int _totalTrafficUp = 0;
-  int _totalTrafficDown = 0;
   int _detailTab = 0;
   double _detailHeight = 260;
   DateTime? _dnsCacheClearedAt;
@@ -539,9 +533,6 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
         unawaited(_refreshConnections());
       }
     });
-    _trafficTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (_page == MonitorPage.traffic) unawaited(_refresh());
-    });
   }
 
   void _handleDataChanged() {
@@ -575,7 +566,6 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
     _logsSubscription?.close();
     _fallbackTimer?.cancel();
     _connectionsTimer?.cancel();
-    _trafficTimer?.cancel();
     _eventRefreshTimer?.cancel();
     _detailScrollController.dispose();
     super.dispose();
@@ -592,12 +582,8 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
           ? await _snapshotReader.read(
               requests: ref.read(requestsProvider).list,
               logs: ref.read(logsProvider).list,
-              includeTraffic: _page == MonitorPage.traffic,
             )
-          : await ExternalControl.request(
-              'snapshot',
-              _page == MonitorPage.traffic,
-            );
+          : await ExternalControl.request('snapshot');
       if (!mounted || raw == null) return;
       final map = normalizeMonitorMap(raw);
       var requests = (map['requests'] as List? ?? const [])
@@ -615,16 +601,10 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
       final logs = (map['logs'] as List? ?? const [])
           .map(MonitorLog.fromJson)
           .toList();
-      final traffic = normalizeMonitorMap(map['traffic'] ?? const {});
-      final totalTraffic = normalizeMonitorMap(map['totalTraffic'] ?? const {});
       setState(() {
         _requests = requests;
         _connections = connections;
         _logs = logs;
-        _trafficUp = (traffic['up'] as num?)?.toInt() ?? 0;
-        _trafficDown = (traffic['down'] as num?)?.toInt() ?? 0;
-        _totalTrafficUp = (totalTraffic['up'] as num?)?.toInt() ?? 0;
-        _totalTrafficDown = (totalTraffic['down'] as num?)?.toInt() ?? 0;
         _selected = monitorUpdatedSelection(_selected, requests, connections);
         _error = null;
       });
@@ -870,8 +850,6 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
       MonitorPage.requests: '最近请求',
       MonitorPage.connections: '活动连接',
       MonitorPage.dns: 'DNS',
-      MonitorPage.devices: '设备',
-      MonitorPage.traffic: '流量统计',
       MonitorPage.logs: '日志',
       MonitorPage.subStore: 'Sub-Store',
     };
@@ -917,8 +895,6 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
                               });
                               if (page == MonitorPage.dns) {
                                 unawaited(_refreshDnsSources());
-                              } else if (page == MonitorPage.traffic) {
-                                unawaited(_refresh());
                               }
                             },
                             child: Text(labels[page]!),

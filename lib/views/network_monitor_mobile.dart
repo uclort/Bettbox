@@ -159,8 +159,6 @@ extension _NetworkMonitorMobile on _NetworkMonitorViewState {
     MonitorPage.requests ||
     MonitorPage.connections => _buildMobileTrackers(context),
     MonitorPage.dns => _buildMobileDns(context),
-    MonitorPage.devices => _buildMobileDevices(context),
-    MonitorPage.traffic => _buildMobileTraffic(context),
     MonitorPage.logs => _buildMobileLogs(context),
     MonitorPage.subStore => _buildSubStorePage(context),
   };
@@ -342,129 +340,6 @@ extension _NetworkMonitorMobile on _NetworkMonitorViewState {
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMobileDevices(BuildContext context) {
-    final activeIds = _connections.map((item) => item.id).toSet();
-    final grouped = <String, List<TrackerInfo>>{};
-    for (final item in _allTrackers) {
-      grouped.putIfAbsent(monitorDeviceKey(item), () => []).add(item);
-    }
-    final entries = grouped.entries.where((entry) {
-      final item = entry.value.first;
-      final source = monitorDeviceSource(item);
-      final visible = switch (_sidebarFilter) {
-        '本机进程' || '网络来源' || '未识别' => source == _sidebarFilter,
-        '活动' => entry.value.any((item) => activeIds.contains(item.id)),
-        '历史' => entry.value.any((item) => !activeIds.contains(item.id)),
-        _ => true,
-      };
-      return visible &&
-          _matchesQuery([
-            entry.key,
-            item.metadata.sourceIP,
-            item.metadata.processPath,
-          ]);
-    }).toList()..sort((a, b) => a.key.compareTo(b.key));
-    if (entries.isEmpty) return const Center(child: Text('暂无设备数据'));
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
-      itemCount: entries.length,
-      itemBuilder: (context, index) {
-        final entry = entries[index];
-        final item = entry.value.reduce(
-          (current, next) => next.start.isAfter(current.start) ? next : current,
-        );
-        final active = entry.value
-            .where((item) => activeIds.contains(item.id))
-            .length;
-        final networks = entry.value
-            .map((item) => item.metadata.network.toUpperCase())
-            .where((value) => value.isNotEmpty)
-            .toSet()
-            .join(' / ');
-        return Card.filled(
-          child: ListTile(
-            leading: ProcessIcon(
-              key: ValueKey(
-                '${item.metadata.process}\n${item.metadata.processPath}',
-              ),
-              process: item.metadata.process,
-              processPath: item.metadata.processPath,
-              size: 34,
-            ),
-            title: Text(entry.key),
-            subtitle: Text(
-              [
-                monitorDeviceSource(item),
-                item.metadata.sourceIP,
-                networks,
-              ].where((value) => value.isNotEmpty).join(' · '),
-            ),
-            trailing: Text('活动 $active\n历史 ${entry.value.length - active}'),
-            isThreeLine: true,
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildMobileTraffic(BuildContext context) {
-    final groups = <String, int>{};
-    for (final item in _allTrackers) {
-      final key = monitorTrafficGroupValue(item, _sidebarFilter);
-      groups.update(
-        key,
-        (value) => value + item.upload + item.download,
-        ifAbsent: () => item.upload + item.download,
-      );
-    }
-    final entries = groups.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
-      children: [
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          childAspectRatio: 1.6,
-          children: [
-            _mobileMetric(context, '实时上传', '${monitorBytes(_trafficUp)}/s'),
-            _mobileMetric(context, '实时下载', '${monitorBytes(_trafficDown)}/s'),
-            _mobileMetric(context, '累计上传', monitorBytes(_totalTrafficUp)),
-            _mobileMetric(context, '累计下载', monitorBytes(_totalTrafficDown)),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Text(
-          '按$_sidebarFilter统计',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        for (final entry in entries)
-          ListTile(
-            leading: const Icon(Icons.data_usage_outlined),
-            title: Text(entry.key),
-            trailing: Text(monitorBytes(entry.value)),
-          ),
-      ],
-    );
-  }
-
-  Widget _mobileMetric(BuildContext context, String title, String value) {
-    return Card.filled(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(title),
-            const SizedBox(height: 4),
-            Text(value, style: Theme.of(context).textTheme.titleLarge),
-          ],
         ),
       ),
     );

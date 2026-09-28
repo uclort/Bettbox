@@ -257,8 +257,6 @@ void main() {
       MonitorPage.requests,
       MonitorPage.connections,
       MonitorPage.dns,
-      MonitorPage.devices,
-      MonitorPage.traffic,
       MonitorPage.logs,
       MonitorPage.subStore,
     ]);
@@ -716,13 +714,6 @@ const after = true;
         '运行缓存 · fake-ip',
       ]),
     );
-    expect(
-      monitorStaticSidebarSections[MonitorPage.devices]!.expand(
-        (section) => section.items,
-      ),
-      containsAll(['本机进程', '网络来源', '未识别', '活动', '历史']),
-    );
-    expect(monitorDefaultSidebarFilter(MonitorPage.traffic), '出站链');
     expect(monitorStaticSidebarSections[MonitorPage.logs]!.first.items, [
       '全部',
       'error',
@@ -832,21 +823,5 @@ const after = true;
           .processPath,
       appPath,
     );
-  });
-
-  test('设备和流量分类不再伪造 Surge 字段', () {
-    final process = _tracker(id: 'process', process: 'Bettbox', upload: 0);
-    final source = _tracker(
-      id: 'source',
-      process: '',
-      upload: 0,
-      metadata: const Metadata(sourceIP: '192.168.1.2', network: 'udp'),
-    );
-
-    expect(monitorDeviceSource(process), '本机进程');
-    expect(monitorDeviceSource(source), '网络来源');
-    expect(monitorDeviceKey(source), '192.168.1.2');
-    expect(monitorTrafficGroupValue(source, '网络协议'), 'UDP');
-    expect(monitorTrafficGroupValue(source, '来源地址'), '192.168.1.2');
   });
 }

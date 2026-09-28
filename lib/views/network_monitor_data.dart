@@ -9,8 +9,6 @@ enum MonitorPage {
   requests,
   connections,
   dns,
-  devices,
-  traffic,
   logs,
   subStore,
 }
@@ -297,13 +295,6 @@ const monitorStaticSidebarSections = <MonitorPage, List<MonitorSidebarSection>>{
       ],
     ),
   ],
-  MonitorPage.devices: [
-    (title: 'Mihomo 来源', items: ['全部', '本机进程', '网络来源', '未识别']),
-    (title: '连接状态', items: ['活动', '历史']),
-  ],
-  MonitorPage.traffic: [
-    (title: '聚合字段', items: ['出站链', '规则类型', '进程', '来源地址', '网络协议', '目标主机']),
-  ],
   MonitorPage.logs: [
     (title: 'Mihomo 日志级别', items: ['全部', 'error', 'warning', 'info', 'debug']),
   ],
@@ -321,14 +312,9 @@ class NetworkMonitorSnapshotReader {
   Future<Map<String, Object?>> read({
     required List<TrackerInfo> requests,
     required List<Log> logs,
-    bool includeTraffic = false,
   }) async {
     final connectionsFuture = clashCore.getConnections();
     final connections = await connectionsFuture;
-    final traffic = includeTraffic ? await clashCore.getTraffic() : null;
-    final totalTraffic = includeTraffic
-        ? await clashCore.getTotalTraffic()
-        : null;
     final now = DateTime.now();
     final elapsed = now.difference(_previousConnectionsAt ?? now);
     final current = <String, TrackerInfo>{};
@@ -351,13 +337,6 @@ class NetworkMonitorSnapshotReader {
       'requests': requests.map(monitorTrackerToJson).toList(),
       'connections': withSpeed.map(monitorTrackerToJson).toList(),
       'logs': logs.map((log) => log.toJson()).toList(),
-      if (traffic != null)
-        'traffic': {'up': traffic.up.value, 'down': traffic.down.value},
-      if (totalTraffic != null)
-        'totalTraffic': {
-          'up': totalTraffic.up.value,
-          'down': totalTraffic.down.value,
-        },
     };
   }
 }
@@ -466,29 +445,6 @@ String monitorTargetName(TrackerInfo item) {
   final address = item.metadata.destinationIP.trim();
   return address.isEmpty ? '未知目标' : address;
 }
-
-String monitorDeviceSource(TrackerInfo item) {
-  if (item.metadata.process.trim().isNotEmpty) return '本机进程';
-  if (item.metadata.sourceIP.trim().isNotEmpty) return '网络来源';
-  return '未识别';
-}
-
-String monitorDeviceKey(TrackerInfo item) {
-  final process = item.metadata.process.trim();
-  if (process.isNotEmpty) return process;
-  final source = item.metadata.sourceIP.trim();
-  return source.isEmpty ? '未识别' : source;
-}
-
-String monitorTrafficGroupValue(TrackerInfo item, String dimension) =>
-    switch (dimension) {
-      '规则类型' => item.rule.trim().isEmpty ? '未匹配规则' : item.rule.trim(),
-      '进程' => monitorTrackerFacetValue(item, MonitorTrackerFacet.process),
-      '来源地址' => monitorTrackerFacetValue(item, MonitorTrackerFacet.source),
-      '网络协议' => monitorTrackerFacetValue(item, MonitorTrackerFacet.network),
-      '目标主机' => monitorTargetName(item),
-      _ => monitorTrackerFacetValue(item, MonitorTrackerFacet.outbound),
-    };
 
 String monitorRuleName(TrackerInfo item) {
   return [item.rule, item.rulePayload].where((e) => e.isNotEmpty).join(' ');

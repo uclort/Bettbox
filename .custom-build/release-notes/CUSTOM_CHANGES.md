@@ -86,11 +86,11 @@
 ### 网络面板
 
 - macOS、Windows 和 Linux 导航保留一个“面板”tab，点击以同一可执行文件的 `--network-panel` 参数启动独立进程；面板使用专属 Dock/任务栏图标，关闭面板不影响主窗口，主进程退出或管道断开时自动关闭面板。
-- Android 不再把网络功能顺序平铺到“更多”；“更多 → 查看”分组只提供一个“网络面板”二级页，并显示“查看网络请求、连接和流量信息”副标题，进入后在面板内部切换最近请求、活动连接、DNS、设备、流量统计、日志和 Sub-Store 七个 tab；桌面端主导航的大 tab 保持简洁的“面板”，同一网络监控功能的其他入口统一使用“网络面板”，首页“在线面板”属于另一项功能并保持不变。
+- Android 不再把网络功能顺序平铺到“更多”；“更多 → 查看”分组只提供一个“网络面板”二级页，并显示“查看网络请求、连接和流量信息”副标题，进入后在面板内部切换最近请求、活动连接、DNS、日志和 Sub-Store 五个 tab；桌面端主导航的大 tab 保持简洁的“面板”，同一网络监控功能的其他入口统一使用“网络面板”，首页“在线面板”属于另一项功能并保持不变。
 - 独立面板进程不初始化 Mihomo、单例锁或托盘，通过 `ExternalControl` 本地 UDS/TCP 通道读取请求、连接和日志并执行清理/断连；请求与日志变更使用持久订阅主动通知，事件刷新限制为 250 ms。
 - 请求与连接按 Mihomo `TrackerInfo` 的进程、来源、目标、协议、规则、出站链和状态动态分类，支持全文搜索、移动端筛选、右键生成规则、当前配置追加/覆盖规则和独立详情；状态按活动快照、真实出站 socket、`REJECT` 和链路终态区分。
 - DNS 页由当前生效配置读取 `default-nameserver / nameserver / fallback / proxy-server-nameserver / direct-nameserver / nameserver-policy / hosts`，并合并系统 Hosts、运行缓存、Fake-IP 与出站节点 DNS；支持同时清理 DNS 缓存和 Fake-IP。
-- 设备页只展示内核可确认的进程、来源地址和活动/历史状态；流量页调用 `getTraffic / getTotalTraffic` 展示实时与累计上传下载，不将有限环形历史误算为总流量。
+- 不再提供信息价值有限的设备与流量统计子页面；请求和连接列表仍保留单条记录的实时速率、累计上传下载和连接详情。
 - 日志页按实际级别分类；Sub-Store 页支持凭据历史、固定规则读取/新增/修改/删除/拖动排序，保存前重新读取远端脚本并仅替换 `BETTBOX_CUSTOM_RULES`。
 - 选中请求或连接后展开可拖动详情，区分客户端、目标、Fake-IP、实际出站本地/远端地址、GeoIP/ASN 和完整策略链；macOS 通过 `NSWorkspace` 读取进程图标，并发请求合并且复用历史 `.app` 路径。
 - custom-mihomo 为每条连接保存 DNS 逐服务器尝试、规则匹配、策略链和真实 socket 建立事件，`TrackerInfo` 返回 `trace / outboundLocalAddress / outboundRemoteAddress`；连接加入与离开均发送同 ID 通知，请求记录按 ID 原位更新。
