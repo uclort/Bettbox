@@ -7,12 +7,12 @@
     <language>zh-CN</language>
     <item>
       <title>Bettbox 1.19.3</title>
-      <pubDate>Sun, 27 Sep 2026 13:35:15 +0000</pubDate>
-      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000136-r20260927132417-75f71468e833-2c8fb62cd4c6</link>
-      <sparkle:releaseNotesLink>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000136-r20260927132417-75f71468e833-2c8fb62cd4c6</sparkle:releaseNotesLink>
-      <sparkle:version>2090000136</sparkle:version>
+      <pubDate>Mon, 28 Sep 2026 02:10:01 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000137-r20260928015706-cf857afad981-2c8fb62cd4c6</link>
+      <sparkle:releaseNotesLink>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000137-r20260928015706-cf857afad981-2c8fb62cd4c6</sparkle:releaseNotesLink>
+      <sparkle:version>2090000137</sparkle:version>
       <sparkle:shortVersionString>1.19.3</sparkle:shortVersionString>
-      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.3+2090000136-r20260927132417-75f71468e833-2c8fb62cd4c6/Bettbox-1.19.3-macos-amd64.dmg" length="73657885" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="PkxD3X3p/Ar/Zd+3ekcMPObKd7ChrzAwqrK1RqnAIqivxj1BQOzlRdo6bpWShU01iPqXpHPQ7diVZ2eYC14pBQ==" />
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.3+2090000137-r20260928015706-cf857afad981-2c8fb62cd4c6/Bettbox-1.19.3-macos-amd64.dmg" length="73663598" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="+Qmd6ePUMuVgWmapebuRiZLrBbbQbW+S2hrsIv+Gj7jIvR/rMhZuMHbDW1Y1VS5HADTB24J/BHbsYeb9xCCmCg==" />
     </item>
   </channel>
 </rss>
