@@ -612,6 +612,26 @@ jobs:
           $installDir = Join-Path $env:RUNNER_TEMP "bettbox-installer-smoke"
           $originalTemp = $env:TEMP
           $originalTmp = $env:TMP
+          function Wait-ForInstallerProcess {
+            param([Diagnostics.Process]$Process, [string]$Stage, [int]$TimeoutSeconds = 300)
+            if (-not $Process.WaitForExit($TimeoutSeconds * 1000)) {
+              Get-Process |
+                Where-Object {
+                  $_.Path -eq $Process.Path -or
+                  $_.Path -like "$installDir*" -or
+                  $_.Name -like "*Bettbox*"
+                } |
+                Select-Object Id, ProcessName, Path, StartTime |
+                Format-List
+              Stop-Process -Id $Process.Id -Force -ErrorAction SilentlyContinue
+              Get-Process |
+                Where-Object {
+                  $_.Path -like "$installDir*" -or $_.Name -like "*Bettbox*"
+                } |
+                Stop-Process -Force -ErrorAction SilentlyContinue
+              throw "$Stage 超过 $TimeoutSeconds 秒未退出。"
+            }
+          }
           try {
             $env:TEMP = "Q:\bettbox-missing-temp"
             $env:TMP = $env:TEMP
@@ -625,8 +645,8 @@ jobs:
             $process = Start-Process `
               -FilePath $installer.FullName `
               -ArgumentList $arguments `
-              -PassThru `
-              -Wait
+              -PassThru
+            Wait-ForInstallerProcess -Process $process -Stage "Windows 安装程序"
             if ($process.ExitCode -ne 0) {
               throw "Windows 安装程序退出码异常：$($process.ExitCode)"
             }
@@ -639,14 +659,15 @@ jobs:
             $env:TMP = $originalTmp
             $uninstaller = Join-Path $installDir "unins000.exe"
             if (Test-Path $uninstaller) {
-              Start-Process `
+              $uninstallProcess = Start-Process `
                 -FilePath $uninstaller `
                 -ArgumentList @(
                   "/VERYSILENT",
                   "/SUPPRESSMSGBOXES",
                   "/NORESTART"
                 ) `
-                -Wait
+                -PassThru
+              Wait-ForInstallerProcess -Process $uninstallProcess -Stage "Windows 卸载程序"
             }
           }
 
