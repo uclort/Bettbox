@@ -2,11 +2,15 @@
 
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:archive/archive_io.dart';
 import 'package:args/args.dart';
 import 'package:liquid_engine/liquid_engine.dart';
 import 'package:path/path.dart' as path;
 import 'package:yaml/yaml.dart';
+
+const _installerPayloadMagic = 'BETTBOX_SETUP_V1';
 
 void main(List<String> arguments) async {
   final parser = ArgParser()
@@ -15,7 +19,8 @@ void main(List<String> arguments) async {
     ..addOption('env', defaultsTo: 'pre')
     ..addFlag('dev', defaultsTo: false)
     ..addFlag('portable', defaultsTo: null)
-    ..addFlag('installer', defaultsTo: true);
+    ..addFlag('installer', defaultsTo: true)
+    ..addFlag('temp-safe-launcher', defaultsTo: false);
 
   final args = parser.parse(arguments);
   final arch = args['arch'] as String;
@@ -24,6 +29,7 @@ void main(List<String> arguments) async {
   final makePortable =
       (args['portable'] as bool?) ?? (compatible && arch == 'amd64');
   final makeInstaller = args['installer'] as bool;
+  final useTempSafeLauncher = args['temp-safe-launcher'] as bool;
 
   final desc = compatible ? '$arch-compatible' : arch;
 
@@ -67,7 +73,7 @@ void main(List<String> arguments) async {
   final helperExecutableName = isDev ? 'BettboxDevHelperService.exe' : 'BettboxHelperService.exe';
   final helperServiceName = isDev ? 'BettboxDevHelperService' : 'BettboxHelperService';
   final taskName = isDev ? 'Bettbox Dev' : 'Bettbox';
-  
+
   // Format locales - resolve file paths to absolute to avoid Inno Setup relative path issues
   final packagingDir = path.absolute('windows/packaging/exe');
   final locales = [];
@@ -164,7 +170,18 @@ void main(List<String> arguments) async {
     }
 
     final targetInstallerPath = path.join('dist', '$outputBaseName.exe');
-    generatedInstallerFile.renameSync(targetInstallerPath);
+    if (useTempSafeLauncher) {
+      final launcherFile = await _buildInstallerLauncher(arch, appVersion);
+      final targetInstallerFile = launcherFile.copySync(targetInstallerPath);
+      await _appendInstallerPayload(
+        targetInstallerFile: targetInstallerFile,
+        payloadFile: generatedInstallerFile,
+      );
+      generatedInstallerFile.deleteSync();
+      print('已生成使用独立临时目录的单文件安装程序。');
+    } else {
+      generatedInstallerFile.renameSync(targetInstallerPath);
+    }
     print('Successfully generated and moved installer to: $targetInstallerPath');
   } else {
     if (tempIssFile.existsSync()) {
@@ -217,5 +234,85 @@ void main(List<String> arguments) async {
         cleanBatDest.deleteSync();
       }
     }
+  }
+}
+
+Future<File> _buildInstallerLauncher(String arch, String appVersion) async {
+  final sourceDir = path.absolute('windows/packaging/exe/launcher');
+  final buildDir = path.absolute('build/windows/installer_launcher/$arch');
+  final outputDir = path.absolute(
+    'build/windows/installer_launcher/output/$arch',
+  );
+  final generatorArch = arch == 'arm64' ? 'ARM64' : 'x64';
+
+  final configureResult = await Process.run('cmake', [
+    '-S',
+    sourceDir,
+    '-B',
+    buildDir,
+    '-A',
+    generatorArch,
+    '-DBETTBOX_LAUNCHER_OUTPUT_DIR=$outputDir',
+    '-DBETTBOX_LAUNCHER_VERSION=$appVersion',
+  ]);
+  stdout.write(configureResult.stdout);
+  stderr.write(configureResult.stderr);
+  if (configureResult.exitCode != 0) {
+    throw ProcessException(
+      'cmake',
+      const [],
+      '配置 Windows 安装启动器失败。',
+      configureResult.exitCode,
+    );
+  }
+
+  final buildResult = await Process.run('cmake', [
+    '--build',
+    buildDir,
+    '--config',
+    'Release',
+  ]);
+  stdout.write(buildResult.stdout);
+  stderr.write(buildResult.stderr);
+  if (buildResult.exitCode != 0) {
+    throw ProcessException(
+      'cmake',
+      const [],
+      '编译 Windows 安装启动器失败。',
+      buildResult.exitCode,
+    );
+  }
+
+  final launcherFile = File(
+    path.join(outputDir, 'BettboxInstallerLauncher.exe'),
+  );
+  if (!launcherFile.existsSync()) {
+    throw FileSystemException('未找到 Windows 安装启动器。', launcherFile.path);
+  }
+  return launcherFile;
+}
+
+Future<void> _appendInstallerPayload({
+  required File targetInstallerFile,
+  required File payloadFile,
+}) async {
+  final payloadLength = await payloadFile.length();
+  final output = targetInstallerFile.openSync(mode: FileMode.append);
+  try {
+    await for (final chunk in payloadFile.openRead()) {
+      output.writeFromSync(chunk);
+    }
+
+    final magic = ascii.encode(_installerPayloadMagic);
+    if (magic.length != 16) {
+      throw StateError('安装程序载荷标识必须为 16 字节。');
+    }
+    output.writeFromSync(magic);
+
+    final payloadSize = ByteData(8)
+      ..setUint64(0, payloadLength, Endian.little);
+    output.writeFromSync(payloadSize.buffer.asUint8List());
+  } finally {
+    output.closeSync();
   }
 }

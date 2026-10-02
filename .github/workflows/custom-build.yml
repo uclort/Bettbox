@@ -593,7 +593,62 @@ jobs:
             --dart-define=APP_UPDATE_REPOSITORY=$env:APP_UPDATE_REPOSITORY `
             --dart-define=APP_RELEASE_TAG=$env:APP_RELEASE_TAG `
             --dart-define=APP_UPDATE_FEED_URL=$env:APP_UPDATE_FEED_URL
-          dart windows/packaging/exe/package_windows.dart --arch amd64 --env stable
+          dart windows/packaging/exe/package_windows.dart `
+            --arch amd64 `
+            --env stable `
+            --temp-safe-launcher
+
+      - name: 回归测试 Windows 安装器临时目录回退
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $installer = Get-ChildItem "dist/*windows-amd64-setup.exe" |
+            Select-Object -First 1
+          if (-not $installer) {
+            throw "未找到 Windows 安装程序。"
+          }
+
+          $installDir = Join-Path $env:RUNNER_TEMP "bettbox-installer-smoke"
+          $originalTemp = $env:TEMP
+          $originalTmp = $env:TMP
+          try {
+            $env:TEMP = "Q:\bettbox-missing-temp"
+            $env:TMP = $env:TEMP
+            $arguments = @(
+              "/VERYSILENT",
+              "/SUPPRESSMSGBOXES",
+              "/NORESTART",
+              "/NOICONS",
+              "/DIR=$installDir"
+            )
+            $process = Start-Process `
+              -FilePath $installer.FullName `
+              -ArgumentList $arguments `
+              -PassThru `
+              -Wait
+            if ($process.ExitCode -ne 0) {
+              throw "Windows 安装程序退出码异常：$($process.ExitCode)"
+            }
+            if (-not (Test-Path (Join-Path $installDir "Bettbox.exe"))) {
+              throw "Windows 安装程序未写入 Bettbox.exe。"
+            }
+          }
+          finally {
+            $env:TEMP = $originalTemp
+            $env:TMP = $originalTmp
+            $uninstaller = Join-Path $installDir "unins000.exe"
+            if (Test-Path $uninstaller) {
+              Start-Process `
+                -FilePath $uninstaller `
+                -ArgumentList @(
+                  "/VERYSILENT",
+                  "/SUPPRESSMSGBOXES",
+                  "/NORESTART"
+                ) `
+                -Wait
+            }
+          }
 
       - name: 构建 macOS
         if: matrix.platform == 'macos'

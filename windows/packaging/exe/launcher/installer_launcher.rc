@@ -1,0 +1,33 @@
+#include <windows.h>
+
+#pragma code_page(65001)
+
+101 ICON "../../../runner/resources/app_icon.ico"
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION BETTBOX_VERSION_MAJOR,BETTBOX_VERSION_MINOR,BETTBOX_VERSION_PATCH,0
+ PRODUCTVERSION BETTBOX_VERSION_MAJOR,BETTBOX_VERSION_MINOR,BETTBOX_VERSION_PATCH,0
+ FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
+ FILEFLAGS 0x0L
+ FILEOS VOS__WINDOWS32
+ FILETYPE VFT_APP
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080404b0"
+        BEGIN
+            VALUE "CompanyName", "uclort/Bettbox\0"
+            VALUE "FileDescription", "Bettbox 安装程序\0"
+            VALUE "FileVersion", BETTBOX_VERSION_STRING "\0"
+            VALUE "InternalName", "BettboxInstallerLauncher\0"
+            VALUE "OriginalFilename", "Bettbox-Setup.exe\0"
+            VALUE "ProductName", "Bettbox\0"
+            VALUE "ProductVersion", BETTBOX_VERSION_STRING "\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x804, 1200
+    END
+END
