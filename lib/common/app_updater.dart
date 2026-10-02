@@ -181,10 +181,13 @@ class CustomAppUpdater with UpdaterListener {
         procedureName.cast<win32.Utf16>(),
       );
       if (procedure == ffi.Pointer.fromAddress(0)) return;
-      final setBuildVersion = procedure.cast<
-        ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<win32.Utf16>)
-        >().asFunction<void Function(ffi.Pointer<win32.Utf16>)>();
+      final setBuildVersion = procedure
+          .cast<
+            ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<win32.Utf16>)
+            >
+          >()
+          .asFunction<void Function(ffi.Pointer<win32.Utf16>)>();
       setBuildVersion(build);
     } finally {
       win32.FreeLibrary(library);
