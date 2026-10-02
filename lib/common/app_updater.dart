@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ffi' as ffi;
 
 import 'package:auto_updater/auto_updater.dart';
 import 'package:bett_box/common/common.dart';
@@ -90,13 +91,13 @@ class CustomAppUpdater with UpdaterListener {
   /// WinSparkle defaults to ProductVersion for comparison, but the custom
   /// appcast publishes the numeric build number as sparkle:version.
   void _setWindowsAppBuildVersion() {
-    final filePath = calloc<win32.Utf16>(win32.MAX_PATH);
-    final unused = calloc<win32.Uint32>();
-    final translations = calloc<win32.Pointer>();
-    final translationLength = calloc<win32.Uint32>();
-    final versionPointer = calloc<win32.Pointer>();
-    final versionLength = calloc<win32.Uint32>();
-    win32.Pointer<win32.Uint8>? versionData;
+    final filePath = calloc<ffi.Utf16>(win32.MAX_PATH);
+    final unused = calloc<ffi.Uint32>();
+    final translations = calloc<ffi.Pointer>();
+    final translationLength = calloc<ffi.Uint32>();
+    final versionPointer = calloc<ffi.Pointer>();
+    final versionLength = calloc<ffi.Uint32>();
+    ffi.Pointer<ffi.Uint8>? versionData;
     try {
       final pathLength = win32.GetModuleFileName(
         0,
@@ -107,7 +108,7 @@ class CustomAppUpdater with UpdaterListener {
 
       final dataSize = win32.GetFileVersionInfoSize(filePath, unused);
       if (dataSize == 0) return;
-      versionData = calloc<win32.Uint8>(dataSize);
+      versionData = calloc<ffi.Uint8>(dataSize);
       if (win32.GetFileVersionInfo(
             filePath,
             0,
@@ -128,7 +129,7 @@ class CustomAppUpdater with UpdaterListener {
         return;
       }
 
-      final languageAndCodePage = translations.value.cast<win32.Uint32>();
+      final languageAndCodePage = translations.value.cast<ffi.Uint32>();
       final value = languageAndCodePage.value;
       final language = value & 0xffff;
       final codePage = (value >> 16) & 0xffff;
@@ -149,7 +150,7 @@ class CustomAppUpdater with UpdaterListener {
       }
 
       final productVersion = versionPointer.value
-          .cast<win32.Uint16>()
+          .cast<ffi.Uint16>()
           .toDartString();
       final segments = productVersion.split('+');
       final buildNumber = segments.length == 2 ? segments[1] : '';
@@ -175,10 +176,10 @@ class CustomAppUpdater with UpdaterListener {
     if (library == 0) return;
     try {
       final procedure = win32.GetProcAddress(library, procedureName);
-      if (procedure == win32.Pointer.fromAddress(0)) return;
+      if (procedure == ffi.Pointer.fromAddress(0)) return;
       final setBuildVersion = procedure.cast<
-        win32.NativeFunction<win32.Void Function(win32.Pointer<win32.Utf16>)>
-      >().asFunction<void Function(win32.Pointer<win32.Utf16>)>();
+        ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Utf16>)>
+      >().asFunction<void Function(ffi.Pointer<ffi.Utf16>)>();
       setBuildVersion(build);
     } finally {
       win32.FreeLibrary(library);
