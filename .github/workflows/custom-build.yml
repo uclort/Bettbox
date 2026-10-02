@@ -598,6 +598,18 @@ jobs:
             --env stable `
             --temp-safe-launcher
 
+      - name: 校验 Windows 更新版本资源
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $appVersion = "${{ needs.inspect.outputs.app_version }}".Split("+")[0]
+          $version = (Get-Item "build/windows/x64/runner/Release/Bettbox.exe").VersionInfo.ProductVersion
+          $buildNumber = "${{ needs.inspect.outputs.build_number }}"
+          if ($version -ne "$appVersion+$buildNumber") {
+            throw "Windows ProductVersion 应为 $appVersion+$buildNumber，实际为 $version。"
+          }
+
       - name: 回归测试 Windows 安装器临时目录回退
         if: matrix.platform == 'windows'
         shell: pwsh

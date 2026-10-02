@@ -43,7 +43,7 @@
 
 - “关于本机 → 查找更新”检查 `uclort/Bettbox` 已发布的最新自定义 Release；“Github Releases”直接打开该仓库的 Releases 页面。
 - macOS 使用 Sparkle、Windows 使用 WinSparkle；安装前继续执行内核、代理和系统 DNS 退出清理。
-- Windows 自定义安装包使用单文件启动器内嵌原 Inno Setup 安装器；启动器优先在 `%LOCALAPPDATA%\Bettbox\InstallerTemp` 创建独立临时目录并覆盖子进程的 `TEMP/TMP`，避免系统 `%TEMP%` 权限损坏或安全策略导致“错误 5：拒绝访问”。载荷释放缓冲使用堆内存，避免 1 MB 栈缓冲触发 `STATUS_STACK_OVERFLOW`。静默卸载跳过用户数据确认框并默认保留用户数据，交互卸载保留确认；Helper 服务停止在短等待后强制结束进程，避免卸载器被残留服务阻塞。代码位于 `windows/packaging/exe/launcher`、`windows/packaging/exe/package_windows.dart` 与 `windows/packaging/exe/inno_setup.iss`，自定义构建通过无效 `TEMP/TMP` 下的静默安装回归验证；回归安装和卸载均有 5 分钟超时、进程诊断和强制清理。
+- Windows 自定义安装包使用单文件启动器内嵌原 Inno Setup 安装器；启动器优先在 `%LOCALAPPDATA%\Bettbox\InstallerTemp` 创建独立临时目录并覆盖子进程的 `TEMP/TMP`，避免系统 `%TEMP%` 权限损坏或安全策略导致“错误 5：拒绝访问”。载荷释放缓冲使用堆内存，避免 1 MB 栈缓冲触发 `STATUS_STACK_OVERFLOW`。静默卸载跳过用户数据确认框并默认保留用户数据，交互卸载保留确认；Helper 服务停止在短等待后强制结束进程，避免卸载器被残留服务阻塞。WinSparkle 初始化时从 `ProductVersion` 提取构建号并显式设置为内部比较版本，与 appcast 的 `sparkle:version` 对齐，避免同版本仍提示更新；代码位于 `lib/common/app_updater.dart`、`windows/packaging/exe/launcher`、`windows/packaging/exe/package_windows.dart` 与 `windows/packaging/exe/inno_setup.iss`，自定义构建通过无效 `TEMP/TMP` 下的静默安装回归验证；回归安装和卸载均有 5 分钟超时、进程诊断和强制清理，并校验 Windows `ProductVersion` 包含本次构建号。
 - Android 使用 arm64-v8a 固定签名 APK，校验 SHA-256 后通过独立 `FileProvider` URI 调用系统安装器；安装器无法打开时显示失败提示，发布前校验 Provider 与 `app_updates` 路径配置。更新检查读取 `custom-update-feed` 分支静态 JSON，避免 GitHub Releases API 匿名限流。
 - 自动检查与手动检查使用同一发布源，草稿 Release 不会被识别为可用更新。
 

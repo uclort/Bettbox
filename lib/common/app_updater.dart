@@ -5,7 +5,9 @@ import 'package:bett_box/common/common.dart';
 import 'package:bett_box/plugins/app.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/dialog.dart';
+import 'package:ffi/ffi.dart';
 import 'package:flutter/material.dart';
+import 'package:win32/win32.dart' as win32;
 
 class AndroidAppUpdateState {
   final String status;
@@ -75,6 +77,9 @@ class CustomAppUpdater with UpdaterListener {
       return;
     }
     if (supportsNativeUpdater) {
+      if (system.isWindows) {
+        _setWindowsAppBuildVersion();
+      }
       autoUpdater.addListener(this);
       await autoUpdater.setFeedURL(customUpdateFeedUrl);
       await autoUpdater.setScheduledCheckInterval(0);
@@ -82,6 +87,106 @@ class CustomAppUpdater with UpdaterListener {
     _initialized = true;
   }
 
+  /// WinSparkle defaults to ProductVersion for comparison, but the custom
+  /// appcast publishes the numeric build number as sparkle:version.
+  void _setWindowsAppBuildVersion() {
+    final filePath = calloc<win32.Utf16>(win32.MAX_PATH);
+    final unused = calloc<win32.Uint32>();
+    final translations = calloc<win32.Pointer>();
+    final translationLength = calloc<win32.Uint32>();
+    final versionPointer = calloc<win32.Pointer>();
+    final versionLength = calloc<win32.Uint32>();
+    win32.Pointer<win32.Uint8>? versionData;
+    try {
+      final pathLength = win32.GetModuleFileName(
+        0,
+        filePath,
+        win32.MAX_PATH,
+      );
+      if (pathLength == 0) return;
+
+      final dataSize = win32.GetFileVersionInfoSize(filePath, unused);
+      if (dataSize == 0) return;
+      versionData = calloc<win32.Uint8>(dataSize);
+      if (win32.GetFileVersionInfo(
+            filePath,
+            0,
+            dataSize,
+            versionData,
+          ) ==
+          0) {
+        return;
+      }
+      if (win32.VerQueryValue(
+            versionData,
+            '\\VarFileInfo\\Translation'.toNativeUtf16(),
+            translations,
+            translationLength,
+          ) ==
+          0 ||
+          translationLength.value < 4) {
+        return;
+      }
+
+      final languageAndCodePage = translations.value.cast<win32.Uint32>();
+      final value = languageAndCodePage.value;
+      final language = value & 0xffff;
+      final codePage = (value >> 16) & 0xffff;
+      final productVersionKey = StringBuffer()
+        ..write('\\StringFileInfo\\')
+        ..write(language.toRadixString(16).padLeft(4, '0'))
+        ..write(codePage.toRadixString(16).padLeft(4, '0'))
+        ..write('\\ProductVersion');
+      if (win32.VerQueryValue(
+            versionData,
+            productVersionKey.toString().toNativeUtf16(),
+            versionPointer,
+            versionLength,
+          ) ==
+          0 ||
+          versionLength.value == 0) {
+        return;
+      }
+
+      final productVersion = versionPointer.value
+          .cast<win32.Uint16>()
+          .toDartString();
+      final segments = productVersion.split('+');
+      final buildNumber = segments.length == 2 ? segments[1] : '';
+      if (buildNumber.isNotEmpty && int.tryParse(buildNumber) != null) {
+        _setWinSparkleBuildVersion(buildNumber);
+      }
+    } finally {
+      calloc.free(filePath);
+      calloc.free(unused);
+      calloc.free(translations);
+      calloc.free(translationLength);
+      calloc.free(versionPointer);
+      calloc.free(versionLength);
+      if (versionData != null) calloc.free(versionData);
+    }
+  }
+
+  void _setWinSparkleBuildVersion(String buildNumber) {
+    final libraryName = 'WinSparkle.dll'.toNativeUtf16();
+    final procedureName = 'win_sparkle_set_app_build_version'.toNativeUtf8();
+    final build = buildNumber.toNativeUtf16();
+    final library = win32.LoadLibrary(libraryName);
+    if (library == 0) return;
+    try {
+      final procedure = win32.GetProcAddress(library, procedureName);
+      if (procedure == win32.Pointer.fromAddress(0)) return;
+      final setBuildVersion = procedure.cast<
+        win32.NativeFunction<win32.Void Function(win32.Pointer<win32.Utf16>)>
+      >().asFunction<void Function(win32.Pointer<win32.Utf16>)>();
+      setBuildVersion(build);
+    } finally {
+      win32.FreeLibrary(library);
+      calloc.free(libraryName);
+      calloc.free(procedureName);
+      calloc.free(build);
+    }
+  }
   Future<void> checkDesktopUpdate({required bool manual}) async {
     if (!supportsNativeUpdater) return;
     await initialize();

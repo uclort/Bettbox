@@ -5,6 +5,11 @@
 - Windows 构建新增临时目录回归：将 `TEMP/TMP` 指向不存在的路径后执行静默安装并校验 `Bettbox.exe`，安装与卸载各设置 5 分钟超时和进程诊断，避免异常时拖满 120 分钟 job 超时。
 - 修复静默卸载被用户数据确认框阻塞的问题：`/VERYSILENT` 卸载不再弹出确认框并默认保留用户数据；交互卸载行为不变。Helper 服务停止增加短等待后的强制结束兜底，避免残留进程阻塞卸载。
 
+### 2026-10-02 修复 Windows 同版本误报更新
+
+- 排查确认 Android 通过 Release tag 比较，macOS 通过 `CFBundleVersion` 构建号比较，均不受影响；问题仅存在于 Windows。WinSparkle 默认读取 `ProductVersion` 参与比较，但 appcast 发布的是纯构建号，导致 `1.19.3+构建号` 与 `构建号` 比较时始终被判定为旧版本。
+- Windows 启动更新器前从 `ProductVersion` 提取构建号，并通过 WinSparkle `win_sparkle_set_app_build_version` 显式设置为内部比较版本；构建流程同步校验 `Bettbox.exe` 的 `ProductVersion` 包含本次构建号。
+
 ### 2026-09-28 精简网络面板
 
 - 删除网络面板中的设备和流量统计子页面，同时移除对应侧栏、移动端页面、流量轮询与统计聚合逻辑；最近请求、活动连接、DNS、日志和 Sub-Store 五个页面保持不变。
