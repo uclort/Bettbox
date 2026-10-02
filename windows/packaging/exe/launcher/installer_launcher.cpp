@@ -202,7 +202,10 @@ bool ExtractPayload(const std::filesystem::path& executable_path,
     return false;
   }
 
-  std::array<std::uint8_t, 1024 * 1024> buffer{};
+  // The launcher has a default 1 MB stack. Keep the copy buffer on the heap so
+  // extracting large installers cannot trigger STATUS_STACK_OVERFLOW.
+  constexpr DWORD kCopyBufferSize = 1024 * 1024;
+  std::vector<std::uint8_t> buffer(kCopyBufferSize);
   std::uint64_t remaining = footer.payload_size;
   bool succeeded = true;
   while (remaining > 0) {
