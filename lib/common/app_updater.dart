@@ -91,12 +91,12 @@ class CustomAppUpdater with UpdaterListener {
   /// WinSparkle defaults to ProductVersion for comparison, but the custom
   /// appcast publishes the numeric build number as sparkle:version.
   void _setWindowsAppBuildVersion() {
-    final filePath = calloc<pkg_ffi.Utf16>(win32.MAX_PATH);
-    final unused = calloc<ffi.Uint32>();
-    final translations = calloc<ffi.Pointer>();
-    final translationLength = calloc<ffi.Uint32>();
-    final versionPointer = calloc<ffi.Pointer>();
-    final versionLength = calloc<ffi.Uint32>();
+    final filePath = pkg_ffi.calloc<pkg_ffi.Utf16>(win32.MAX_PATH);
+    final unused = pkg_ffi.calloc<ffi.Uint32>();
+    final translations = pkg_ffi.calloc<ffi.Pointer>();
+    final translationLength = pkg_ffi.calloc<ffi.Uint32>();
+    final versionPointer = pkg_ffi.calloc<ffi.Pointer>();
+    final versionLength = pkg_ffi.calloc<ffi.Uint32>();
     ffi.Pointer<ffi.Uint8>? versionData;
     try {
       final pathLength = win32.GetModuleFileName(
@@ -108,7 +108,7 @@ class CustomAppUpdater with UpdaterListener {
 
       final dataSize = win32.GetFileVersionInfoSize(filePath, unused);
       if (dataSize == 0) return;
-      versionData = calloc<ffi.Uint8>(dataSize);
+      versionData = pkg_ffi.calloc<ffi.Uint8>(dataSize);
       if (win32.GetFileVersionInfo(
             filePath,
             0,
@@ -158,13 +158,13 @@ class CustomAppUpdater with UpdaterListener {
         _setWinSparkleBuildVersion(buildNumber);
       }
     } finally {
-      calloc.free(filePath);
-      calloc.free(unused);
-      calloc.free(translations);
-      calloc.free(translationLength);
-      calloc.free(versionPointer);
-      calloc.free(versionLength);
-      if (versionData != null) calloc.free(versionData);
+      pkg_ffi.calloc.free(filePath);
+      pkg_ffi.calloc.free(unused);
+      pkg_ffi.calloc.free(translations);
+      pkg_ffi.calloc.free(translationLength);
+      pkg_ffi.calloc.free(versionPointer);
+      pkg_ffi.calloc.free(versionLength);
+      if (versionData != null) pkg_ffi.calloc.free(versionData);
     }
   }
 
@@ -184,9 +184,9 @@ class CustomAppUpdater with UpdaterListener {
       setBuildVersion(build);
     } finally {
       win32.FreeLibrary(library);
-      calloc.free(libraryName);
-      calloc.free(procedureName);
-      calloc.free(build);
+      pkg_ffi.calloc.free(libraryName);
+      pkg_ffi.calloc.free(procedureName);
+      pkg_ffi.calloc.free(build);
     }
   }
   Future<void> checkDesktopUpdate({required bool manual}) async {
