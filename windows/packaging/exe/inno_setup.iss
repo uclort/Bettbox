@@ -145,6 +145,13 @@ begin
   ServiceName := '{{HELPER_SERVICE_NAME}}';
   
   Exec('sc', 'stop ' + ServiceName, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+
+  { Give the service process a short grace period after the SCM accepts stop. }
+  Sleep(1000);
+
+  if IsProcessRunning('{{HELPER_EXECUTABLE_NAME}}') then
+    Exec('taskkill', '/f /im {{HELPER_EXECUTABLE_NAME}}', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+
   Exec('sc', 'delete ' + ServiceName, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 
@@ -212,16 +219,24 @@ function InitializeUninstall(): Boolean;
 var
   Response: Integer;
 begin
-  Response := MsgBox(CustomMessage('RemoveUserDataPrompt'), mbConfirmation, MB_YESNOCANCEL);
-  
-  if Response = IDCANCEL then
+  if UninstallSilent then
   begin
-    Result := False;
+    ShouldCleanUserData := False;
+    Result := True;
   end
   else
   begin
-    ShouldCleanUserData := (Response = IDYES);
-    Result := True;
+    Response := MsgBox(CustomMessage('RemoveUserDataPrompt'), mbConfirmation, MB_YESNOCANCEL);
+
+    if Response = IDCANCEL then
+    begin
+      Result := False;
+    end
+    else
+    begin
+      ShouldCleanUserData := (Response = IDYES);
+      Result := True;
+    end;
   end;
 end;
 
