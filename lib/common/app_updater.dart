@@ -6,7 +6,7 @@ import 'package:bett_box/common/common.dart';
 import 'package:bett_box/plugins/app.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/dialog.dart';
-import 'package:ffi/ffi.dart';
+import 'package:ffi/ffi.dart' as pkg_ffi;
 import 'package:flutter/material.dart';
 import 'package:win32/win32.dart' as win32;
 
@@ -91,7 +91,7 @@ class CustomAppUpdater with UpdaterListener {
   /// WinSparkle defaults to ProductVersion for comparison, but the custom
   /// appcast publishes the numeric build number as sparkle:version.
   void _setWindowsAppBuildVersion() {
-    final filePath = calloc<ffi.Utf16>(win32.MAX_PATH);
+    final filePath = calloc<pkg_ffi.Utf16>(win32.MAX_PATH);
     final unused = calloc<ffi.Uint32>();
     final translations = calloc<ffi.Pointer>();
     final translationLength = calloc<ffi.Uint32>();
@@ -150,7 +150,7 @@ class CustomAppUpdater with UpdaterListener {
       }
 
       final productVersion = versionPointer.value
-          .cast<ffi.Uint16>()
+          .cast<pkg_ffi.Utf16>()
           .toDartString();
       final segments = productVersion.split('+');
       final buildNumber = segments.length == 2 ? segments[1] : '';
@@ -178,8 +178,9 @@ class CustomAppUpdater with UpdaterListener {
       final procedure = win32.GetProcAddress(library, procedureName);
       if (procedure == ffi.Pointer.fromAddress(0)) return;
       final setBuildVersion = procedure.cast<
-        ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Utf16>)>
-      >().asFunction<void Function(ffi.Pointer<ffi.Utf16>)>();
+        ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<pkg_ffi.Utf16>)
+        >().asFunction<void Function(ffi.Pointer<pkg_ffi.Utf16>)>();
       setBuildVersion(build);
     } finally {
       win32.FreeLibrary(library);
