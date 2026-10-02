@@ -91,7 +91,8 @@ class CustomAppUpdater with UpdaterListener {
   /// WinSparkle defaults to ProductVersion for comparison, but the custom
   /// appcast publishes the numeric build number as sparkle:version.
   void _setWindowsAppBuildVersion() {
-    final filePath = win32.Utf16.fromDartString('A' * win32.MAX_PATH);
+    final filePath = pkg_ffi.calloc<ffi.Uint16>(win32.MAX_PATH)
+        .cast<pkg_ffi.Utf16>();
     final unused = pkg_ffi.calloc<ffi.Uint32>();
     final translations = pkg_ffi.calloc<ffi.Pointer>();
     final translationLength = pkg_ffi.calloc<ffi.Uint32>();
@@ -150,7 +151,7 @@ class CustomAppUpdater with UpdaterListener {
       }
 
       final productVersion = versionPointer.value
-          .cast<win32.Utf16>()
+          .cast<pkg_ffi.Utf16>()
           .toDartString();
       final segments = productVersion.split('+');
       final buildNumber = segments.length == 2 ? segments[1] : '';
@@ -171,23 +172,23 @@ class CustomAppUpdater with UpdaterListener {
   void _setWinSparkleBuildVersion(String buildNumber) {
     final libraryName = 'WinSparkle.dll'.toNativeUtf16();
     final procedureName =
-        'win_sparkle_set_app_build_version'.toNativeUtf16();
+        'win_sparkle_set_app_build_version'.toNativeUtf8();
     final build = buildNumber.toNativeUtf16();
     final library = win32.LoadLibrary(libraryName);
     if (library == 0) return;
     try {
       final procedure = win32.GetProcAddress(
         library,
-        procedureName.cast<win32.Utf16>(),
+        procedureName,
       );
       if (procedure == ffi.Pointer.fromAddress(0)) return;
       final setBuildVersion = procedure
           .cast<
             ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<win32.Utf16>)
+              ffi.Void Function(ffi.Pointer<pkg_ffi.Utf16>)
             >
           >()
-          .asFunction<void Function(ffi.Pointer<win32.Utf16>)>();
+          .asFunction<void Function(ffi.Pointer<pkg_ffi.Utf16>)>();
       setBuildVersion(build);
     } finally {
       win32.FreeLibrary(library);
