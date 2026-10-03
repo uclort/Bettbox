@@ -632,6 +632,20 @@ jobs:
             }
           }
 
+          $workflowSource = Get-Content ".github/workflows/custom-build.yml" -Raw
+          if (-not $workflowSource.Contains('<title>Bettbox ${APP_VERSION}</title>') -or
+              -not $workflowSource.Contains(
+                '<sparkle:shortVersionString>${APP_VERSION}</sparkle:shortVersionString>'
+              )) {
+            throw "Windows appcast 最新版本展示仍缺少完整构建号。"
+          }
+          if ($workflowSource.Contains('<title>Bettbox ${short_version}</title>') -or
+              $workflowSource.Contains(
+                '<sparkle:shortVersionString>${short_version}</sparkle:shortVersionString>'
+              )) {
+            throw "Windows appcast 最新版本展示仍使用短版本号。"
+          }
+
           $runnerSource = Get-Content "windows/runner/main.cpp" -Raw
           if (-not $runnerSource.Contains("is_network_panel")) {
             throw "Windows Runner 未识别 --network-panel。"
@@ -1178,7 +1192,6 @@ jobs:
         run: |
           set -euo pipefail
 
-          short_version="${APP_VERSION%%+*}"
           release_url="https://github.com/${GITHUB_REPOSITORY}/releases/tag/${RELEASE_TAG}"
           published_at="$(date -Ru)"
           export published_at
@@ -1230,12 +1243,12 @@ jobs:
               echo '    <description>Bettbox 自定义版本更新源</description>'
               echo '    <language>zh-CN</language>'
               echo '    <item>'
-              echo "      <title>Bettbox ${short_version}</title>"
+              echo "      <title>Bettbox ${APP_VERSION}</title>"
               echo "      <pubDate>${published_at}</pubDate>"
               echo "      <link>${release_url}</link>"
               echo "      <sparkle:releaseNotesLink>${release_url}</sparkle:releaseNotesLink>"
               echo "      <sparkle:version>${BUILD_NUMBER}</sparkle:version>"
-              echo "      <sparkle:shortVersionString>${short_version}</sparkle:shortVersionString>"
+              echo "      <sparkle:shortVersionString>${APP_VERSION}</sparkle:shortVersionString>"
               echo "      <enclosure url=\"${asset_url}\" length=\"${length}\" type=\"application/octet-stream\" sparkle:os=\"${platform}\" ${signature_attribute} />"
               echo '    </item>'
               echo '  </channel>'
