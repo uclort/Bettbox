@@ -43,7 +43,7 @@
 
 - “关于本机 → 查找更新”检查 `uclort/Bettbox` 已发布的最新自定义 Release；“Github Releases”直接打开该仓库的 Releases 页面。
 - macOS 使用 Sparkle、Windows 使用 WinSparkle；安装前继续执行内核、代理和系统 DNS 退出清理。
-- Windows 自定义安装包使用单文件启动器内嵌原 Inno Setup 安装器；启动器优先在 `%LOCALAPPDATA%\Bettbox\InstallerTemp` 创建独立临时目录并覆盖子进程的 `TEMP/TMP`，避免系统 `%TEMP%` 权限损坏或安全策略导致“错误 5：拒绝访问”。载荷释放缓冲使用堆内存，避免 1 MB 栈缓冲触发 `STATUS_STACK_OVERFLOW`。静默卸载跳过用户数据确认框并默认保留用户数据，交互卸载保留确认；Helper 服务按需启动，主程序退出时主动停止，安装器升级时仅更新已有服务路径并保留鉴权环境，不创建或启动 Helper，残留 Helper/Core 由安装器静默清理。WinSparkle 初始化时从 `ProductVersion` 提取构建号，完整版本通过 `win_sparkle_set_app_details` 展示，纯构建号通过 `win_sparkle_set_app_build_version` 与 appcast 的 `sparkle:version` 比较，既避免同版本误报，也保留 `1.19.3+构建号` 的可见差异；代码位于 `lib/common/app_updater.dart`、`lib/common/system.dart`、`lib/controller.dart`、`windows/packaging/exe/launcher`、`windows/packaging/exe/package_windows.dart` 与 `windows/packaging/exe/inno_setup.iss`，自定义构建通过无效 `TEMP/TMP` 下的静默安装回归验证；回归安装和卸载均有 5 分钟超时、进程诊断和强制清理，并校验 Windows `ProductVersion` 包含本次构建号以及安装后 Helper 进程与服务未运行。
+- Windows 自定义安装包使用单文件启动器内嵌原 Inno Setup 安装器；启动器优先在 `%LOCALAPPDATA%\Bettbox\InstallerTemp` 创建独立临时目录并覆盖子进程的 `TEMP/TMP`，避免系统 `%TEMP%` 权限损坏或安全策略导致“错误 5：拒绝访问”。载荷释放缓冲使用堆内存，避免 1 MB 栈缓冲触发 `STATUS_STACK_OVERFLOW`。静默卸载跳过用户数据确认框并默认保留用户数据，交互卸载保留确认；Helper 服务按需启动，主程序退出时主动停止，首次 TUN 管理员授权后最多等待 30 秒直至 Helper 可用，安装器升级时仅更新已有服务路径并保留鉴权环境，不创建或启动 Helper，残留 Helper/Core 由安装器静默清理。Windows 主窗口使用稳定原生标记识别已有实例，重复启动会恢复并聚焦现有窗口。WinSparkle 初始化时从 `ProductVersion` 提取构建号，完整版本通过 `win_sparkle_set_app_details` 展示，纯构建号通过 `win_sparkle_set_app_build_version` 与 appcast 的 `sparkle:version` 比较，既避免同版本误报，也保留 `1.19.3+构建号` 的可见差异；代码位于 `lib/common/app_updater.dart`、`lib/common/system.dart`、`lib/controller.dart`、`windows/runner`、`windows/packaging/exe/launcher`、`windows/packaging/exe/package_windows.dart` 与 `windows/packaging/exe/inno_setup.iss`，自定义构建通过无效 `TEMP/TMP` 下的静默安装回归验证；回归安装和卸载均有 5 分钟超时、进程诊断和强制清理，并校验 Windows `ProductVersion` 包含本次构建号以及安装后 Helper 进程与服务未运行。
 - Android 使用 arm64-v8a 固定签名 APK，校验 SHA-256 后通过独立 `FileProvider` URI 调用系统安装器；安装器无法打开时显示失败提示，发布前校验 Provider 与 `app_updates` 路径配置。更新检查读取 `custom-update-feed` 分支静态 JSON，避免 GitHub Releases API 匿名限流。
 - 自动检查与手动检查使用同一发布源，草稿 Release 不会被识别为可用更新。
 
@@ -100,7 +100,7 @@
 ### 统一启停交互
 
 - 桌面端系统代理或 TUN 任一开启即启动核心，两者均关闭即停止核心；设置页、快捷卡片和托盘开关都调用 `updateSystemProxy` / `updateTun` 联动方法。Windows、macOS 和 Linux 的 TUN 首次启动统一同步执行无 TUN 基线配置、管理员授权、必要的特权核心重启、监听启动和 TUN 配置应用，任一步失败都会停止监听并回滚 TUN 开关；系统代理仍开启时恢复无 TUN 核心，避免 UI 已开启但实际网络黑洞。
-- 桌面核心实际运行状态统一以 `globalState.isStart` 为准并同步到展示状态；Windows 系统代理调用串行执行，仅以默认 WinINet 连接写入结果作为启停成功标准，RAS 连接同步与设置刷新尽力执行，既避免启停竞态和静默失败，也不因附加操作失败误判整体失败。
+- 桌面核心实际运行状态统一以 `globalState.isStart` 为准并同步到展示状态；Windows 系统代理调用串行执行，同时写入 WinINet 默认/RAS 连接和当前用户 `Internet Settings` 注册表，任一主通道成功即可完成启停，设置刷新尽力执行，避免特定 Windows 环境拒绝默认连接 API 时无法开启代理。
 - 移除桌面独立启动/停止入口、启动热键和“联动开关”设置；托盘保留网络面板、系统代理、TUN、重启内核等入口。
 - Android 首页保留一个悬浮总开关，并避让底部导航与页面滚动内容；启动时间卡片仅作为非独立启停的运行时长展示，不再提供桌面独立启停操作。
 - 回归测试为 `test/controller/macos_tun_startup_test.dart`。

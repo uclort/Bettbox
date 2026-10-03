@@ -48,6 +48,9 @@ public:
   // Show the current window. Returns true if the window was successfully shown.
   bool Show();
 
+  // Create 因成功激活已有主窗口而停止创建时返回 true。
+  bool WasExistingWindowActivated() const;
+
   // Release OS resources associated with window.
   void Destroy();
 
@@ -102,6 +105,7 @@ private:
   static void UpdateTheme(HWND const window);
 
   bool quit_on_close_ = false;
+  bool existing_window_activated_ = false;
 
   // window handle for top level window.
   HWND window_handle_ = nullptr;

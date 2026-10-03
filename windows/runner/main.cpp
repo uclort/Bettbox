@@ -129,7 +129,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
 #endif
   const bool activate_existing = !is_control_command && !is_network_panel;
   if (!window.Create(window_title, origin, size, activate_existing)) {
-    return EXIT_FAILURE;
+    return window.WasExistingWindowActivated() ? EXIT_SUCCESS : EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);
 

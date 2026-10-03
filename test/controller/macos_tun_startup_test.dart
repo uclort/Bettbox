@@ -6,6 +6,37 @@ import 'package:bett_box/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  group('Windows Helper 启动', () {
+    test('管理员授权后持续等待 Helper 变为可用', () async {
+      var attempts = 0;
+
+      final healthy = await waitForWindowsHelperHealthy(
+        check: () async => ++attempts == 4,
+        maxAttempts: 6,
+        interval: Duration.zero,
+      );
+
+      expect(healthy, isTrue);
+      expect(attempts, 4);
+    });
+
+    test('达到最大尝试次数后才报告 Helper 不可用', () async {
+      var attempts = 0;
+
+      final healthy = await waitForWindowsHelperHealthy(
+        check: () async {
+          attempts++;
+          return false;
+        },
+        maxAttempts: 3,
+        interval: Duration.zero,
+      );
+
+      expect(healthy, isFalse);
+      expect(attempts, 3);
+    });
+  });
+
   group('桌面 TUN 启动', () {
     test('等待管理员授权完成后才启动监听', () async {
       final authorization = Completer<Result<bool>>();

@@ -4,6 +4,8 @@
 #include <dwmapi.h>
 #include <flutter_windows.h>
 
+#include <cwchar>
+
 #include "resource.h"
 
 namespace
@@ -23,6 +25,7 @@ namespace
 #else
   constexpr const wchar_t kWindowClassName[] = L"BETTBOX_RUNNER_WIN32_WINDOW";
 #endif
+  constexpr const wchar_t kMainWindowProperty[] = L"BettboxMainWindow";
 
   /// Registry key for app theme preference.
   ///
@@ -61,6 +64,71 @@ namespace
       enable_non_client_dpi_scaling(hwnd);
     }
     FreeLibrary(user32_module);
+  }
+
+  BOOL CALLBACK FindMainWindowCallback(HWND hwnd, LPARAM lparam)
+  {
+    wchar_t class_name[128] = {};
+    if (GetClassNameW(hwnd, class_name, 128) == 0 ||
+        wcscmp(class_name, kWindowClassName) != 0 ||
+        GetPropW(hwnd, kMainWindowProperty) == nullptr)
+    {
+      return TRUE;
+    }
+
+    *reinterpret_cast<HWND *>(lparam) = hwnd;
+    return FALSE;
+  }
+
+  HWND FindExistingMainWindow()
+  {
+    HWND hwnd = nullptr;
+    EnumWindows(FindMainWindowCallback, reinterpret_cast<LPARAM>(&hwnd));
+    return hwnd;
+  }
+
+  void ActivateExistingWindow(HWND hwnd)
+  {
+    WINDOWPLACEMENT placement = {sizeof(WINDOWPLACEMENT)};
+    GetWindowPlacement(hwnd, &placement);
+
+    if (placement.showCmd == SW_SHOWMAXIMIZED)
+    {
+      ShowWindowAsync(hwnd, SW_SHOWMAXIMIZED);
+    }
+    else if (IsIconic(hwnd) || placement.showCmd == SW_SHOWMINIMIZED)
+    {
+      ShowWindowAsync(hwnd, SW_RESTORE);
+    }
+    else
+    {
+      ShowWindowAsync(hwnd, SW_SHOW);
+    }
+
+    SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0,
+                 SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE);
+
+    const DWORD current_thread = GetCurrentThreadId();
+    const DWORD target_thread = GetWindowThreadProcessId(hwnd, nullptr);
+    const bool attached =
+        target_thread != 0 && target_thread != current_thread &&
+        AttachThreadInput(current_thread, target_thread, TRUE);
+
+    BringWindowToTop(hwnd);
+    const bool foreground = SetForegroundWindow(hwnd);
+    SetActiveWindow(hwnd);
+    SetFocus(hwnd);
+
+    if (attached)
+    {
+      AttachThreadInput(current_thread, target_thread, FALSE);
+    }
+
+    if (!foreground)
+    {
+      FLASHWINFO flash = {sizeof(FLASHWINFO), hwnd, FLASHW_TRAY, 3, 0};
+      FlashWindowEx(&flash);
+    }
   }
 
 } // namespace
@@ -143,9 +211,10 @@ bool Win32Window::Create(const std::wstring &title,
                          const Size &size,
                          bool activate_existing)
 {
-
+  existing_window_activated_ = false;
   if (activate_existing && SendAppLinkToInstance(title))
   {
+    existing_window_activated_ = true;
     return false;
   }
   Destroy();
@@ -169,6 +238,11 @@ bool Win32Window::Create(const std::wstring &title,
   {
     return false;
   }
+  if (activate_existing)
+  {
+    SetPropW(window, kMainWindowProperty,
+             reinterpret_cast<HANDLE>(static_cast<INT_PTR>(1)));
+  }
 
   UpdateTheme(window);
 
@@ -180,37 +254,24 @@ bool Win32Window::Show()
   return ShowWindow(window_handle_, SW_SHOWNORMAL);
 }
 
+bool Win32Window::WasExistingWindowActivated() const
+{
+  return existing_window_activated_;
+}
+
 bool Win32Window::SendAppLinkToInstance(const std::wstring &title)
 {
-  // Find our exact window
+  // 先兼容旧版本的标题查找，再使用不受动态标题影响的主窗口标记。
   HWND hwnd = ::FindWindow(kWindowClassName, title.c_str());
+  if (!hwnd)
+  {
+    hwnd = FindExistingMainWindow();
+  }
 
   if (hwnd)
   {
-    // Dispatch new link to current window
     SendAppLink(hwnd);
-
-    // (Optional) Restore our window to front in same state
-    WINDOWPLACEMENT place = {sizeof(WINDOWPLACEMENT)};
-    GetWindowPlacement(hwnd, &place);
-
-    switch (place.showCmd)
-    {
-    case SW_SHOWMAXIMIZED:
-      ShowWindow(hwnd, SW_SHOWMAXIMIZED);
-      break;
-    case SW_SHOWMINIMIZED:
-      ShowWindow(hwnd, SW_RESTORE);
-      break;
-    default:
-      ShowWindow(hwnd, SW_NORMAL);
-      break;
-    }
-
-    SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE);
-    SetForegroundWindow(hwnd);
-
-    // Window has been found, don't create another one.
+    ActivateExistingWindow(hwnd);
     return true;
   }
 
@@ -312,6 +373,7 @@ void Win32Window::Destroy()
 
   if (window_handle_)
   {
+    RemovePropW(window_handle_, kMainWindowProperty);
     DestroyWindow(window_handle_);
     window_handle_ = nullptr;
   }

@@ -25,13 +25,47 @@
 
 namespace {
 
+constexpr const wchar_t kInternetSettingsKey[] =
+    L"Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings";
+
+bool WriteRegistryString(HKEY key,
+                         const wchar_t* name,
+                         const std::wstring& value) {
+  const auto* data = reinterpret_cast<const BYTE*>(value.c_str());
+  const DWORD size =
+      static_cast<DWORD>((value.size() + 1) * sizeof(wchar_t));
+  return RegSetValueExW(key, name, 0, REG_SZ, data, size) == ERROR_SUCCESS;
+}
+
+bool WriteProxyRegistry(bool enabled,
+                        const std::wstring& proxy_address = L"",
+                        const std::wstring& bypass_list = L"") {
+  HKEY key = nullptr;
+  if (RegCreateKeyExW(HKEY_CURRENT_USER, kInternetSettingsKey, 0, nullptr, 0,
+                      KEY_SET_VALUE, nullptr, &key, nullptr) != ERROR_SUCCESS) {
+    return false;
+  }
+
+  const DWORD proxy_enabled = enabled ? 1 : 0;
+  bool updated =
+      RegSetValueExW(key, L"ProxyEnable", 0, REG_DWORD,
+                     reinterpret_cast<const BYTE*>(&proxy_enabled),
+                     sizeof(proxy_enabled)) == ERROR_SUCCESS;
+  if (enabled) {
+    updated = WriteRegistryString(key, L"ProxyServer", proxy_address) &&
+              WriteRegistryString(key, L"ProxyOverride", bypass_list) &&
+              updated;
+  }
+  RegCloseKey(key);
+  return updated;
+}
+
 bool ApplyProxyOptionsToConnections(INTERNET_PER_CONN_OPTION_LIST* list) {
   const DWORD list_size = sizeof(*list);
   list->pszConnection = nullptr;
-  if (!InternetSetOptionW(nullptr, INTERNET_OPTION_PER_CONNECTION_OPTION, list,
-                          list_size)) {
-    return false;
-  }
+  const bool default_updated =
+      InternetSetOptionW(nullptr, INTERNET_OPTION_PER_CONNECTION_OPTION, list,
+                         list_size);
 
   RASENTRYNAME entry = {};
   entry.dwSize = sizeof(entry);
@@ -53,7 +87,7 @@ bool ApplyProxyOptionsToConnections(INTERNET_PER_CONN_OPTION_LIST* list) {
         RasEnumEntriesW(nullptr, nullptr, entry_address, &size, &count);
   }
   if (result != ERROR_SUCCESS) {
-    return true;
+    return default_updated;
   }
 
   for (DWORD i = 0; i < count; i++) {
@@ -61,7 +95,7 @@ bool ApplyProxyOptionsToConnections(INTERNET_PER_CONN_OPTION_LIST* list) {
     InternetSetOptionW(nullptr, INTERNET_OPTION_PER_CONNECTION_OPTION, list,
                        list_size);
   }
-  return true;
+  return default_updated;
 }
 
 void NotifyProxyChanged() {
@@ -97,7 +131,10 @@ bool startProxy(const int port,
   list.dwOptionCount = 3;
   list.pOptions = options;
 
-  if (!ApplyProxyOptionsToConnections(&list)) {
+  const bool registry_updated =
+      WriteProxyRegistry(true, proxy_address, bypass_list);
+  const bool wininet_updated = ApplyProxyOptionsToConnections(&list);
+  if (!registry_updated && !wininet_updated) {
     stopProxy();
     return false;
   }
@@ -114,9 +151,10 @@ bool stopProxy() {
   list.dwSize = sizeof(list);
   list.dwOptionCount = 1;
   list.pOptions = &option;
-  const bool updated = ApplyProxyOptionsToConnections(&list);
+  const bool registry_updated = WriteProxyRegistry(false);
+  const bool wininet_updated = ApplyProxyOptionsToConnections(&list);
   NotifyProxyChanged();
-  return updated;
+  return registry_updated || wininet_updated;
 }
 
 namespace proxy

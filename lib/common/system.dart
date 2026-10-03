@@ -11,9 +11,25 @@ import 'package:bett_box/helper/helper.dart';
 import 'package:bett_box/plugins/app.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/input.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:synchronized/synchronized.dart';
+
+@visibleForTesting
+Future<bool> waitForWindowsHelperHealthy({
+  required Future<bool> Function() check,
+  int maxAttempts = 60,
+  Duration interval = const Duration(milliseconds: 500),
+}) async {
+  for (var attempt = 0; attempt < maxAttempts; attempt++) {
+    if (await check()) return true;
+    if (attempt + 1 < maxAttempts) {
+      await Future.delayed(interval);
+    }
+  }
+  return false;
+}
 
 class System {
   static System? _instance;
@@ -434,19 +450,7 @@ class Windows {
   }
 
   Future<bool> _waitForHelperHealthy() async {
-    for (var attempt = 0; attempt < 8; attempt++) {
-      await Future.delayed(const Duration(milliseconds: 250));
-      if (await isHelperHealthy()) return true;
-
-      final check = await Process.run('sc', ['query', appHelperService]);
-      final output = check.stdout.toString();
-      if (output.contains('STOPPED') ||
-          (attempt >= 2 && output.contains('RUNNING'))) {
-        break;
-      }
-    }
-
-    return false;
+    return waitForWindowsHelperHealthy(check: isHelperHealthy);
   }
 
   Future<void> stopHelperService() async {
