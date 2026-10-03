@@ -633,9 +633,9 @@ jobs:
           }
 
           $workflowSource = Get-Content ".github/workflows/custom-build.yml" -Raw
-          if (-not $workflowSource.Contains('<title>Bettbox ${APP_VERSION}</title>') -or
+          if (-not $workflowSource.Contains('<title>Bettbox ${FINAL_APP_VERSION}</title>') -or
               -not $workflowSource.Contains(
-                '<sparkle:shortVersionString>${APP_VERSION}</sparkle:shortVersionString>'
+                '<sparkle:shortVersionString>${FINAL_APP_VERSION}</sparkle:shortVersionString>'
               )) {
             throw "Windows appcast 最新版本展示仍缺少完整构建号。"
           }
@@ -1246,12 +1246,12 @@ jobs:
               echo '    <description>Bettbox 自定义版本更新源</description>'
               echo '    <language>zh-CN</language>'
               echo '    <item>'
-              echo "      <title>Bettbox ${APP_VERSION}</title>"
+              echo "      <title>Bettbox ${FINAL_APP_VERSION}</title>"
               echo "      <pubDate>${published_at}</pubDate>"
               echo "      <link>${release_url}</link>"
               echo "      <sparkle:releaseNotesLink>${release_url}</sparkle:releaseNotesLink>"
               echo "      <sparkle:version>${BUILD_NUMBER}</sparkle:version>"
-              echo "      <sparkle:shortVersionString>${APP_VERSION}</sparkle:shortVersionString>"
+              echo "      <sparkle:shortVersionString>${FINAL_APP_VERSION}</sparkle:shortVersionString>"
               echo "      <enclosure url=\"${asset_url}\" length=\"${length}\" type=\"application/octet-stream\" sparkle:os=\"${platform}\" ${signature_attribute} />"
               echo '    </item>'
               echo '  </channel>'

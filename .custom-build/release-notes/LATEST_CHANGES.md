@@ -1,6 +1,6 @@
 ### 2026-10-03 修复 Windows 更新弹窗最新版本展示
 
-- Windows appcast 的 `title` 和 `sparkle:shortVersionString` 改为发布完整 `1.19.3+构建号`，更新弹窗中最新版本和本机版本都能显示构建号，方便直接对比。
+- Windows appcast 的 `title` 和 `sparkle:shortVersionString` 改为发布最终安装版本 `1.19.3+构建号`，更新弹窗中最新版本和本机版本都能显示构建号，方便直接对比。
 - `sparkle:version` 继续保持纯构建号，与 WinSparkle 本机比较版本一致，不重新引入同版本误报。
 - Windows 构建新增 appcast 完整版本展示字段的静态回归校验，防止 `echo` 生成逻辑回退到短版本号。
 
