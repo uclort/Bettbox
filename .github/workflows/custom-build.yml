@@ -646,6 +646,28 @@ jobs:
           if (-not $proxySource.Contains("result->Success(startProxy(port, bypassDomain));")) {
             throw "Windows 系统代理未返回真实启用结果。"
           }
+          if (-not $proxySource.Contains("void NotifyProxyChanged()") -or
+              $proxySource.Contains("&& NotifyProxyChanged()")) {
+            throw "Windows 系统代理仍将刷新通知结果作为启停成功条件。"
+          }
+
+          $systemSource = Get-Content "lib/common/system.dart" -Raw
+          if (-not $systemSource.Contains("'start= demand'") -or
+              $systemSource.Contains("AppIdentity.isDev ? 'demand' : 'auto'")) {
+            throw "Windows Helper 服务未统一配置为按需启动。"
+          }
+
+          $controllerSource = Get-Content "lib/controller.dart" -Raw
+          if (-not $controllerSource.Contains("await windows!.stopHelperService();")) {
+            throw "Windows 主程序退出时未停止 Helper 服务。"
+          }
+
+          $installerSource = Get-Content "windows/packaging/exe/inno_setup.iss" -Raw
+          if (-not $installerSource.Contains("CloseApplicationsFilter={{EXECUTABLE_NAME}}") -or
+              $installerSource.Contains("RegisterHelperService") -or
+              $installerSource.Contains("'start ' + ServiceName")) {
+            throw "Windows 安装器仍会提示或自动启动 Helper 服务。"
+          }
 
       - name: 回归测试 Windows 安装器临时目录回退
         if: matrix.platform == 'windows'
@@ -701,6 +723,14 @@ jobs:
             }
             if (-not (Test-Path (Join-Path $installDir "Bettbox.exe"))) {
               throw "Windows 安装程序未写入 Bettbox.exe。"
+            }
+            $helperProcess = Get-Process "BettboxHelperService" -ErrorAction SilentlyContinue
+            if ($helperProcess) {
+              throw "静默安装后 Helper 进程不应常驻运行。"
+            }
+            $helperService = Get-Service "BettboxHelperService" -ErrorAction SilentlyContinue
+            if ($helperService -and $helperService.Status -eq "Running") {
+              throw "静默安装后 Helper 服务不应处于运行状态。"
             }
           }
           finally {

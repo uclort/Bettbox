@@ -412,7 +412,7 @@ class Windows {
       'create',
       appHelperService,
       'binPath= "${appPath.helperPath}"',
-      'start= ${AppIdentity.isDev ? 'demand' : 'auto'}',
+      'start= demand',
       '&&',
       'reg',
       'add',
@@ -450,14 +450,23 @@ class Windows {
   }
 
   Future<void> stopHelperService() async {
-    await helperClient.stopCore();
-    if (!AppIdentity.isDev) return;
+    final query = await Process.run('sc', ['query', appHelperService]);
+    if (query.exitCode != 0 ||
+        !query.stdout.toString().contains('RUNNING')) {
+      return;
+    }
 
+    await helperClient.stopCore();
     if (await helperClient.stopHelperService()) {
       return;
     }
 
-    await Process.run('sc', ['stop', appHelperService]);
+    final result = await Process.run('sc', ['stop', appHelperService]);
+    if (result.exitCode != 0) {
+      commonPrint.log(
+        'Failed to stop Windows helper service: ${result.stderr}',
+      );
+    }
   }
 
   Future<bool> registerTask(String appName) async {

@@ -1383,6 +1383,13 @@ class AppController {
     } catch (e) {
       commonPrint.log('handleExit error: $e');
     } finally {
+      if (windows != null) {
+        try {
+          await windows!.stopHelperService();
+        } catch (e) {
+          commonPrint.log('Failed to stop Windows helper on exit: $e');
+        }
+      }
       if (macOS != null) {
         try {
           await macOS!.updateDns(true);

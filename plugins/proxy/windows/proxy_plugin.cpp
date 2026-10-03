@@ -53,25 +53,20 @@ bool ApplyProxyOptionsToConnections(INTERNET_PER_CONN_OPTION_LIST* list) {
         RasEnumEntriesW(nullptr, nullptr, entry_address, &size, &count);
   }
   if (result != ERROR_SUCCESS) {
-    return false;
+    return true;
   }
 
   for (DWORD i = 0; i < count; i++) {
     list->pszConnection = entry_address[i].szEntryName;
-    if (!InternetSetOptionW(nullptr, INTERNET_OPTION_PER_CONNECTION_OPTION,
-                            list, list_size)) {
-      return false;
-    }
+    InternetSetOptionW(nullptr, INTERNET_OPTION_PER_CONNECTION_OPTION, list,
+                       list_size);
   }
   return true;
 }
 
-bool NotifyProxyChanged() {
-  const bool settings_changed =
-      InternetSetOptionW(nullptr, INTERNET_OPTION_SETTINGS_CHANGED, nullptr, 0);
-  const bool refreshed =
-      InternetSetOptionW(nullptr, INTERNET_OPTION_REFRESH, nullptr, 0);
-  return settings_changed && refreshed;
+void NotifyProxyChanged() {
+  InternetSetOptionW(nullptr, INTERNET_OPTION_SETTINGS_CHANGED, nullptr, 0);
+  InternetSetOptionW(nullptr, INTERNET_OPTION_REFRESH, nullptr, 0);
 }
 
 }  // namespace
@@ -102,10 +97,11 @@ bool startProxy(const int port,
   list.dwOptionCount = 3;
   list.pOptions = options;
 
-  if (!ApplyProxyOptionsToConnections(&list) || !NotifyProxyChanged()) {
+  if (!ApplyProxyOptionsToConnections(&list)) {
     stopProxy();
     return false;
   }
+  NotifyProxyChanged();
   return true;
 }
 
@@ -118,7 +114,9 @@ bool stopProxy() {
   list.dwSize = sizeof(list);
   list.dwOptionCount = 1;
   list.pOptions = &option;
-  return ApplyProxyOptionsToConnections(&list) && NotifyProxyChanged();
+  const bool updated = ApplyProxyOptionsToConnections(&list);
+  NotifyProxyChanged();
+  return updated;
 }
 
 namespace proxy

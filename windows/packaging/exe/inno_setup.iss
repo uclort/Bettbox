@@ -19,7 +19,7 @@ PrivilegesRequired={{PRIVILEGES_REQUIRED}}
 ArchitecturesAllowed={{ARCH}}
 ArchitecturesInstallIn64BitMode={{ARCH}}
 CloseApplications=yes
-CloseApplicationsFilter={{EXECUTABLE_NAME}},{{CORE_EXECUTABLE_NAME}},{{HELPER_EXECUTABLE_NAME}}
+CloseApplicationsFilter={{EXECUTABLE_NAME}}
 SetupLogging=yes
 
 [Code]
@@ -120,7 +120,7 @@ begin
   DeleteFile(TempScriptPath);
 end;
 
-procedure RegisterHelperService;
+procedure ConfigureExistingHelperService;
 var
   ResultCode: Integer;
   HelperPath: String;
@@ -128,13 +128,13 @@ var
 begin
   ServiceName := '{{HELPER_SERVICE_NAME}}';
   HelperPath := ExpandConstant('{app}\{{HELPER_EXECUTABLE_NAME}}');
-  
-  Exec('sc', 'stop ' + ServiceName, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  Exec('sc', 'delete ' + ServiceName, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  
-  Exec('sc', 'create ' + ServiceName + ' binPath= "' + HelperPath + '" start= auto', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  
-  Exec('sc', 'start ' + ServiceName, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+
+  Exec('sc', 'query ' + ServiceName, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  if ResultCode <> 0 then
+    Exit;
+
+  { 升级时保留应用写入的 Helper 鉴权环境，仅更新路径并改为按需启动。 }
+  Exec('sc', 'config ' + ServiceName + ' binPath= "' + HelperPath + '" start= demand', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 
 procedure UnregisterHelperService;
@@ -250,7 +250,7 @@ begin
 
   if CurStep = ssPostInstall then
   begin
-    RegisterHelperService;
+    ConfigureExistingHelperService;
   end;
 end;
 
