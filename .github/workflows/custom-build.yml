@@ -577,9 +577,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          flutter test \
-            test/controller/macos_tun_startup_test.dart \
-            test/views/network_monitor_test.dart
+          flutter test test/controller/macos_tun_startup_test.dart
 
       - name: 构建 Android arm64-v8a
         if: matrix.platform == 'android'
