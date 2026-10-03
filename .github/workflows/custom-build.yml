@@ -639,10 +639,13 @@ jobs:
               )) {
             throw "Windows appcast 最新版本展示仍缺少完整构建号。"
           }
-          if ($workflowSource.Contains('<title>Bettbox ${short_version}</title>') -or
-              $workflowSource.Contains(
-                '<sparkle:shortVersionString>${short_version}</sparkle:shortVersionString>'
-              )) {
+          $legacyAppcastLines = $workflowSource -split "`r?`n" | Where-Object {
+            $_.Trim().StartsWith('echo "') -and (
+              $_.Contains('<title>Bettbox ${short_version}</title>') -or
+              $_.Contains('<sparkle:shortVersionString>${short_version}</sparkle:shortVersionString>')
+            )
+          }
+          if ($legacyAppcastLines) {
             throw "Windows appcast 最新版本展示仍使用短版本号。"
           }
 
