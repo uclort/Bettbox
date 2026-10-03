@@ -111,6 +111,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
       std::find(command_line_arguments.begin(),
                 command_line_arguments.end(), "--restart") !=
           command_line_arguments.end();
+  const bool is_network_panel =
+      std::find(command_line_arguments.begin(), command_line_arguments.end(),
+                "--network-panel") != command_line_arguments.end();
 
   project.set_dart_entrypoint_arguments(std::move(command_line_arguments));
 
@@ -118,11 +121,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
 #ifdef BETTBOX_DEV
-  const wchar_t *window_title = L"Bettbox Dev";
+  const wchar_t *window_title =
+      is_network_panel ? L"Bettbox Dev Network Panel" : L"Bettbox Dev";
 #else
-  const wchar_t *window_title = L"Bettbox";
+  const wchar_t *window_title =
+      is_network_panel ? L"Bettbox Network Panel" : L"Bettbox";
 #endif
-  if (!window.Create(window_title, origin, size, !is_control_command)) {
+  const bool activate_existing = !is_control_command && !is_network_panel;
+  if (!window.Create(window_title, origin, size, activate_existing)) {
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);

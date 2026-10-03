@@ -1,6 +1,11 @@
+import 'dart:async';
+
+import 'package:bett_box/common/print.dart';
 import 'package:bett_box/common/proxy.dart';
 import 'package:bett_box/models/models.dart';
+import 'package:bett_box/providers/config.dart';
 import 'package:bett_box/providers/state.dart';
+import 'package:bett_box/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -14,15 +19,41 @@ class ProxyManager extends ConsumerStatefulWidget {
 }
 
 class _ProxyManagerState extends ConsumerState<ProxyManager> {
+  Future<void> _pendingUpdate = Future.value();
+
   Future<void> _updateProxy(ProxyState proxyState) async {
+    if (proxy == null) return;
+
     final isStart = proxyState.isStart;
     final systemProxy = proxyState.systemProxy;
     final port = proxyState.port;
+    final bool? updated;
     if (isStart && systemProxy) {
-      proxy?.startProxy(port, proxyState.bypassDomain);
+      updated = await proxy?.startProxy(port, proxyState.bypassDomain);
     } else {
-      proxy?.stopProxy();
+      updated = await proxy?.stopProxy();
     }
+    if (updated != true) {
+      throw StateError(
+        isStart && systemProxy ? '系统代理启用失败' : '系统代理关闭失败',
+      );
+    }
+  }
+
+  void _scheduleProxyUpdate(ProxyState proxyState) {
+    _pendingUpdate = _pendingUpdate
+        .catchError((_) {})
+        .then((_) => _updateProxy(proxyState))
+        .catchError((Object error, StackTrace stackTrace) {
+          commonPrint.log('同步系统代理失败：$error\n$stackTrace');
+          if (mounted && proxyState.isStart && proxyState.systemProxy) {
+            ref
+                .read(networkSettingProvider.notifier)
+                .updateState((state) => state.copyWith(systemProxy: false));
+            globalState.showNotifier('系统代理启用失败，已自动关闭');
+          }
+        });
+    unawaited(_pendingUpdate);
   }
 
   @override
@@ -30,7 +61,7 @@ class _ProxyManagerState extends ConsumerState<ProxyManager> {
     super.initState();
     ref.listenManual(proxyStateProvider, (prev, next) {
       if (prev != next) {
-        _updateProxy(next);
+        _scheduleProxyUpdate(next);
       }
     }, fireImmediately: true);
   }

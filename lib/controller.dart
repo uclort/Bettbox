@@ -31,7 +31,7 @@ import 'models/models.dart';
 import 'views/profiles/override_profile.dart';
 
 @visibleForTesting
-Future<bool> runMacOSTunStartup({
+Future<bool> runDesktopTunStartup({
   required Future<Result<bool>> Function() requestAdmin,
   required Future<void> Function() restartCore,
   required Future<void> Function() setupCoreWithoutTun,
@@ -46,8 +46,7 @@ Future<bool> runMacOSTunStartup({
 
   if (result.needRestart) {
     await restartCore();
-    // The restarted process has no active configuration. Load a non-TUN
-    // baseline before starting the listener so TUN can never get ahead of it.
+    // 重启后的核心没有活动配置，先加载无 TUN 基线，避免监听启动后出现网络黑洞。
     await setupCoreWithoutTun();
   }
 
@@ -235,7 +234,7 @@ class AppController {
 
     // globalState is updated by the core lifecycle itself. The runtime
     // provider is presentation state and can lag while the window is hidden.
-    final wasRunning = system.isMacOS
+    final wasRunning = system.isDesktop
         ? globalState.isStart
         : _ref.read(runTimeProvider.notifier).isStart;
     final keepVpnService = system.isAndroid;
@@ -275,7 +274,7 @@ class AppController {
         _backgroundLoad();
       }
     } finally {
-      if (system.isMacOS) {
+      if (system.isDesktop) {
         _syncDesktopRuntimePresentation();
       }
       await _syncMacOSSystemDns();
@@ -290,7 +289,7 @@ class AppController {
       try {
         await _updateStatus(isStart);
       } finally {
-        if (system.isMacOS) {
+        if (system.isDesktop) {
           _syncDesktopRuntimePresentation();
         }
         await _syncMacOSSystemDns();
@@ -458,66 +457,47 @@ class AppController {
 
     if (isDesktop && patchConfig.tun.enable) {
       final setupResult = await _quickSetupConfig(enableTun: false);
-      if (system.isMacOS && setupResult != true) {
+      if (setupResult != true) {
         commonPrint.log('Fast start aborted: initial TUN setup failed');
+        await _recoverDesktopTunStartup(baselineConfigured: false);
         return;
       }
 
-      if (system.isMacOS) {
-        try {
-          final started = await runMacOSTunStartup(
-            requestAdmin: () => _requestAdmin(true),
-            restartCore: () =>
-                _restartCore(setupConfig: false, refreshData: false),
-            setupCoreWithoutTun: () async {
-              final configured = await _setupCoreConfig(enableTun: false);
-              if (!configured) {
-                throw StateError(
-                  'Failed to configure the restarted macOS core without TUN',
-                );
-              }
-            },
-            applyTunConfig: _updateClashConfig,
-            startListener: clashCore.startListener,
-            stopListener: clashCore.stopListener,
-          );
-          if (!started) {
-            commonPrint.log(
-              'Fast start aborted: macOS TUN authorization failed',
-            );
-            return;
-          }
-          await globalState.handleStartWithActiveListener([
-            updateRunTime,
-            updateTraffic,
-          ]);
-          _backgroundLoad();
-        } catch (e) {
-          commonPrint.log('FastStart macOS TUN startup failed: $e');
-          rethrow;
+      try {
+        final started = await runDesktopTunStartup(
+          requestAdmin: () => _requestAdmin(true),
+          restartCore: () =>
+              _restartCore(setupConfig: false, refreshData: false),
+          setupCoreWithoutTun: () async {
+            final configured = await _setupCoreConfig(enableTun: false);
+            if (!configured) {
+              throw StateError('桌面核心重启后无法加载无 TUN 配置');
+            }
+          },
+          applyTunConfig: () async {
+            if (!await _updateClashConfig()) {
+              throw StateError('无法应用桌面 TUN 配置');
+            }
+          },
+          startListener: clashCore.startListener,
+          stopListener: clashCore.stopListener,
+        );
+        if (!started) {
+          commonPrint.log('桌面 TUN 授权失败，终止快速启动');
+          await _recoverDesktopTunStartup(baselineConfigured: true);
+          return;
         }
-        _scheduleCheckIpRefresh();
-        return;
-      }
-
-      await globalState.handleStart([updateRunTime, updateTraffic]);
-
-      Future.microtask(() async {
-        try {
-          final res = await _requestAdmin(true);
-          if (res.needRestart) {
-            await restartCore();
-            return;
-          }
-          if (!res.isError) {
-            await _updateClashConfig();
-          }
-        } catch (e) {
-          commonPrint.log('FastStart update config failed: $e');
-        }
+        await globalState.handleStartWithActiveListener([
+          updateRunTime,
+          updateTraffic,
+        ]);
         _backgroundLoad();
-      });
-
+      } catch (e) {
+        commonPrint.log('桌面 TUN 快速启动失败：$e');
+        await _recoverDesktopTunStartup(baselineConfigured: true);
+        globalState.showNotifier(e.formatError);
+        return;
+      }
       _scheduleCheckIpRefresh();
       return;
     }
@@ -536,6 +516,38 @@ class AppController {
     _scheduleCheckIpRefresh();
 
     _backgroundLoad();
+  }
+
+  Future<void> _recoverDesktopTunStartup({
+    required bool baselineConfigured,
+  }) async {
+    _ref
+        .read(patchClashConfigProvider.notifier)
+        .updateState((state) => state.copyWith.tun(enable: false));
+    _ref.read(realTunEnableProvider.notifier).value = false;
+    final prefs = await preferences.sharedPreferencesCompleter.future;
+    await prefs?.setBool('is_tun_running', false);
+
+    var canStartWithoutTun = baselineConfigured;
+    if (baselineConfigured) {
+      try {
+        canStartWithoutTun = await _setupCoreConfig(enableTun: false);
+      } catch (e) {
+        canStartWithoutTun = false;
+        commonPrint.log('恢复桌面无 TUN 配置失败：$e');
+      }
+    }
+
+    final keepRunning =
+        _ref.read(networkSettingProvider).systemProxy && canStartWithoutTun;
+    if (keepRunning && !globalState.isStart) {
+      await globalState.handleStart([updateRunTime, updateTraffic]);
+      _scheduleCheckIpRefresh();
+      _backgroundLoad();
+    } else if (!keepRunning && globalState.isStart) {
+      await globalState.handleStop();
+    }
+    _syncDesktopRuntimePresentation();
   }
 
   void _scheduleCheckIpRefresh() {
@@ -853,11 +865,13 @@ class AppController {
     setProfile(profile.copyWith(currentGroupName: groupName));
   }
 
-  Future<void> updateClashConfig() {
+  Future<bool> updateClashConfig() {
     return _coreLifecycleLock.synchronized(() async {
-      await safeRun(() async {
-        await _updateClashConfig();
-      }, needLoading: true);
+      return await safeRun(
+            _updateClashConfig,
+            needLoading: true,
+          ) ??
+          false;
     });
   }
 
@@ -886,21 +900,22 @@ class AppController {
     return res.data ?? _ref.read(realTunEnableProvider);
   }
 
-  Future<void> _updateClashConfig() async {
+  Future<bool> _updateClashConfig() async {
     try {
       await _initCore();
       final updateParams = _ref.read(updateParamsProvider);
       final tunResult = await _requestAdmin(updateParams.tun.enable);
-      if (tunResult.isError) return;
+      if (tunResult.isError) return false;
 
       final bool realTunEnable =
           tunResult.data ?? _ref.read(realTunEnableProvider);
       if (tunResult.needRestart) {
         await _restartCore();
-        return;
+        return true;
       }
 
       await _applyCoreTunConfig(realTunEnable);
+      return true;
     } finally {
       await _syncMacOSSystemDns();
     }
@@ -928,22 +943,15 @@ class AppController {
       final code = await system.authorizeCore();
       switch (code) {
         case AuthorizeCode.success:
-          if (!system.isMacOS) {
-            _ref.read(realTunEnableProvider.notifier).value = enableTun;
-          }
           return Result.success(enableTun, needRestart: true);
         case AuthorizeCode.none:
           break;
         case AuthorizeCode.error:
-          globalState.showNotifier(
-            'TUN mode requires administrator privileges.',
+          globalState.showNotifier(appLocalizations.tunEnableRequireAdmin);
+          return Result<bool>.error(
+            appLocalizations.tunEnableRequireAdmin,
           );
-          enableTun = false;
-          break;
       }
-    }
-    if (!system.isMacOS) {
-      _ref.read(realTunEnableProvider.notifier).value = enableTun;
     }
     return Result.success(enableTun);
   }
@@ -2014,14 +2022,21 @@ class AppController {
       systemProxy: _ref.read(networkSettingProvider).systemProxy,
       tunEnabled: target,
     );
-    final isRunning = system.isMacOS
-        ? globalState.isStart
-        : _ref.read(runTimeProvider.notifier).isStart;
+    final isRunning = globalState.isStart;
     try {
       if (shouldRun != isRunning) {
         await updateStatus(shouldRun);
       } else if (isRunning) {
-        await updateClashConfig();
+        final updated = await updateClashConfig();
+        if (!updated) {
+          if (target) {
+            await _recoverDesktopTunStartup(baselineConfigured: true);
+          } else {
+            _ref
+                .read(patchClashConfigProvider.notifier)
+                .updateState((state) => state.copyWith.tun(enable: current));
+          }
+        }
       }
     } finally {
       await updateTray(false, false, true);
@@ -2041,9 +2056,7 @@ class AppController {
       systemProxy: target,
       tunEnabled: _ref.read(patchClashConfigProvider).tun.enable,
     );
-    final isRunning = system.isMacOS
-        ? globalState.isStart
-        : _ref.read(runTimeProvider.notifier).isStart;
+    final isRunning = globalState.isStart;
     try {
       if (shouldRun != isRunning) await updateStatus(shouldRun);
     } finally {

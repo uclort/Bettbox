@@ -572,6 +572,15 @@ jobs:
           flutter pub get
           dart run build_runner build -d
 
+      - name: 回归测试 Windows 桌面网络逻辑
+        if: matrix.platform == 'windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter test \
+            test/controller/macos_tun_startup_test.dart \
+            test/views/network_monitor_test.dart
+
       - name: 构建 Android arm64-v8a
         if: matrix.platform == 'android'
         shell: bash
@@ -608,6 +617,36 @@ jobs:
           $buildNumber = "${{ needs.inspect.outputs.build_number }}"
           if ($version -ne "$appVersion+$buildNumber") {
             throw "Windows ProductVersion 应为 $appVersion+$buildNumber，实际为 $version。"
+          }
+
+      - name: 校验 Windows 更新展示与网络面板入口
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $updaterSource = Get-Content "lib/common/app_updater.dart" -Raw
+          foreach ($symbol in @(
+            "win_sparkle_set_app_details",
+            "win_sparkle_set_app_build_version"
+          )) {
+            if (-not $updaterSource.Contains($symbol)) {
+              throw "Windows 更新器缺少 $symbol。"
+            }
+          }
+
+          $runnerSource = Get-Content "windows/runner/main.cpp" -Raw
+          if (-not $runnerSource.Contains("is_network_panel")) {
+            throw "Windows Runner 未识别 --network-panel。"
+          }
+          if (-not $runnerSource.Contains(
+            "const bool activate_existing = !is_control_command && !is_network_panel;"
+          )) {
+            throw "Windows 网络面板仍会被主窗口单实例逻辑拦截。"
+          }
+
+          $proxySource = Get-Content "plugins/proxy/windows/proxy_plugin.cpp" -Raw
+          if (-not $proxySource.Contains("result->Success(startProxy(port, bypassDomain));")) {
+            throw "Windows 系统代理未返回真实启用结果。"
           }
 
       - name: 回归测试 Windows 安装器临时目录回退

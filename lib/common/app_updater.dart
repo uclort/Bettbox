@@ -79,7 +79,7 @@ class CustomAppUpdater with UpdaterListener {
     }
     if (supportsNativeUpdater) {
       if (system.isWindows) {
-        _setWindowsAppBuildVersion();
+        _configureWindowsAppVersion();
       }
       autoUpdater.addListener(this);
       await autoUpdater.setFeedURL(customUpdateFeedUrl);
@@ -88,9 +88,8 @@ class CustomAppUpdater with UpdaterListener {
     _initialized = true;
   }
 
-  /// WinSparkle defaults to ProductVersion for comparison, but the custom
-  /// appcast publishes the numeric build number as sparkle:version.
-  void _setWindowsAppBuildVersion() {
+  /// WinSparkle 使用纯构建号比较更新，同时在界面展示完整 ProductVersion。
+  void _configureWindowsAppVersion() {
     final filePath = pkg_ffi.calloc<ffi.Uint16>(win32.MAX_PATH)
         .cast<pkg_ffi.Utf16>();
     final unused = pkg_ffi.calloc<ffi.Uint32>();
@@ -156,7 +155,7 @@ class CustomAppUpdater with UpdaterListener {
       final segments = productVersion.split('+');
       final buildNumber = segments.length == 2 ? segments[1] : '';
       if (buildNumber.isNotEmpty && int.tryParse(buildNumber) != null) {
-        _setWinSparkleBuildVersion(buildNumber);
+        _configureWinSparkleVersion(productVersion, buildNumber);
       }
     } finally {
       pkg_ffi.calloc.free(filePath);
@@ -169,34 +168,78 @@ class CustomAppUpdater with UpdaterListener {
     }
   }
 
-  void _setWinSparkleBuildVersion(String buildNumber) {
+  void _configureWinSparkleVersion(
+    String productVersion,
+    String buildNumber,
+  ) {
     final libraryName = 'WinSparkle.dll'.toNativeUtf16();
-    final procedureName =
+    final detailsProcedureName =
+        'win_sparkle_set_app_details'.toNativeUtf8();
+    final buildProcedureName =
         'win_sparkle_set_app_build_version'.toNativeUtf8();
+    final company = 'com.appshub'.toNativeUtf16();
+    final appName = 'Bettbox'.toNativeUtf16();
+    final version = productVersion.toNativeUtf16();
     final build = buildNumber.toNativeUtf16();
     final library = win32.LoadLibrary(libraryName);
-    if (library == 0) return;
     try {
-      final procedure = win32.GetProcAddress(
+      if (library == 0) {
+        commonPrint.log('无法加载 WinSparkle.dll，跳过版本配置');
+        return;
+      }
+      final detailsProcedure = win32.GetProcAddress(
         library,
-        procedureName,
+        detailsProcedureName,
       );
-      if (procedure == ffi.Pointer.fromAddress(0)) return;
-      final setBuildVersion = procedure
+      final buildProcedure = win32.GetProcAddress(
+        library,
+        buildProcedureName,
+      );
+      if (detailsProcedure == ffi.Pointer.fromAddress(0) ||
+          buildProcedure == ffi.Pointer.fromAddress(0)) {
+        commonPrint.log('WinSparkle 版本配置函数不可用');
+        return;
+      }
+      final setAppDetails = detailsProcedure
+          .cast<
+            ffi.NativeFunction<
+              ffi.Void Function(
+                ffi.Pointer<pkg_ffi.Utf16>,
+                ffi.Pointer<pkg_ffi.Utf16>,
+                ffi.Pointer<pkg_ffi.Utf16>,
+              )
+            >
+          >()
+          .asFunction<
+            void Function(
+              ffi.Pointer<pkg_ffi.Utf16>,
+              ffi.Pointer<pkg_ffi.Utf16>,
+              ffi.Pointer<pkg_ffi.Utf16>,
+            )
+          >();
+      final setBuildVersion = buildProcedure
           .cast<
             ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<pkg_ffi.Utf16>)
             >
           >()
           .asFunction<void Function(ffi.Pointer<pkg_ffi.Utf16>)>();
+      setAppDetails(company, appName, version);
       setBuildVersion(build);
+    } catch (e) {
+      commonPrint.log('配置 WinSparkle 版本失败：$e');
     } finally {
-      win32.FreeLibrary(library);
+      if (library != 0) win32.FreeLibrary(library);
       pkg_ffi.calloc.free(libraryName);
-      pkg_ffi.calloc.free(procedureName);
+      pkg_ffi.calloc.free(detailsProcedureName);
+      pkg_ffi.calloc.free(buildProcedureName);
+      pkg_ffi.calloc.free(company);
+      pkg_ffi.calloc.free(appName);
+      pkg_ffi.calloc.free(version);
       pkg_ffi.calloc.free(build);
     }
   }
+
   Future<void> checkDesktopUpdate({required bool manual}) async {
     if (!supportsNativeUpdater) return;
     await initialize();

@@ -1,14 +1,37 @@
+import 'dart:async';
+
 import 'package:bett_box/controller.dart';
 import 'package:bett_box/common/system.dart';
 import 'package:bett_box/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  group('macOS TUN startup', () {
+  group('桌面 TUN 启动', () {
+    test('等待管理员授权完成后才启动监听', () async {
+      final authorization = Completer<Result<bool>>();
+      final events = <String>[];
+
+      final startup = runDesktopTunStartup(
+        requestAdmin: () => authorization.future,
+        restartCore: () async => events.add('restart'),
+        setupCoreWithoutTun: () async => events.add('setupWithoutTun'),
+        applyTunConfig: () async => events.add('apply'),
+        startListener: () async => events.add('start'),
+        stopListener: () async => events.add('stop'),
+      );
+
+      await Future<void>.delayed(Duration.zero);
+      expect(events, isEmpty);
+
+      authorization.complete(Result.success(true));
+      expect(await startup, isTrue);
+      expect(events, ['start', 'apply']);
+    });
+
     test('starts the listener before applying TUN', () async {
       final events = <String>[];
 
-      final started = await runMacOSTunStartup(
+      final started = await runDesktopTunStartup(
         requestAdmin: () async {
           events.add('authorize');
           return Result.success(true);
@@ -29,7 +52,7 @@ void main() {
       () async {
         final events = <String>[];
 
-        final started = await runMacOSTunStartup(
+        final started = await runDesktopTunStartup(
           requestAdmin: () async {
             events.add('authorize');
             return Result.success(true, needRestart: true);
@@ -55,7 +78,7 @@ void main() {
     test('does not start when authorization fails', () async {
       final events = <String>[];
 
-      final started = await runMacOSTunStartup(
+      final started = await runDesktopTunStartup(
         requestAdmin: () async {
           events.add('authorize');
           return Result<bool>.error('authorization failed');
@@ -75,7 +98,7 @@ void main() {
       final events = <String>[];
 
       await expectLater(
-        runMacOSTunStartup(
+        runDesktopTunStartup(
           requestAdmin: () async {
             events.add('authorize');
             return Result.success(true);
@@ -99,7 +122,7 @@ void main() {
       final events = <String>[];
 
       await expectLater(
-        runMacOSTunStartup(
+        runDesktopTunStartup(
           requestAdmin: () async {
             events.add('authorize');
             return Result.success(true, needRestart: true);
@@ -123,7 +146,7 @@ void main() {
       final events = <String>[];
 
       await expectLater(
-        runMacOSTunStartup(
+        runDesktopTunStartup(
           requestAdmin: () async {
             events.add('authorize');
             return Result.success(true, needRestart: true);
