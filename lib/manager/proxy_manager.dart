@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bett_box/common/print.dart';
 import 'package:bett_box/common/proxy.dart';
 import 'package:bett_box/models/models.dart';
+import 'package:bett_box/providers/app.dart';
 import 'package:bett_box/providers/config.dart';
 import 'package:bett_box/providers/state.dart';
 import 'package:bett_box/state.dart';
