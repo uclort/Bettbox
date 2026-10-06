@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:bett_box/controller.dart';
 import 'package:bett_box/common/system.dart';
@@ -7,6 +8,36 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Windows Helper 启动', () {
+    test('服务启动失败时不进入健康等待', () async {
+      var waited = false;
+
+      final healthy = await startWindowsHelperAndWait(
+        start: () async => ProcessResult(1, 5, '', 'Access is denied.'),
+        waitForHealthy: () async {
+          waited = true;
+          return true;
+        },
+      );
+
+      expect(healthy, isFalse);
+      expect(waited, isFalse);
+    });
+
+    test('服务启动成功后才等待 Helper 可用', () async {
+      var waited = false;
+
+      final healthy = await startWindowsHelperAndWait(
+        start: () async => ProcessResult(1, 0, '', ''),
+        waitForHealthy: () async {
+          waited = true;
+          return true;
+        },
+      );
+
+      expect(healthy, isTrue);
+      expect(waited, isTrue);
+    });
+
     test('管理员授权后持续等待 Helper 变为可用', () async {
       var attempts = 0;
 

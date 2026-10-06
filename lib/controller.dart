@@ -1604,6 +1604,17 @@ class AppController {
     }
   }
 
+  Future<void> _syncInitialWindowVisibility() async {
+    if (!system.isDesktop) return;
+
+    final isWindowVisible = await window?.isVisible ?? false;
+    if (isWindowVisible || !_ref.read(appSettingProvider).silentLaunch) {
+      await window?.show();
+    } else {
+      await window?.hide();
+    }
+  }
+
   Future<void> init() async {
     FlutterError.onError = (details) {
       if (kDebugMode) {
@@ -1638,6 +1649,9 @@ class AppController {
       commonPrint.log('Failed to check wake lock status: $e');
     }
 
+    // 窗口展示不能等待核心、TUN 授权或 Helper 服务初始化。
+    await _syncInitialWindowVisibility();
+
     await updateTray(true);
 
     try {
@@ -1664,16 +1678,6 @@ class AppController {
     autoUpdateProfiles();
     autoCheckUpdate();
 
-    final isWindowVisible = await window?.isVisible ?? false;
-    if (isWindowVisible) {
-      window?.show();
-    } else {
-      if (!_ref.read(appSettingProvider).silentLaunch) {
-        window?.show();
-      } else {
-        window?.hide();
-      }
-    }
     await syncDesktopRuntimeState(preferCurrentState: true);
     await updateTray(true, false, true);
 

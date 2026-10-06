@@ -6,8 +6,18 @@ import 'package:bett_box/models/models.dart';
 import 'package:bett_box/providers/config.dart';
 import 'package:bett_box/providers/state.dart';
 import 'package:bett_box/state.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+@visibleForTesting
+bool shouldDeferInitialSystemProxySync({
+  required bool isInitialized,
+  required bool isStart,
+  required bool systemProxy,
+}) {
+  return !isInitialized && !isStart && systemProxy;
+}
 
 class ProxyManager extends ConsumerStatefulWidget {
   final Widget child;
@@ -20,6 +30,7 @@ class ProxyManager extends ConsumerStatefulWidget {
 
 class _ProxyManagerState extends ConsumerState<ProxyManager> {
   Future<void> _pendingUpdate = Future.value();
+  bool _deferredProxySync = false;
 
   Future<void> _updateProxy(ProxyState proxyState) async {
     if (proxy == null) return;
@@ -56,14 +67,35 @@ class _ProxyManagerState extends ConsumerState<ProxyManager> {
     unawaited(_pendingUpdate);
   }
 
+  void _handleProxyState(ProxyState proxyState) {
+    final shouldDefer = shouldDeferInitialSystemProxySync(
+      isInitialized: ref.read(initProvider),
+      isStart: proxyState.isStart,
+      systemProxy: proxyState.systemProxy,
+    );
+    if (shouldDefer) {
+      _deferredProxySync = true;
+      return;
+    }
+
+    _deferredProxySync = false;
+    _scheduleProxyUpdate(proxyState);
+  }
+
   @override
   void initState() {
     super.initState();
     ref.listenManual(proxyStateProvider, (prev, next) {
       if (prev != next) {
-        _scheduleProxyUpdate(next);
+        _handleProxyState(next);
       }
     }, fireImmediately: true);
+    ref.listenManual(initProvider, (prev, next) {
+      if (next && _deferredProxySync) {
+        _deferredProxySync = false;
+        _scheduleProxyUpdate(ref.read(proxyStateProvider));
+      }
+    });
   }
 
   @override

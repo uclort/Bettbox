@@ -687,6 +687,13 @@ jobs:
               -not $proxySource.Contains("registry_updated || wininet_updated")) {
             throw "Windows 系统代理缺少注册表写入兜底。"
           }
+          $proxyManagerSource = Get-Content "lib/manager/proxy_manager.dart" -Raw
+          if (-not $proxyManagerSource.Contains(
+                "shouldDeferInitialSystemProxySync"
+              ) -or
+              -not $proxyManagerSource.Contains("_deferredProxySync")) {
+            throw "Windows 启动时仍会先关闭即将启用的系统代理。"
+          }
 
           $systemSource = Get-Content "lib/common/system.dart" -Raw
           if (-not $systemSource.Contains("'start= demand'") -or
@@ -694,13 +701,24 @@ jobs:
             throw "Windows Helper 服务未统一配置为按需启动。"
           }
           if (-not $systemSource.Contains("maxAttempts = 60") -or
+              -not $systemSource.Contains("startWindowsHelperAndWait") -or
+              -not $systemSource.Contains("if (result.exitCode != 0)") -or
               $systemSource.Contains("output.contains('STOPPED')")) {
-            throw "Windows Helper 首次授权后仍可能过早结束健康等待。"
+            throw "Windows Helper 启动失败或首次授权健康等待逻辑不正确。"
           }
 
           $controllerSource = Get-Content "lib/controller.dart" -Raw
           if (-not $controllerSource.Contains("await windows!.stopHelperService();")) {
             throw "Windows 主程序退出时未停止 Helper 服务。"
+          }
+          $showWindowIndex = $controllerSource.IndexOf(
+            "await _syncInitialWindowVisibility();"
+          )
+          $initStatusIndex = $controllerSource.IndexOf("await _initStatus();")
+          if ($showWindowIndex -lt 0 -or
+              $initStatusIndex -lt 0 -or
+              $showWindowIndex -ge $initStatusIndex) {
+            throw "Windows 窗口展示仍被核心或 TUN 启动流程阻塞。"
           }
 
           $installerSource = Get-Content "windows/packaging/exe/inno_setup.iss" -Raw

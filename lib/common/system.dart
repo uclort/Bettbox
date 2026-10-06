@@ -31,6 +31,20 @@ Future<bool> waitForWindowsHelperHealthy({
   return false;
 }
 
+@visibleForTesting
+Future<bool> startWindowsHelperAndWait({
+  required Future<ProcessResult> Function() start,
+  required Future<bool> Function() waitForHealthy,
+  void Function(ProcessResult result)? onStartFailed,
+}) async {
+  final result = await start();
+  if (result.exitCode != 0) {
+    onStartFailed?.call(result);
+    return false;
+  }
+  return waitForHealthy();
+}
+
 class System {
   static System? _instance;
 
@@ -379,8 +393,20 @@ class Windows {
 
     final query = await Process.run('sc', ['query', appHelperService]);
     if (query.exitCode == 0) {
-      await Process.run('sc', ['start', appHelperService]);
-      if (await _waitForHelperHealthy()) return true;
+      final started = await startWindowsHelperAndWait(
+        start: () => Process.run('sc', ['start', appHelperService]),
+        waitForHealthy: () => _waitForHelperHealthy(
+          maxAttempts: 12,
+          interval: const Duration(milliseconds: 250),
+        ),
+        onStartFailed: (result) {
+          commonPrint.log(
+            '启动现有 Windows Helper 服务失败，立即重新配置：'
+            '${result.stderr}',
+          );
+        },
+      );
+      if (started) return true;
     }
 
     if (!await _configureHelperService()) return false;
@@ -449,8 +475,15 @@ class Windows {
     return runas('cmd.exe', command);
   }
 
-  Future<bool> _waitForHelperHealthy() async {
-    return waitForWindowsHelperHealthy(check: isHelperHealthy);
+  Future<bool> _waitForHelperHealthy({
+    int maxAttempts = 60,
+    Duration interval = const Duration(milliseconds: 500),
+  }) async {
+    return waitForWindowsHelperHealthy(
+      check: isHelperHealthy,
+      maxAttempts: maxAttempts,
+      interval: interval,
+    );
   }
 
   Future<void> stopHelperService() async {
