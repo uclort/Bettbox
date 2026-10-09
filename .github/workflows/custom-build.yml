@@ -621,11 +621,22 @@ jobs:
           cache-key: flutter-sdk-windows-arm64-master-${{ hashFiles('**/pubspec.lock') }}
 
       - name: 获取 Flutter 依赖并生成代码
+        # Windows ARM64 的 Dart build_runner 在原生镜像上会长时间无输出，
+        # 生成文件已随源码提交；该平台跳过重复生成，避免拖满 job 超时。
+        if: matrix.platform != 'windows' || matrix.arch != 'arm64'
         shell: bash
         run: |
           set -euo pipefail
           flutter pub get
           dart run build_runner build -d
+
+      - name: 获取 Flutter 依赖（Windows ARM64）
+        if: matrix.platform == 'windows' && matrix.arch == 'arm64'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
+          flutter pub get --verbose
 
       - name: 选择 Windows WinSparkle 架构
         if: matrix.platform == 'windows'
