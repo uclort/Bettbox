@@ -5,6 +5,7 @@
 #include <windows.h>
 
 #include <shellapi.h>
+#include <objidl.h>
 #include <gdiplus.h>
 #include <strsafe.h>
 #include <uxtheme.h>
