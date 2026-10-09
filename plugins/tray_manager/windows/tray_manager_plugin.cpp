@@ -493,7 +493,7 @@ void TrayManagerPlugin::ApplyTemplateIcon(bool active) {
 
   const int iconWidth = GetSystemMetrics(SM_CXSMICON);
   const int iconHeight = GetSystemMetrics(SM_CYSMICON);
-  GdiplusToken gdiplus_token = 0;
+  ULONG_PTR gdiplus_token = 0;
   GdiplusStartupInput gdiplus_input;
   if (GdiplusStartup(&gdiplus_token, &gdiplus_input, nullptr) != Ok) {
     return;
