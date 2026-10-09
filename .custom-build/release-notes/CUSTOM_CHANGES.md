@@ -45,6 +45,7 @@
 - macOS 使用 Sparkle、Windows 使用 WinSparkle；安装前继续执行内核、代理和系统 DNS 退出清理。
 - Windows 自定义安装包使用单文件启动器内嵌原 Inno Setup 安装器；启动器优先在 `%LOCALAPPDATA%\Bettbox\InstallerTemp` 创建独立临时目录并覆盖子进程的 `TEMP/TMP`，避免系统 `%TEMP%` 权限损坏或安全策略导致“错误 5：拒绝访问”。载荷释放缓冲使用堆内存，避免 1 MB 栈缓冲触发 `STATUS_STACK_OVERFLOW`。静默卸载跳过用户数据确认框并默认保留用户数据，交互卸载保留确认；Helper 服务按需启动，主程序退出时主动停止，首次 TUN 管理员授权后最多等待 30 秒直至 Helper 可用，已有服务启动失败时立即进入提权重配，只有实际启动成功才执行短健康等待，避免重复等待 30 秒；安装器升级时仅更新已有服务路径并保留鉴权环境，不创建或启动 Helper，残留 Helper/Core 由安装器静默清理。Windows 主窗口使用稳定原生标记识别已有实例，重复启动会恢复并聚焦现有窗口；首次启动窗口展示位于核心、TUN 授权和 Helper 初始化之前，不被网络启动链路阻塞。WinSparkle 初始化时从 `ProductVersion` 提取构建号，完整版本通过 `win_sparkle_set_app_details` 展示，纯构建号通过 `win_sparkle_set_app_build_version` 与 appcast 的 `sparkle:version` 比较；appcast 的 `title` 和 `sparkle:shortVersionString` 也发布最终安装版本 `1.19.3+构建号`，更新弹窗两侧均可直接对比版本差异；代码位于 `lib/common/app_updater.dart`、`lib/common/system.dart`、`lib/controller.dart`、`windows/runner`、`windows/packaging/exe/launcher`、`windows/packaging/exe/package_windows.dart`、`windows/packaging/exe/inno_setup.iss` 与 `.github/workflows/custom-build.yml`，自定义构建通过无效 `TEMP/TMP` 下的静默安装回归验证；回归安装和卸载均有 5 分钟超时、进程诊断和强制清理，并校验 Windows `ProductVersion` 包含本次构建号、appcast `echo` 生成字段包含完整版本、窗口展示顺序、Helper 启动失败快速回退以及安装后 Helper 进程与服务未运行。
 - Windows 安装启动器 Release 构建使用静态 MSVC 运行库（`/MT`），不依赖系统 `VCRUNTIME140.dll` / `MSVCP140.dll`；构建校验位于 `.github/workflows/custom-build.yml`。
+- 默认 Release 同时发布 Windows x64 与 Windows ARM64；ARM64 使用原生 Runner 和 Flutter ARM 工具链，Helper 显式选择对应 Rust MSVC target，WinSparkle 按目标架构切换预编译库，并对安装包及最终目录内原生 EXE/DLL 执行 PE 架构校验。Windows ARM64 使用独立 `appcast-windows-arm64.xml` 更新源；补丁脚本位于 `windows/packaging/patch_auto_updater_windows.dart`。
 - Android 使用 arm64-v8a 固定签名 APK，校验 SHA-256 后通过独立 `FileProvider` URI 调用系统安装器；安装器无法打开时显示失败提示，发布前校验 Provider 与 `app_updates` 路径配置。更新检查读取 `custom-update-feed` 分支静态 JSON，避免 GitHub Releases API 匿名限流。
 - 自动检查与手动检查使用同一发布源，草稿 Release 不会被识别为可用更新。
 
@@ -110,7 +111,7 @@
 
 - `uclort/Bettbox` 明确标记为非官方个人自定义版；GitHub 操作必须显式指定该仓库。
 - `custom-sync.yml` 与 `custom-build.yml` 仅支持手动触发；同步顺序为上游 Bettbox → 保留功能分支 → 私有 custom-mihomo → 自定义构建。
-- 构建可选择全平台、仅 macOS Apple Silicon 或仅 Android arm64-v8a；Android 构建同步静态更新源。
+- 默认全平台构建发布 Android ARM64、Windows x64、Windows ARM64、macOS Apple Silicon 和 macOS Intel 共 5 个安装包；也可选择仅 macOS Apple Silicon 或仅 Android arm64-v8a，Android 构建同步静态更新源。
 - 内核同步兼容新版 Mihomo 将版本号改为构建时注入的模式；源码版本为空时按 Bettbox 上游核心树继续同步，仍执行 Snell v6 补丁与 Go 回归。
 - 自定义应用代码变化但未同步完整总账和发布增量时拒绝发布。
 

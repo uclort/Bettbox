@@ -254,9 +254,26 @@ class Build {
     return corePaths;
   }
 
-  static Future<void> buildHelper(Target target, String token) async {
+  static Future<void> buildHelper(
+    Target target,
+    Arch arch,
+    String token,
+  ) async {
+    final rustTarget = switch (arch) {
+      Arch.amd64 => 'x86_64-pc-windows-msvc',
+      Arch.arm64 => 'aarch64-pc-windows-msvc',
+      Arch.arm => throw 'Windows helper does not support arm',
+    };
     await exec(
-      ['cargo', 'build', '--release', '--features', 'windows-service'],
+      [
+        'cargo',
+        'build',
+        '--release',
+        '--features',
+        'windows-service',
+        '--target',
+        rustTarget,
+      ],
       environment: {'TOKEN': token},
       name: 'build helper',
       workingDirectory: _servicesDir,
@@ -264,6 +281,7 @@ class Build {
     final outPath = join(
       _servicesDir,
       'target',
+      rustTarget,
       'release',
       'helper${target.executableExtensionName}',
     );
@@ -674,14 +692,14 @@ class BuildCommand extends Command {
       if (coreHash == null || coreHash.isEmpty) {
         throw '--core-hash is required when --out=helper';
       }
-      await Build.buildHelper(target, coreHash);
+      await Build.buildHelper(target, arch!, coreHash);
       return;
     }
 
     if (actualOut != 'app') {
       if (target == Target.windows) {
         final token = await Build.calcSha256(corePaths.first);
-        await Build.buildHelper(target, token);
+        await Build.buildHelper(target, arch!, token);
       }
       return;
     }
@@ -716,8 +734,8 @@ class BuildCommand extends Command {
         final token = target != Target.android
             ? await Build.calcSha256(corePaths.first)
             : null;
-        Build.buildHelper(target, token!);
-        _buildDistributor(
+        await Build.buildHelper(target, arch!, token!);
+        await _buildDistributor(
           target: target,
           targets: 'exe',
           args: ' --description $desc --build-dart-define=CORE_SHA256=$token',

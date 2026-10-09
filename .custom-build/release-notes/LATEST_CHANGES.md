@@ -1,3 +1,10 @@
+### 2026-10-09 新增 Windows ARM64 原生安装包
+
+- 默认自定义构建矩阵新增 Windows ARM64，与 Android ARM64、Windows x64、macOS Intel、macOS Apple Silicon 同时构建并发布，共 5 个安装包。
+- Windows ARM64 使用 GitHub 原生 ARM Runner 和 Flutter ARM 工具链；Core、Helper、Flutter 主程序、插件 DLL、WinSparkle 与单文件安装启动器均按 ARM64 构建。
+- Helper 构建显式选择 `aarch64-pc-windows-msvc` 或 `x86_64-pc-windows-msvc`；WinSparkle 构建前按目标架构切换预编译库，避免 ARM64 包混入 x64 组件。
+- Windows 构建新增最终 PE 架构校验，发布阶段校验默认全平台构建必须恰好生成 5 个安装包；应用内更新源同步新增 `appcast-windows-arm64.xml`。
+
 ### 2026-10-09 修复 Windows 安装启动器运行库依赖
 
 - Windows 单文件安装启动器改用静态链接 MSVC Release 运行库，避免系统缺少 `VCRUNTIME140.dll` 或 `MSVCP140.dll` 时双击安装包直接失败。

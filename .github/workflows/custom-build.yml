@@ -261,7 +261,7 @@ jobs:
           elif [[ "${MACOS_ARM64_ONLY}" == "true" ]]; then
             include='[{"name":"macOS Apple Silicon","platform":"macos","arch":"arm64","os":"macos-15","artifact":"Bettbox-macOS-arm64"}]'
           else
-            include='[{"name":"Android Pixel 6a (arm64-v8a)","platform":"android","arch":"arm64","os":"ubuntu-24.04","artifact":"Bettbox-Android-arm64-v8a"},{"name":"Windows x64","platform":"windows","arch":"amd64","os":"windows-2022","artifact":"Bettbox-Windows-x64"},{"name":"macOS Apple Silicon","platform":"macos","arch":"arm64","os":"macos-15","artifact":"Bettbox-macOS-arm64"},{"name":"macOS Intel","platform":"macos","arch":"amd64","os":"macos-15","artifact":"Bettbox-macOS-amd64"}]'
+            include='[{"name":"Android Pixel 6a (arm64-v8a)","platform":"android","arch":"arm64","os":"ubuntu-24.04","artifact":"Bettbox-Android-arm64-v8a"},{"name":"Windows x64","platform":"windows","arch":"amd64","os":"windows-2022","artifact":"Bettbox-Windows-x64"},{"name":"Windows ARM64","platform":"windows","arch":"arm64","os":"windows-11-arm","artifact":"Bettbox-Windows-arm64"},{"name":"macOS Apple Silicon","platform":"macos","arch":"arm64","os":"macos-15","artifact":"Bettbox-macOS-arm64"},{"name":"macOS Intel","platform":"macos","arch":"amd64","os":"macos-15","artifact":"Bettbox-macOS-amd64"}]'
           fi
           echo "value={\"include\":${include}}" >> "${GITHUB_OUTPUT}"
 
@@ -442,7 +442,7 @@ jobs:
         if: matrix.platform == 'windows'
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: x86_64-pc-windows-msvc
+          targets: ${{ matrix.arch == 'arm64' && 'aarch64-pc-windows-msvc' || 'x86_64-pc-windows-msvc' }}
 
       - name: 配置 Rust（macOS）
         if: matrix.platform == 'macos'
@@ -558,6 +558,7 @@ jobs:
           cache-dependency-path: core/go.sum
 
       - name: 配置 Flutter
+        if: matrix.platform != 'windows' || matrix.arch != 'arm64'
         uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
@@ -565,12 +566,28 @@ jobs:
           cache: true
           cache-key: flutter-sdk-${{ runner.os }}-${{ env.FLUTTER_VERSION }}-${{ runner.arch }}
 
+      - name: 配置 Flutter（Windows ARM64）
+        if: matrix.platform == 'windows' && matrix.arch == 'arm64'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: master
+          cache: true
+          cache-key: flutter-sdk-windows-arm64-master-${{ hashFiles('**/pubspec.lock') }}
+
       - name: 获取 Flutter 依赖并生成代码
         shell: bash
         run: |
           set -euo pipefail
           flutter pub get
           dart run build_runner build -d
+
+      - name: 选择 Windows WinSparkle 架构
+        if: matrix.platform == 'windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          dart windows/packaging/patch_auto_updater_windows.dart \
+            --arch=${{ matrix.arch }}
 
       - name: 回归测试 Windows 桌面网络逻辑
         if: matrix.platform == 'windows'
@@ -597,37 +614,79 @@ jobs:
         shell: bash
         run: dart setup.dart android --arch arm64 --env stable
 
-      - name: 构建 Windows x64
+      - name: 构建 Windows
         if: matrix.platform == 'windows'
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          dart setup.dart windows --arch amd64 --out core-only
+          $arch = "${{ matrix.arch }}"
+          dart setup.dart windows --arch $arch --out core-only
           $coreHash = (Get-FileHash libclash/windows/BettboxCore.exe -Algorithm SHA256).Hash.ToLower()
-          dart setup.dart windows --arch amd64 --out helper --core-hash $coreHash
+          dart setup.dart windows --arch $arch --out helper --core-hash $coreHash
           flutter build windows --release --verbose `
             --build-number=${{ needs.inspect.outputs.build_number }} `
             --dart-define=CORE_SHA256=$coreHash `
             --dart-define=APP_ENV=stable `
-            --dart-define=APP_ASSET_SUFFIX=windows-amd64-setup.exe `
+            --dart-define=APP_ASSET_SUFFIX=windows-$arch-setup.exe `
             --dart-define=APP_UPDATE_REPOSITORY=$env:APP_UPDATE_REPOSITORY `
             --dart-define=APP_RELEASE_TAG=$env:APP_RELEASE_TAG `
             --dart-define=APP_UPDATE_FEED_URL=$env:APP_UPDATE_FEED_URL
           dart windows/packaging/exe/package_windows.dart `
-            --arch amd64 `
+            --arch $arch `
             --env stable `
             --temp-safe-launcher
 
-      - name: 校验 Windows 更新版本资源
+      - name: 校验 Windows 版本与原生架构
         if: matrix.platform == 'windows'
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
+          $arch = "${{ matrix.arch }}"
+          $buildDir = if ($arch -eq "arm64") { "arm64" } else { "x64" }
+          $releaseDir = "build/windows/$buildDir/runner/Release"
           $appVersion = "${{ needs.inspect.outputs.app_version }}".Split("+")[0]
-          $version = (Get-Item "build/windows/x64/runner/Release/Bettbox.exe").VersionInfo.ProductVersion
+          $version = (Get-Item "$releaseDir/Bettbox.exe").VersionInfo.ProductVersion
           $buildNumber = "${{ needs.inspect.outputs.build_number }}"
           if ($version -ne "$appVersion+$buildNumber") {
             throw "Windows ProductVersion 应为 $appVersion+$buildNumber，实际为 $version。"
+          }
+
+          function Get-PeMachine {
+            param([string]$Path)
+            $resolvedPath = (Resolve-Path $Path).Path
+            $bytes = [IO.File]::ReadAllBytes($resolvedPath)
+            if ($bytes.Length -lt 64) {
+              throw "$resolvedPath 不是有效的 PE 文件。"
+            }
+            $peOffset = [BitConverter]::ToInt32($bytes, 0x3c)
+            if ($peOffset -lt 0 -or $peOffset + 6 -gt $bytes.Length) {
+              throw "$resolvedPath 的 PE 头偏移无效。"
+            }
+            return [BitConverter]::ToUInt16($bytes, $peOffset + 4)
+          }
+
+          $expectedMachine = if ($arch -eq "arm64") { 0xaa64 } else { 0x8664 }
+          $installer = Get-ChildItem "dist/*windows-$arch-setup.exe" |
+            Select-Object -First 1
+          if (-not $installer) {
+            throw "未找到 Windows $arch 安装程序。"
+          }
+          $nativeFiles = @(
+            "$releaseDir/Bettbox.exe",
+            "$releaseDir/BettboxCore.exe",
+            "$releaseDir/BettboxHelperService.exe",
+            $installer.FullName
+          )
+          $nativeFiles += Get-ChildItem "$releaseDir/*.dll" |
+            ForEach-Object { $_.FullName }
+          foreach ($file in $nativeFiles) {
+            $machine = Get-PeMachine $file
+            if ($machine -ne $expectedMachine) {
+              throw (
+                "{0} 架构错误：期望 0x{1:x4}，实际 0x{2:x4}。" -f
+                $file, $expectedMachine, $machine
+              )
+            }
           }
 
       - name: 校验 Windows 更新展示与网络面板入口
@@ -746,13 +805,14 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $installer = Get-ChildItem "dist/*windows-amd64-setup.exe" |
+          $arch = "${{ matrix.arch }}"
+          $installer = Get-ChildItem "dist/*windows-$arch-setup.exe" |
             Select-Object -First 1
           if (-not $installer) {
             throw "未找到 Windows 安装程序。"
           }
 
-          $installDir = Join-Path $env:RUNNER_TEMP "bettbox-installer-smoke"
+          $installDir = Join-Path $env:RUNNER_TEMP "bettbox-installer-smoke-$arch"
           $originalTemp = $env:TEMP
           $originalTmp = $env:TMP
           function Wait-ForInstallerProcess {
@@ -1066,6 +1126,8 @@ jobs:
           FINAL_APP_VERSION: ${{ needs.inspect.outputs.final_app_version }}
           BETTBOX_RELEASE: ${{ needs.inspect.outputs.bettbox_release }}
           UPSTREAM_SHA: ${{ needs.inspect.outputs.upstream_sha }}
+          MACOS_ARM64_ONLY: ${{ inputs.macos_arm64_only || false }}
+          ANDROID_ONLY: ${{ inputs.android_only || false }}
         run: |
           set -euo pipefail
           mapfile -d '' assets < <(
@@ -1075,6 +1137,16 @@ jobs:
           )
           if [[ "${#assets[@]}" -eq 0 ]]; then
             echo "错误：没有可发布的构建产物。" >&2
+            exit 1
+          fi
+          expected_asset_count=5
+          if [[ "${MACOS_ARM64_ONLY}" == "true" ||
+                "${ANDROID_ONLY}" == "true" ]]; then
+            expected_asset_count=1
+          fi
+          if [[ "${#assets[@]}" -ne "${expected_asset_count}" ]]; then
+            echo "错误：预期发布 ${expected_asset_count} 个安装包，实际为 ${#assets[@]} 个。" >&2
+            printf '%s\n' "${assets[@]}" >&2
             exit 1
           fi
 
@@ -1295,6 +1367,7 @@ jobs:
             if [[ "${MACOS_ARM64_ONLY}" != "true" ]]; then
               generate_feed macos amd64
               generate_feed windows amd64
+              generate_feed windows arm64
             fi
           fi
 
