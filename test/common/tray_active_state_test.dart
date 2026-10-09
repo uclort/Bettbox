@@ -70,6 +70,7 @@ void main() {
     await subject.update(trayState: active, force: true);
     expect(calls.lastWhere((call) => call.method == 'setActive').arguments, {
       'active': true,
+      'brightness': 'light',
     });
 
     await subject.update(
@@ -79,6 +80,7 @@ void main() {
 
     expect(calls.lastWhere((call) => call.method == 'setActive').arguments, {
       'active': true,
+      'brightness': 'light',
     });
     expect(
       calls.lastWhere((call) => call.method == 'setSpeedTitle').arguments,

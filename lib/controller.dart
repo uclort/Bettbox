@@ -46,10 +46,11 @@ Future<bool> runDesktopTunStartup({
 
   if (result.needRestart) {
     await restartCore();
-    // 重启后的核心没有活动配置，先加载无 TUN 基线，避免监听启动后出现网络黑洞。
-    await setupCoreWithoutTun();
   }
 
+  // 监听启动前只加载一次无 TUN 基线；需要提权重启时放在重启后加载，
+  // 无需重启时也保证当前配置完整，避免重复解析配置拖慢 Windows 首次开启。
+  await setupCoreWithoutTun();
   await startListener();
   try {
     await applyTunConfig();
@@ -456,13 +457,7 @@ class AppController {
     final isDesktop = system.isDesktop;
 
     if (isDesktop && patchConfig.tun.enable) {
-      final setupResult = await _quickSetupConfig(enableTun: false);
-      if (setupResult != true) {
-        commonPrint.log('Fast start aborted: initial TUN setup failed');
-        await _recoverDesktopTunStartup(baselineConfigured: false);
-        return;
-      }
-
+      var baselineConfigured = false;
       try {
         final started = await runDesktopTunStartup(
           requestAdmin: () => _requestAdmin(true),
@@ -471,20 +466,21 @@ class AppController {
           setupCoreWithoutTun: () async {
             final configured = await _setupCoreConfig(enableTun: false);
             if (!configured) {
-              throw StateError('桌面核心重启后无法加载无 TUN 配置');
+              throw StateError('桌面核心无法加载无 TUN 配置');
             }
+            baselineConfigured = true;
           },
           applyTunConfig: () async {
-            if (!await _updateClashConfig()) {
-              throw StateError('无法应用桌面 TUN 配置');
-            }
+            await _applyCoreTunConfig(true);
           },
           startListener: clashCore.startListener,
           stopListener: clashCore.stopListener,
         );
         if (!started) {
           commonPrint.log('桌面 TUN 授权失败，终止快速启动');
-          await _recoverDesktopTunStartup(baselineConfigured: true);
+          await _recoverDesktopTunStartup(
+            baselineConfigured: baselineConfigured,
+          );
           return;
         }
         await globalState.handleStartWithActiveListener([
@@ -494,7 +490,9 @@ class AppController {
         _backgroundLoad();
       } catch (e) {
         commonPrint.log('桌面 TUN 快速启动失败：$e');
-        await _recoverDesktopTunStartup(baselineConfigured: true);
+        await _recoverDesktopTunStartup(
+          baselineConfigured: baselineConfigured,
+        );
         globalState.showNotifier(e.formatError);
         return;
       }

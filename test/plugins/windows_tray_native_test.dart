@@ -21,6 +21,20 @@ void main() {
     expect(setSpeedBlock, contains('_UpdateToolTip();'));
   });
 
+  test('Windows 启用图标按系统明暗使用高对比前景色', () {
+    expect(source, contains('bool tray_icon_dark_ = false;'));
+    expect(source, contains('*brightness == "dark"'));
+    expect(source, contains('isDark ? 255 : 0'));
+    expect(
+      source,
+      contains('Color tint(255, tintValue, tintValue, tintValue)'),
+    );
+    expect(
+      source,
+      contains('ApplyTemplateIcon(tray_icon_active_, tray_icon_dark_)'),
+    );
+  });
+
   test('Windows 右键菜单按系统要求激活并完成消息循环', () {
     final popupBlock = RegExp(
       r'^void TrayManagerPlugin::PopUpContextMenu[\s\S]*?'

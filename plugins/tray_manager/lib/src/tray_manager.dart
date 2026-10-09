@@ -301,8 +301,14 @@ class TrayManager {
   }
 
   /// 设置托盘图标是否处于正在接管系统流量的状态。
-  Future<void> setActive(bool active) async {
-    await _channel.invokeMethod('setActive', {'active': active});
+  Future<void> setActive(
+    bool active, {
+    Brightness? brightness,
+  }) async {
+    await _channel.invokeMethod('setActive', {
+      'active': active,
+      'brightness': brightness?.name,
+    });
   }
 
   /// 清除托盘图标旁的速率。

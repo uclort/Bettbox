@@ -61,6 +61,9 @@ class Tray {
     if (system.isAndroid) {
       return;
     }
+    final effectiveBrightness =
+        brightness ??
+        WidgetsBinding.instance.platformDispatcher.platformBrightness;
     if (force && !system.isMacOS) {
       await trayManager.destroy();
       _isSpeedTitleVisible = false;
@@ -70,16 +73,17 @@ class Tray {
     }
     await trayManager.setIcon(
       utils.getTrayIconPath(
-        brightness:
-            brightness ??
-            WidgetsBinding.instance.platformDispatcher.platformBrightness,
+        brightness: effectiveBrightness,
         isStart: isStart,
       ),
       isTemplate: _supportsTrayTemplate,
       id: AppIdentity.compactName,
     );
     if (_supportsTrayTemplate) {
-      await trayManager.setActive(isStart);
+      await trayManager.setActive(
+        isStart,
+        brightness: effectiveBrightness,
+      );
     }
     if (!Platform.isLinux) {
       await trayManager.setToolTip(appName);

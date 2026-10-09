@@ -142,6 +142,7 @@ class TrayManagerPlugin : public flutter::Plugin {
   std::wstring base_tooltip_;
   std::wstring speed_title_;
   bool tray_icon_active_ = true;
+  bool tray_icon_dark_ = false;
 
   // The ID of the WindowProc delegate registration.
   int window_proc_id = -1;
@@ -157,7 +158,7 @@ class TrayManagerPlugin : public flutter::Plugin {
                                                              WPARAM wparam,
                                                              LPARAM lparam);
   HWND TrayManagerPlugin::GetMainWindow();
-  void TrayManagerPlugin::ApplyTemplateIcon(bool active);
+  void TrayManagerPlugin::ApplyTemplateIcon(bool active, bool isDark);
   void TrayManagerPlugin::Destroy(
       const flutter::MethodCall<flutter::EncodableValue>& method_call,
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
@@ -405,7 +406,7 @@ std::optional<LRESULT> TrayManagerPlugin::HandleWindowProc(HWND hWnd,
     if (windows_taskbar_created_message_id != 0 && nid.hIcon != nullptr) {
       // restore the icon with the existing resource.
       tray_icon_setted = false;
-      ApplyTemplateIcon(tray_icon_active_);
+      ApplyTemplateIcon(tray_icon_active_, tray_icon_dark_);
     }
   }
   return result;
@@ -500,7 +501,7 @@ void TrayManagerPlugin::_UpdateToolTip() {
   }
 }
 
-void TrayManagerPlugin::ApplyTemplateIcon(bool active) {
+void TrayManagerPlugin::ApplyTemplateIcon(bool active, bool isDark) {
   using namespace Gdiplus;
 
   if (tray_icon_path_.empty()) {
@@ -537,8 +538,10 @@ void TrayManagerPlugin::ApplyTemplateIcon(bool active) {
       break;
     }
 
-    // 与 macOS 菜单栏一致：未接管时使用 60% 中性灰，接管后使用系统前景色。
-    const Color tint(active ? 255, 0, 0, 0 : 255, 153, 153, 153);
+    // 与 macOS 模板图标一致：未接管时使用中性灰，接管后按系统明暗
+    // 使用黑色或白色前景，避免深色任务栏上的黑色图标看起来仍像未启用。
+    const BYTE tintValue = !active ? 153 : isDark ? 255 : 0;
+    const Color tint(255, tintValue, tintValue, tintValue);
     ColorMatrix matrix = {};
     matrix.m[0][0] = static_cast<REAL>(tint.GetR()) / 255.0f;
     matrix.m[1][1] = static_cast<REAL>(tint.GetG()) / 255.0f;
@@ -583,8 +586,14 @@ void TrayManagerPlugin::SetActive(
     return;
   }
 
-  ApplyTemplateIcon(*active);
+  const auto& args = std::get<flutter::EncodableMap>(*method_call.arguments());
+  const auto* brightness =
+      std::get_if<std::string>(ValueOrNull(args, "brightness"));
+  const bool isDark = brightness != nullptr && *brightness == "dark";
+
+  ApplyTemplateIcon(*active, isDark);
   tray_icon_active_ = *active;
+  tray_icon_dark_ = isDark;
   result->Success(flutter::EncodableValue(true));
 }
 

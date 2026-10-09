@@ -87,7 +87,7 @@ void main() {
 
       authorization.complete(Result.success(true));
       expect(await startup, isTrue);
-      expect(events, ['start', 'apply']);
+      expect(events, ['setupWithoutTun', 'start', 'apply']);
     });
 
     test('starts the listener before applying TUN', () async {
@@ -106,7 +106,12 @@ void main() {
       );
 
       expect(started, isTrue);
-      expect(events, ['authorize', 'start', 'apply']);
+      expect(events, [
+        'authorize',
+        'setupWithoutTun',
+        'start',
+        'apply',
+      ]);
     });
 
     test(
@@ -177,7 +182,13 @@ void main() {
         throwsStateError,
       );
 
-      expect(events, ['authorize', 'start', 'apply', 'stop']);
+      expect(events, [
+        'authorize',
+        'setupWithoutTun',
+        'start',
+        'apply',
+        'stop',
+      ]);
     });
 
     test('does not start when restarting the core fails', () async {

@@ -108,13 +108,17 @@ class System {
   Future<AuthorizeCode> authorizeCore() async {
     if (system.isAndroid) return AuthorizeCode.none;
 
-    if (await checkIsAdmin()) return AuthorizeCode.none;
-
     if (system.isWindows) {
-      if (await windows?.isHelperHealthy() ?? false) return AuthorizeCode.none;
-      final result = await windows?.registerService();
+      final status =
+          await windows?.checkService() ?? WindowsHelperServiceStatus.none;
+      if (status == WindowsHelperServiceStatus.running) {
+        return AuthorizeCode.none;
+      }
+      final result = await windows?.registerService(initialStatus: status);
       return result == true ? AuthorizeCode.success : AuthorizeCode.error;
     }
+
+    if (await checkIsAdmin()) return AuthorizeCode.none;
 
     if (system.isMacOS) {
       final corePath = appPath.corePath;
@@ -381,18 +385,22 @@ class Windows {
 
   Future<bool>? _registerServiceInFlight;
 
-  Future<bool> registerService() {
-    return _registerServiceInFlight ??= _registerService().whenComplete(
-      () => _registerServiceInFlight = null,
-    );
+  Future<bool> registerService({
+    WindowsHelperServiceStatus? initialStatus,
+  }) {
+    return _registerServiceInFlight ??= _registerService(
+      initialStatus,
+    ).whenComplete(() => _registerServiceInFlight = null);
   }
 
-  Future<bool> _registerService() async {
+  Future<bool> _registerService(
+    WindowsHelperServiceStatus? initialStatus,
+  ) async {
     await HelperAuthManager.ensureAuthKey();
-    if (await isHelperHealthy()) return true;
+    final status = initialStatus ?? await checkService();
+    if (status == WindowsHelperServiceStatus.running) return true;
 
-    final query = await Process.run('sc', ['query', appHelperService]);
-    if (query.exitCode == 0) {
+    if (status == WindowsHelperServiceStatus.presence) {
       final started = await startWindowsHelperAndWait(
         start: () => Process.run('sc', ['start', appHelperService]),
         waitForHealthy: () => _waitForHelperHealthy(
