@@ -24,7 +24,8 @@ def main() -> None:
         if not target.is_file():
             raise SystemExit(f"vclibs ARM64 目录缺少 {name}。")
         shutil.copy2(source_dir / name, target)
-        print(f"已替换为 ARM64 运行库：{target}")
+        # Windows ARM Runner 的控制台可能是 CP1252，避免非 ASCII 输出导致编码异常。
+        print(f"Replaced ARM64 runtime: {target}")
 
 
 if __name__ == "__main__":
