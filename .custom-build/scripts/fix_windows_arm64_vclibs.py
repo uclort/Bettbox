@@ -9,12 +9,18 @@ from pathlib import Path
 
 def main() -> None:
     root = Path.cwd()
+    plugin_root = root / "windows/flutter/ephemeral/.plugin_symlinks/vclibs"
     plugin = next(
-        (root / "windows/flutter/ephemeral/.plugin_symlinks/vclibs").glob("*"),
+        (candidate for candidate in plugin_root.iterdir() if candidate.is_dir()),
         None,
-    )
+    ) if plugin_root.is_dir() else None
     if plugin is None:
-        raise SystemExit("未找到 vclibs 插件目录。")
+        children = (
+            ", ".join(child.name for child in plugin_root.iterdir())
+            if plugin_root.is_dir()
+            else "目录不存在"
+        )
+        raise SystemExit(f"未找到 vclibs 插件目录，实际内容：{children}")
 
     source_dir = root / ".custom-build/vendor/vclibs-arm64"
     target_dir = plugin / "windows/VCLibs/arm64"
