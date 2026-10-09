@@ -737,8 +737,10 @@ class OtherSettingView extends ConsumerWidget {
       const DisableQuicSection(),
       if (system.isAndroid) const HighPriorityNotificationItem(),
       if (system.isAndroid) const NetworkSpeedNotificationItem(),
-      if (system.isMacOS) const TrayClickBehaviorItem(),
-      if (system.isMacOS) const EnableTraySpeedItem(),
+      if (system.isMacOS || system.isWindows)
+        const TrayClickBehaviorItem(),
+      if (system.isMacOS || system.isWindows)
+        const EnableTraySpeedItem(),
       if (system.isWindows) const HighPriorityItem(),
       if (system.isWindows) const NetworkFixItem(),
       if (system.isAndroid) const BatteryOptimizationItem(),

@@ -45,15 +45,6 @@ class _TrayContainerState extends ConsumerState<TrayManager> with TrayListener {
   }
 
   Future<void> _handleTrayIconClick({required bool isRightClick}) async {
-    if (!system.isMacOS) {
-      if (isRightClick) {
-        // ignore: deprecated_member_use
-        await trayManager.popUpContextMenu(bringAppToFront: true);
-      } else {
-        window?.show();
-      }
-      return;
-    }
     if (_shouldTemporarilyShowHiddenItems) {
       await globalState.appController.showTrayMenu(includeHiddenItems: true);
       return;

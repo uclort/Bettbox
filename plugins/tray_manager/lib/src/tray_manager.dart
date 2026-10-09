@@ -286,7 +286,7 @@ class TrayManager {
     await _channel.invokeMethod('setTitle', arguments);
   }
 
-  /// 在 macOS 菜单栏图标右侧显示两行上传和下载速率。
+  /// 在托盘图标旁显示两行上传和下载速率。
   Future<void> setSpeedTitle({
     required int upload,
     required int download,
@@ -300,12 +300,12 @@ class TrayManager {
     await _channel.invokeMethod('setSpeedTitle', arguments);
   }
 
-  /// 设置 macOS 菜单栏图标是否处于正在接管系统流量的状态。
+  /// 设置托盘图标是否处于正在接管系统流量的状态。
   Future<void> setActive(bool active) async {
     await _channel.invokeMethod('setActive', {'active': active});
   }
 
-  /// 清除 macOS 菜单栏图标右侧的速率。
+  /// 清除托盘图标旁的速率。
   Future<void> clearSpeedTitle() async {
     await _channel.invokeMethod('clearSpeedTitle');
   }

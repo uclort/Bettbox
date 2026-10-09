@@ -49,7 +49,6 @@ class ThemeView extends ConsumerWidget {
     final toggleItems = [
       if (shouldShowHarmonyFont) _HarmonyFontItem(),
       if (system.isAndroid) const _DarkIconItem(),
-      if (system.isWindows) _TrayIconInvertItem(),
       _TextScaleFactorItem(),
     ];
 
@@ -449,42 +448,6 @@ class _DarkIconItem extends ConsumerWidget {
           ref
               .read(themeSettingProvider.notifier)
               .updateState((state) => state.copyWith(useDarkIcon: value));
-        },
-      ),
-    );
-  }
-}
-
-class _TrayIconInvertItem extends ConsumerWidget {
-  const _TrayIconInvertItem();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final invertTrayIcon = ref.watch(
-      themeSettingProvider.select((state) => state.invertTrayIcon),
-    );
-    return ListItem.switchItem(
-      leading: Icon(Icons.invert_colors),
-      horizontalTitleGap: 12,
-      title: Text(
-        appLocalizations.trayIconInvert,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-          color: context.colorScheme.onSurfaceVariant,
-        ),
-      ),
-      subtitle: Text(
-        appLocalizations.trayIconInvertDesc,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: context.colorScheme.onSurfaceVariant.withOpacity(0.7),
-        ),
-      ),
-      delegate: SwitchDelegate(
-        value: invertTrayIcon,
-        onChanged: (bool value) async {
-          ref
-              .read(themeSettingProvider.notifier)
-              .updateState((state) => state.copyWith(invertTrayIcon: value));
-          await globalState.appController.updateTray(true);
         },
       ),
     );

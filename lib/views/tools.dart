@@ -622,7 +622,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
             const OtherSettingView(),
           ),
         ),
-      if (!system.isAndroid)
+      if (system.isMacOS || system.isWindows)
         _SearchItem(
           title: appLocalizations.trayClickBehavior,
           category: otherSettingsCategory,
@@ -632,7 +632,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
             const OtherSettingView(),
           ),
         ),
-      if (system.isMacOS)
+      if (system.isMacOS || system.isWindows)
         _SearchItem(
           title: appLocalizations.enableTraySpeed,
           subtitle: appLocalizations.enableTraySpeedDesc,

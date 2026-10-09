@@ -8,7 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('两个接管开关关闭时网速归零，任一开启时恢复活动状态', () async {
+  test('托盘图标与网速状态不再区分 macOS 和 Windows', () async {
     globalState.config = Config(themeProps: defaultThemeProps);
     const channel = MethodChannel('tray_manager');
     final calls = <MethodCall>[];
@@ -40,6 +40,12 @@ void main() {
 
     await subject.update(trayState: active, force: true);
     await subject.updateSpeed(Traffic(up: 1234, down: 5678));
+    final iconCall = calls.lastWhere((call) => call.method == 'setIcon');
+    expect(
+      iconCall.arguments['iconPath'],
+      contains('icon_template.png'),
+    );
+    expect(iconCall.arguments['isTemplate'], true);
     await subject.update(
       trayState: active.copyWith(tunEnable: false),
       force: true,

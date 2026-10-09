@@ -5,6 +5,7 @@
 #include <windows.h>
 
 #include <shellapi.h>
+#include <gdiplus.h>
 #include <strsafe.h>
 #include <uxtheme.h>
 #include <vsstyle.h>
@@ -19,6 +20,8 @@
 #include <map>
 #include <memory>
 #include <sstream>
+
+#pragma comment(lib, "gdiplus.lib")
 
 #define WM_MYMESSAGE (WM_USER + 1)
 
@@ -52,6 +55,32 @@ static void InitializeDarkModeApis() {
 }
 
 static bool g_darkModeLastIsDark = false;
+
+static std::wstring NormalizeSpeedNumber(uint64_t value) {
+  static const uint64_t kScales[] = {
+      1,
+      1024ULL,
+      1024ULL * 1024ULL,
+      1024ULL * 1024ULL * 1024ULL,
+      1024ULL * 1024ULL * 1024ULL * 1024ULL,
+  };
+  static const wchar_t* kUnits[] = {L"B/s", L"K/s", L"M/s", L"G/s", L"T/s"};
+  static_assert(sizeof(kScales) / sizeof(kScales[0]) ==
+                sizeof(kUnits) / sizeof(kUnits[0]));
+
+  size_t unit = 0;
+  for (size_t i = 1; i < sizeof(kScales) / sizeof(kScales[0]); ++i) {
+    if (value >= kScales[i]) unit = i;
+  }
+  if (unit == 0) {
+    return std::to_wstring(value) + L" " + kUnits[0];
+  }
+
+  const double scaled = static_cast<double>(value) / kScales[unit];
+  wchar_t number[16] = {};
+  StringCchPrintfW(number, _countof(number), L"%.1f", scaled);
+  return std::wstring(number) + L" " + kUnits[unit];
+}
 
 static void ApplyDarkModeToMenu(HWND hwnd, bool isDark) {
   InitializeDarkModeApis();
@@ -108,6 +137,10 @@ class TrayManagerPlugin : public flutter::Plugin {
   UINT windows_taskbar_created_message_id = 0;
 
   bool is_menu_open_ = false;
+  std::string tray_icon_path_;
+  std::wstring speed_title_;
+  bool speed_title_active_ = true;
+  bool tray_icon_active_ = true;
 
   // The ID of the WindowProc delegate registration.
   int window_proc_id = -1;
@@ -122,6 +155,7 @@ class TrayManagerPlugin : public flutter::Plugin {
                                                              WPARAM wparam,
                                                              LPARAM lparam);
   HWND TrayManagerPlugin::GetMainWindow();
+  void TrayManagerPlugin::ApplyTemplateIcon(bool active);
   void TrayManagerPlugin::Destroy(
       const flutter::MethodCall<flutter::EncodableValue>& method_call,
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
@@ -129,6 +163,15 @@ class TrayManagerPlugin : public flutter::Plugin {
       const flutter::MethodCall<flutter::EncodableValue>& method_call,
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
   void TrayManagerPlugin::SetToolTip(
+      const flutter::MethodCall<flutter::EncodableValue>& method_call,
+      std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
+  void TrayManagerPlugin::SetActive(
+      const flutter::MethodCall<flutter::EncodableValue>& method_call,
+      std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
+  void TrayManagerPlugin::SetSpeedTitle(
+      const flutter::MethodCall<flutter::EncodableValue>& method_call,
+      std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
+  void TrayManagerPlugin::ClearSpeedTitle(
       const flutter::MethodCall<flutter::EncodableValue>& method_call,
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
   void TrayManagerPlugin::SetContextMenu(
@@ -360,7 +403,7 @@ std::optional<LRESULT> TrayManagerPlugin::HandleWindowProc(HWND hWnd,
     if (windows_taskbar_created_message_id != 0 && nid.hIcon != nullptr) {
       // restore the icon with the existing resource.
       tray_icon_setted = false;
-      _ApplyIcon();
+      ApplyTemplateIcon(tray_icon_active_);
     }
   }
   return result;
@@ -393,6 +436,9 @@ void TrayManagerPlugin::SetIcon(
 
   std::string iconPath =
       std::get<std::string>(args.at(flutter::EncodableValue("iconPath")));
+
+  tray_icon_path_ = iconPath;
+  speed_title_.clear();
 
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
 
@@ -435,6 +481,124 @@ void TrayManagerPlugin::_ApplyIcon() {
   niif.hWnd = nid.hWnd;
   niif.uID = nid.uID;
   niif.guidItem = GUID_NULL;
+}
+
+void TrayManagerPlugin::ApplyTemplateIcon(bool active) {
+  if (tray_icon_path_.empty()) {
+    return;
+  }
+
+  const int iconWidth = GetSystemMetrics(SM_CXSMICON);
+  const int iconHeight = GetSystemMetrics(SM_CYSMICON);
+  GdiplusToken gdiplus_token = 0;
+  GdiplusStartupInput gdiplus_input;
+  if (GdiplusStartup(&gdiplus_token, &gdiplus_input, nullptr) != Ok) {
+    return;
+  }
+  // GDI+ 没有 RAII 包装，先集中申请资源，再统一关闭并释放。
+  Bitmap* source = nullptr;
+  Bitmap* target = nullptr;
+  Graphics* graphics = nullptr;
+  HICON icon = nullptr;
+  do {
+    source = new Bitmap(
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>()
+            .from_bytes(tray_icon_path_)
+            .c_str(),
+        PixelFormat32bppARGB);
+    if (source->GetLastStatus() != Ok) {
+      break;
+    }
+    target = new Bitmap(iconWidth, iconHeight);
+    if (target->GetLastStatus() != Ok) {
+      break;
+    }
+    graphics = Graphics::FromImage(target);
+    if (graphics->GetLastStatus() != Ok) {
+      break;
+    }
+
+    // 与 macOS 菜单栏一致：未接管时使用 60% 中性灰，接管后使用系统前景色。
+    const Color tint(active ? 255, 0, 0, 0 : 255, 153, 153, 153);
+    ColorMatrix matrix = {};
+    matrix.m[0][0] = static_cast<REAL>(tint.GetR()) / 255.0f;
+    matrix.m[1][1] = static_cast<REAL>(tint.GetG()) / 255.0f;
+    matrix.m[2][2] = static_cast<REAL>(tint.GetB()) / 255.0f;
+    matrix.m[3][3] = 1.0f;
+    matrix.m[4][0] = static_cast<REAL>(tint.GetR()) / 255.0f;
+    matrix.m[4][1] = static_cast<REAL>(tint.GetG()) / 255.0f;
+    matrix.m[4][2] = static_cast<REAL>(tint.GetB()) / 255.0f;
+    ImageAttributes attributes;
+    attributes.SetColorMatrix(&matrix, ColorMatrixFlagsDefault,
+                              ColorAdjustTypeBitmap);
+
+    graphics->SetPixelOffsetMode(PixelOffsetModeHalf);
+    graphics->SetInterpolationMode(InterpolationModeHighQualityBicubic);
+    graphics->Clear(Color(0, 0, 0, 0));
+    graphics->DrawImage(source, Rect(0, 0, iconWidth, iconHeight), 0, 0,
+                        source->GetWidth(), source->GetHeight(), UnitPixel,
+                        &attributes);
+    if (target->GetHICON(&icon) == Ok && icon != nullptr) {
+      if (nid.hIcon != nullptr) {
+        DestroyIcon(nid.hIcon);
+      }
+      nid.hIcon = icon;
+      Shell_NotifyIcon(tray_icon_setted ? NIM_MODIFY : NIM_ADD, &nid);
+    }
+  } while (false);
+
+  delete graphics;
+  delete target;
+  delete source;
+  GdiplusShutdown(gdiplus_token);
+}
+
+void TrayManagerPlugin::SetActive(
+    const flutter::MethodCall<flutter::EncodableValue>& method_call,
+    std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
+  const auto* active = std::get_if<bool>(
+      &std::get<flutter::EncodableMap>(*method_call.arguments())
+           .at(flutter::EncodableValue("active")));
+  if (active == nullptr) {
+    result->Error("bad_args", "active must be a boolean");
+    return;
+  }
+
+  ApplyTemplateIcon(*active);
+  tray_icon_active_ = *active;
+  result->Success(flutter::EncodableValue(true));
+}
+
+void TrayManagerPlugin::SetSpeedTitle(
+    const flutter::MethodCall<flutter::EncodableValue>& method_call,
+    std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
+  const auto& args = std::get<flutter::EncodableMap>(*method_call.arguments());
+  const auto* upload =
+      std::get_if<int64_t>(&args.at(flutter::EncodableValue("upload")));
+  const auto* download =
+      std::get_if<int64_t>(&args.at(flutter::EncodableValue("download")));
+  const auto* active =
+      std::get_if<bool>(&args.at(flutter::EncodableValue("active")));
+  if (upload == nullptr || download == nullptr || active == nullptr ||
+      *upload < 0 || *download < 0) {
+    result->Error("bad_args", "invalid speed arguments");
+    return;
+  }
+
+  speed_title_ =
+      L"↑ " + NormalizeSpeedNumber(static_cast<uint64_t>(*upload)) +
+      L"\n↓ " + NormalizeSpeedNumber(static_cast<uint64_t>(*download));
+  speed_title_active_ = *active;
+  Shell_NotifyIcon(NIM_MODIFY, &nid);
+  result->Success(flutter::EncodableValue(true));
+}
+
+void TrayManagerPlugin::ClearSpeedTitle(
+    const flutter::MethodCall<flutter::EncodableValue>& method_call,
+    std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
+  speed_title_.clear();
+  Shell_NotifyIcon(NIM_MODIFY, &nid);
+  result->Success(flutter::EncodableValue(true));
 }
 
 void TrayManagerPlugin::SetToolTip(
@@ -556,6 +720,12 @@ void TrayManagerPlugin::HandleMethodCall(
     Destroy(method_call, std::move(result));
   } else if (method_call.method_name().compare("setIcon") == 0) {
     SetIcon(method_call, std::move(result));
+  } else if (method_call.method_name().compare("setActive") == 0) {
+    SetActive(method_call, std::move(result));
+  } else if (method_call.method_name().compare("setSpeedTitle") == 0) {
+    SetSpeedTitle(method_call, std::move(result));
+  } else if (method_call.method_name().compare("clearSpeedTitle") == 0) {
+    ClearSpeedTitle(method_call, std::move(result));
   } else if (method_call.method_name().compare("setToolTip") == 0) {
     SetToolTip(method_call, std::move(result));
   } else if (method_call.method_name().compare("setContextMenu") == 0) {

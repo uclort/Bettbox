@@ -778,9 +778,9 @@ class Utils {
   String getTrayIconPath({
     required Brightness brightness,
     bool isStart = false,
-    bool invertTrayIcon = false,
   }) {
-    if (system.isMacOS) {
+    // macOS 与 Windows 共用模板图，由原生托盘层按启停状态渲染灰/高亮。
+    if (system.isMacOS || system.isWindows) {
       return 'assets/images/icon_template.png';
     }
 
@@ -790,18 +790,9 @@ class Utils {
 
     final suffix = system.isWindows ? 'ico' : 'png';
 
-    final darkPath = !isStart
+    return !isStart
         ? 'assets/images/icon_light.$suffix'
         : 'assets/images/icon_white.$suffix';
-    final lightPath = !isStart
-        ? 'assets/images/icon.$suffix'
-        : 'assets/images/icon_black.$suffix';
-
-    if (invertTrayIcon) {
-      return brightness == Brightness.dark ? lightPath : darkPath;
-    }
-
-    return brightness == Brightness.dark ? darkPath : lightPath;
   }
 
   int compareVersions(String version1, String version2) {

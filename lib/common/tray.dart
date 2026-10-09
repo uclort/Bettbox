@@ -44,6 +44,9 @@ class Tray {
   int? _lastDisplayedDownload;
   bool? _lastDisplayedActive;
 
+  // macOS 与 Windows 共用模板图标和状态渲染；Linux 仍使用普通彩色图标。
+  bool get _supportsTrayTemplate => system.isMacOS || system.isWindows;
+
   void dispose() {
     delayTestCoordinator.removeListener(_handleDelayTestStateChanged);
     _debounceTimer?.cancel();
@@ -71,13 +74,11 @@ class Tray {
             brightness ??
             WidgetsBinding.instance.platformDispatcher.platformBrightness,
         isStart: isStart,
-        invertTrayIcon:
-            system.isWindows && globalState.config.themeProps.invertTrayIcon,
       ),
-      isTemplate: system.isMacOS,
+      isTemplate: _supportsTrayTemplate,
       id: AppIdentity.compactName,
     );
-    if (system.isMacOS) {
+    if (_supportsTrayTemplate) {
       await trayManager.setActive(isStart);
     }
     if (!Platform.isLinux) {
@@ -138,9 +139,7 @@ class Tray {
           force: focus,
         );
       }
-      if (system.isMacOS) {
-        await _syncSpeedTitle();
-      }
+      await _syncSpeedTitle();
       if (system.isMacOS && !prepareContextMenu && !trayManager.isMenuOpen) {
         return;
       }
@@ -365,13 +364,16 @@ class Tray {
 
   Future<void> updateSpeed(Traffic traffic) async {
     _lastTraffic = _trayTrafficActive ? traffic : Traffic();
-    if (!system.isMacOS || !_traySpeedEnabled) {
+    if (!_supportsTrayTemplate || !_traySpeedEnabled) {
       return;
     }
     await _setSpeedTitle(_lastTraffic);
   }
 
   Future<void> _syncSpeedTitle() async {
+    if (!_supportsTrayTemplate) {
+      return;
+    }
     if (!_traySpeedEnabled) {
       if (!_isSpeedTitleVisible) {
         return;

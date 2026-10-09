@@ -698,8 +698,7 @@ class AppController {
     final networkSpeedNotification =
         system.isAndroid &&
         _ref.read(vpnSettingProvider).networkSpeedNotification;
-    final enableTraySpeed =
-        system.isMacOS && _ref.read(vpnSettingProvider).enableTraySpeed;
+    final enableTraySpeed = _ref.read(vpnSettingProvider).enableTraySpeed;
 
     final isScreenOn = globalState.isScreenOn;
 
