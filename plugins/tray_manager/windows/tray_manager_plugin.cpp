@@ -485,6 +485,8 @@ void TrayManagerPlugin::_ApplyIcon() {
 }
 
 void TrayManagerPlugin::ApplyTemplateIcon(bool active) {
+  using namespace Gdiplus;
+
   if (tray_icon_path_.empty()) {
     return;
   }
