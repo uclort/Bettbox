@@ -239,7 +239,7 @@ class ExternalControl {
         ).timeout(const Duration(seconds: 1));
       }
     }
-    throw StateError('Bettbox is not running');
+    throw StateError('Bettbox 主程序未运行或尚未完成启动');
   }
 
   static bool _isConnectionReset(SocketException e) {

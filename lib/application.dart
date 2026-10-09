@@ -142,19 +142,19 @@ class ApplicationState extends ConsumerState<Application>
     if (currentContext != null && currentContext != context) {
       globalState.appController = AppController(currentContext, ref);
     }
-    await globalState.appController.init();
-    if (system.isMacOS) {
-      final networkState = await macOS?.defaultNetworkState;
-      if (!mounted) return;
-      _lastMacOSNetworkFingerprint = networkState?.fingerprint;
-      _macOSNetworkRecoveryReady = true;
-    }
     if (!appPath.isPortable) {
       try {
         await ExternalControl.start();
       } catch (e) {
         commonPrint.log('ExternalControl start failed: $e');
       }
+    }
+    await globalState.appController.init();
+    if (system.isMacOS) {
+      final networkState = await macOS?.defaultNetworkState;
+      if (!mounted) return;
+      _lastMacOSNetworkFingerprint = networkState?.fingerprint;
+      _macOSNetworkRecoveryReady = true;
     }
     globalState.appController.initLink();
     if (system.isAndroid) {

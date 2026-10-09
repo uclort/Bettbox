@@ -37,6 +37,7 @@ Future<bool> runDesktopTunStartup({
   required Future<void> Function() setupCoreWithoutTun,
   required Future<void> Function() applyTunConfig,
   required Future<void> Function() startListener,
+  required Future<bool> Function() verifyCoreReady,
   required Future<void> Function() stopListener,
 }) async {
   final result = await requestAdmin();
@@ -51,9 +52,12 @@ Future<bool> runDesktopTunStartup({
   // 监听启动前只加载一次无 TUN 基线；需要提权重启时放在重启后加载，
   // 无需重启时也保证当前配置完整，避免重复解析配置拖慢 Windows 首次开启。
   await setupCoreWithoutTun();
-  await startListener();
   try {
+    await startListener();
     await applyTunConfig();
+    if (!await verifyCoreReady()) {
+      throw StateError('桌面核心在启用 TUN 后未保持运行');
+    }
   } catch (error, stackTrace) {
     try {
       await stopListener();
@@ -138,7 +142,11 @@ class AppController {
   int _macOSNetworkRecoveryGeneration = 0;
   Timer? _idleGcTimer;
 
-  AppController(this.context, WidgetRef ref) : _ref = ref;
+  AppController(this.context, WidgetRef ref) : _ref = ref {
+    if (clashService != null) {
+      clashService!.onUnexpectedExit = _handleUnexpectedCoreExit;
+    }
+  }
 
   DateTime _lastModeChangeTime = DateTime.fromMillisecondsSinceEpoch(0);
 
@@ -455,6 +463,10 @@ class AppController {
 
     final patchConfig = _ref.read(patchClashConfigProvider);
     final isDesktop = system.isDesktop;
+    if (isDesktop && !await clashService!.checkCoreHealth()) {
+      commonPrint.log('桌面核心不可用，启动网络前先重启核心');
+      await _restartCore(setupConfig: false, refreshData: false);
+    }
 
     if (isDesktop && patchConfig.tun.enable) {
       var baselineConfigured = false;
@@ -474,6 +486,7 @@ class AppController {
             await _applyCoreTunConfig(true);
           },
           startListener: clashCore.startListener,
+          verifyCoreReady: () => clashService!.checkCoreHealth(),
           stopListener: clashCore.stopListener,
         );
         if (!started) {
@@ -526,26 +539,118 @@ class AppController {
     final prefs = await preferences.sharedPreferencesCompleter.future;
     await prefs?.setBool('is_tun_running', false);
 
-    var canStartWithoutTun = baselineConfigured;
-    if (baselineConfigured) {
+    var canStartWithoutTun = false;
+    try {
+      canStartWithoutTun = await _setupCoreConfig(enableTun: false);
+    } catch (e) {
+      commonPrint.log(
+        '恢复桌面无 TUN 配置失败'
+        '${baselineConfigured ? '' : '（基线尚未完成）'}：$e',
+      );
+    }
+
+    final systemProxyEnabled = _ref.read(networkSettingProvider).systemProxy;
+    if (systemProxyEnabled && !canStartWithoutTun) {
+      _ref
+          .read(networkSettingProvider.notifier)
+          .updateState((state) => state.copyWith(systemProxy: false));
       try {
-        canStartWithoutTun = await _setupCoreConfig(enableTun: false);
+        await proxy?.stopProxy();
       } catch (e) {
-        canStartWithoutTun = false;
-        commonPrint.log('恢复桌面无 TUN 配置失败：$e');
+        commonPrint.log('恢复桌面启动状态时关闭系统代理失败：$e');
       }
     }
 
-    final keepRunning =
-        _ref.read(networkSettingProvider).systemProxy && canStartWithoutTun;
+    final keepRunning = systemProxyEnabled && canStartWithoutTun;
     if (keepRunning && !globalState.isStart) {
       await globalState.handleStart([updateRunTime, updateTraffic]);
       _scheduleCheckIpRefresh();
       _backgroundLoad();
     } else if (!keepRunning && globalState.isStart) {
-      await globalState.handleStop();
+      try {
+        await globalState.handleStop();
+      } catch (e) {
+        commonPrint.log('恢复桌面启动状态时停止监听失败：$e');
+      }
     }
     _syncDesktopRuntimePresentation();
+    try {
+      await savePreferences();
+    } catch (e) {
+      commonPrint.log('保存桌面启动回滚状态失败：$e');
+    }
+    try {
+      await updateTray(false, false, true);
+    } catch (e) {
+      commonPrint.log('刷新桌面启动回滚托盘状态失败：$e');
+    }
+  }
+
+  Future<void> _handleUnexpectedCoreExit(
+    String details, {
+    bool force = false,
+  }) async {
+    if (!system.isDesktop || globalState.isExiting) return;
+
+    await _coreLifecycleLock.synchronized(() async {
+      if (globalState.isExiting) return;
+      if (!force && await clashService!.checkCoreHealth()) {
+        commonPrint.log('忽略已经恢复的 BettboxCore 退出事件：$details');
+        return;
+      }
+
+      final tunEnabled =
+          _ref.read(patchClashConfigProvider).tun.enable ||
+          _ref.read(realTunEnableProvider);
+      final systemProxyEnabled = _ref
+          .read(networkSettingProvider)
+          .systemProxy;
+      if (!force &&
+          !tunEnabled &&
+          !systemProxyEnabled &&
+          !globalState.isStart) {
+        return;
+      }
+
+      commonPrint.log('检测到 BettboxCore 非预期退出，开始回滚桌面网络状态：$details');
+      _invalidateCoreReads();
+      _ref
+          .read(patchClashConfigProvider.notifier)
+          .updateState((state) => state.copyWith.tun(enable: false));
+      _ref.read(realTunEnableProvider.notifier).value = false;
+      _ref
+          .read(networkSettingProvider.notifier)
+          .updateState((state) => state.copyWith(systemProxy: false));
+
+      globalState.startTime = null;
+      globalState.stopUpdateTasks();
+      _ref.read(runTimeProvider.notifier).value = null;
+      _ref.read(trafficsProvider.notifier).clear();
+      _ref.read(totalTrafficProvider.notifier).value = Traffic();
+
+      final prefs = await preferences.sharedPreferencesCompleter.future;
+      await prefs?.setBool('is_vpn_running', false);
+      await prefs?.setBool('is_tun_running', false);
+
+      try {
+        await proxy?.stopProxy();
+      } catch (e) {
+        commonPrint.log('Core 异常退出后关闭系统代理失败：$e');
+      }
+
+      try {
+        await savePreferences();
+      } catch (e) {
+        commonPrint.log('保存 Core 异常退出回滚状态失败：$e');
+      }
+      try {
+        await updateTray(false, false, true);
+      } catch (e) {
+        commonPrint.log('刷新 Core 异常退出托盘状态失败：$e');
+      }
+      addCheckIpNumDebounce();
+      globalState.showNotifier('BettboxCore 异常退出，系统代理和虚拟网卡已自动关闭');
+    });
   }
 
   void _scheduleCheckIpRefresh() {
@@ -1657,19 +1762,28 @@ class AppController {
       commonPrint.log('Initialize custom app updater failed: $e');
     }
 
-    await _initCore();
+    var coreReady = true;
     try {
-      await _initStatus();
+      await _initCore();
     } catch (e) {
-      commonPrint.log('_initStatus failed, falling back to basic startup: $e');
-      try {
-        await applyProfile(silence: true);
-      } catch (e2) {
-        commonPrint.log('Fallback applyProfile also failed: $e2');
-      }
+      coreReady = false;
+      commonPrint.log('Initialize BettboxCore failed: $e');
+      await _handleUnexpectedCoreExit('BettboxCore 初始化失败：$e', force: true);
     }
+    if (coreReady) {
+      try {
+        await _initStatus();
+      } catch (e) {
+        commonPrint.log('_initStatus failed, falling back to basic startup: $e');
+        try {
+          await applyProfile(silence: true);
+        } catch (e2) {
+          commonPrint.log('Fallback applyProfile also failed: $e2');
+        }
+      }
 
-    await updateGroups();
+      await updateGroups();
+    }
 
     autoLaunch?.updateStatus(_ref.read(appSettingProvider).autoLaunch);
     autoUpdateProfiles();

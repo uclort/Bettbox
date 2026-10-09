@@ -54,7 +54,14 @@ class _TrayContainerState extends ConsumerState<TrayManager> with TrayListener {
         ? vpnProps.trayRightClickBehavior
         : vpnProps.trayLeftClickBehavior;
     if (behavior == TrayClickBehavior.showMenu) {
-      await globalState.appController.showTrayMenu();
+      if (system.isWindows) {
+        // Windows 必须在托盘点击回调的同一轮消息中弹出已经缓存的菜单。
+        // 先异步重建菜单会错过 Shell 的弹出时机，表现为菜单闪一下后消失。
+        // ignore: deprecated_member_use
+        await trayManager.popUpContextMenu(bringAppToFront: true);
+      } else {
+        await globalState.appController.showTrayMenu();
+      }
       return;
     }
     window?.show();

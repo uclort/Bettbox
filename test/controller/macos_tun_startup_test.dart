@@ -79,6 +79,7 @@ void main() {
         setupCoreWithoutTun: () async => events.add('setupWithoutTun'),
         applyTunConfig: () async => events.add('apply'),
         startListener: () async => events.add('start'),
+        verifyCoreReady: () async => true,
         stopListener: () async => events.add('stop'),
       );
 
@@ -102,6 +103,7 @@ void main() {
         setupCoreWithoutTun: () async => events.add('setupWithoutTun'),
         applyTunConfig: () async => events.add('apply'),
         startListener: () async => events.add('start'),
+        verifyCoreReady: () async => true,
         stopListener: () async => events.add('stop'),
       );
 
@@ -128,6 +130,7 @@ void main() {
           setupCoreWithoutTun: () async => events.add('setupWithoutTun'),
           applyTunConfig: () async => events.add('apply'),
           startListener: () async => events.add('start'),
+          verifyCoreReady: () async => true,
           stopListener: () async => events.add('stop'),
         );
 
@@ -154,6 +157,7 @@ void main() {
         setupCoreWithoutTun: () async => events.add('setupWithoutTun'),
         applyTunConfig: () async => events.add('apply'),
         startListener: () async => events.add('start'),
+        verifyCoreReady: () async => true,
         stopListener: () async => events.add('stop'),
       );
 
@@ -177,6 +181,7 @@ void main() {
             throw StateError('apply failed');
           },
           startListener: () async => events.add('start'),
+          verifyCoreReady: () async => true,
           stopListener: () async => events.add('stop'),
         ),
         throwsStateError,
@@ -207,6 +212,7 @@ void main() {
           setupCoreWithoutTun: () async => events.add('setupWithoutTun'),
           applyTunConfig: () async => events.add('apply'),
           startListener: () async => events.add('start'),
+          verifyCoreReady: () async => true,
           stopListener: () async => events.add('stop'),
         ),
         throwsStateError,
@@ -231,12 +237,67 @@ void main() {
           },
           applyTunConfig: () async => events.add('apply'),
           startListener: () async => events.add('start'),
+          verifyCoreReady: () async => true,
           stopListener: () async => events.add('stop'),
         ),
         throwsStateError,
       );
 
       expect(events, ['authorize', 'restart', 'setupWithoutTun']);
+    });
+
+    test('TUN 应用后核心失去响应时停止监听并报错', () async {
+      final events = <String>[];
+
+      await expectLater(
+        runDesktopTunStartup(
+          requestAdmin: () async {
+            events.add('authorize');
+            return Result.success(true);
+          },
+          restartCore: () async => events.add('restart'),
+          setupCoreWithoutTun: () async => events.add('setupWithoutTun'),
+          applyTunConfig: () async => events.add('apply'),
+          startListener: () async => events.add('start'),
+          verifyCoreReady: () async {
+            events.add('verify');
+            return false;
+          },
+          stopListener: () async => events.add('stop'),
+        ),
+        throwsStateError,
+      );
+
+      expect(events, [
+        'authorize',
+        'setupWithoutTun',
+        'start',
+        'apply',
+        'verify',
+        'stop',
+      ]);
+    });
+
+    test('监听启动失败时仍尝试停止监听并保持未启动', () async {
+      final events = <String>[];
+
+      await expectLater(
+        runDesktopTunStartup(
+          requestAdmin: () async => Result.success(true),
+          restartCore: () async => events.add('restart'),
+          setupCoreWithoutTun: () async => events.add('setupWithoutTun'),
+          applyTunConfig: () async => events.add('apply'),
+          startListener: () async {
+            events.add('start');
+            throw StateError('listener failed');
+          },
+          verifyCoreReady: () async => true,
+          stopListener: () async => events.add('stop'),
+        ),
+        throwsStateError,
+      );
+
+      expect(events, ['setupWithoutTun', 'start', 'stop']);
     });
   });
 

@@ -24,10 +24,12 @@ class ClashService extends ClashHandlerInterface {
 
   bool isStarting = false;
   bool _isDestroying = false;
+  bool _unexpectedExitReported = false;
 
   Process? process;
 
   Completer<void>? _restartCompleter;
+  Future<void> Function(String details)? onUnexpectedExit;
 
   TransportType _transportType = TransportType.unixSocket;
   String? _socketPath;
@@ -56,7 +58,11 @@ class ClashService extends ClashHandlerInterface {
     }
 
     _initServer();
-    reStart();
+    try {
+      await reStart();
+    } catch (e) {
+      commonPrint.log('Initial BettboxCore start failed: $e');
+    }
   }
 
   Future<void> _initServer() async {
@@ -139,127 +145,135 @@ class ClashService extends ClashHandlerInterface {
   Future<void> _doRestart() async {
     isStarting = true;
     _isDestroying = false;
+    _unexpectedExitReported = false;
 
-    await _destroySocket();
+    try {
+      await _destroySocket();
 
-    if (system.isWindows) {
-      await helperClient.stopCore().catchError((_) => false);
-    }
+      if (system.isWindows) {
+        await helperClient.stopCore().catchError((_) => false);
+      }
 
-    final previousProcess = process;
-    process = null;
-    previousProcess?.kill();
-    if (previousProcess != null) {
-      await previousProcess.exitCode.timeout(
-        const Duration(seconds: 2),
-        onTimeout: () {
-          previousProcess.kill(ProcessSignal.sigkill);
-          return -1;
-        },
-      );
-    }
-
-    final serverSocket = await serverCompleter.future;
-
-    final String arg;
-    if (_transportType == TransportType.unixSocket) {
-      arg = _socketPath!;
-    } else {
-      arg = '${serverSocket.port}';
-    }
-
-    final homeDirPath = await appPath.homeDirPath;
-    final environment = Map<String, String>.from(Platform.environment);
-    environment['SAFE_PATHS'] = homeDirPath;
-
-    if (system.isWindows) {
-      final isHealthy = await windows?.isHelperHealthy() ?? false;
-      if (isHealthy) {
-        final started = await helperClient.startCore(
-          corePath: appPath.corePath,
-          arg: arg,
-          homeDir: homeDirPath,
+      final previousProcess = process;
+      process = null;
+      previousProcess?.kill();
+      if (previousProcess != null) {
+        await previousProcess.exitCode.timeout(
+          const Duration(seconds: 2),
+          onTimeout: () {
+            previousProcess.kill(ProcessSignal.sigkill);
+            return -1;
+          },
         );
-        if (started) {
-          await _waitForCoreReady();
-          if (socketCompleter.isCompleted) {
-            isStarting = false;
-            if (system.isWindows && globalState.config.appSetting.enableHighPriority) {
-              unawaited(
-                helperClient
-                    .setProcessPriority(
-                      '${AppIdentity.coreExecutableName}.exe',
-                      true,
-                    )
-                    .catchError((e) {
-                      commonPrint.log('Failed to set core process priority: $e');
-                      return false;
-                    }),
-              );
+      }
+
+      final serverSocket = await serverCompleter.future;
+
+      final String arg;
+      if (_transportType == TransportType.unixSocket) {
+        arg = _socketPath!;
+      } else {
+        arg = '${serverSocket.port}';
+      }
+
+      final homeDirPath = await appPath.homeDirPath;
+      final environment = Map<String, String>.from(Platform.environment);
+      environment['SAFE_PATHS'] = homeDirPath;
+
+      if (system.isWindows) {
+        final isHealthy = await windows?.isHelperHealthy() ?? false;
+        if (isHealthy) {
+          final started = await helperClient.startCore(
+            corePath: appPath.corePath,
+            arg: arg,
+            homeDir: homeDirPath,
+          );
+          if (started) {
+            if (await _waitForCoreReady()) {
+              _setWindowsCorePriority();
+              return;
             }
+            commonPrint.log(
+              'Helper start core timed out waiting for socket, falling back to normal mode',
+            );
+            await helperClient.stopCore().catchError((_) => false);
+          } else {
+            commonPrint.log(
+              'Helper start core failed, falling back to normal mode',
+            );
+          }
+        }
+      }
+
+      final coreProcess = await Process.start(appPath.corePath, [
+        arg,
+      ], environment: environment);
+      process = coreProcess;
+      coreProcess.stdout.listen((_) {});
+      var lastCoreError = '';
+      coreProcess.stderr.listen((e) {
+        final error = utf8.decode(e);
+        if (error.isNotEmpty) {
+          lastCoreError = error.trim();
+          commonPrint.log(error);
+        }
+      });
+      unawaited(
+        coreProcess.exitCode.then((exitCode) {
+          if (!identical(process, coreProcess) ||
+              _isDestroying ||
+              globalState.isExiting) {
             return;
           }
-          commonPrint.log(
-            'Helper start core timed out waiting for socket, falling back to normal mode',
-          );
-          await helperClient.stopCore().catchError((_) => false);
-        } else {
-          commonPrint.log(
-            'Helper start core failed, falling back to normal mode',
-          );
-        }
-      }
-    }
-
-    final coreProcess = await Process.start(appPath.corePath, [
-      arg,
-    ], environment: environment);
-    process = coreProcess;
-    coreProcess.stdout.listen((_) {});
-    var lastCoreError = '';
-    coreProcess.stderr.listen((e) {
-      final error = utf8.decode(e);
-      if (error.isNotEmpty) {
-        lastCoreError = error.trim();
-        commonPrint.log(error);
-      }
-    });
-    unawaited(
-      coreProcess.exitCode.then((exitCode) {
-        if (!identical(process, coreProcess) ||
-            _isDestroying ||
-            globalState.isExiting) {
-          return;
-        }
-        process = null;
-        final socket = _activeSocket;
-        if (socket != null) _handleSocketClosed(socket);
-        commonPrint.log(
-          'BettboxCore 异常退出（代码 $exitCode）'
-          '${lastCoreError.isEmpty ? '' : ': $lastCoreError'}',
-        );
-        globalState.showNotifier('BettboxCore 异常退出（代码 $exitCode），请查看日志');
-      }),
-    );
-    await _waitForCoreReady();
-    isStarting = false;
-    if (system.isWindows && globalState.config.appSetting.enableHighPriority) {
-      unawaited(
-        helperClient
-            .setProcessPriority('${AppIdentity.coreExecutableName}.exe', true)
-            .catchError((e) {
-              commonPrint.log('Failed to set core process priority: $e');
-              return false;
-            }),
+          process = null;
+          final details =
+              'BettboxCore 异常退出（代码 $exitCode）'
+              '${lastCoreError.isEmpty ? '' : ': $lastCoreError'}';
+          final socket = _activeSocket;
+          if (socket != null) {
+            _handleSocketClosed(socket, details: details);
+          } else {
+            _notifyUnexpectedExit(details);
+          }
+          commonPrint.log(details);
+        }),
       );
+      if (!await _waitForCoreReady()) {
+        if (identical(process, coreProcess)) {
+          process = null;
+        }
+        coreProcess.kill();
+        throw StateError('BettboxCore 启动超时，未建立控制连接');
+      }
+      _setWindowsCorePriority();
+    } finally {
+      isStarting = false;
     }
   }
 
-  Future<void> _waitForCoreReady() async {
+  void _setWindowsCorePriority() {
+    if (!system.isWindows ||
+        !globalState.config.appSetting.enableHighPriority) {
+      return;
+    }
+    unawaited(
+      helperClient
+          .setProcessPriority('${AppIdentity.coreExecutableName}.exe', true)
+          .catchError((e) {
+            commonPrint.log('Failed to set core process priority: $e');
+            return false;
+          }),
+    );
+  }
+
+  Future<bool> _waitForCoreReady() async {
     try {
       await socketCompleter.future.timeout(const Duration(seconds: 5));
+      _unexpectedExitReported = false;
+      return true;
     } catch (_) {
       commonPrint.log('Core ready timeout after 5s');
+      return false;
     }
   }
 
@@ -326,10 +340,33 @@ class ClashService extends ClashHandlerInterface {
     await socket?.close();
   }
 
-  void _handleSocketClosed(Socket socket) {
+  void _handleSocketClosed(Socket socket, {String? details}) {
     if (!identical(_activeSocket, socket)) return;
     _activeSocket = null;
     if (socketCompleter.isCompleted) socketCompleter = Completer();
+    if (!_isDestroying && !globalState.isExiting && !isStarting) {
+      _notifyUnexpectedExit(details ?? 'BettboxCore 控制连接意外断开');
+    }
+  }
+
+  void _notifyUnexpectedExit(String details) {
+    if (_unexpectedExitReported ||
+        _isDestroying ||
+        globalState.isExiting ||
+        isStarting) {
+      return;
+    }
+    _unexpectedExitReported = true;
+    final callback = onUnexpectedExit;
+    if (callback == null) {
+      globalState.showNotifier('BettboxCore 异常退出，请查看日志');
+      return;
+    }
+    unawaited(
+      callback(details).catchError((Object error, StackTrace stackTrace) {
+        commonPrint.log('处理 BettboxCore 异常退出失败：$error\n$stackTrace');
+      }),
+    );
   }
 
   @override

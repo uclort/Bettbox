@@ -390,13 +390,23 @@ class GlobalState {
 
   Future handleStop([bool includeVpnService = true]) async {
     startTime = null;
-    if (system.isAndroid && isService) {
-      await clashLibHandler?.stopListener();
-    } else {
-      await clashCore.stopListener();
+    Object? stopError;
+    StackTrace? stopStackTrace;
+    try {
+      if (system.isAndroid && isService) {
+        await clashLibHandler?.stopListener();
+      } else {
+        await clashCore.stopListener();
+      }
+    } catch (error, stackTrace) {
+      stopError = error;
+      stopStackTrace = stackTrace;
     }
     if (!includeVpnService) {
       stopUpdateTasks();
+      if (stopError != null) {
+        Error.throwWithStackTrace(stopError, stopStackTrace!);
+      }
       return;
     }
     await service?.stopVpn();
@@ -406,6 +416,9 @@ class GlobalState {
       await prefs?.setBool('is_tun_running', false);
     }
     stopUpdateTasks();
+    if (stopError != null) {
+      Error.throwWithStackTrace(stopError, stopStackTrace!);
+    }
   }
 
   Future<bool?> showMessage({
