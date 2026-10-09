@@ -637,6 +637,7 @@ jobs:
           $ErrorActionPreference = "Stop"
           $PSNativeCommandUseErrorActionPreference = $true
           flutter pub get --verbose
+          python .custom-build/scripts/fix_windows_arm64_vclibs.py
 
       - name: 选择 Windows WinSparkle 架构
         if: matrix.platform == 'windows'
