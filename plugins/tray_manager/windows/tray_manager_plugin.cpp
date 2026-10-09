@@ -5,8 +5,8 @@
 #include <windows.h>
 
 #include <shellapi.h>
-#include <objidl.h>
 #include <gdiplus.h>
+#include <objidl.h>
 #include <strsafe.h>
 #include <uxtheme.h>
 #include <vsstyle.h>
@@ -485,8 +485,6 @@ void TrayManagerPlugin::_ApplyIcon() {
 }
 
 void TrayManagerPlugin::ApplyTemplateIcon(bool active) {
-  using namespace Gdiplus;
-
   if (tray_icon_path_.empty()) {
     return;
   }
