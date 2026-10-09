@@ -396,6 +396,7 @@ jobs:
           fetch-depth: 1
 
       - name: 检出私有自定义 Mihomo
+        if: matrix.platform != 'windows' || matrix.arch != 'arm64'
         uses: actions/checkout@v6
         with:
           repository: ${{ env.CUSTOM_MIHOMO_REPOSITORY }}
@@ -403,6 +404,42 @@ jobs:
           path: .custom-build/runtime/custom-mihomo
           fetch-depth: 1
           ssh-key: ${{ secrets.CUSTOM_MIHOMO_READ_KEY }}
+
+      - name: 检出私有自定义 Mihomo（Windows ARM64）
+        if: matrix.platform == 'windows' && matrix.arch == 'arm64'
+        shell: pwsh
+        env:
+          CUSTOM_MIHOMO_READ_KEY: ${{ secrets.CUSTOM_MIHOMO_READ_KEY }}
+          CUSTOM_MIHOMO_COMMIT: ${{ needs.inspect.outputs.custom_mihomo_commit }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          if (-not $env:CUSTOM_MIHOMO_READ_KEY) {
+            throw "缺少 custom-mihomo 只读 SSH 密钥。"
+          }
+
+          $checkoutDir = ".custom-build/runtime/custom-mihomo"
+          $keyPath = Join-Path $env:RUNNER_TEMP "custom-mihomo-arm64-key"
+          New-Item -ItemType Directory -Force (Split-Path $checkoutDir) | Out-Null
+          Set-Content -Path $keyPath -Value $env:CUSTOM_MIHOMO_READ_KEY -NoNewline
+          & icacls.exe $keyPath /inheritance:r | Out-Null
+          & icacls.exe $keyPath /grant:r "$($env:USERNAME):(R)" | Out-Null
+          if ($LASTEXITCODE -ne 0) {
+            throw "无法收紧 custom-mihomo SSH 密钥权限。"
+          }
+
+          try {
+            $env:GIT_SSH_COMMAND = (
+              "ssh -i `"$keyPath`" -o IdentitiesOnly=yes " +
+              "-o StrictHostKeyChecking=accept-new"
+            )
+            git init $checkoutDir
+            git -C $checkoutDir remote add origin git@github.com:uclort/custom-mihomo.git
+            git -C $checkoutDir fetch --depth=1 origin $env:CUSTOM_MIHOMO_COMMIT
+            git -C $checkoutDir checkout --detach FETCH_HEAD
+          }
+          finally {
+            Remove-Item $keyPath -Force -ErrorAction SilentlyContinue
+          }
 
       - name: 强制替换为自定义 Mihomo
         shell: bash
