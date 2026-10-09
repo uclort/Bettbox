@@ -139,8 +139,8 @@ class TrayManagerPlugin : public flutter::Plugin {
 
   bool is_menu_open_ = false;
   std::string tray_icon_path_;
+  std::wstring base_tooltip_;
   std::wstring speed_title_;
-  bool speed_title_active_ = true;
   bool tray_icon_active_ = true;
 
   // The ID of the WindowProc delegate registration.
@@ -149,6 +149,7 @@ class TrayManagerPlugin : public flutter::Plugin {
   void TrayManagerPlugin::_CreateMenu(HMENU menu, flutter::EncodableMap args);
   void TrayManagerPlugin::_UpdateMenuLabels(HMENU menu, flutter::EncodableMap args);
   void TrayManagerPlugin::_ApplyIcon();
+  void TrayManagerPlugin::_UpdateToolTip();
 
   // Called for top-level WindowProc delegation.
   std::optional<LRESULT> TrayManagerPlugin::HandleWindowProc(HWND hwnd,
@@ -371,7 +372,7 @@ std::optional<LRESULT> TrayManagerPlugin::HandleWindowProc(HWND hWnd,
   } else if (message == WM_COMMAND) {
     flutter::EncodableMap eventData = flutter::EncodableMap();
     eventData[flutter::EncodableValue("id")] =
-        flutter::EncodableValue((int)wParam);
+        flutter::EncodableValue(static_cast<int>(LOWORD(wParam)));
 
     channel->InvokeMethod("onTrayMenuItemClick",
                           std::make_unique<flutter::EncodableValue>(eventData));
@@ -439,7 +440,6 @@ void TrayManagerPlugin::SetIcon(
       std::get<std::string>(args.at(flutter::EncodableValue("iconPath")));
 
   tray_icon_path_ = iconPath;
-  speed_title_.clear();
 
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
 
@@ -482,6 +482,22 @@ void TrayManagerPlugin::_ApplyIcon() {
   niif.hWnd = nid.hWnd;
   niif.uID = nid.uID;
   niif.guidItem = GUID_NULL;
+}
+
+void TrayManagerPlugin::_UpdateToolTip() {
+  std::wstring tooltip = base_tooltip_;
+  if (!speed_title_.empty()) {
+    if (!tooltip.empty()) {
+      tooltip += L"\n";
+    }
+    tooltip += speed_title_;
+  }
+
+  nid.uFlags |= NIF_TIP;
+  StringCchCopyW(nid.szTip, _countof(nid.szTip), tooltip.c_str());
+  if (tray_icon_setted) {
+    Shell_NotifyIcon(NIM_MODIFY, &nid);
+  }
 }
 
 void TrayManagerPlugin::ApplyTemplateIcon(bool active) {
@@ -591,8 +607,7 @@ void TrayManagerPlugin::SetSpeedTitle(
   speed_title_ =
       L"↑ " + NormalizeSpeedNumber(static_cast<uint64_t>(*upload)) +
       L"\n↓ " + NormalizeSpeedNumber(static_cast<uint64_t>(*download));
-  speed_title_active_ = *active;
-  Shell_NotifyIcon(NIM_MODIFY, &nid);
+  _UpdateToolTip();
   result->Success(flutter::EncodableValue(true));
 }
 
@@ -600,7 +615,7 @@ void TrayManagerPlugin::ClearSpeedTitle(
     const flutter::MethodCall<flutter::EncodableValue>& method_call,
     std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
   speed_title_.clear();
-  Shell_NotifyIcon(NIM_MODIFY, &nid);
+  _UpdateToolTip();
   result->Success(flutter::EncodableValue(true));
 }
 
@@ -614,10 +629,8 @@ void TrayManagerPlugin::SetToolTip(
       std::get<std::string>(args.at(flutter::EncodableValue("toolTip")));
 
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-  nid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
-  StringCchCopy(nid.szTip, _countof(nid.szTip),
-                converter.from_bytes(toolTip).c_str());
-  Shell_NotifyIcon(NIM_MODIFY, &nid);
+  base_tooltip_ = converter.from_bytes(toolTip);
+  _UpdateToolTip();
 
   result->Success(flutter::EncodableValue(true));
 }
@@ -670,11 +683,14 @@ void TrayManagerPlugin::PopUpContextMenu(
   x = cursorPos.x;
   y = cursorPos.y;
 
-  if (bringAppToFront) {
-    SetForegroundWindow(hWnd);
+  if (bringAppToFront && IsIconic(hWnd)) {
+    ShowWindow(hWnd, SW_RESTORE);
   }
-  TrackPopupMenu(hMenu, TPM_BOTTOMALIGN | TPM_LEFTALIGN, static_cast<int>(x),
-                 static_cast<int>(y), 0, hWnd, NULL);
+  SetForegroundWindow(hWnd);
+  TrackPopupMenu(hMenu,
+                 TPM_BOTTOMALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON,
+                 static_cast<int>(x), static_cast<int>(y), 0, hWnd, nullptr);
+  PostMessage(hWnd, WM_NULL, 0, 0);
   // Fallback: ensure onMenuClose is sent if WM_MENUSELECT didn't trigger it
   if (is_menu_open_) {
     is_menu_open_ = false;

@@ -11,6 +11,19 @@ import 'package:bett_box/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+@visibleForTesting
+bool shouldHardRestartDesktopCoreOnProfileChange({
+  required bool isDesktop,
+  required bool profileChanged,
+  required bool isRunning,
+  required bool systemProxy,
+  required bool tunEnabled,
+}) {
+  return isDesktop &&
+      profileChanged &&
+      (isRunning || systemProxy || tunEnabled);
+}
+
 class ClashManager extends ConsumerStatefulWidget {
   final Widget child;
 
@@ -34,10 +47,18 @@ class _ClashContainerState extends ConsumerState<ClashManager>
     ref.listenManual(needSetupProvider, (prev, next) {
       if (prev != next) {
         final profileChanged = prev?.a != next.a;
+        final shouldHardRestart =
+            shouldHardRestartDesktopCoreOnProfileChange(
+              isDesktop: system.isDesktop,
+              profileChanged: profileChanged,
+              isRunning: globalState.isStart,
+              systemProxy: ref.read(networkSettingProvider).systemProxy,
+              tunEnabled: ref.read(patchClashConfigProvider).tun.enable,
+            );
         unawaited(
           globalState.appController
               .handleChangeProfile(
-                hardRestart: system.isDesktop && profileChanged,
+                hardRestart: shouldHardRestart,
               )
               .catchError((Object error, StackTrace stackTrace) {
                 commonPrint.log('Profile change failed: $error');

@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:bett_box/enum/enum.dart';
-import 'package:bett_box/models/config.dart';
+import 'package:bett_box/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -25,6 +25,19 @@ void main() {
 
       expect(restored.trayLeftClickBehavior, TrayClickBehavior.showMenu);
       expect(restored.trayRightClickBehavior, TrayClickBehavior.showPanel);
+    });
+  });
+
+  group('首次安装网络开关', () {
+    test('系统代理和虚拟网卡默认关闭', () {
+      expect(const VpnProps().systemProxy, isFalse);
+      expect(const NetworkProps().systemProxy, isFalse);
+      expect(defaultClashConfig.tun.enable, isFalse);
+    });
+
+    test('旧配置缺少系统代理字段时保持关闭', () {
+      expect(VpnProps.fromJson(const {}).systemProxy, isFalse);
+      expect(NetworkProps.fromJson(const {}).systemProxy, isFalse);
     });
   });
 }

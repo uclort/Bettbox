@@ -65,12 +65,13 @@
 - 桌面托盘提供系统代理、虚拟网卡、重启内核、重启软件、自动启动、亮屏锁、策略组和节点选择；macOS 与 Windows 使用同一套左右键行为配置，可分别设置为显示窗口或显示菜单。
 - Dock 图标完全跟随主窗口状态：窗口显示或最小化时显示，窗口关闭到托盘或静默启动时隐藏；不再提供“常驻 DOCK”开关，也不读取历史偏好。代码位于 `plugins/window_ext/macos/Classes/WindowExtPlugin.swift`、`macos/Runner/AppDelegate.swift` 与 `macos/Runner/MainFlutterWindow.swift`，策略映射测试位于 `macos/RunnerTests/RunnerTests.swift`。
 - macOS 与 Windows 均支持独立开启实时上传/下载速率；系统代理与虚拟网卡均关闭时立即归零并显示为未启用状态。
+- Windows 网速通过托盘悬浮 tooltip 展示，应用名称与实时上传/下载速率合并写入原生 `NOTIFYICONDATA.szTip`，图标刷新时保留当前速率；右键菜单遵循 Windows 前台窗口、`TrackPopupMenu` 与 `WM_NULL` 消息收尾流程，避免菜单闪现后立即消失。
 - macOS 与 Windows 共用模板图标：启用系统代理或虚拟网卡时高亮，未启用时使用 60% 中性灰渲染，配色和启停语义保持一致。Windows 移除“托盘反转”设置，历史配置继续保留但不再影响托盘。
 - 托盘一级菜单提供显示窗口、网络面板、模式、策略组、系统代理、虚拟网卡和重启内核；“显示窗口 / 网络面板 / 系统代理 / 虚拟网卡 / 重启内核 / 退出”使用 `⌘M / ⌘D / ⌘S / ⌘E / ⌘R / ⌘Q`。
 - 二级菜单父项只展开子菜单；节点测速结果使用独立右对齐列。
 - 首次安装特权工具后原位刷新托盘；从后台显示窗口或从托盘重启内核后主动同步最终运行状态。
 - 系统代理管理器只关闭当前 Bettbox 进程成功启用过的代理，避免误关 Surge 等其他软件的系统代理。
-- 代码位于 `lib/common/tray.dart`、`lib/common/utils.dart`、`lib/manager/tray_manager.dart`、`lib/providers/state.dart`、`plugins/tray_manager/macos/Classes/TrayIcon.swift`、`plugins/tray_manager/windows/tray_manager_plugin.cpp` 和 `plugins/proxy/lib/proxy.dart`；回归测试为 `test/common/tray_active_state_test.dart`、`test/plugins/tray_menu_open_state_test.dart` 与 `macos/RunnerTests/RunnerTests.swift`。
+- 代码位于 `lib/common/tray.dart`、`lib/common/utils.dart`、`lib/manager/tray_manager.dart`、`lib/providers/state.dart`、`plugins/tray_manager/macos/Classes/TrayIcon.swift`、`plugins/tray_manager/windows/tray_manager_plugin.cpp` 和 `plugins/proxy/lib/proxy.dart`；回归测试为 `test/common/tray_active_state_test.dart`、`test/plugins/tray_menu_open_state_test.dart`、`test/plugins/windows_tray_native_test.dart` 与 `macos/RunnerTests/RunnerTests.swift`。
 
 ### 隐藏策略组
 
@@ -102,10 +103,11 @@
 ### 统一启停交互
 
 - 桌面端系统代理或 TUN 任一开启即启动核心，两者均关闭即停止核心；设置页、快捷卡片和托盘开关都调用 `updateSystemProxy` / `updateTun` 联动方法。Windows、macOS 和 Linux 的 TUN 首次启动统一同步执行无 TUN 基线配置、管理员授权、必要的特权核心重启、监听启动和 TUN 配置应用，任一步失败都会停止监听并回滚 TUN 开关；系统代理仍开启时恢复无 TUN 核心，避免 UI 已开启但实际网络黑洞。桌面窗口展示不等待该同步安全链路完成，因此 Windows 开启 TUN 后重启应用仍会先显示窗口，再在后台事件循环中完成授权和网络就绪。
+- 首次安装默认关闭系统代理和 TUN；首次添加配置且两个网络开关均关闭时只加载配置，不执行桌面 Core 硬重启，避免配置刚落盘时出现 Core 异常退出。已有配置中显式保存的开关状态保持不变。
 - 桌面核心实际运行状态统一以 `globalState.isStart` 为准并同步到展示状态；Windows 系统代理调用串行执行，同时写入 WinINet 默认/RAS 连接和当前用户 `Internet Settings` 注册表，任一主通道成功即可完成启停，设置刷新尽力执行，避免特定 Windows 环境拒绝默认连接 API 时无法开启代理。启动配置要求开启系统代理时，初始化阶段延后首次同步，等待核心监听就绪后直接启用，不再先关闭再串行开启；配置要求关闭时仍立即清理残留代理。
 - 移除桌面独立启动/停止入口、启动热键和“联动开关”设置；托盘保留网络面板、系统代理、TUN、重启内核等入口。
 - Android 首页保留一个悬浮总开关，并避让底部导航与页面滚动内容；启动时间卡片仅作为非独立启停的运行时长展示，不再提供桌面独立启停操作。
-- 回归测试为 `test/controller/macos_tun_startup_test.dart`。
+- 回归测试为 `test/controller/macos_tun_startup_test.dart`、`test/manager/clash_manager_test.dart` 与 `test/models/vpn_props_test.dart`。
 
 ### 自定义构建与发布
 

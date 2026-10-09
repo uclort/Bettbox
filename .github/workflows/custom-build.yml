@@ -655,7 +655,12 @@ jobs:
           flutter test \
             test/common/tray_active_state_test.dart \
             test/controller/macos_tun_startup_test.dart \
-            test/manager/proxy_manager_test.dart
+            test/manager/clash_manager_test.dart \
+            test/manager/proxy_manager_test.dart \
+            test/models/tray_speed_config_test.dart \
+            test/models/vpn_props_test.dart \
+            test/plugins/tray_menu_open_state_test.dart \
+            test/plugins/windows_tray_native_test.dart
 
       - name: 校验 Windows 安装启动器运行库
         if: matrix.platform == 'windows'
