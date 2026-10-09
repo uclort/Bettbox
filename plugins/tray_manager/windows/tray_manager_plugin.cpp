@@ -740,14 +740,6 @@ void TrayManagerPlugin::PopUpContextMenu(
 
   HWND hWnd = GetMainWindow();
 
-  double x, y;
-
-  // RECT rect;
-  // Shell_NotifyIconGetRect(&niif, &rect);
-
-  // x = rect.left + ((rect.right - rect.left) / 2);
-  // y = rect.top + ((rect.bottom - rect.top) / 2);
-
   ShowContextMenu(hWnd, bringAppToFront);
   result->Success(flutter::EncodableValue(true));
 }
