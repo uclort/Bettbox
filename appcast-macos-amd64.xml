@@ -6,13 +6,13 @@
     <description>Bettbox 自定义版本更新源</description>
     <language>zh-CN</language>
     <item>
-      <title>Bettbox 1.19.3+2090000174</title>
-      <pubDate>Fri, 09 Oct 2026 07:58:35 +0000</pubDate>
-      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000174-r20261009074114-df69a2bab8c2-2c8fb62cd4c6</link>
-      <sparkle:releaseNotesLink>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000174-r20261009074114-df69a2bab8c2-2c8fb62cd4c6</sparkle:releaseNotesLink>
-      <sparkle:version>2090000174</sparkle:version>
-      <sparkle:shortVersionString>1.19.3+2090000174</sparkle:shortVersionString>
-      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.3+2090000174-r20261009074114-df69a2bab8c2-2c8fb62cd4c6/Bettbox-1.19.3-macos-amd64.dmg" length="73683009" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="kHCGMkjRJHH6+k5xql/le9+TzgYEGRQHtYO/AnAX42WFwJYAmwTpzWpfBoGiVSxlvlChYhWx0nzU5Qg8yXP3AA==" />
+      <title>Bettbox 1.19.3+2090000176</title>
+      <pubDate>Fri, 09 Oct 2026 08:36:25 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000176-r20261009082310-37cb206c5856-2c8fb62cd4c6</link>
+      <sparkle:releaseNotesLink>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000176-r20261009082310-37cb206c5856-2c8fb62cd4c6</sparkle:releaseNotesLink>
+      <sparkle:version>2090000176</sparkle:version>
+      <sparkle:shortVersionString>1.19.3+2090000176</sparkle:shortVersionString>
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.3+2090000176-r20261009082310-37cb206c5856-2c8fb62cd4c6/Bettbox-1.19.3-macos-amd64.dmg" length="73682606" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="p979RAInZ/G1Zw+psP6K9+915k0RSa64h4oCZdMijkRdZOjKzZfRjEZaLjDCpwaxLOA7MMEUEJCL/X860hazAg==" />
     </item>
   </channel>
 </rss>
