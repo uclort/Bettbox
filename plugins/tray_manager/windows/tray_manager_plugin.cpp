@@ -143,6 +143,8 @@ class TrayManagerPlugin : public flutter::Plugin {
   std::wstring speed_title_;
   bool tray_icon_active_ = true;
   bool tray_icon_dark_ = false;
+  bool left_click_shows_menu_ = false;
+  bool right_click_shows_menu_ = true;
 
   // The ID of the WindowProc delegate registration.
   int window_proc_id = -1;
@@ -180,9 +182,13 @@ class TrayManagerPlugin : public flutter::Plugin {
   void TrayManagerPlugin::SetContextMenu(
       const flutter::MethodCall<flutter::EncodableValue>& method_call,
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
+  void TrayManagerPlugin::SetNativeMenuClickBehavior(
+      const flutter::MethodCall<flutter::EncodableValue>& method_call,
+      std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
   void TrayManagerPlugin::PopUpContextMenu(
       const flutter::MethodCall<flutter::EncodableValue>& method_call,
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
+  void TrayManagerPlugin::ShowContextMenu(HWND hWnd, bool bringAppToFront);
   void TrayManagerPlugin::GetBounds(
       const flutter::MethodCall<flutter::EncodableValue>& method_call,
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
@@ -380,10 +386,18 @@ std::optional<LRESULT> TrayManagerPlugin::HandleWindowProc(HWND hWnd,
   } else if (message == WM_MYMESSAGE) {
     switch (lParam) {
       case WM_LBUTTONUP:
+        if (left_click_shows_menu_) {
+          ShowContextMenu(hWnd, true);
+          break;
+        }
         channel->InvokeMethod("onTrayIconMouseDown",
                               std::make_unique<flutter::EncodableValue>());
         break;
       case WM_RBUTTONUP:
+        if (right_click_shows_menu_) {
+          ShowContextMenu(hWnd, true);
+          break;
+        }
         channel->InvokeMethod("onTrayIconRightMouseDown",
                               std::make_unique<flutter::EncodableValue>());
         break;
@@ -668,6 +682,53 @@ void TrayManagerPlugin::SetContextMenu(
   result->Success(flutter::EncodableValue(true));
 }
 
+void TrayManagerPlugin::SetNativeMenuClickBehavior(
+    const flutter::MethodCall<flutter::EncodableValue>& method_call,
+    std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
+  const flutter::EncodableMap& args =
+      std::get<flutter::EncodableMap>(*method_call.arguments());
+
+  auto* left = std::get_if<bool>(ValueOrNull(args, "left"));
+  auto* right = std::get_if<bool>(ValueOrNull(args, "right"));
+  if (left != nullptr) {
+    left_click_shows_menu_ = *left;
+  }
+  if (right != nullptr) {
+    right_click_shows_menu_ = *right;
+  }
+
+  result->Success(flutter::EncodableValue(true));
+}
+
+void TrayManagerPlugin::ShowContextMenu(HWND hWnd, bool bringAppToFront) {
+  if (hWnd == nullptr) {
+    hWnd = GetMainWindow();
+  }
+  if (hWnd == nullptr) {
+    return;
+  }
+
+  POINT cursorPos;
+  GetCursorPos(&cursorPos);
+
+  if (bringAppToFront && IsIconic(hWnd)) {
+    ShowWindow(hWnd, SW_RESTORE);
+  }
+  SetForegroundWindow(hWnd);
+  TrackPopupMenu(hMenu,
+                 TPM_BOTTOMALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON,
+                 cursorPos.x, cursorPos.y, 0, hWnd, nullptr);
+  PostMessage(hWnd, WM_NULL, 0, 0);
+
+  // WM_MENUSELECT normally resets this; retain a fallback for hosts that omit
+  // that notification while dismissing a context menu.
+  if (is_menu_open_) {
+    is_menu_open_ = false;
+    channel->InvokeMethod("onMenuClose",
+                          std::make_unique<flutter::EncodableValue>());
+  }
+}
+
 void TrayManagerPlugin::PopUpContextMenu(
     const flutter::MethodCall<flutter::EncodableValue>& method_call,
     std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
@@ -687,25 +748,7 @@ void TrayManagerPlugin::PopUpContextMenu(
   // x = rect.left + ((rect.right - rect.left) / 2);
   // y = rect.top + ((rect.bottom - rect.top) / 2);
 
-  POINT cursorPos;
-  GetCursorPos(&cursorPos);
-  x = cursorPos.x;
-  y = cursorPos.y;
-
-  if (bringAppToFront && IsIconic(hWnd)) {
-    ShowWindow(hWnd, SW_RESTORE);
-  }
-  SetForegroundWindow(hWnd);
-  TrackPopupMenu(hMenu,
-                 TPM_BOTTOMALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON,
-                 static_cast<int>(x), static_cast<int>(y), 0, hWnd, nullptr);
-  PostMessage(hWnd, WM_NULL, 0, 0);
-  // Fallback: ensure onMenuClose is sent if WM_MENUSELECT didn't trigger it
-  if (is_menu_open_) {
-    is_menu_open_ = false;
-    channel->InvokeMethod("onMenuClose",
-                          std::make_unique<flutter::EncodableValue>());
-  }
+  ShowContextMenu(hWnd, bringAppToFront);
   result->Success(flutter::EncodableValue(true));
 }
 
@@ -758,6 +801,9 @@ void TrayManagerPlugin::HandleMethodCall(
     SetToolTip(method_call, std::move(result));
   } else if (method_call.method_name().compare("setContextMenu") == 0) {
     SetContextMenu(method_call, std::move(result));
+  } else if (method_call.method_name().compare("setNativeMenuClickBehavior") ==
+             0) {
+    SetNativeMenuClickBehavior(method_call, std::move(result));
   } else if (method_call.method_name().compare("popUpContextMenu") == 0) {
     PopUpContextMenu(method_call, std::move(result));
   } else if (method_call.method_name().compare("getBounds") == 0) {

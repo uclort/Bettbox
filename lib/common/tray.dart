@@ -136,6 +136,12 @@ class Tray {
       _traySpeedEnabled = trayState.enableTraySpeed;
       _trayTrafficActive =
           trayState.isStart && (trayState.systemProxy || trayState.tunEnable);
+      if (system.isWindows) {
+        await trayManager.setNativeMenuClickBehavior(
+          left: trayState.trayLeftClickBehavior == TrayClickBehavior.showMenu,
+          right: trayState.trayRightClickBehavior == TrayClickBehavior.showMenu,
+        );
+      }
       if (!silent && !Platform.isLinux) {
         await _updateSystemTray(
           brightness: trayState.brightness,

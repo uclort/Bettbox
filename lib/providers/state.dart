@@ -243,6 +243,8 @@ TrayState trayState(Ref ref) {
     selectedMap: selectedMap,
     wakelockEnabled: wakelockEnabled,
     enableTraySpeed: vpnProps.enableTraySpeed,
+    trayLeftClickBehavior: vpnProps.trayLeftClickBehavior,
+    trayRightClickBehavior: vpnProps.trayRightClickBehavior,
   );
 }
 

@@ -454,6 +454,16 @@ class AppController {
     }
   }
 
+  Future<bool> isDesktopCoreHealthy() async {
+    if (!system.isDesktop) return true;
+    try {
+      return await clashService!.checkCoreHealth();
+    } catch (e) {
+      commonPrint.log('桌面核心健康检查失败：$e');
+      return false;
+    }
+  }
+
   Future<void> _fastStart() async {
     final currentProfile = _ref.read(currentProfileProvider);
     if (currentProfile == null) {
@@ -2144,7 +2154,10 @@ class AppController {
       systemProxy: _ref.read(networkSettingProvider).systemProxy,
       tunEnabled: target,
     );
-    final isRunning = globalState.isStart;
+    // `isStart` can remain stale after the Core process or IPC has died.
+    // Requiring a live Core here routes the request through _fastStart, which
+    // owns the recovery/restart path instead of writing to a dead socket.
+    final isRunning = globalState.isStart && await isDesktopCoreHealthy();
     try {
       if (shouldRun != isRunning) {
         await updateStatus(shouldRun);
@@ -2178,7 +2191,7 @@ class AppController {
       systemProxy: target,
       tunEnabled: _ref.read(patchClashConfigProvider).tun.enable,
     );
-    final isRunning = globalState.isStart;
+    final isRunning = globalState.isStart && await isDesktopCoreHealthy();
     try {
       if (shouldRun != isRunning) await updateStatus(shouldRun);
     } finally {

@@ -338,6 +338,20 @@ class TrayManager {
     await _channel.invokeMethod('setContextMenu', arguments);
   }
 
+  /// Configures which tray buttons display the cached native menu directly.
+  ///
+  /// Windows must show the menu during the Shell notification callback; a
+  /// Dart round-trip can miss the foreground-window timing for the popup.
+  Future<void> setNativeMenuClickBehavior({
+    bool left = false,
+    bool right = false,
+  }) async {
+    await _channel.invokeMethod('setNativeMenuClickBehavior', {
+      'left': left,
+      'right': right,
+    });
+  }
+
   /// Pops up the context menu of the tray icon.
   ///
   /// [bringAppToFront] If true, the app will be brought to the front when the

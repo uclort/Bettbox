@@ -1,3 +1,9 @@
+### 2026-10-09 修复 TUN 失效 IPC 超时与 Windows 托盘直弹
+
+- 系统代理和 TUN 开关不再只依赖可能滞后的 `globalState.isStart`；执行前会检查 Core IPC 健康，Core 已退出或控制连接已断时自动进入快速启动恢复链路，修复开关虚拟网卡出现 `TimeoutException: Core socket connection timed out` 且无法使用的问题。
+- Windows 托盘左右键“显示菜单”改为在原生 Shell 点击回调内直接弹出缓存菜单，不再经过 Dart 往返；原生侧保存统一左右键行为配置，保留与 macOS 一致的自定义点击效果。
+- 新增网络开关真实健康状态、Windows 原生菜单直弹与左右键配置同步的回归检查。
+
 ### 2026-10-09 修复 Windows Core 启动回滚与托盘菜单闪退
 
 - Windows 托盘左右键配置为“显示菜单”时改为直接弹出已经缓存的原生菜单，不再在 Shell 点击回调中异步重建，修复右键菜单闪一下后消失；网速 tooltip 继续保留，两者不存在原生冲突。

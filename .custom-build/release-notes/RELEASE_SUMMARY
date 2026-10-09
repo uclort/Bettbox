@@ -1,1 +1,5 @@
-修复 Windows Core 启动失败后的网络状态回滚、托盘菜单闪退与网络面板连接提示
+### 2026-10-09 修复 TUN 失效 IPC 超时与 Windows 托盘直弹
+
+- 系统代理和 TUN 开关在 Core IPC 失效时自动走快速启动恢复链路，修复开关虚拟网卡出现 `TimeoutException: Core socket connection timed out`。
+- Windows 托盘左右键显示菜单改为原生 Shell 点击回调内直接弹出，不再经过 Dart 往返，同时保留统一自定义点击行为。
+- 新增 Core 健康状态、Windows 原生菜单直弹和左右键配置同步回归检查。

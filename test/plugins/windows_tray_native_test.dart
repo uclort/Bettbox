@@ -44,13 +44,25 @@ void main() {
   });
 
   test('Windows 右键菜单按系统要求激活并完成消息循环', () {
+    final handleBlock = RegExp(
+      r'std::optional<LRESULT> TrayManagerPlugin::HandleWindowProc[\s\S]*?'
+      r'void TrayManagerPlugin::SetContextMenu',
+      multiLine: true,
+    ).firstMatch(source)?.group(0);
+
     final popupBlock = RegExp(
-      r'^void TrayManagerPlugin::PopUpContextMenu[\s\S]*?'
+      r'^void TrayManagerPlugin::SetNativeMenuClickBehavior[\s\S]*?'
+      r'void TrayManagerPlugin::PopUpContextMenu[\s\S]*?'
       r'void TrayManagerPlugin::GetBounds',
       multiLine: true,
     ).firstMatch(source)?.group(0);
 
+    expect(handleBlock, isNotNull);
+    expect(handleBlock, contains('case WM_RBUTTONUP:'));
+    expect(handleBlock, contains('if (right_click_shows_menu_)'));
+    expect(handleBlock, contains('ShowContextMenu(hWnd, true);'));
     expect(popupBlock, isNotNull);
+    expect(popupBlock, contains('setNativeMenuClickBehavior'));
     expect(popupBlock, contains('SetForegroundWindow(hWnd);'));
     expect(popupBlock, contains('TPM_RIGHTBUTTON'));
     expect(popupBlock, contains('PostMessage(hWnd, WM_NULL, 0, 0);'));
@@ -60,21 +72,20 @@ void main() {
     );
   });
 
-  test('Windows 托盘点击直接弹出缓存菜单，不在点击回调中异步重建', () {
-    final clickBlock = RegExp(
-      r'Future<void> _handleTrayIconClick[\s\S]*?'
-      r'@override\s+void onTrayIconRightMouseDown',
-    ).firstMatch(trayManagerSource)?.group(0);
+  test('Windows 托盘原生点击行为跟随统一配置', () {
+    final updateBlock = RegExp(
+      r'Future<void> _doUpdate\(\{[\s\S]*?'
+      r'if \(!silent && !Platform\.isLinux\)',
+      multiLine: true,
+    ).firstMatch(File('lib/common/tray.dart').readAsStringSync())?.group(0);
 
-    expect(clickBlock, isNotNull);
-    expect(clickBlock, contains('if (system.isWindows)'));
+    expect(updateBlock, isNotNull);
+    expect(updateBlock, contains('setNativeMenuClickBehavior'));
+    expect(updateBlock, contains('TrayClickBehavior.showMenu'));
     expect(
-      clickBlock,
-      contains('popUpContextMenu(bringAppToFront: true)'),
-    );
-    expect(
-      clickBlock,
-      contains('globalState.appController.showTrayMenu()'),
+      File('plugins/tray_manager/lib/src/tray_manager.dart')
+          .readAsStringSync(),
+      contains('Future<void> setNativeMenuClickBehavior'),
     );
   });
 
@@ -87,6 +98,21 @@ void main() {
     expect(
       controllerSource,
       contains('系统代理和虚拟网卡已自动关闭'),
+    );
+  });
+
+  test('网络开关使用真实 Core 健康状态而非陈旧运行标记', () {
+    final updateTunBlock = RegExp(
+      r'Future<void> updateTun\(\[bool\? enabled\]\) async \{[\s\S]*?'
+      r'Future<void> updateSystemProxy',
+      multiLine: true,
+    ).firstMatch(controllerSource)?.group(0);
+
+    expect(updateTunBlock, isNotNull);
+    expect(updateTunBlock, contains('await isDesktopCoreHealthy()'));
+    expect(
+      controllerSource,
+      contains('return await clashService!.checkCoreHealth();'),
     );
   });
 
