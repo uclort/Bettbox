@@ -45,8 +45,8 @@ void main() {
 
   test('Windows 右键菜单按系统要求激活并完成消息循环', () {
     final handleBlock = RegExp(
-      r'std::optional<LRESULT> TrayManagerPlugin::HandleWindowProc[\s\S]*?'
-      r'void TrayManagerPlugin::SetContextMenu',
+      r'std::optional<LRESULT> TrayManagerPlugin::HandleWindowProc\(HWND hWnd,[\s\S]*?'
+      r'void TrayManagerPlugin::SetNativeMenuClickBehavior',
       multiLine: true,
     ).firstMatch(source)?.group(0);
 
