@@ -137,7 +137,7 @@ class Tray {
       _trayTrafficActive =
           trayState.isStart && (trayState.systemProxy || trayState.tunEnable);
       if (system.isWindows) {
-        final vpnProps = globalState.config.vpn;
+        final vpnProps = globalState.config.vpnProps;
         await trayManager.setNativeMenuClickBehavior(
           left: vpnProps.trayLeftClickBehavior == TrayClickBehavior.showMenu,
           right: vpnProps.trayRightClickBehavior == TrayClickBehavior.showMenu,
