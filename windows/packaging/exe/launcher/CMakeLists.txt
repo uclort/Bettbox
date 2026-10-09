@@ -36,6 +36,11 @@ target_compile_definitions(BettboxInstallerLauncher PRIVATE
   "BETTBOX_VERSION_PATCH=${BETTBOX_VERSION_PATCH}"
   "BETTBOX_VERSION_STRING=\"${BETTBOX_LAUNCHER_VERSION}\""
 )
+if(MSVC)
+  target_compile_options(BettboxInstallerLauncher PRIVATE
+    "$<$<CONFIG:Release>:/MT>"
+  )
+endif()
 target_link_libraries(BettboxInstallerLauncher PRIVATE shell32.lib)
 
 set_target_properties(BettboxInstallerLauncher PROPERTIES

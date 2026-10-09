@@ -582,6 +582,16 @@ jobs:
             test/controller/macos_tun_startup_test.dart \
             test/manager/proxy_manager_test.dart
 
+      - name: 校验 Windows 安装启动器运行库
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $launcherCmake = Get-Content "windows/packaging/exe/launcher/CMakeLists.txt" -Raw
+          if (-not $launcherCmake.Contains('$<$<CONFIG:Release>:/MT>')) {
+            throw "Windows 安装启动器未静态链接 MSVC 运行库。"
+          }
+
       - name: 构建 Android arm64-v8a
         if: matrix.platform == 'android'
         shell: bash
