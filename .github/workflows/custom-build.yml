@@ -413,6 +413,7 @@ jobs:
           CUSTOM_MIHOMO_COMMIT: ${{ needs.inspect.outputs.custom_mihomo_commit }}
         run: |
           $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
           if (-not $env:CUSTOM_MIHOMO_READ_KEY) {
             throw "缺少 custom-mihomo 只读 SSH 密钥。"
           }
@@ -420,7 +421,15 @@ jobs:
           $checkoutDir = ".custom-build/runtime/custom-mihomo"
           $keyPath = Join-Path $env:RUNNER_TEMP "custom-mihomo-arm64-key"
           New-Item -ItemType Directory -Force (Split-Path $checkoutDir) | Out-Null
-          Set-Content -Path $keyPath -Value $env:CUSTOM_MIHOMO_READ_KEY -NoNewline
+          $privateKey = $env:CUSTOM_MIHOMO_READ_KEY.Replace("`r`n", "`n")
+          if (-not $privateKey.EndsWith("`n")) {
+            $privateKey += "`n"
+          }
+          [IO.File]::WriteAllText(
+            $keyPath,
+            $privateKey,
+            [Text.UTF8Encoding]::new($false)
+          )
           & icacls.exe $keyPath /inheritance:r | Out-Null
           & icacls.exe $keyPath /grant:r "$($env:USERNAME):(R)" | Out-Null
           if ($LASTEXITCODE -ne 0) {
