@@ -62,7 +62,10 @@ void main() {
     expect(handleBlock, contains('if (right_click_shows_menu_)'));
     expect(handleBlock, contains('ShowContextMenu(hWnd, true);'));
     expect(popupBlock, isNotNull);
-    expect(popupBlock, contains('setNativeMenuClickBehavior'));
+    expect(
+      source,
+      contains('"setNativeMenuClickBehavior"'),
+    );
     expect(popupBlock, contains('SetForegroundWindow(hWnd);'));
     expect(popupBlock, contains('TPM_RIGHTBUTTON'));
     expect(popupBlock, contains('PostMessage(hWnd, WM_NULL, 0, 0);'));
