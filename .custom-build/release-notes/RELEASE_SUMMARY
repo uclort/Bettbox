@@ -1,5 +1,6 @@
-### 2026-10-09 修复 TUN 失效 IPC 超时与 Windows 托盘直弹
+### 2026-10-10 根治 Windows 托盘菜单被网速显示阻断
 
-- 系统代理和 TUN 开关在 Core IPC 失效时自动走快速启动恢复链路，修复开关虚拟网卡出现 `TimeoutException: Core socket connection timed out`。
-- Windows 托盘左右键显示菜单改为原生 Shell 点击回调内直接弹出，不再经过 Dart 往返，同时保留统一自定义点击行为。
-- 新增 Core 健康状态、Windows 原生菜单直弹和左右键配置同步回归检查。
+- 修复 Flutter 常见网速值编码为 `int32`、Windows 插件只读取 `int64` 导致托盘菜单初始化被异常中断的问题，网速更新失败不再影响菜单。
+- Windows 托盘使用独立隐藏消息窗口承载点击与 `TrackPopupMenuEx`，菜单打开期间冻结结构和回调 ID，关闭后再应用最新状态。
+- 修复模板 PNG 先按 ICO 注册空图标的问题，并新增 Parallels Windows 11 A/B 复现、真实 Win32 菜单显示及生命周期回归。
+- Parallels 实测：ARM64 正式包副本替换修复托盘 DLL 后，网速开启时右键菜单、隐藏窗口、持续显示、左键恢复及菜单项实际鼠标点击均通过；Flutter 51 项、Windows x64/ARM64 原生测试通过。

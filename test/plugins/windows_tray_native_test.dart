@@ -9,10 +9,11 @@ void main() {
   final trayManagerSource = File(
     'lib/manager/tray_manager.dart',
   ).readAsStringSync();
-  final controllerSource = File('lib/controller.dart').readAsStringSync();
-  final clashServiceSource = File(
-    'lib/clash/service.dart',
+  final menuHostSource = File(
+    'plugins/tray_manager/windows/tray_menu_host.h',
   ).readAsStringSync();
+  final controllerSource = File('lib/controller.dart').readAsStringSync();
+  final clashServiceSource = File('lib/clash/service.dart').readAsStringSync();
   final applicationSource = File('lib/application.dart').readAsStringSync();
 
   test('Windows 托盘网速写入 tooltip 并保留应用名称', () {
@@ -60,19 +61,28 @@ void main() {
     expect(handleBlock, isNotNull);
     expect(handleBlock, contains('case WM_RBUTTONUP:'));
     expect(handleBlock, contains('if (right_click_shows_menu_)'));
-    expect(handleBlock, contains('ShowContextMenu(hWnd, true);'));
+    expect(handleBlock, contains('ShowContextMenu();'));
     expect(popupBlock, isNotNull);
-    expect(
-      source,
-      contains('"setNativeMenuClickBehavior"'),
-    );
-    expect(popupBlock, contains('SetForegroundWindow(hWnd);'));
-    expect(popupBlock, contains('TPM_RIGHTBUTTON'));
-    expect(popupBlock, contains('PostMessage(hWnd, WM_NULL, 0, 0);'));
-    expect(
-      source,
-      contains('static_cast<int>(LOWORD(wParam))'),
-    );
+    expect(source, contains('"setNativeMenuClickBehavior"'));
+    expect(menuHostSource, contains('SetForegroundWindow(window_);'));
+    expect(menuHostSource, contains('TPM_RIGHTBUTTON'));
+    expect(menuHostSource, contains('TPM_RETURNCMD | TPM_NONOTIFY'));
+    expect(menuHostSource, contains('PostMessageW(window_, WM_NULL, 0, 0);'));
+    expect(source, contains('nid.hWnd = menu_host_->window();'));
+    expect(popupBlock, contains('static_cast<int>(command)'));
+    expect(popupBlock, isNot(contains('ShowWindow(')));
+  });
+
+  test('Windows 网速同时接受 32 位和 64 位编码且失败不阻断菜单', () {
+    expect(source, contains('ReadInteger(ValueOrNull(args, "upload"))'));
+    expect(source, contains('ReadInteger(ValueOrNull(args, "download"))'));
+    final integerSource = File(
+      'plugins/tray_manager/windows/tray_integer.h',
+    ).readAsStringSync();
+    expect(integerSource, contains('std::get_if<int32_t>'));
+    expect(integerSource, contains('std::get_if<int64_t>'));
+    expect(source, contains('if (is_menu_open_ && !should_keep_open)'));
+    expect(source, contains('pending_menu_ = args;'));
   });
 
   test('Windows 托盘原生点击行为跟随统一配置', () {
@@ -86,8 +96,7 @@ void main() {
     expect(updateBlock, contains('setNativeMenuClickBehavior'));
     expect(updateBlock, contains('TrayClickBehavior.showMenu'));
     expect(
-      File('plugins/tray_manager/lib/src/tray_manager.dart')
-          .readAsStringSync(),
+      File('plugins/tray_manager/lib/src/tray_manager.dart').readAsStringSync(),
       contains('Future<void> setNativeMenuClickBehavior'),
     );
   });
@@ -98,10 +107,7 @@ void main() {
       controllerSource,
       contains('verifyCoreReady: () => clashService!.checkCoreHealth()'),
     );
-    expect(
-      controllerSource,
-      contains('系统代理和虚拟网卡已自动关闭'),
-    );
+    expect(controllerSource, contains('系统代理和虚拟网卡已自动关闭'));
   });
 
   test('网络开关使用真实 Core 健康状态而非陈旧运行标记', () {
@@ -125,10 +131,7 @@ void main() {
       clashServiceSource,
       contains("_notifyUnexpectedExit(details ?? 'BettboxCore 控制连接意外断开')"),
     );
-    expect(
-      clashServiceSource,
-      contains('BettboxCore 启动超时，未建立控制连接'),
-    );
+    expect(clashServiceSource, contains('BettboxCore 启动超时，未建立控制连接'));
   });
 
   test('网络面板控制端在应用初始化前启动', () {

@@ -647,6 +647,21 @@ jobs:
           dart windows/packaging/patch_auto_updater_windows.dart \
             --arch=${{ matrix.arch }}
 
+      - name: 回归测试 Windows 原生托盘菜单
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        timeout-minutes: 3
+        run: |
+          $ErrorActionPreference = "Stop"
+          $architecture = if ("${{ matrix.arch }}" -eq "arm64") { "ARM64" } else { "x64" }
+          $testBuild = Join-Path $env:RUNNER_TEMP "tray-native-tests"
+          cmake -S plugins/tray_manager/windows/test -B $testBuild -A $architecture
+          if ($LASTEXITCODE -ne 0) { throw "托盘原生测试配置失败" }
+          cmake --build $testBuild --config Debug
+          if ($LASTEXITCODE -ne 0) { throw "托盘原生测试编译失败" }
+          ctest --test-dir $testBuild -C Debug --output-on-failure --timeout 15
+          if ($LASTEXITCODE -ne 0) { throw "托盘原生菜单显示/整数编码测试失败" }
+
       - name: 回归测试 Windows 桌面网络逻辑
         if: matrix.platform == 'windows'
         shell: bash
@@ -660,7 +675,8 @@ jobs:
             test/models/tray_speed_config_test.dart \
             test/models/vpn_props_test.dart \
             test/plugins/tray_menu_open_state_test.dart \
-            test/plugins/windows_tray_native_test.dart
+            test/plugins/windows_tray_native_test.dart \
+            test/plugins/windows_tray_menu_lifecycle_test.dart
 
       - name: 校验 Windows 安装启动器运行库
         if: matrix.platform == 'windows'

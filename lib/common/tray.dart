@@ -72,18 +72,12 @@ class Tray {
       _lastDisplayedActive = null;
     }
     await trayManager.setIcon(
-      utils.getTrayIconPath(
-        brightness: effectiveBrightness,
-        isStart: isStart,
-      ),
+      utils.getTrayIconPath(brightness: effectiveBrightness, isStart: isStart),
       isTemplate: _supportsTrayTemplate,
       id: AppIdentity.compactName,
     );
     if (_supportsTrayTemplate) {
-      await trayManager.setActive(
-        isStart,
-        brightness: effectiveBrightness,
-      );
+      await trayManager.setActive(isStart, brightness: effectiveBrightness);
     }
     if (!Platform.isLinux) {
       await trayManager.setToolTip(appName);
@@ -144,11 +138,15 @@ class Tray {
         );
       }
       if (!silent && !Platform.isLinux) {
-        await _updateSystemTray(
-          brightness: trayState.brightness,
-          isStart: _trayTrafficActive,
-          force: focus,
-        );
+        try {
+          await _updateSystemTray(
+            brightness: trayState.brightness,
+            isStart: _trayTrafficActive,
+            force: focus && !(system.isWindows && trayManager.isMenuOpen),
+          );
+        } on PlatformException catch (error) {
+          commonPrint.log('更新托盘图标失败：$error');
+        }
       }
       await _syncSpeedTitle();
       if (system.isMacOS && !prepareContextMenu && !trayManager.isMenuOpen) {
@@ -339,7 +337,8 @@ class Tray {
       );
       menuItems.add(exitMenuItem);
       final menu = Menu(items: menuItems);
-      final keepMenuOpen = silent || (system.isMacOS && trayManager.isMenuOpen);
+      final keepMenuOpen =
+          silent || (_supportsTrayTemplate && trayManager.isMenuOpen);
       await trayManager.setContextMenu(
         menu,
         keepMenuOpen: keepMenuOpen,
@@ -389,7 +388,12 @@ class Tray {
       if (!_isSpeedTitleVisible) {
         return;
       }
-      await trayManager.clearSpeedTitle();
+      try {
+        await trayManager.clearSpeedTitle();
+      } on PlatformException catch (error) {
+        commonPrint.log('清除托盘网速失败：$error');
+        return;
+      }
       _isSpeedTitleVisible = false;
       _lastDisplayedUpload = null;
       _lastDisplayedDownload = null;
@@ -412,11 +416,17 @@ class Tray {
         _lastDisplayedActive == _trayTrafficActive) {
       return;
     }
-    await trayManager.setSpeedTitle(
-      upload: upload,
-      download: download,
-      active: _trayTrafficActive,
-    );
+    try {
+      await trayManager.setSpeedTitle(
+        upload: upload,
+        download: download,
+        active: _trayTrafficActive,
+      );
+    } on PlatformException catch (error) {
+      // BETTBOX-CUSTOM: 网速属于装饰能力，失败不能阻断原生菜单初始化。
+      commonPrint.log('更新托盘网速失败：$error');
+      return;
+    }
     _isSpeedTitleVisible = true;
     _lastDisplayedUpload = upload;
     _lastDisplayedDownload = download;

@@ -22,6 +22,9 @@
 #include <memory>
 #include <sstream>
 
+#include "tray_integer.h"
+#include "tray_menu_host.h"
+
 #pragma comment(lib, "gdiplus.lib")
 
 #define WM_MYMESSAGE (WM_USER + 1)
@@ -145,6 +148,8 @@ class TrayManagerPlugin : public flutter::Plugin {
   bool tray_icon_dark_ = false;
   bool left_click_shows_menu_ = false;
   bool right_click_shows_menu_ = true;
+  std::unique_ptr<tray_manager::TrayMenuHost> menu_host_;
+  std::optional<flutter::EncodableMap> pending_menu_;
 
   // The ID of the WindowProc delegate registration.
   int window_proc_id = -1;
@@ -159,7 +164,6 @@ class TrayManagerPlugin : public flutter::Plugin {
                                                              UINT message,
                                                              WPARAM wparam,
                                                              LPARAM lparam);
-  HWND TrayManagerPlugin::GetMainWindow();
   void TrayManagerPlugin::ApplyTemplateIcon(bool active, bool isDark);
   void TrayManagerPlugin::Destroy(
       const flutter::MethodCall<flutter::EncodableValue>& method_call,
@@ -188,7 +192,7 @@ class TrayManagerPlugin : public flutter::Plugin {
   void TrayManagerPlugin::PopUpContextMenu(
       const flutter::MethodCall<flutter::EncodableValue>& method_call,
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
-  void TrayManagerPlugin::ShowContextMenu(HWND hWnd, bool bringAppToFront);
+  bool TrayManagerPlugin::ShowContextMenu();
   void TrayManagerPlugin::GetBounds(
       const flutter::MethodCall<flutter::EncodableValue>& method_call,
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
@@ -226,6 +230,10 @@ void TrayManagerPlugin::RegisterWithRegistrar(
 
 TrayManagerPlugin::TrayManagerPlugin(flutter::PluginRegistrarWindows* registrar)
     : registrar(registrar) {
+  menu_host_ = std::make_unique<tray_manager::TrayMenuHost>(
+      [this](HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
+        HandleWindowProc(hwnd, message, wparam, lparam);
+      });
   window_proc_id = registrar->RegisterTopLevelWindowProcDelegate(
       [this](HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
         return HandleWindowProc(hwnd, message, wparam, lparam);
@@ -358,36 +366,11 @@ std::optional<LRESULT> TrayManagerPlugin::HandleWindowProc(HWND hWnd,
       nid.hIcon = nullptr;
     }
     tray_icon_setted = false;
-  } else if (message == WM_INITMENUPOPUP) {
-    HMENU hmenu = (HMENU)wParam;
-    if (hmenu == hMenu && !is_menu_open_) {
-      is_menu_open_ = true;
-      channel->InvokeMethod("onMenuOpen",
-                            std::make_unique<flutter::EncodableValue>());
-    }
-  } else if (message == WM_MENUSELECT) {
-    HMENU hmenu = (HMENU)lParam;
-    if (hmenu == hMenu || hmenu == NULL) {
-      UINT flags = (UINT)HIWORD(wParam);
-
-      if (hmenu == NULL && flags == 0xFFFF && is_menu_open_) {
-        is_menu_open_ = false;
-        channel->InvokeMethod("onMenuClose",
-                              std::make_unique<flutter::EncodableValue>());
-      }
-    }
-  } else if (message == WM_COMMAND) {
-    flutter::EncodableMap eventData = flutter::EncodableMap();
-    eventData[flutter::EncodableValue("id")] =
-        flutter::EncodableValue(static_cast<int>(LOWORD(wParam)));
-
-    channel->InvokeMethod("onTrayMenuItemClick",
-                          std::make_unique<flutter::EncodableValue>(eventData));
   } else if (message == WM_MYMESSAGE) {
     switch (lParam) {
       case WM_LBUTTONUP:
         if (left_click_shows_menu_) {
-          ShowContextMenu(hWnd, true);
+          ShowContextMenu();
           break;
         }
         channel->InvokeMethod("onTrayIconMouseDown",
@@ -395,7 +378,7 @@ std::optional<LRESULT> TrayManagerPlugin::HandleWindowProc(HWND hWnd,
         break;
       case WM_RBUTTONUP:
         if (right_click_shows_menu_) {
-          ShowContextMenu(hWnd, true);
+          ShowContextMenu();
           break;
         }
         channel->InvokeMethod("onTrayIconRightMouseDown",
@@ -426,10 +409,6 @@ std::optional<LRESULT> TrayManagerPlugin::HandleWindowProc(HWND hWnd,
   return result;
 }
 
-HWND TrayManagerPlugin::GetMainWindow() {
-  return ::GetAncestor(registrar->GetView()->GetNativeWindow(), GA_ROOT);
-}
-
 void TrayManagerPlugin::Destroy(
     const flutter::MethodCall<flutter::EncodableValue>& method_call,
     std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
@@ -456,6 +435,17 @@ void TrayManagerPlugin::SetIcon(
 
   tray_icon_path_ = iconPath;
 
+  // 模板资源是 PNG，LoadImage(IMAGE_ICON) 只能读取 ICO，不能先注册空图标。
+  if (iconPath.size() >= 4 && iconPath.substr(iconPath.size() - 4) == ".png") {
+    ApplyTemplateIcon(tray_icon_active_, tray_icon_dark_);
+    if (!tray_icon_setted) {
+      result->Error("icon_unavailable", "Windows 托盘模板图标创建失败");
+      return;
+    }
+    result->Success(flutter::EncodableValue(true));
+    return;
+  }
+
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
 
   if (nid.hIcon != nullptr) {
@@ -468,6 +458,11 @@ void TrayManagerPlugin::SetIcon(
                 IMAGE_ICON, GetSystemMetrics(SM_CXSMICON),
                 GetSystemMetrics(SM_CYSMICON), LR_LOADFROMFILE));
 
+  if (nid.hIcon == nullptr) {
+    result->Error("icon_unavailable", "Windows 托盘图标加载失败");
+    return;
+  }
+
   _ApplyIcon();
 
   result->Success(flutter::EncodableValue(true));
@@ -478,7 +473,7 @@ void TrayManagerPlugin::_ApplyIcon() {
     Shell_NotifyIcon(NIM_MODIFY, &nid);
   } else {
     nid.cbSize = sizeof(NOTIFYICONDATA);
-    nid.hWnd = GetMainWindow();
+    nid.hWnd = menu_host_->window();
     nid.uID = 1;
     nid.uCallbackMessage = WM_MYMESSAGE;
     nid.uFlags = NIF_MESSAGE | NIF_ICON;
@@ -579,7 +574,7 @@ void TrayManagerPlugin::ApplyTemplateIcon(bool active, bool isDark) {
         DestroyIcon(nid.hIcon);
       }
       nid.hIcon = icon;
-      Shell_NotifyIcon(tray_icon_setted ? NIM_MODIFY : NIM_ADD, &nid);
+      _ApplyIcon();
     }
   } while (false);
 
@@ -615,13 +610,11 @@ void TrayManagerPlugin::SetSpeedTitle(
     const flutter::MethodCall<flutter::EncodableValue>& method_call,
     std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
   const auto& args = std::get<flutter::EncodableMap>(*method_call.arguments());
-  const auto* upload =
-      std::get_if<int64_t>(&args.at(flutter::EncodableValue("upload")));
-  const auto* download =
-      std::get_if<int64_t>(&args.at(flutter::EncodableValue("download")));
+  const auto upload = tray_manager::ReadInteger(ValueOrNull(args, "upload"));
+  const auto download = tray_manager::ReadInteger(ValueOrNull(args, "download"));
   const auto* active =
       std::get_if<bool>(&args.at(flutter::EncodableValue("active")));
-  if (upload == nullptr || download == nullptr || active == nullptr ||
+  if (!upload || !download || active == nullptr ||
       *upload < 0 || *download < 0) {
     result->Error("bad_args", "invalid speed arguments");
     return;
@@ -667,9 +660,16 @@ void TrayManagerPlugin::SetContextMenu(
   auto* keep_menu_open = std::get_if<bool>(ValueOrNull(args, "keepMenuOpen"));
   bool should_keep_open = keep_menu_open != nullptr && *keep_menu_open && is_menu_open_;
 
+  // 菜单模态循环也会处理平台消息，不能在此期间删除现有菜单项。
+  if (is_menu_open_ && !should_keep_open) {
+    pending_menu_ = args;
+    result->Success(flutter::EncodableValue(true));
+    return;
+  }
+
   auto* brightness = std::get_if<std::string>(ValueOrNull(args, "brightness"));
   bool is_dark = brightness != nullptr && *brightness == "dark";
-  ApplyDarkModeToMenu(GetMainWindow(), is_dark);
+  ApplyDarkModeToMenu(menu_host_->window(), is_dark);
 
   if (should_keep_open) {
     _UpdateMenuLabels(hMenu, std::get<flutter::EncodableMap>(
@@ -700,47 +700,44 @@ void TrayManagerPlugin::SetNativeMenuClickBehavior(
   result->Success(flutter::EncodableValue(true));
 }
 
-void TrayManagerPlugin::ShowContextMenu(HWND hWnd, bool bringAppToFront) {
-  if (hWnd == nullptr) {
-    hWnd = GetMainWindow();
+bool TrayManagerPlugin::ShowContextMenu() {
+  if (is_menu_open_) return true;
+  if (menu_host_->window() == nullptr || GetMenuItemCount(hMenu) <= 0) {
+    return false;
   }
-  if (hWnd == nullptr) {
-    return;
-  }
+  POINT cursorPos{};
+  if (!GetCursorPos(&cursorPos)) return false;
 
-  POINT cursorPos;
-  GetCursorPos(&cursorPos);
-
-  if (bringAppToFront && IsIconic(hWnd)) {
-    ShowWindow(hWnd, SW_RESTORE);
+  is_menu_open_ = true;
+  channel->InvokeMethod("onMenuOpen",
+                        std::make_unique<flutter::EncodableValue>());
+  const UINT command = menu_host_->Show(hMenu, cursorPos);
+  // 先派发旧菜单 ID，再允许 Dart 替换菜单与回调映射。
+  if (command != 0) {
+    flutter::EncodableMap eventData;
+    eventData[flutter::EncodableValue("id")] =
+        flutter::EncodableValue(static_cast<int>(command));
+    channel->InvokeMethod("onTrayMenuItemClick",
+                          std::make_unique<flutter::EncodableValue>(eventData));
   }
-  SetForegroundWindow(hWnd);
-  TrackPopupMenu(hMenu,
-                 TPM_BOTTOMALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON,
-                 cursorPos.x, cursorPos.y, 0, hWnd, nullptr);
-  PostMessage(hWnd, WM_NULL, 0, 0);
-
-  // WM_MENUSELECT normally resets this; retain a fallback for hosts that omit
-  // that notification while dismissing a context menu.
-  if (is_menu_open_) {
-    is_menu_open_ = false;
-    channel->InvokeMethod("onMenuClose",
-                          std::make_unique<flutter::EncodableValue>());
+  is_menu_open_ = false;
+  channel->InvokeMethod("onMenuClose",
+                        std::make_unique<flutter::EncodableValue>());
+  if (pending_menu_) {
+    _CreateMenu(hMenu, std::get<flutter::EncodableMap>(
+                          pending_menu_->at(flutter::EncodableValue("menu"))));
+    pending_menu_.reset();
   }
+  return true;
 }
 
 void TrayManagerPlugin::PopUpContextMenu(
     const flutter::MethodCall<flutter::EncodableValue>& method_call,
     std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
-  const flutter::EncodableMap& args =
-      std::get<flutter::EncodableMap>(*method_call.arguments());
-
-  bool bringAppToFront =
-      std::get<bool>(args.at(flutter::EncodableValue("bringAppToFront")));
-
-  HWND hWnd = GetMainWindow();
-
-  ShowContextMenu(hWnd, bringAppToFront);
+  if (!ShowContextMenu()) {
+    result->Error("menu_unavailable", "Windows 托盘菜单尚未就绪");
+    return;
+  }
   result->Success(flutter::EncodableValue(true));
 }
 

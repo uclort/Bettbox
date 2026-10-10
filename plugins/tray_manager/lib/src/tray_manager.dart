@@ -100,6 +100,7 @@ class TrayManager {
   }
 
   Menu? _menu;
+  ({Menu menu, Brightness? brightness})? _pendingWindowsMenu;
 
   final TrayMenuOpenState _menuOpenState = TrayMenuOpenState();
 
@@ -139,6 +140,11 @@ class TrayManager {
       return;
     } else if (call.method == 'onMenuClose') {
       _menuOpenState.close();
+      if (!isMenuOpen && _pendingWindowsMenu != null) {
+        final pending = _pendingWindowsMenu!;
+        _pendingWindowsMenu = null;
+        await setContextMenu(pending.menu, brightness: pending.brightness);
+      }
       return;
     }
 
@@ -198,6 +204,7 @@ class TrayManager {
   // Destroys the tray icon immediately.
   Future<void> destroy() async {
     _menuOpenState.reset();
+    _pendingWindowsMenu = null;
     await _channel.invokeMethod('destroy');
   }
 
@@ -323,6 +330,11 @@ class TrayManager {
     bool keepMenuOpen = false,
     Brightness? brightness,
   }) async {
+    // Windows 模态菜单打开期间冻结原生结构和 ID 到 Dart 回调的映射。
+    if (defaultTargetPlatform == TargetPlatform.windows && isMenuOpen) {
+      _pendingWindowsMenu = (menu: menu, brightness: brightness);
+      return;
+    }
     final bool willKeepOpen = keepMenuOpen && isMenuOpen;
     if (willKeepOpen) {
       if (_menu == null || !reuseOpenMenuItemIds(_menu!, menu)) {

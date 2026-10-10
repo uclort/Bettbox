@@ -47,10 +47,7 @@ void main() {
     await subject.update(trayState: active, force: true);
     await subject.updateSpeed(Traffic(up: 1234, down: 5678));
     final iconCall = calls.lastWhere((call) => call.method == 'setIcon');
-    expect(
-      iconCall.arguments['iconPath'],
-      contains('icon_template.png'),
-    );
+    expect(iconCall.arguments['iconPath'], contains('icon_template.png'));
     expect(iconCall.arguments['isTemplate'], true);
     await subject.update(
       trayState: active.copyWith(tunEnable: false),
@@ -85,6 +82,53 @@ void main() {
     expect(
       calls.lastWhere((call) => call.method == 'setSpeedTitle').arguments,
       {'upload': 0, 'download': 0, 'active': true},
+    );
+  });
+
+  test('网速平台接口异常时仍初始化菜单并允许下一次重试', () async {
+    globalState.config = Config(themeProps: defaultThemeProps);
+    const channel = MethodChannel('tray_manager');
+    final calls = <MethodCall>[];
+    var failSpeed = true;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          calls.add(call);
+          if (call.method == 'setSpeedTitle' && failSpeed) {
+            throw PlatformException(code: 'bad_args');
+          }
+          return true;
+        });
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+    });
+    final subject = Tray();
+    addTearDown(subject.dispose);
+    const state = TrayState(
+      mode: Mode.rule,
+      port: 7890,
+      autoLaunch: false,
+      systemProxy: false,
+      tunEnable: false,
+      isStart: false,
+      locale: null,
+      brightness: Brightness.light,
+      groups: [],
+      selectedMap: {},
+      enableTraySpeed: true,
+    );
+    // macOS 测试主机也用完整菜单路径，覆盖网速异常后的初始化。
+    await subject.showContextMenu(trayState: state, groups: []);
+    expect(calls.any((call) => call.method == 'setContextMenu'), isTrue);
+    expect(calls.any((call) => call.method == 'popUpContextMenu'), isTrue);
+    final failedCount = calls
+        .where((call) => call.method == 'setSpeedTitle')
+        .length;
+    failSpeed = false;
+    await subject.updateSpeed(Traffic());
+    expect(
+      calls.where((call) => call.method == 'setSpeedTitle').length,
+      failedCount + 1,
     );
   });
 }
