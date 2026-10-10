@@ -6,9 +6,9 @@
     <description>Bettbox 自定义版本更新源</description>
     <language>zh-CN</language>
     <item>
-      <title>Bettbox 1.19.3+2090000186</title>
-      <pubDate>Sat, 10 Oct 2026 08:56:07 +0000</pubDate>
-      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000186-r20261010084225-8edd8e391edc-2c8fb62cd4c6</link>
+      <title>Bettbox 1.19.3+2090000187</title>
+      <pubDate>Sat, 10 Oct 2026 09:16:13 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000187-r20261010090311-8edd8e391edc-2c8fb62cd4c6</link>
       <description><![CDATA[<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https:;">
@@ -20,20 +20,11 @@ pre { white-space: pre-wrap; } code { font-size: .92em; }
 img,table { max-width: 100%; } table { border-collapse: collapse; } td,th { border: 1px solid #888; padding: 6px; }
 a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; padding-top: 12px; }
 </style></head><body><p dir="auto">基于上游 Bettbox <code class="notranslate">main@26865630fef4</code> 构建的自定义版本。</p>
-<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.3+2090000186</code></strong></p>
+<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.3+2090000187</code></strong></p>
 <h2 dir="auto">本次变更（相较上一自定义 Release）</h2>
 <ul dir="auto">
-<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000184-r20261010071724-fada5146888d-2c8fb62cd4c6"><code class="notranslate">custom-v1.19.3+2090000184-r20261010071724-fada5146888d-2c8fb62cd4c6</code></a> → <code class="notranslate">custom-v1.19.3+2090000186-r20261010084225-8edd8e391edc-2c8fb62cd4c6</code></li>
-</ul>
-<h3 dir="auto">2026-10-10 优化托盘测速与更新说明</h3>
-<ul dir="auto">
-<li>Windows 托盘点击测速后保留当前菜单与已展开的子菜单；测速动画和节点结果原位刷新，普通节点与其他操作保持系统默认关闭行为。</li>
-<li>测速排序变化时按稳定 key/命令 ID 更新可见结果，菜单打开期间不重建结构、不替换点击回调，避免更新后点击错位。</li>
-<li>macOS 原生更新框固定简体中文，最新版本与当前版本均展示完整 <code class="notranslate">短版本+构建号</code>；内部版本比较规则不变。</li>
-<li>修复新增 macOS 更新器回归错误地从已裁剪开发模块的 Release App 导入 Sparkle 导致构建在打包成功后失败；改为使用 Pod/SDK 开发框架、Runner 原生架构执行测试，并继续校验正式包中文资源，不跳过回归。</li>
-<li>桌面更新说明直接展示已发布 Release 的完整描述富文本，不再嵌入整个 GitHub Release 网页，保留完整发布页入口；转换失败仍保留完整正文。</li>
-<li>Android 更新源同步完整 Release Markdown；说明框展示可滚动正文、完整版本对比及发布页链接，不再只截取短列表。</li>
-<li>回归：Flutter 54 项通过；Parallels Windows 11 x64/ARM64 原生子菜单测速、结果原位更新及普通项关闭测试通过，托盘插件 Release 编译通过；Sparkle 插件编译、Swift 格式化测试和中文资源读取通过，Release 描述/CDATA/转换兜底 3 项通过。</li>
+<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000186-r20261010084225-8edd8e391edc-2c8fb62cd4c6"><code class="notranslate">custom-v1.19.3+2090000186-r20261010084225-8edd8e391edc-2c8fb62cd4c6</code></a> → <code class="notranslate">custom-v1.19.3+2090000187-r20261010090311-8edd8e391edc-2c8fb62cd4c6</code></li>
+<li>无新的应用或内核功能变更。</li>
 </ul>
 <h2 dir="auto">本包改动（相较上游版本）</h2>
 <h3 dir="auto">上游融合必检</h3>
@@ -172,16 +163,16 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <h2 dir="auto">构建信息</h2>
 <ul dir="auto">
 <li>上游 Bettbox main 基线：<code class="notranslate">main@26865630fef4</code></li>
-<li>最终安装版本：<code class="notranslate">1.19.3+2090000186</code></li>
+<li>最终安装版本：<code class="notranslate">1.19.3+2090000187</code></li>
 <li>上游源码版本：<code class="notranslate">1.19.3+2026092601</code></li>
 <li>Bettbox custom-build commit：<code class="notranslate">8edd8e391edc438b2041f8139e7a0e17e8a5e76b</code></li>
 </ul>
 <p dir="auto">Release 仅包含本次 Action 生成的安装包，不包含私有自定义 Mihomo 源码。</p>
 <p dir="auto">Windows 与 macOS 安装包未做商业代码签名；Android 安装包使用 Bettbox 自定义版固定 Release 签名。</p>
-<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3%2B2090000186-r20261010084225-8edd8e391edc-2c8fb62cd4c6">查看完整发布页</a></footer></body></html>]]></description>
-      <sparkle:version>2090000186</sparkle:version>
-      <sparkle:shortVersionString>1.19.3+2090000186</sparkle:shortVersionString>
-      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.3+2090000186-r20261010084225-8edd8e391edc-2c8fb62cd4c6/Bettbox-1.19.3-macos-amd64.dmg" length="73654535" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="IS+aObpj/hKGWQPFuJ54KwZ2fdnMYRIHw60kXxVtu7rEWS2gBEZg0OrYb7BeQNJU8z+qr7QoAF9yAje5JmZPDQ==" />
+<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3%2B2090000187-r20261010090311-8edd8e391edc-2c8fb62cd4c6">查看完整发布页</a></footer></body></html>]]></description>
+      <sparkle:version>2090000187</sparkle:version>
+      <sparkle:shortVersionString>1.19.3+2090000187</sparkle:shortVersionString>
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.3+2090000187-r20261010090311-8edd8e391edc-2c8fb62cd4c6/Bettbox-1.19.3-macos-amd64.dmg" length="73654518" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="9ihZMRXmxTMDL5M2IfDWS+s8XkxixtyK8TSgbMzyTZYxPxMSvtI6ss0frfu7w+L7H8VG70zQSXK6L11fVjpSAw==" />
     </item>
   </channel>
 </rss>
