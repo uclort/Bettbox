@@ -6,13 +6,182 @@
     <description>Bettbox 自定义版本更新源</description>
     <language>zh-CN</language>
     <item>
-      <title>Bettbox 1.19.3+2090000184</title>
-      <pubDate>Sat, 10 Oct 2026 07:31:46 +0000</pubDate>
-      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000184-r20261010071724-fada5146888d-2c8fb62cd4c6</link>
-      <sparkle:releaseNotesLink>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000184-r20261010071724-fada5146888d-2c8fb62cd4c6</sparkle:releaseNotesLink>
-      <sparkle:version>2090000184</sparkle:version>
-      <sparkle:shortVersionString>1.19.3+2090000184</sparkle:shortVersionString>
-      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.3+2090000184-r20261010071724-fada5146888d-2c8fb62cd4c6/Bettbox-1.19.3-macos-amd64.dmg" length="73688749" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="A9l+PgrktlSoXcB0EbikS/rsSsVnt5M+uRJif0TlaeTwnvMlKjDuL1mZmylNVs4lJs68AzpDN5l8R65tYPLhAw==" />
+      <title>Bettbox 1.19.3+2090000186</title>
+      <pubDate>Sat, 10 Oct 2026 08:56:07 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000186-r20261010084225-8edd8e391edc-2c8fb62cd4c6</link>
+      <description><![CDATA[<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https:;">
+<style>
+:root { color-scheme: light dark; }
+body { font: 14px/1.65 -apple-system,"Microsoft YaHei",sans-serif; margin: 20px; overflow-wrap: anywhere; }
+h1,h2,h3 { line-height: 1.35; } h1 { font-size: 22px; } h2 { font-size: 18px; } h3 { font-size: 16px; }
+pre { white-space: pre-wrap; } code { font-size: .92em; }
+img,table { max-width: 100%; } table { border-collapse: collapse; } td,th { border: 1px solid #888; padding: 6px; }
+a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; padding-top: 12px; }
+</style></head><body><p dir="auto">基于上游 Bettbox <code class="notranslate">main@26865630fef4</code> 构建的自定义版本。</p>
+<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.3+2090000186</code></strong></p>
+<h2 dir="auto">本次变更（相较上一自定义 Release）</h2>
+<ul dir="auto">
+<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000184-r20261010071724-fada5146888d-2c8fb62cd4c6"><code class="notranslate">custom-v1.19.3+2090000184-r20261010071724-fada5146888d-2c8fb62cd4c6</code></a> → <code class="notranslate">custom-v1.19.3+2090000186-r20261010084225-8edd8e391edc-2c8fb62cd4c6</code></li>
+</ul>
+<h3 dir="auto">2026-10-10 优化托盘测速与更新说明</h3>
+<ul dir="auto">
+<li>Windows 托盘点击测速后保留当前菜单与已展开的子菜单；测速动画和节点结果原位刷新，普通节点与其他操作保持系统默认关闭行为。</li>
+<li>测速排序变化时按稳定 key/命令 ID 更新可见结果，菜单打开期间不重建结构、不替换点击回调，避免更新后点击错位。</li>
+<li>macOS 原生更新框固定简体中文，最新版本与当前版本均展示完整 <code class="notranslate">短版本+构建号</code>；内部版本比较规则不变。</li>
+<li>修复新增 macOS 更新器回归错误地从已裁剪开发模块的 Release App 导入 Sparkle 导致构建在打包成功后失败；改为使用 Pod/SDK 开发框架、Runner 原生架构执行测试，并继续校验正式包中文资源，不跳过回归。</li>
+<li>桌面更新说明直接展示已发布 Release 的完整描述富文本，不再嵌入整个 GitHub Release 网页，保留完整发布页入口；转换失败仍保留完整正文。</li>
+<li>Android 更新源同步完整 Release Markdown；说明框展示可滚动正文、完整版本对比及发布页链接，不再只截取短列表。</li>
+<li>回归：Flutter 54 项通过；Parallels Windows 11 x64/ARM64 原生子菜单测速、结果原位更新及普通项关闭测试通过，托盘插件 Release 编译通过；Sparkle 插件编译、Swift 格式化测试和中文资源读取通过，Release 描述/CDATA/转换兜底 3 项通过。</li>
+</ul>
+<h2 dir="auto">本包改动（相较上游版本）</h2>
+<h3 dir="auto">上游融合必检</h3>
+<ul dir="auto">
+<li>同步 Bettbox、Mihomo 或 Snell 前后搜索 <code class="notranslate">BETTBOX-CUSTOM</code>，逐项确认标记代码仍然存在。</li>
+<li>融合后运行相关目录的 Go/Flutter 回归测试；不得仅以编译成功代替行为验证。</li>
+<li>本文件只登记当前仍保留的自定义功能；修改、迁移、删除或被上游等价能力替代时必须同步更新。</li>
+<li><code class="notranslate">LATEST_CHANGES.md</code> 只记录相较上一自定义 Release 的增量，不能替代本文件。</li>
+<li>未经用户明确要求，不创建 Pull Request。</li>
+</ul>
+<h3 dir="auto">WebDAV 配置同步边界</h3>
+<ul dir="auto">
+<li>WebDAV 使用现有 ZIP 备份格式的 <code class="notranslate">shared-config</code> 范围，只同步订阅配置、配置 YAML 与 <code class="notranslate">ScriptProps.scripts</code>。</li>
+<li>当前配置、当前脚本、节点选择、策略组展开状态和 Provider 派生缓存保持本机状态；App、DAV 凭据、主题、窗口、托盘、热键、代理、TUN、访问控制、界面样式、测速过滤和超时等设置不跨设备覆盖。</li>
+<li>本地导入导出继续使用完整备份语义；历史完整 WebDAV 包恢复时同样只应用共享配置字段。</li>
+<li>代码位于 <code class="notranslate">lib/controller.dart</code>、<code class="notranslate">lib/models/config.dart</code> 与 <code class="notranslate">lib/views/backup_and_recovery.dart</code>；回归测试为 <code class="notranslate">test/models/webdav_shared_config_test.dart</code>。</li>
+</ul>
+<h3 dir="auto">私有覆写脚本</h3>
+<ul dir="auto">
+<li><code class="notranslate">scripts/uclort-desktop.js</code> 与 <code class="notranslate">scripts/uclort-sukka.js</code> 保存在私有 <code class="notranslate">uclort/custom-mihomo</code> 仓库，包含私有订阅与内网信息，不提交到公开 Bettbox；当前同步提交为 <code class="notranslate">5a0477bb0ffb88eb8e3a30239eda1960112cadb5</code>。</li>
+<li><code class="notranslate">uclort-desktop.js</code> 保留源节点与 Provider，过滤套餐/流量提示节点，按地区与倍率排序，重建 Global、Apple、Emby、抓包、CC 内网和 Fallback 分组；<code class="notranslate">latencyTestUrl</code> 统一 Provider 健康检查和策略组测速地址。</li>
+<li><code class="notranslate">uclort-sukka.js</code> 以 <code class="notranslate">Uclort.conf</code> 为基准接入 Sukka 官方 Mihomo <code class="notranslate">domainset / non_ip / ip</code> 规则集；Bettbox 运行端口、TUN 启停和栈模式沿用客户端当前状态，源 hosts 仅按保护条件替换节点服务器域名。</li>
+<li>固定自定义规则统一放在 <code class="notranslate">BETTBOX_CUSTOM_RULES</code>，支持可选说明注释；网络面板通过 Sub-Store wholeFile/file API 读取、追加、修改、删除和拖动排序，保存前重新读取远端脚本，避免覆盖其他改动。</li>
+<li><code class="notranslate">CC-intranet-en5</code> 使用 <code class="notranslate">dns-follow-interface: true</code> 与 <code class="notranslate">allow-other-interface: true</code>；CC 内网由 <code class="notranslate">ruleOptionsEnable.CC内网</code> 单一开关控制，关闭时恢复 <code class="notranslate">10.0.0.0/8</code> DIRECT。</li>
+<li>修改后至少运行 <code class="notranslate">node --check scripts/uclort-desktop.js</code>、<code class="notranslate">node --check scripts/uclort-sukka.js</code>、<code class="notranslate">node scripts/uclort-sukka.test.js</code>，并通过 Bettbox 实际导入 URL 与远端文件逐字节校验。</li>
+</ul>
+<h3 dir="auto">Mihomo：direct proxy 跟随接口 DNS</h3>
+<ul dir="auto">
+<li>direct proxy 支持 <code class="notranslate">dns-follow-interface</code>；仅在配置 <code class="notranslate">interface-name</code> 时生效，省略默认为 <code class="notranslate">true</code>。</li>
+<li>direct proxy 支持 <code class="notranslate">allow-other-interface</code>，省略默认为 <code class="notranslate">true</code>；指定接口不存在、未运行或缺少目标协议族地址时，连接和接口 DNS 一并回退到当前默认接口。</li>
+<li>显式设为 <code class="notranslate">false</code> 时保持严格接口绑定；接口可用但普通连接失败时不会越权回退。</li>
+<li>macOS 的 <code class="notranslate">dhcp://&lt;interface&gt;</code> 优先读取系统 Scoped Resolver，读取不到时再使用 Mihomo DHCP 广播；DNS 失败或连接重置时按需刷新并重试，其他平台保留原一小时缓存。</li>
+<li>标记位于 <code class="notranslate">core/Clash.Meta/adapter/outbound/direct.go</code>、<code class="notranslate">component/dialer/options.go</code>、<code class="notranslate">component/dhcp/dhcp.go</code> 和 <code class="notranslate">dns/dhcp.go</code>；对应目录测试必须保留。</li>
+</ul>
+<h3 dir="auto">Snell v6 与自定义内核</h3>
+<ul dir="auto">
+<li>私有 <code class="notranslate">uclort/custom-mihomo</code> 以 Bettbox 当前内置 Mihomo 源码树为输入，应用 <code class="notranslate">patches/opensnell-v6.patch</code> 后供构建替换使用。</li>
+<li>Snell v6 支持 <code class="notranslate">version: 6</code> 及 <code class="notranslate">default / unshaped / unsafe-raw</code> 模式；补丁来源与许可证记录在私有仓库的 <code class="notranslate">OPEN-SNELL-V6</code> 和 <code class="notranslate">THIRD_PARTY_NOTICES.md</code>。</li>
+<li><code class="notranslate">.custom-build/metadata/custom-mihomo-commit</code> 固定每次构建使用的私有内核提交；构建前校验 Bettbox 核心树、Mihomo 版本和 Snell 补丁摘要。</li>
+<li>同步后至少运行 <code class="notranslate">go test ./transport/snell ./adapter/outbound ./component/dialer ./component/dhcp ./dns ./listener/sing_tun ./constant ./tunnel ./tunnel/statistic</code>。</li>
+</ul>
+<h3 dir="auto">应用内更新</h3>
+<ul dir="auto">
+<li>macOS 更新器回归通过 <code class="notranslate">.custom-build/scripts/test-macos-updater.sh</code> 使用 CocoaPods Sparkle 与 Flutter SDK 开发框架编译，不从已裁剪 Headers/Modules 的 Release App 导入模块；测试程序按 Runner 原生架构执行，不依赖 Rosetta。中文资源仍校验最终 App，按字符串字典语义比较，兼容打包时 plist 格式转换。</li>
+<li>macOS Sparkle 更新框固定使用内置简体中文字符串；<code class="notranslate">macos/Podfile</code> 在每次依赖安装后调用 <code class="notranslate">.custom-build/scripts/localize-sparkle.rb</code>，覆盖所有 Sparkle 字符串本地化分支，不修改系统语言偏好。本地 <code class="notranslate">plugins/auto_updater_macos</code> 通过 <code class="notranslate">SUVersionDisplay</code> 同时展示最新与本机的 <code class="notranslate">短版本+构建号</code>，内部构建号比较保持不变；Swift 回归位于插件 <code class="notranslate">macos/Tests/main.swift</code>，自定义构建校验格式化结果与最终包中文资源。</li>
+<li>发布后读取 <code class="notranslate">uclort/Bettbox</code> Release 的完整 <code class="notranslate">body</code>，通过 <code class="notranslate">.custom-build/scripts/render-release-notes.py</code> 转为独立 HTML 正文并内联到桌面 appcast <code class="notranslate">description</code>，不再将 GitHub 整页设为 <code class="notranslate">releaseNotesLink</code>；GitHub Markdown 转换失败时保留完整转义正文。保留完整发布页入口并限制脚本加载，HTML/CDATA/失败兜底回归为 <code class="notranslate">.custom-build/scripts/test-release-notes.py</code>。</li>
+<li>Android 静态更新 JSON 保存完整 Release Markdown，<code class="notranslate">lib/widgets/app_update_dialog.dart</code> 配合 <code class="notranslate">lib/controller.dart</code> 展示可滚动的完整说明、当前与最新完整版本及发布页入口；正文支持标题、列表和链接，链接仅允许 HTTP/HTTPS。回归为 <code class="notranslate">test/widgets/app_update_dialog_test.dart</code>。</li>
+<li>“关于本机 → 查找更新”检查 <code class="notranslate">uclort/Bettbox</code> 已发布的最新自定义 Release；“Github Releases”直接打开该仓库的 Releases 页面。</li>
+<li>macOS 使用 Sparkle、Windows 使用 WinSparkle；安装前继续执行内核、代理和系统 DNS 退出清理。</li>
+<li>Windows 自定义安装包使用单文件启动器内嵌原 Inno Setup 安装器；启动器优先在 <code class="notranslate">%LOCALAPPDATA%\Bettbox\InstallerTemp</code> 创建独立临时目录并覆盖子进程的 <code class="notranslate">TEMP/TMP</code>，避免系统 <code class="notranslate">%TEMP%</code> 权限损坏或安全策略导致“错误 5：拒绝访问”。载荷释放缓冲使用堆内存，避免 1 MB 栈缓冲触发 <code class="notranslate">STATUS_STACK_OVERFLOW</code>。静默卸载跳过用户数据确认框并默认保留用户数据，交互卸载保留确认；Helper 服务按需启动，主程序退出时主动停止，首次 TUN 管理员授权后最多等待 30 秒直至 Helper 可用，已有服务启动失败时立即进入提权重配，只有实际启动成功才执行短健康等待，避免重复等待 30 秒；安装器升级时仅更新已有服务路径并保留鉴权环境，不创建或启动 Helper，残留 Helper/Core 由安装器静默清理。Windows 主窗口使用稳定原生标记识别已有实例，重复启动会恢复并聚焦现有窗口；首次启动窗口展示位于核心、TUN 授权和 Helper 初始化之前，不被网络启动链路阻塞。WinSparkle 初始化时从 <code class="notranslate">ProductVersion</code> 提取构建号，完整版本通过 <code class="notranslate">win_sparkle_set_app_details</code> 展示，纯构建号通过 <code class="notranslate">win_sparkle_set_app_build_version</code> 与 appcast 的 <code class="notranslate">sparkle:version</code> 比较；appcast 的 <code class="notranslate">title</code> 和 <code class="notranslate">sparkle:shortVersionString</code> 也发布最终安装版本 <code class="notranslate">1.19.3+构建号</code>，更新弹窗两侧均可直接对比版本差异；代码位于 <code class="notranslate">lib/common/app_updater.dart</code>、<code class="notranslate">lib/common/system.dart</code>、<code class="notranslate">lib/controller.dart</code>、<code class="notranslate">windows/runner</code>、<code class="notranslate">windows/packaging/exe/launcher</code>、<code class="notranslate">windows/packaging/exe/package_windows.dart</code>、<code class="notranslate">windows/packaging/exe/inno_setup.iss</code> 与 <code class="notranslate">.github/workflows/custom-build.yml</code>，自定义构建通过无效 <code class="notranslate">TEMP/TMP</code> 下的静默安装回归验证；回归安装和卸载均有 5 分钟超时、进程诊断和强制清理，并校验 Windows <code class="notranslate">ProductVersion</code> 包含本次构建号、appcast <code class="notranslate">echo</code> 生成字段包含完整版本、窗口展示顺序、Helper 启动失败快速回退以及安装后 Helper 进程与服务未运行。</li>
+<li>Windows 安装启动器 Release 构建使用静态 MSVC 运行库（<code class="notranslate">/MT</code>），不依赖系统 <code class="notranslate">VCRUNTIME140.dll</code> / <code class="notranslate">MSVCP140.dll</code>；构建校验位于 <code class="notranslate">.github/workflows/custom-build.yml</code>。</li>
+<li>默认 Release 同时发布 Windows x64 与 Windows ARM64；ARM64 使用原生 Runner 和 Flutter ARM 工具链，私有内核检出时以 UTF-8 无 BOM、LF 结尾写入 SSH 私钥并收紧 ACL，同时让 PowerShell 原生命令错误立即终止构建；ARM64 仅执行 <code class="notranslate">flutter pub get</code>，复用源码中已提交的 build_runner 生成文件，避免 Dart 生成器在原生镜像上长时间无输出。<code class="notranslate">vclibs 0.1.3</code> 发布包中的 ARM64 运行库实为 32 位 ARM，ARM64 构建会在依赖获取后用 <code class="notranslate">.custom-build/vendor/vclibs-arm64</code> 内的真正 ARM64 DLL 覆盖插件缓存。Helper 显式选择对应 Rust MSVC target，WinSparkle 按目标架构切换预编译库，并对安装包及最终目录内原生 EXE/DLL 执行 PE 架构校验。Windows ARM64 使用独立 <code class="notranslate">appcast-windows-arm64.xml</code> 更新源；补丁脚本位于 <code class="notranslate">windows/packaging/patch_auto_updater_windows.dart</code>。</li>
+<li>Android 使用 arm64-v8a 固定签名 APK，校验 SHA-256 后通过独立 <code class="notranslate">FileProvider</code> URI 调用系统安装器；安装器无法打开时显示失败提示，发布前校验 Provider 与 <code class="notranslate">app_updates</code> 路径配置。更新检查读取 <code class="notranslate">custom-update-feed</code> 分支静态 JSON，避免 GitHub Releases API 匿名限流。</li>
+<li>自动检查与手动检查使用同一发布源，草稿 Release 不会被识别为可用更新。</li>
+</ul>
+<h3 dir="auto">macOS TUN、DNS 与唤醒恢复</h3>
+<ul dir="auto">
+<li>macOS 实际 TUN 配置将 <code class="notranslate">system</code> 栈映射为 <code class="notranslate">mixed</code>；显式 <code class="notranslate">mixed</code> 或 <code class="notranslate">gvisor</code> 保持原值。</li>
+<li>桌面切换 TUN 栈使用串行核心重启；失效 IPC socket 立即丢弃，异常退出记录退出码和 stderr。</li>
+<li>macOS 开启 TUN 时自动托管当前网络服务 DNS，关闭 TUN、停止或退出时恢复原 DNS；下次启动会清理残留托管状态。</li>
+<li>系统唤醒、Wi-Fi 切换或默认出口租约变化后，通过网卡、网关、地址、网络服务和 DHCP 信息生成的指纹识别真实网络变化。</li>
+<li>等待网络稳定后迁移托管 DNS、关闭旧连接、重建 Mihomo resolver 的 DoH/DoT 连接池、刷新 DNS/Fake-IP，并按需停止监听后重建 TUN；桌面 IPC 的 <code class="notranslate">resetConnections</code> 方法名与 Dart 调用保持一致，恢复任务支持代际取消和一次重试。</li>
+<li>启动 TUN 前检查其他 VPN 遗留的 <code class="notranslate">1.0.0.0/8</code> utun 路由；发现冲突时保持关闭并提示接口。</li>
+<li>macOS TUN 关闭竞态的 <code class="notranslate">ENOTSOCK</code> 按标准关闭处理，避免旧批量读协程日志风暴和 CPU 满载；Mixed/GVisor 所需方法集继续保留，并兼容 sing-tun 新增的 Darwin <code class="notranslate">BatchSize</code> 接口。</li>
+<li>主要测试为 <code class="notranslate">test/application/macos_network_recovery_test.dart</code>、<code class="notranslate">test/controller/macos_tun_startup_test.dart</code>、<code class="notranslate">test/models/clash_config_test.dart</code> 及 <code class="notranslate">core/Clash.Meta/listener/sing_tun</code> 定向测试。</li>
+</ul>
+<h3 dir="auto">macOS 与 Windows 托盘</h3>
+<ul dir="auto">
+<li>桌面托盘提供系统代理、虚拟网卡、重启内核、重启软件、自动启动、亮屏锁、策略组和节点选择；macOS 与 Windows 使用同一套左右键行为配置，可分别设置为显示窗口或显示菜单。</li>
+<li>Dock 图标完全跟随主窗口状态：窗口显示或最小化时显示，窗口关闭到托盘或静默启动时隐藏；不再提供“常驻 DOCK”开关，也不读取历史偏好。代码位于 <code class="notranslate">plugins/window_ext/macos/Classes/WindowExtPlugin.swift</code>、<code class="notranslate">macos/Runner/AppDelegate.swift</code> 与 <code class="notranslate">macos/Runner/MainFlutterWindow.swift</code>，策略映射测试位于 <code class="notranslate">macos/RunnerTests/RunnerTests.swift</code>。</li>
+<li>macOS 与 Windows 均支持独立开启实时上传/下载速率；系统代理与虚拟网卡均关闭时立即归零并显示为未启用状态。</li>
+<li>Windows 网速通过托盘悬浮 tooltip 展示，应用名称与实时上传/下载速率合并写入原生 <code class="notranslate">NOTIFYICONDATA.szTip</code>，图标刷新时保留当前速率；右键菜单遵循 Windows 前台窗口、<code class="notranslate">TrackPopupMenu</code> 与 <code class="notranslate">WM_NULL</code> 消息收尾流程，避免菜单闪现后立即消失。</li>
+<li>Windows 网速接口兼容 StandardMethodCodec 的 <code class="notranslate">int32</code>/<code class="notranslate">int64</code> 两种整数编码，装饰更新异常不会阻断菜单初始化；模板 PNG 直接经 GDI+ 生成图标，不再按 ICO 注册空图标。</li>
+<li>Windows 左右键配置为“显示菜单”时在 Shell 点击回调内直接弹出已缓存的原生菜单，不再经 Dart 往返；原生侧保存统一左右键行为配置，菜单内容仍由统一托盘状态更新，macOS 继续在弹出前按需重建以支持 Option 隐藏项。</li>
+<li>Windows Shell 回调和菜单改由独立隐藏消息窗口承载，不依赖 Flutter 主窗口可见性；菜单使用 <code class="notranslate">TrackPopupMenuEx + TPM_RETURNCMD</code> 同步返回命令，显示期间冻结原生结构和 Dart 回调 ID，关闭后再应用最新状态。</li>
+<li>Windows 仅 <code class="notranslate">persistent-delay-test</code> 测速项通过 <code class="notranslate">WH_MSGFILTER</code> 截获鼠标/键盘激活并保持原生菜单跟踪，不以关闭后重弹模拟；普通节点与其他操作仍遵循 Windows 默认关闭行为。测速动画和节点结果按稳定 key 复用 ID、按原生命令 ID 原位刷新，结构与点击回调冻结至关闭后应用，避免测速排序变动后点错节点。代码位于 <code class="notranslate">plugins/tray_manager/windows/tray_menu_host.h</code>、<code class="notranslate">tray_manager_plugin.cpp</code>、插件 Dart <code class="notranslate">setContextMenu</code> 与 <code class="notranslate">lib/common/tray.dart</code>；原生 <code class="notranslate">tray_menu_host_test.cpp</code> 覆盖真实子菜单内鼠标/回车测速、结果刷新和普通项关闭，Dart 生命周期回归覆盖排序后结果与 ID 对应关系。</li>
+<li>macOS 与 Windows 共用模板图标：启用系统代理或虚拟网卡时高亮，未启用时使用 60% 中性灰渲染，配色和启停语义保持一致；Windows 启用态按系统明暗使用黑色或白色高对比前景，避免深色任务栏上仍显示成灰色。Windows 移除“托盘反转”设置，历史配置继续保留但不再影响托盘。</li>
+<li>托盘一级菜单提供显示窗口、网络面板、模式、策略组、系统代理、虚拟网卡和重启内核；“显示窗口 / 网络面板 / 系统代理 / 虚拟网卡 / 重启内核 / 退出”使用 <code class="notranslate">⌘M / ⌘D / ⌘S / ⌘E / ⌘R / ⌘Q</code>。</li>
+<li>二级菜单父项只展开子菜单；节点测速结果使用独立右对齐列。</li>
+<li>首次安装特权工具后原位刷新托盘；从后台显示窗口或从托盘重启内核后主动同步最终运行状态。</li>
+<li>系统代理管理器只关闭当前 Bettbox 进程成功启用过的代理，避免误关 Surge 等其他软件的系统代理。</li>
+<li>代码位于 <code class="notranslate">lib/common/tray.dart</code>、<code class="notranslate">lib/common/utils.dart</code>、<code class="notranslate">lib/manager/tray_manager.dart</code>、<code class="notranslate">lib/providers/state.dart</code>、<code class="notranslate">plugins/tray_manager/macos/Classes/TrayIcon.swift</code>、<code class="notranslate">plugins/tray_manager/windows/tray_manager_plugin.cpp</code> 和 <code class="notranslate">plugins/proxy/lib/proxy.dart</code>；回归测试为 <code class="notranslate">test/common/tray_active_state_test.dart</code>、<code class="notranslate">test/plugins/tray_menu_open_state_test.dart</code>、<code class="notranslate">test/plugins/windows_tray_native_test.dart</code>、<code class="notranslate">test/plugins/windows_tray_menu_lifecycle_test.dart</code>、<code class="notranslate">plugins/tray_manager/windows/test</code> 与 <code class="notranslate">macos/RunnerTests/RunnerTests.swift</code>，安装包可用 <code class="notranslate">.custom-build/scripts/test-windows-tray-menu.ps1</code> 在交互式 Windows 会话做真实菜单探针；插件与原生测试显式使用 MSVC <code class="notranslate">/utf-8</code>，避免中文 Windows 代码页误解析 UTF-8 注释。</li>
+</ul>
+<h3 dir="auto">隐藏策略组</h3>
+<ul dir="auto">
+<li>代理页“显示隐藏项”按配置原始顺序显示隐藏策略组，托盘同步遵循该设置。</li>
+<li>设置关闭时，macOS 可按住 Option 点击托盘图标临时显示隐藏策略组；Option 状态同时读取点击事件和当前键盘修饰键，避免菜单栏事件丢失修饰键。</li>
+</ul>
+<h3 dir="auto">Inline Provider 内容查看</h3>
+<ul dir="auto">
+<li>Inline 类型代理提供者可直接从运行配置序列化查看节点内容；HTTP 与 File 类型继续使用原文件读取方式。</li>
+<li>回归测试为 <code class="notranslate">core/hub_test.go</code>。</li>
+</ul>
+<h3 dir="auto">HarmonyOS Sans 字体</h3>
+<ul dir="auto">
+<li>内置 HarmonyOS Sans 补齐标准 U+0020 空格字形，避免列表、详情和输入框出现异常大的词间距。</li>
+</ul>
+<h3 dir="auto">网络面板</h3>
+<ul dir="auto">
+<li>macOS、Windows 和 Linux 导航保留一个“面板”tab，点击以同一可执行文件的 <code class="notranslate">--network-panel</code> 参数启动独立进程；Windows Runner 为面板使用独立原生窗口标题并跳过主窗口单实例激活，确保第二进程能进入 Dart 面板入口；面板使用专属 Dock/任务栏图标，关闭面板不影响主窗口，主进程退出或管道断开时自动关闭面板。</li>
+<li>Android 不再把网络功能顺序平铺到“更多”；“更多 → 查看”分组只提供一个“网络面板”二级页，并显示“查看网络请求、连接和流量信息”副标题，进入后在面板内部切换最近请求、活动连接、DNS、日志和 Sub-Store 五个 tab；桌面端主导航的大 tab 保持简洁的“面板”，同一网络监控功能的其他入口统一使用“网络面板”，首页“在线面板”属于另一项功能并保持不变。</li>
+<li>独立面板进程不初始化 Mihomo、单例锁或托盘，通过 <code class="notranslate">ExternalControl</code> 本地 UDS/TCP 通道读取请求、连接和日志并执行清理/断连；请求与日志变更使用持久订阅主动通知，事件刷新限制为 250 ms。</li>
+<li>主程序在 Core 初始化前启动 <code class="notranslate">ExternalControl</code>，即使 Core 启动失败也能让独立面板连接并展示明确的“主程序未运行或尚未完成启动”状态，不再直接暴露英文 <code class="notranslate">Bettbox is not running</code>。</li>
+<li>请求与连接按 Mihomo <code class="notranslate">TrackerInfo</code> 的进程、来源、目标、协议、规则、出站链和状态动态分类，支持全文搜索、移动端筛选、右键生成规则、当前配置追加/覆盖规则和独立详情；状态按活动快照、真实出站 socket、<code class="notranslate">REJECT</code> 和链路终态区分。</li>
+<li>DNS 页由当前生效配置读取 <code class="notranslate">default-nameserver / nameserver / fallback / proxy-server-nameserver / direct-nameserver / nameserver-policy / hosts</code>，并合并系统 Hosts、运行缓存、Fake-IP 与出站节点 DNS；支持同时清理 DNS 缓存和 Fake-IP。</li>
+<li>不再提供信息价值有限的设备与流量统计子页面；请求和连接列表仍保留单条记录的实时速率、累计上传下载和连接详情。</li>
+<li>日志页按实际级别分类；Sub-Store 页支持凭据历史、固定规则读取/新增/修改/删除/拖动排序，保存前重新读取远端脚本并仅替换 <code class="notranslate">BETTBOX_CUSTOM_RULES</code>。</li>
+<li>选中请求或连接后展开可拖动详情，区分客户端、目标、Fake-IP、实际出站本地/远端地址、GeoIP/ASN 和完整策略链；macOS 通过 <code class="notranslate">NSWorkspace</code> 读取进程图标，并发请求合并且复用历史 <code class="notranslate">.app</code> 路径。</li>
+<li>custom-mihomo 为每条连接保存 DNS 逐服务器尝试、规则匹配、策略链和真实 socket 建立事件，<code class="notranslate">TrackerInfo</code> 返回 <code class="notranslate">trace / outboundLocalAddress / outboundRemoteAddress</code>；连接加入与离开均发送同 ID 通知，请求记录按 ID 原位更新。</li>
+<li>代码位于 <code class="notranslate">lib/views/network_monitor*.dart</code>、<code class="notranslate">lib/common/window.dart</code>、<code class="notranslate">lib/common/external_control.dart</code>、<code class="notranslate">lib/common/navigation.dart</code>、<code class="notranslate">lib/views/network_monitor_navigation.dart</code>、<code class="notranslate">lib/enum/enum.dart</code>、<code class="notranslate">lib/widgets/google_bottom_nav_bar.dart</code> 和 <code class="notranslate">lib/common/tray.dart</code>；回归测试为 <code class="notranslate">test/views/network_monitor_test.dart</code>、<code class="notranslate">core/Clash.Meta/tunnel/statistic/manager_notify_test.go</code> 及私有内核 <code class="notranslate">constant / dns / tunnel / tunnel/statistic</code> 测试。</li>
+</ul>
+<h3 dir="auto">统一启停交互</h3>
+<ul dir="auto">
+<li>桌面端系统代理或 TUN 任一开启即启动核心，两者均关闭即停止核心；设置页、快捷卡片和托盘开关都调用 <code class="notranslate">updateSystemProxy</code> / <code class="notranslate">updateTun</code> 联动方法。Windows、macOS 和 Linux 的 TUN 首次启动统一同步执行无 TUN 基线配置、管理员授权、必要的特权核心重启、监听启动和 TUN 配置应用，任一步失败都会停止监听并回滚 TUN 开关；系统代理仍开启时恢复无 TUN 核心，避免 UI 已开启但实际网络黑洞。桌面窗口展示不等待该同步安全链路完成，因此 Windows 开启 TUN 后重启应用仍会先显示窗口，再在后台事件循环中完成授权和网络就绪。</li>
+<li>首次安装默认关闭系统代理和 TUN；首次添加配置且两个网络开关均关闭时只加载配置，不执行桌面 Core 硬重启，避免配置刚落盘时出现 Core 异常退出。已有配置中显式保存的开关状态保持不变。</li>
+<li>Windows 首次开启 TUN 时只执行一次 Helper 初始状态判断、一次无 TUN 基线配置和一次 TUN 应用；需要提权时仍保留 Helper 健康等待与特权 Core 重启，但不再重复解析配置或二次检查管理员状态。macOS 沿用同一启动顺序且不增加额外工作。</li>
+<li>桌面 TUN 只有在监听启动、TUN 配置应用和 Core 健康检查全部成功后才进入运行态；普通 Core 进程退出或 Helper Core 的 IPC 控制连接异常断开时，统一关闭系统代理与 TUN 的期望/实际状态，清理运行时和流量展示，更新托盘并立即持久化。初始化失败时主窗口继续可用且两个网络开关保持关闭；用户再次开启网络时会先检测并重启不可用的 Core。</li>
+<li>系统代理和 TUN 开关在执行配置更新前先用 Core IPC 健康检查校验 <code class="notranslate">globalState.isStart</code>；当运行标记存在但 Core 已退出或 IPC 已断时，自动走快速启动恢复链路重建 Core，不再直接向失效 socket 发送 <code class="notranslate">updateConfig</code> 导致 <code class="notranslate">TimeoutException: Core socket connection timed out</code>。</li>
+<li>桌面核心实际运行状态统一以 <code class="notranslate">globalState.isStart</code> 为准并同步到展示状态；Windows 系统代理调用串行执行，同时写入 WinINet 默认/RAS 连接和当前用户 <code class="notranslate">Internet Settings</code> 注册表，任一主通道成功即可完成启停，设置刷新尽力执行，避免特定 Windows 环境拒绝默认连接 API 时无法开启代理。启动配置要求开启系统代理时，初始化阶段延后首次同步，等待核心监听就绪后直接启用，不再先关闭再串行开启；配置要求关闭时仍立即清理残留代理。</li>
+<li>移除桌面独立启动/停止入口、启动热键和“联动开关”设置；托盘保留网络面板、系统代理、TUN、重启内核等入口。</li>
+<li>Android 首页保留一个悬浮总开关，并避让底部导航与页面滚动内容；启动时间卡片仅作为非独立启停的运行时长展示，不再提供桌面独立启停操作。</li>
+<li>回归测试为 <code class="notranslate">test/controller/macos_tun_startup_test.dart</code>、<code class="notranslate">test/manager/clash_manager_test.dart</code> 与 <code class="notranslate">test/models/vpn_props_test.dart</code>。</li>
+</ul>
+<h3 dir="auto">自定义构建与发布</h3>
+<ul dir="auto">
+<li><code class="notranslate">uclort/Bettbox</code> 明确标记为非官方个人自定义版；GitHub 操作必须显式指定该仓库。</li>
+<li><code class="notranslate">custom-sync.yml</code> 与 <code class="notranslate">custom-build.yml</code> 仅支持手动触发；同步顺序为上游 Bettbox → 保留功能分支 → 私有 custom-mihomo → 自定义构建。</li>
+<li>默认全平台构建发布 Android ARM64、Windows x64、Windows ARM64、macOS Apple Silicon 和 macOS Intel 共 5 个安装包；也可选择仅 macOS Apple Silicon 或仅 Android arm64-v8a，Android 构建同步静态更新源。</li>
+<li>内核同步兼容新版 Mihomo 将版本号改为构建时注入的模式；源码版本为空时按 Bettbox 上游核心树继续同步，仍执行 Snell v6 补丁与 Go 回归。</li>
+<li>自定义应用代码变化但未同步完整总账和发布增量时拒绝发布。</li>
+</ul>
+<h3 dir="auto">已删除的历史自定义功能</h3>
+<ul dir="auto">
+<li>旧自定义节点测速并发、缓存、诊断和 Provider 生命周期改造此前已删除，继续使用 Bettbox 上游实现。</li>
+</ul>
+<h2 dir="auto">构建信息</h2>
+<ul dir="auto">
+<li>上游 Bettbox main 基线：<code class="notranslate">main@26865630fef4</code></li>
+<li>最终安装版本：<code class="notranslate">1.19.3+2090000186</code></li>
+<li>上游源码版本：<code class="notranslate">1.19.3+2026092601</code></li>
+<li>Bettbox custom-build commit：<code class="notranslate">8edd8e391edc438b2041f8139e7a0e17e8a5e76b</code></li>
+</ul>
+<p dir="auto">Release 仅包含本次 Action 生成的安装包，不包含私有自定义 Mihomo 源码。</p>
+<p dir="auto">Windows 与 macOS 安装包未做商业代码签名；Android 安装包使用 Bettbox 自定义版固定 Release 签名。</p>
+<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3%2B2090000186-r20261010084225-8edd8e391edc-2c8fb62cd4c6">查看完整发布页</a></footer></body></html>]]></description>
+      <sparkle:version>2090000186</sparkle:version>
+      <sparkle:shortVersionString>1.19.3+2090000186</sparkle:shortVersionString>
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.3+2090000186-r20261010084225-8edd8e391edc-2c8fb62cd4c6/Bettbox-1.19.3-macos-amd64.dmg" length="73654535" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="IS+aObpj/hKGWQPFuJ54KwZ2fdnMYRIHw60kXxVtu7rEWS2gBEZg0OrYb7BeQNJU8z+qr7QoAF9yAje5JmZPDQ==" />
     </item>
   </channel>
 </rss>
