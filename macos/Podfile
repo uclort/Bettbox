@@ -23,6 +23,7 @@ def flutter_root
 end
 
 require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
+require_relative '../.custom-build/scripts/localize-sparkle'
 
 flutter_macos_podfile_setup
 
@@ -37,6 +38,9 @@ target 'Runner' do
 end
 
 post_install do |installer|
+  BettboxSparkleLocalization.apply(
+    File.join(installer.sandbox.root, 'Sparkle', 'Sparkle.framework', 'Resources')
+  )
   installer.pods_project.targets.each do |target|
     flutter_additional_macos_build_settings(target)
   end

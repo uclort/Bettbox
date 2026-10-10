@@ -540,7 +540,7 @@ class Tray {
     if (delay == null) {
       return '';
     } else if (delay == 0) {
-      return system.isMacOS ? _loadingFrames[_loadingFrame] : '...';
+      return _supportsTrayTemplate ? _loadingFrames[_loadingFrame] : '...';
     } else if (delay < 0) {
       return '×';
     } else {
@@ -549,7 +549,7 @@ class Tray {
   }
 
   void _startLoadingAnimation() {
-    if (!system.isMacOS) {
+    if (!_supportsTrayTemplate) {
       return;
     }
     _loadingTimer?.cancel();
@@ -561,7 +561,7 @@ class Tray {
   }
 
   void _scheduleLoadingUpdate() {
-    if (!delayTestCoordinator.isTesting || !system.isMacOS) return;
+    if (!delayTestCoordinator.isTesting || !_supportsTrayTemplate) return;
     _loadingTimer = Timer(const Duration(milliseconds: 300), () async {
       if (trayManager.isMenuOpen) {
         _loadingFrame = (_loadingFrame + 1) % _loadingFrames.length;
@@ -590,21 +590,21 @@ class Tray {
     }).toList();
 
     try {
-      if (system.isMacOS) {
+      if (_supportsTrayTemplate) {
         _startLoadingAnimation();
       }
       await delayTest(
         testableProxies,
         testUrl: group.testUrl,
         groupName: group.name,
-        onDelayUpdated: system.isMacOS
+        onDelayUpdated: _supportsTrayTemplate
             ? () => appController.updateTray(false, true)
             : null,
       );
     } catch (e) {
       commonPrint.log('Delay test error: $e');
     } finally {
-      if (system.isMacOS) {
+      if (_supportsTrayTemplate) {
         _stopLoadingAnimation();
       }
       await appController.updateTray(false, true);

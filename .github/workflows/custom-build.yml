@@ -273,6 +273,7 @@ jobs:
           UPSTREAM_SHA: ${{ steps.meta.outputs.upstream_sha }}
         run: |
           set -euo pipefail
+          python3 .custom-build/scripts/test-release-notes.py
           for file in \
             .custom-build/release-notes/CUSTOM_CHANGES.md \
             .custom-build/release-notes/RELEASE_SUMMARY \
@@ -676,7 +677,8 @@ jobs:
             test/models/vpn_props_test.dart \
             test/plugins/tray_menu_open_state_test.dart \
             test/plugins/windows_tray_native_test.dart \
-            test/plugins/windows_tray_menu_lifecycle_test.dart
+            test/plugins/windows_tray_menu_lifecycle_test.dart \
+            test/widgets/app_update_dialog_test.dart
 
       - name: 校验 Windows 安装启动器运行库
         if: matrix.platform == 'windows'
@@ -965,6 +967,29 @@ jobs:
         if: matrix.platform == 'macos'
         shell: bash
         run: dart setup.dart macos --arch ${{ matrix.arch }} --env stable
+
+      - name: 回归测试 macOS 更新版本与中文资源
+        if: matrix.platform == 'macos'
+        shell: bash
+        run: |
+          set -euo pipefail
+          app_path="$(find build/macos/Build/Products/Release -maxdepth 1 -name '*.app' -print -quit)"
+          test_target="arm64-apple-macosx11.0"
+          if [[ "${{ matrix.arch }}" == "amd64" ]]; then
+            test_target="x86_64-apple-macosx10.15"
+          fi
+          frameworks="${app_path}/Contents/Frameworks"
+          swiftc -target "${test_target}" -F "${frameworks}" \
+            -framework Sparkle -framework FlutterMacOS \
+            -Xlinker -rpath -Xlinker "${frameworks}" \
+            plugins/auto_updater_macos/macos/Classes/AutoUpdater.swift \
+            plugins/auto_updater_macos/macos/Tests/main.swift \
+            -o "${RUNNER_TEMP}/updater-version-test"
+          "${RUNNER_TEMP}/updater-version-test"
+          resources="${frameworks}/Sparkle.framework/Resources"
+          for strings in "${resources}"/*.lproj/Sparkle.strings; do
+            cmp "${resources}/zh_CN.lproj/Sparkle.strings" "${strings}"
+          done
 
       - name: 签署桌面更新包并生成更新元数据
         if: matrix.platform == 'macos' || matrix.platform == 'windows'
@@ -1366,6 +1391,7 @@ jobs:
       - name: 更新应用内更新源
         shell: bash
         env:
+          GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ needs.inspect.outputs.release_tag }}
           APP_VERSION: ${{ needs.inspect.outputs.app_version }}
           FINAL_APP_VERSION: ${{ needs.inspect.outputs.final_app_version }}
@@ -1382,6 +1408,14 @@ jobs:
           export published_at
           feed_source="${RUNNER_TEMP}/custom-update-feed"
           mkdir -p "${feed_source}"
+          release_json="${RUNNER_TEMP}/published-release.json"
+          gh release view "${RELEASE_TAG}" --repo uclort/Bettbox \
+            --json body,url | python3 -c 'import json,sys; r=json.load(sys.stdin); r["html_url"]=r.pop("url"); json.dump(r,sys.stdout,ensure_ascii=False)' \
+            > "${release_json}"
+          export RELEASE_JSON="${release_json}"
+          notes_html="${RUNNER_TEMP}/update-release-notes.html"
+          python3 .custom-build/scripts/render-release-notes.py \
+            --release-json "${release_json}" --output "${notes_html}"
 
           generate_feed() {
             local platform="$1"
@@ -1431,7 +1465,9 @@ jobs:
               echo "      <title>Bettbox ${FINAL_APP_VERSION}</title>"
               echo "      <pubDate>${published_at}</pubDate>"
               echo "      <link>${release_url}</link>"
-              echo "      <sparkle:releaseNotesLink>${release_url}</sparkle:releaseNotesLink>"
+              printf '      <description><![CDATA['
+              python3 -c 'import pathlib,sys; print(pathlib.Path(sys.argv[1]).read_text().replace("]]>","]]]]><![CDATA[>"),end="")' "${notes_html}"
+              printf ']]></description>\n'
               echo "      <sparkle:version>${BUILD_NUMBER}</sparkle:version>"
               echo "      <sparkle:shortVersionString>${FINAL_APP_VERSION}</sparkle:shortVersionString>"
               echo "      <enclosure url=\"${asset_url}\" length=\"${length}\" type=\"application/octet-stream\" sparkle:os=\"${platform}\" ${signature_attribute} />"
@@ -1459,15 +1495,14 @@ jobs:
             android_asset="$(basename "${android_asset_path}")"
             android_sha256="$(sha256sum "${android_asset_path}" | awk '{ print $1 }')"
             android_length="$(wc -c < "${android_asset_path}" | tr -d '[:space:]')"
-            release_summary="$(tr -d '\r\n' < .custom-build/release-notes/RELEASE_SUMMARY)"
             export ANDROID_ASSET="${android_asset}"
             export ANDROID_LENGTH="${android_length}"
             export ANDROID_SHA256="${android_sha256}"
-            export RELEASE_SUMMARY="${release_summary}"
             python3 - "${feed_source}/android-update-arm64.json" <<'PY'
           import json
           import os
           import sys
+          from pathlib import Path
           from urllib.parse import quote
 
           repository = os.environ['GITHUB_REPOSITORY']
@@ -1478,9 +1513,10 @@ jobs:
           payload = {
               'tag_name': release_tag,
               'name': f"Bettbox {os.environ['FINAL_APP_VERSION']}",
+              'version': os.environ['FINAL_APP_VERSION'],
               'html_url': release_url,
               'published_at': os.environ['published_at'],
-              'body': os.environ['RELEASE_SUMMARY'],
+              'body': json.loads(Path(os.environ['RELEASE_JSON']).read_text(encoding='utf-8'))['body'],
               'draft': False,
               'prerelease': False,
               'assets': [{

@@ -333,6 +333,14 @@ class TrayManager {
     // Windows 模态菜单打开期间冻结原生结构和 ID 到 Dart 回调的映射。
     if (defaultTargetPlatform == TargetPlatform.windows && isMenuOpen) {
       _pendingWindowsMenu = (menu: menu, brightness: brightness);
+      if (keepMenuOpen && _menu != null && reuseOpenMenuItemIds(_menu!, menu)) {
+        // 只更新文字、勾选和禁用状态；原生结构及可见项回调保持不变。
+        await _channel.invokeMethod('setContextMenu', {
+          'menu': _menuToJson(menu),
+          'keepMenuOpen': true,
+          'brightness': brightness?.name,
+        });
+      }
       return;
     }
     final bool willKeepOpen = keepMenuOpen && isMenuOpen;

@@ -1,6 +1,1 @@
-### 2026-10-10 根治 Windows 托盘菜单被网速显示阻断
-
-- 修复 Flutter 常见网速值编码为 `int32`、Windows 插件只读取 `int64` 导致托盘菜单初始化被异常中断的问题，网速更新失败不再影响菜单。
-- Windows 托盘使用独立隐藏消息窗口承载点击与 `TrackPopupMenuEx`，菜单打开期间冻结结构和回调 ID，关闭后再应用最新状态。
-- 修复模板 PNG 先按 ICO 注册空图标的问题，并新增 Parallels Windows 11 A/B 复现、真实 Win32 菜单显示及生命周期回归。
-- Parallels 实测：ARM64 正式包副本替换修复托盘 DLL 后，网速开启时右键菜单、隐藏窗口、持续显示、左键恢复及菜单项实际鼠标点击均通过；Flutter 51 项、Windows x64/ARM64 原生测试通过。
+Windows 测速保持菜单，macOS 中文完整版本更新框，桌面与 Android 展示 Release 描述富文本

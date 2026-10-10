@@ -12,6 +12,7 @@ import 'package:bett_box/plugins/app.dart';
 import 'package:bett_box/plugins/service.dart' as vpn_service;
 import 'package:bett_box/providers/providers.dart';
 import 'package:bett_box/state.dart';
+import 'package:bett_box/widgets/app_update_dialog.dart';
 import 'package:bett_box/widgets/dialog.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
@@ -1567,23 +1568,22 @@ class AppController {
     }
     if (data != null) {
       final tagName = data['tag_name'];
-      final body = data['body'];
-      final submits = utils.parseReleaseBody(body);
-      final textTheme = context.textTheme;
-      final res = await globalState.showMessage(
-        title: appLocalizations.discoverNewVersion,
-        message: TextSpan(
-          text: '$tagName \n',
-          style: textTheme.headlineSmall,
-          children: [
-            TextSpan(text: '\n', style: textTheme.bodyMedium),
-            for (final submit in submits)
-              TextSpan(text: '- $submit \n', style: textTheme.bodyMedium),
-          ],
+      final res = await globalState.showCommonDialog<bool>(
+        child: AppUpdateDialog(
+          latestVersion:
+              data['version']?.toString() ??
+              data['name']?.toString() ??
+              tagName.toString(),
+          currentVersion:
+              '${globalState.packageInfo.version}+'
+              '${globalState.packageInfo.buildNumber}',
+          notes: data['body']?.toString() ?? '',
+          releaseUrl: data['html_url']?.toString() ?? '',
+          openUrl: (url) => unawaited(globalState.openUrl(url)),
+          confirmText: isCustomUpdateBuild
+              ? appLocalizations.downloadAndInstall
+              : appLocalizations.goDownload,
         ),
-        confirmText: isCustomUpdateBuild
-            ? appLocalizations.downloadAndInstall
-            : appLocalizations.goDownload,
       );
       if (res != true) {
         return;

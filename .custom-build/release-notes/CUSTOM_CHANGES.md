@@ -41,6 +41,9 @@
 
 ### 应用内更新
 
+- macOS Sparkle 更新框固定使用内置简体中文字符串；`macos/Podfile` 在每次依赖安装后调用 `.custom-build/scripts/localize-sparkle.rb`，覆盖所有 Sparkle 字符串本地化分支，不修改系统语言偏好。本地 `plugins/auto_updater_macos` 通过 `SUVersionDisplay` 同时展示最新与本机的 `短版本+构建号`，内部构建号比较保持不变；Swift 回归位于插件 `macos/Tests/main.swift`，自定义构建校验格式化结果与最终包中文资源。
+- 发布后读取 `uclort/Bettbox` Release 的完整 `body`，通过 `.custom-build/scripts/render-release-notes.py` 转为独立 HTML 正文并内联到桌面 appcast `description`，不再将 GitHub 整页设为 `releaseNotesLink`；GitHub Markdown 转换失败时保留完整转义正文。保留完整发布页入口并限制脚本加载，HTML/CDATA/失败兜底回归为 `.custom-build/scripts/test-release-notes.py`。
+- Android 静态更新 JSON 保存完整 Release Markdown，`lib/widgets/app_update_dialog.dart` 配合 `lib/controller.dart` 展示可滚动的完整说明、当前与最新完整版本及发布页入口；正文支持标题、列表和链接，链接仅允许 HTTP/HTTPS。回归为 `test/widgets/app_update_dialog_test.dart`。
 - “关于本机 → 查找更新”检查 `uclort/Bettbox` 已发布的最新自定义 Release；“Github Releases”直接打开该仓库的 Releases 页面。
 - macOS 使用 Sparkle、Windows 使用 WinSparkle；安装前继续执行内核、代理和系统 DNS 退出清理。
 - Windows 自定义安装包使用单文件启动器内嵌原 Inno Setup 安装器；启动器优先在 `%LOCALAPPDATA%\Bettbox\InstallerTemp` 创建独立临时目录并覆盖子进程的 `TEMP/TMP`，避免系统 `%TEMP%` 权限损坏或安全策略导致“错误 5：拒绝访问”。载荷释放缓冲使用堆内存，避免 1 MB 栈缓冲触发 `STATUS_STACK_OVERFLOW`。静默卸载跳过用户数据确认框并默认保留用户数据，交互卸载保留确认；Helper 服务按需启动，主程序退出时主动停止，首次 TUN 管理员授权后最多等待 30 秒直至 Helper 可用，已有服务启动失败时立即进入提权重配，只有实际启动成功才执行短健康等待，避免重复等待 30 秒；安装器升级时仅更新已有服务路径并保留鉴权环境，不创建或启动 Helper，残留 Helper/Core 由安装器静默清理。Windows 主窗口使用稳定原生标记识别已有实例，重复启动会恢复并聚焦现有窗口；首次启动窗口展示位于核心、TUN 授权和 Helper 初始化之前，不被网络启动链路阻塞。WinSparkle 初始化时从 `ProductVersion` 提取构建号，完整版本通过 `win_sparkle_set_app_details` 展示，纯构建号通过 `win_sparkle_set_app_build_version` 与 appcast 的 `sparkle:version` 比较；appcast 的 `title` 和 `sparkle:shortVersionString` 也发布最终安装版本 `1.19.3+构建号`，更新弹窗两侧均可直接对比版本差异；代码位于 `lib/common/app_updater.dart`、`lib/common/system.dart`、`lib/controller.dart`、`windows/runner`、`windows/packaging/exe/launcher`、`windows/packaging/exe/package_windows.dart`、`windows/packaging/exe/inno_setup.iss` 与 `.github/workflows/custom-build.yml`，自定义构建通过无效 `TEMP/TMP` 下的静默安装回归验证；回归安装和卸载均有 5 分钟超时、进程诊断和强制清理，并校验 Windows `ProductVersion` 包含本次构建号、appcast `echo` 生成字段包含完整版本、窗口展示顺序、Helper 启动失败快速回退以及安装后 Helper 进程与服务未运行。
@@ -69,6 +72,7 @@
 - Windows 网速接口兼容 StandardMethodCodec 的 `int32`/`int64` 两种整数编码，装饰更新异常不会阻断菜单初始化；模板 PNG 直接经 GDI+ 生成图标，不再按 ICO 注册空图标。
 - Windows 左右键配置为“显示菜单”时在 Shell 点击回调内直接弹出已缓存的原生菜单，不再经 Dart 往返；原生侧保存统一左右键行为配置，菜单内容仍由统一托盘状态更新，macOS 继续在弹出前按需重建以支持 Option 隐藏项。
 - Windows Shell 回调和菜单改由独立隐藏消息窗口承载，不依赖 Flutter 主窗口可见性；菜单使用 `TrackPopupMenuEx + TPM_RETURNCMD` 同步返回命令，显示期间冻结原生结构和 Dart 回调 ID，关闭后再应用最新状态。
+- Windows 仅 `persistent-delay-test` 测速项通过 `WH_MSGFILTER` 截获鼠标/键盘激活并保持原生菜单跟踪，不以关闭后重弹模拟；普通节点与其他操作仍遵循 Windows 默认关闭行为。测速动画和节点结果按稳定 key 复用 ID、按原生命令 ID 原位刷新，结构与点击回调冻结至关闭后应用，避免测速排序变动后点错节点。代码位于 `plugins/tray_manager/windows/tray_menu_host.h`、`tray_manager_plugin.cpp`、插件 Dart `setContextMenu` 与 `lib/common/tray.dart`；原生 `tray_menu_host_test.cpp` 覆盖真实子菜单内鼠标/回车测速、结果刷新和普通项关闭，Dart 生命周期回归覆盖排序后结果与 ID 对应关系。
 - macOS 与 Windows 共用模板图标：启用系统代理或虚拟网卡时高亮，未启用时使用 60% 中性灰渲染，配色和启停语义保持一致；Windows 启用态按系统明暗使用黑色或白色高对比前景，避免深色任务栏上仍显示成灰色。Windows 移除“托盘反转”设置，历史配置继续保留但不再影响托盘。
 - 托盘一级菜单提供显示窗口、网络面板、模式、策略组、系统代理、虚拟网卡和重启内核；“显示窗口 / 网络面板 / 系统代理 / 虚拟网卡 / 重启内核 / 退出”使用 `⌘M / ⌘D / ⌘S / ⌘E / ⌘R / ⌘Q`。
 - 二级菜单父项只展开子菜单；节点测速结果使用独立右对齐列。
