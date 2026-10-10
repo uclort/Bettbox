@@ -274,6 +274,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 .custom-build/scripts/test-release-notes.py
+          python3 .custom-build/scripts/test-winsparkle-patch.py
           for file in \
             .custom-build/release-notes/CUSTOM_CHANGES.md \
             .custom-build/release-notes/RELEASE_SUMMARY \
@@ -648,6 +649,19 @@ jobs:
           dart windows/packaging/patch_auto_updater_windows.dart \
             --arch=${{ matrix.arch }}
 
+      - name: 缓存 Windows 更新器源码与编译产物
+        if: matrix.platform == 'windows'
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/bettbox-winsparkle
+          key: winsparkle-0.8.1-v143-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('.custom-build/scripts/*winsparkle*', '.custom-build/scripts/updater-*') }}
+
+      - name: 构建 Windows 更新器网络与进度修复
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        timeout-minutes: 30
+        run: .custom-build/scripts/build-winsparkle.ps1 -Arch '${{ matrix.arch }}'
+
       - name: 回归测试 Windows 原生托盘菜单
         if: matrix.platform == 'windows'
         shell: pwsh
@@ -678,7 +692,15 @@ jobs:
             test/plugins/tray_menu_open_state_test.dart \
             test/plugins/windows_tray_native_test.dart \
             test/plugins/windows_tray_menu_lifecycle_test.dart \
-            test/widgets/app_update_dialog_test.dart
+            test/widgets/app_update_dialog_test.dart \
+            test/widgets/macos_menu_bar_test.dart
+
+      - name: 回归测试 macOS 应用菜单与更新展示
+        if: matrix.platform == 'macos'
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter test test/widgets/macos_menu_bar_test.dart test/widgets/app_update_dialog_test.dart
 
       - name: 校验 Windows 安装启动器运行库
         if: matrix.platform == 'windows'

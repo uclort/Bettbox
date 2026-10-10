@@ -785,5 +785,13 @@
   "addUser": "新增用戶",
   "editUser": "編輯用戶",
   "userAuthEmpty": "未設定驗證用戶，局域網連線無需憑據",
-  "usernameCannotContainColon": "使用者名稱不能包含冒號"
+  "usernameCannotContainColon": "使用者名稱不能包含冒號",
+  "menuView": "顯示",
+  "menuWindow": "視窗",
+  "menuHideApp": "隱藏 Bettbox",
+  "menuHideOthers": "隱藏其他應用程式",
+  "menuShowAll": "顯示全部",
+  "menuFullScreen": "全螢幕",
+  "menuZoom": "縮放",
+  "menuBringAllToFront": "全部置於最前"
 }

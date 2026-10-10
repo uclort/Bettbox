@@ -49,15 +49,16 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m13(count) => "${count} 件選択中";
 
-  static String m14(label) => "${label} は有効なURLである必要があります";
+  static String m14(interface) =>
+      "別の VPN/TUN がまだ実行中です（${interface}）。終了してから再試行してください。";
 
-  static String m15(count) => "${Intl.plural(count, other: '年')}";
+  static String m15(progress) => "アップデートをダウンロード中：${progress}%";
 
-  static String _custom_tunRouteConflict(interface) => "別の VPN/TUN がまだ実行中です（${interface}）。終了してから再試行してください。";
+  static String m16(message) => "アップデートに失敗しました：${message}";
 
-  static String _custom_updateDownloading(progress) => "アップデートをダウンロード中：${progress}%";
+  static String m17(label) => "${label} は有効なURLである必要があります";
 
-  static String _custom_updateFailed(message) => "アップデートに失敗しました：${message}";
+  static String m18(count) => "${Intl.plural(count, other: '年')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -341,6 +342,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "domain": MessageLookupByLibrary.simpleMessage("組織 / ドメイン"),
     "doubleBounce": MessageLookupByLibrary.simpleMessage("ダブルバウンス"),
     "download": MessageLookupByLibrary.simpleMessage("受信"),
+    "downloadAndInstall": MessageLookupByLibrary.simpleMessage(
+      "ダウンロードしてインストール",
+    ),
     "dozeSuspend": MessageLookupByLibrary.simpleMessage("スリープ連携"),
     "dozeSuspendDesc": MessageLookupByLibrary.simpleMessage(
       "OSのDozeスリープモードに同期",
@@ -582,6 +586,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "memoryInfoDesc": MessageLookupByLibrary.simpleMessage(
       "表示されているメモリ値はカーネル動的ヒープの占有量であり、アプリ全体のメモリ統計ではありません（参考値）。",
     ),
+    "menuBringAllToFront": MessageLookupByLibrary.simpleMessage("すべてを手前に移動"),
+    "menuFullScreen": MessageLookupByLibrary.simpleMessage("フルスクリーン"),
+    "menuHideApp": MessageLookupByLibrary.simpleMessage("Bettboxを隠す"),
+    "menuHideOthers": MessageLookupByLibrary.simpleMessage("ほかを隠す"),
+    "menuShowAll": MessageLookupByLibrary.simpleMessage("すべてを表示"),
+    "menuView": MessageLookupByLibrary.simpleMessage("表示"),
+    "menuWindow": MessageLookupByLibrary.simpleMessage("ウインドウ"),
+    "menuZoom": MessageLookupByLibrary.simpleMessage("拡大／縮小"),
     "messageTest": MessageLookupByLibrary.simpleMessage("メッセージテスト"),
     "messageTestTip": MessageLookupByLibrary.simpleMessage("テストメッセージです。"),
     "min": MessageLookupByLibrary.simpleMessage("最小"),
@@ -612,11 +624,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "navConnections": MessageLookupByLibrary.simpleMessage("接続"),
     "navTools": MessageLookupByLibrary.simpleMessage("ツール"),
     "network": MessageLookupByLibrary.simpleMessage("ネットワーク"),
-    "networkMonitorTab": MessageLookupByLibrary.simpleMessage("パネル"),
-    "networkPanel": MessageLookupByLibrary.simpleMessage("ネットワークパネル"),
-    "networkPanelDesc": MessageLookupByLibrary.simpleMessage(
-      "ネットワークリクエスト、接続、トラフィックを表示",
-    ),
     "networkDesc": MessageLookupByLibrary.simpleMessage("ネットワーク関連設定を変更"),
     "networkDetection": MessageLookupByLibrary.simpleMessage("ネットワーク検出"),
     "networkErrorRetryLater": MessageLookupByLibrary.simpleMessage(
@@ -629,6 +636,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkMatch": MessageLookupByLibrary.simpleMessage("ネットワークマッチ"),
     "networkMatchHint": MessageLookupByLibrary.simpleMessage(
       "IP、CIDR または Gateway:IP/CIDR",
+    ),
+    "networkMonitorTab": MessageLookupByLibrary.simpleMessage("パネル"),
+    "networkPanel": MessageLookupByLibrary.simpleMessage("ネットワークパネル"),
+    "networkPanelDesc": MessageLookupByLibrary.simpleMessage(
+      "ネットワークリクエスト、接続、トラフィックを表示",
     ),
     "networkSpeed": MessageLookupByLibrary.simpleMessage("通信速度"),
     "networkSpeedNotification": MessageLookupByLibrary.simpleMessage("速度通知"),
@@ -1010,6 +1022,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tcpConcurrentDesc": MessageLookupByLibrary.simpleMessage("TCPの同時並列接続を許可"),
     "testUrl": MessageLookupByLibrary.simpleMessage("テストURL"),
     "testing": MessageLookupByLibrary.simpleMessage("検出中"),
+    "testingDelay": MessageLookupByLibrary.simpleMessage("テスト中"),
     "textScale": MessageLookupByLibrary.simpleMessage("テキスト倍率"),
     "theme": MessageLookupByLibrary.simpleMessage("テーマ"),
     "themeColor": MessageLookupByLibrary.simpleMessage("テーマカラー"),
@@ -1047,6 +1060,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunEnableRequireAdmin": MessageLookupByLibrary.simpleMessage(
       "TUN仮想NIC機能の有効化には管理者（ROOT）権限が必要です",
     ),
+    "tunRouteConflict": m14,
     "tunVirtualAddress": MessageLookupByLibrary.simpleMessage(
       "TUN 仮想ネットワークアダプター",
     ),
@@ -1103,11 +1117,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "unnamed": MessageLookupByLibrary.simpleMessage("無題"),
     "unpin": MessageLookupByLibrary.simpleMessage("固定解除"),
     "update": MessageLookupByLibrary.simpleMessage("更新"),
+    "updateDownloading": m15,
+    "updateFailed": m16,
+    "updateInstalling": MessageLookupByLibrary.simpleMessage(
+      "システムインストーラーを開いています...",
+    ),
     "updateTime": MessageLookupByLibrary.simpleMessage("更新日時"),
     "upload": MessageLookupByLibrary.simpleMessage("送信"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("URLから設定を取得"),
-    "urlTip": m14,
+    "urlTip": m17,
     "useGlobalScriptOverride": MessageLookupByLibrary.simpleMessage(
       "グローバルスクリプトオーバーライドを使用",
     ),
@@ -1145,12 +1164,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "whitelistMode": MessageLookupByLibrary.simpleMessage("ホワイトリストモード"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("システムへ適用"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage("管理者権限が必要です"),
-    "years": m15,
-    "testingDelay": MessageLookupByLibrary.simpleMessage("テスト中"),
-    "tunRouteConflict": _custom_tunRouteConflict,
-    "downloadAndInstall": MessageLookupByLibrary.simpleMessage("ダウンロードしてインストール"),
-    "updateDownloading": _custom_updateDownloading,
-    "updateInstalling": MessageLookupByLibrary.simpleMessage("システムインストーラーを開いています..."),
-    "updateFailed": _custom_updateFailed,
+    "years": m18,
   };
 }

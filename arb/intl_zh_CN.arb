@@ -68,8 +68,8 @@
   "trayClickBehavior": "托盘点击行为",
   "leftClickBehavior": "左键点击",
   "rightClickBehavior": "右键点击",
-  "showPanel": "显示面板",
-  "showMenu": "显示菜单",
+  "showPanel": "显示窗口",
+  "showMenu": "打开菜单",
   "enableTraySpeed": "网速显示",
   "enableTraySpeedDesc": "在菜单栏显示上传和下载速率",
   "excludeChina": "排除国内",
@@ -782,5 +782,13 @@
   "downloadAndInstall": "下载并安装",
   "updateDownloading": "正在下载更新：{progress}%",
   "updateInstalling": "正在打开系统安装程序...",
-  "updateFailed": "更新失败：{message}"
+  "updateFailed": "更新失败：{message}",
+  "menuView": "显示",
+  "menuWindow": "窗口",
+  "menuHideApp": "隐藏 Bettbox",
+  "menuHideOthers": "隐藏其他应用",
+  "menuShowAll": "显示全部",
+  "menuFullScreen": "全屏",
+  "menuZoom": "缩放",
+  "menuBringAllToFront": "全部置于前台"
 }

@@ -50,15 +50,16 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m13(count) => "${count} مورد انتخاب شده";
 
-  static String m14(label) => "${label} باید یک URL معتبر باشد";
+  static String m14(interface) =>
+      "یک VPN/TUN دیگر همچنان فعال است (${interface}). آن را خاموش کنید و دوباره تلاش کنید.";
 
-  static String m15(count) => "${Intl.plural(count, other: '# سال')}";
+  static String m15(progress) => "در حال دانلود به‌روزرسانی: ${progress}%";
 
-  static String _custom_tunRouteConflict(interface) => "یک VPN/TUN دیگر همچنان فعال است (${interface}). آن را خاموش کنید و دوباره تلاش کنید.";
+  static String m16(message) => "به‌روزرسانی ناموفق بود: ${message}";
 
-  static String _custom_updateDownloading(progress) => "در حال دانلود به‌روزرسانی: ${progress}%";
+  static String m17(label) => "${label} باید یک URL معتبر باشد";
 
-  static String _custom_updateFailed(message) => "به‌روزرسانی ناموفق بود: ${message}";
+  static String m18(count) => "${Intl.plural(count, other: '# سال')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -422,6 +423,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "domain": MessageLookupByLibrary.simpleMessage("سازمان / دامنه"),
     "doubleBounce": MessageLookupByLibrary.simpleMessage("جهش دوگانه"),
     "download": MessageLookupByLibrary.simpleMessage("دانلود"),
+    "downloadAndInstall": MessageLookupByLibrary.simpleMessage("دانلود و نصب"),
     "dozeSuspend": MessageLookupByLibrary.simpleMessage("پشتیبانی از Doze"),
     "dozeSuspendDesc": MessageLookupByLibrary.simpleMessage(
       "همگام‌سازی با حالت خواب سیستم (Doze)",
@@ -733,6 +735,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "memoryInfoDesc": MessageLookupByLibrary.simpleMessage(
       "مقادیر حافظه نشان داده شده صرفاً مربوط به حافظه دینامیک هسته بوده و تمام حافظه برنامه نیست (جهت اطلاع).",
     ),
+    "menuBringAllToFront": MessageLookupByLibrary.simpleMessage(
+      "آوردن همه به جلو",
+    ),
+    "menuFullScreen": MessageLookupByLibrary.simpleMessage("تمام صفحه"),
+    "menuHideApp": MessageLookupByLibrary.simpleMessage("پنهان کردن Bettbox"),
+    "menuHideOthers": MessageLookupByLibrary.simpleMessage("پنهان کردن دیگران"),
+    "menuShowAll": MessageLookupByLibrary.simpleMessage("نمایش همه"),
+    "menuView": MessageLookupByLibrary.simpleMessage("نمایش"),
+    "menuWindow": MessageLookupByLibrary.simpleMessage("پنجره"),
+    "menuZoom": MessageLookupByLibrary.simpleMessage("بزرگ‌نمایی"),
     "messageTest": MessageLookupByLibrary.simpleMessage("تست پیام"),
     "messageTestTip": MessageLookupByLibrary.simpleMessage(
       "این یک پیام تستی است.",
@@ -771,11 +783,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "navConnections": MessageLookupByLibrary.simpleMessage("اتصالات"),
     "navTools": MessageLookupByLibrary.simpleMessage("ابزارها"),
     "network": MessageLookupByLibrary.simpleMessage("شبکه"),
-    "networkMonitorTab": MessageLookupByLibrary.simpleMessage("پنل"),
-    "networkPanel": MessageLookupByLibrary.simpleMessage("پنل شبکه"),
-    "networkPanelDesc": MessageLookupByLibrary.simpleMessage(
-      "مشاهده درخواست‌ها، اتصال‌ها و ترافیک شبکه",
-    ),
     "networkDesc": MessageLookupByLibrary.simpleMessage("تغییر تنظیمات شبکه"),
     "networkDetection": MessageLookupByLibrary.simpleMessage("تست شبکه"),
     "networkErrorRetryLater": MessageLookupByLibrary.simpleMessage(
@@ -788,6 +795,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkMatch": MessageLookupByLibrary.simpleMessage("تطبیق شبکه"),
     "networkMatchHint": MessageLookupByLibrary.simpleMessage(
       "IP یا CIDR یا Gateway:IP/CIDR",
+    ),
+    "networkMonitorTab": MessageLookupByLibrary.simpleMessage("پنل"),
+    "networkPanel": MessageLookupByLibrary.simpleMessage("پنل شبکه"),
+    "networkPanelDesc": MessageLookupByLibrary.simpleMessage(
+      "مشاهده درخواست‌ها، اتصال‌ها و ترافیک شبکه",
     ),
     "networkSpeed": MessageLookupByLibrary.simpleMessage("سرعت شبکه"),
     "networkSpeedNotification": MessageLookupByLibrary.simpleMessage(
@@ -1285,6 +1297,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "testUrl": MessageLookupByLibrary.simpleMessage("آدرس تست"),
     "testing": MessageLookupByLibrary.simpleMessage("در حال بررسی"),
+    "testingDelay": MessageLookupByLibrary.simpleMessage("در حال آزمایش"),
     "textScale": MessageLookupByLibrary.simpleMessage("مقیاس متن"),
     "theme": MessageLookupByLibrary.simpleMessage("پوسته"),
     "themeColor": MessageLookupByLibrary.simpleMessage("رنگ پوسته"),
@@ -1334,6 +1347,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunEnableRequireAdmin": MessageLookupByLibrary.simpleMessage(
       "استفاده از حالت TUN نیازمند دسترسی Admin یا ROOT است",
     ),
+    "tunRouteConflict": m14,
     "tunVirtualAddress": MessageLookupByLibrary.simpleMessage(
       "آدرس کارت شبکه مجازی TUN",
     ),
@@ -1398,13 +1412,18 @@ class MessageLookup extends MessageLookupByLibrary {
     "unnamed": MessageLookupByLibrary.simpleMessage("بدون نام"),
     "unpin": MessageLookupByLibrary.simpleMessage("برداشتن پین"),
     "update": MessageLookupByLibrary.simpleMessage("بروزرسانی"),
+    "updateDownloading": m15,
+    "updateFailed": m16,
+    "updateInstalling": MessageLookupByLibrary.simpleMessage(
+      "در حال باز کردن نصب‌کننده سیستم...",
+    ),
     "updateTime": MessageLookupByLibrary.simpleMessage("زمان به‌روزرسانی"),
     "upload": MessageLookupByLibrary.simpleMessage("آپلود"),
     "url": MessageLookupByLibrary.simpleMessage("آدرس URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage(
       "دریافت پروفایل از طریق آدرس URL",
     ),
-    "urlTip": m14,
+    "urlTip": m17,
     "useGlobalScriptOverride": MessageLookupByLibrary.simpleMessage(
       "استفاده از اسکریپت اورراید سراسری",
     ),
@@ -1452,12 +1471,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "نیازمند دسترسی مدیریت (Admin)",
     ),
-    "years": m15,
-    "testingDelay": MessageLookupByLibrary.simpleMessage("در حال آزمایش"),
-    "tunRouteConflict": _custom_tunRouteConflict,
-    "downloadAndInstall": MessageLookupByLibrary.simpleMessage("دانلود و نصب"),
-    "updateDownloading": _custom_updateDownloading,
-    "updateInstalling": MessageLookupByLibrary.simpleMessage("در حال باز کردن نصب‌کننده سیستم..."),
-    "updateFailed": _custom_updateFailed,
+    "years": m18,
   };
 }

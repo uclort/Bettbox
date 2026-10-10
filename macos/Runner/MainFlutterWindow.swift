@@ -78,6 +78,23 @@ class MainFlutterWindow: NSWindow {
             }
 
             switch call.method {
+            case "performMenuAction":
+                let arguments = call.arguments as? [String: Any]
+                let selectors: [String: Selector] = [
+                    "hide": #selector(NSApplication.hide(_:)),
+                    "hideOthers": #selector(NSApplication.hideOtherApplications(_:)),
+                    "showAll": #selector(NSApplication.unhideAllApplications(_:)),
+                    "bringAllToFront": #selector(NSApplication.arrangeInFront(_:)),
+                    "fullScreen": #selector(NSWindow.toggleFullScreen(_:)),
+                    "zoom": #selector(NSWindow.performZoom(_:)),
+                    "undo": Selector(("undo:")), "redo": Selector(("redo:")),
+                    "cut": Selector(("cut:")), "copy": Selector(("copy:")),
+                    "paste": Selector(("paste:")), "selectAll": Selector(("selectAll:"))
+                ]
+                if let action = arguments?["action"] as? String, let selector = selectors[action] {
+                    NSApp.sendAction(selector, to: nil, from: self)
+                }
+                result(nil)
             case "getPackageIcon":
                 let arguments = call.arguments as? [String: Any]
                 let processPath = arguments?["processPath"] as? String ?? ""

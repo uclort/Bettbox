@@ -53,6 +53,7 @@ class AndroidAppUpdateState {
 class CustomAppUpdater with UpdaterListener {
   bool _initialized = false;
   bool _manualCheck = false;
+  DateTime? _lastDesktopCheck;
   bool _androidUpdateRunning = false;
   bool _androidDialogVisible = false;
 
@@ -243,6 +244,12 @@ class CustomAppUpdater with UpdaterListener {
   Future<void> checkDesktopUpdate({required bool manual}) async {
     if (!supportsNativeUpdater) return;
     await initialize();
+    final now = DateTime.now();
+    if (_lastDesktopCheck != null &&
+        now.difference(_lastDesktopCheck!) < const Duration(seconds: 2)) {
+      return;
+    }
+    _lastDesktopCheck = now;
     _manualCheck = manual;
     await autoUpdater.checkForUpdates(inBackground: !manual);
   }
@@ -340,9 +347,12 @@ class CustomAppUpdater with UpdaterListener {
   @override
   void onUpdaterError(UpdaterError? error) {
     if (_manualCheck) {
-      globalState.showNotifier(
-        appLocalizations.updateFailed(error?.message ?? 'Unknown error'),
-      );
+      final detail = system.isWindows
+          ? '更新检查或下载失败，请重试；详细原因见 '
+                '%LOCALAPPDATA%\\Bettbox\\updater.log'
+          : error?.message ?? '检查更新失败，请重试';
+      commonPrint.log('更新检查失败：$detail');
+      globalState.showNotifier(appLocalizations.updateFailed(detail));
     }
     _manualCheck = false;
   }

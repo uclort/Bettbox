@@ -84,5 +84,28 @@ void main(List<String> arguments) {
     );
   }
   cmakeFile.writeAsStringSync(source);
+  final updaterFile = File(_join([windowsDirectory, 'auto_updater.cpp']));
+  var updaterSource = updaterFile.readAsStringSync();
+  const automaticChecks = 'win_sparkle_set_automatic_check_for_updates(0);';
+  if (!updaterSource.contains(automaticChecks)) {
+    if (!updaterSource.contains('  win_sparkle_init();')) {
+      throw StateError('无法定位 WinSparkle 初始化入口。');
+    }
+    updaterSource = updaterSource.replaceFirst(
+      '  win_sparkle_init();',
+      '  // BETTBOX-CUSTOM: 自动检查由应用管理，避免核心启动前额外请求更新源。\n'
+          '  $automaticChecks',
+    );
+    const callback =
+        '  win_sparkle_set_update_cancelled_callback(__onUpdateCancelledCallback);';
+    if (!updaterSource.contains(callback)) {
+      throw StateError('无法定位 WinSparkle 初始化回调。');
+    }
+    updaterSource = updaterSource.replaceFirst(
+      callback,
+      '$callback\n  win_sparkle_init();',
+    );
+    updaterFile.writeAsStringSync(updaterSource);
+  }
   print('auto_updater_windows 已切换到 WinSparkle $winsparkleArch。');
 }

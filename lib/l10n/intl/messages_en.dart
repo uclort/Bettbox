@@ -53,16 +53,17 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m13(count) => "${count} items selected";
 
-  static String m14(label) => "${label} must be a URL";
+  static String m14(interface) =>
+      "Another VPN/TUN is still active (${interface}). Turn it off and try again.";
 
-  static String m15(count) =>
+  static String m15(progress) => "Downloading update: ${progress}%";
+
+  static String m16(message) => "Update failed: ${message}";
+
+  static String m17(label) => "${label} must be a URL";
+
+  static String m18(count) =>
       "${Intl.plural(count, one: 'year', other: 'years')}";
-
-  static String _custom_tunRouteConflict(interface) => "Another VPN/TUN is still active (${interface}). Turn it off and try again.";
-
-  static String _custom_updateDownloading(progress) => "Downloading update: ${progress}%";
-
-  static String _custom_updateFailed(message) => "Update failed: ${message}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -426,6 +427,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "domain": MessageLookupByLibrary.simpleMessage("Organization / Domain"),
     "doubleBounce": MessageLookupByLibrary.simpleMessage("Double Bounce"),
     "download": MessageLookupByLibrary.simpleMessage("Download"),
+    "downloadAndInstall": MessageLookupByLibrary.simpleMessage(
+      "Download and Install",
+    ),
     "dozeSuspend": MessageLookupByLibrary.simpleMessage("Doze Support"),
     "dozeSuspendDesc": MessageLookupByLibrary.simpleMessage(
       "Sync with system Doze mode",
@@ -731,6 +735,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "memoryInfoDesc": MessageLookupByLibrary.simpleMessage(
       "The current memory information value displayed is the dynamic stack memory usage of the core during runtime, not the complete APP memory statistics, for reference only.",
     ),
+    "menuBringAllToFront": MessageLookupByLibrary.simpleMessage(
+      "Bring All to Front",
+    ),
+    "menuFullScreen": MessageLookupByLibrary.simpleMessage("Full Screen"),
+    "menuHideApp": MessageLookupByLibrary.simpleMessage("Hide Bettbox"),
+    "menuHideOthers": MessageLookupByLibrary.simpleMessage("Hide Others"),
+    "menuShowAll": MessageLookupByLibrary.simpleMessage("Show All"),
+    "menuView": MessageLookupByLibrary.simpleMessage("View"),
+    "menuWindow": MessageLookupByLibrary.simpleMessage("Window"),
+    "menuZoom": MessageLookupByLibrary.simpleMessage("Zoom"),
     "messageTest": MessageLookupByLibrary.simpleMessage("Message Test"),
     "messageTestTip": MessageLookupByLibrary.simpleMessage(
       "This is a message.",
@@ -769,11 +783,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "navConnections": MessageLookupByLibrary.simpleMessage("Active"),
     "navTools": MessageLookupByLibrary.simpleMessage("More"),
     "network": MessageLookupByLibrary.simpleMessage("Network"),
-    "networkMonitorTab": MessageLookupByLibrary.simpleMessage("Panel"),
-    "networkPanel": MessageLookupByLibrary.simpleMessage("Network Panel"),
-    "networkPanelDesc": MessageLookupByLibrary.simpleMessage(
-      "View network requests, connections, and traffic",
-    ),
     "networkDesc": MessageLookupByLibrary.simpleMessage(
       "Modify network-related settings",
     ),
@@ -788,6 +797,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkMatch": MessageLookupByLibrary.simpleMessage("Network Match"),
     "networkMatchHint": MessageLookupByLibrary.simpleMessage(
       "Enter IP, CIDR or Gateway:IP/CIDR",
+    ),
+    "networkMonitorTab": MessageLookupByLibrary.simpleMessage("Panel"),
+    "networkPanel": MessageLookupByLibrary.simpleMessage("Network Panel"),
+    "networkPanelDesc": MessageLookupByLibrary.simpleMessage(
+      "View network requests, connections, and traffic",
     ),
     "networkSpeed": MessageLookupByLibrary.simpleMessage("Network Speed"),
     "networkSpeedNotification": MessageLookupByLibrary.simpleMessage(
@@ -1259,6 +1273,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "testUrl": MessageLookupByLibrary.simpleMessage("Test URL"),
     "testing": MessageLookupByLibrary.simpleMessage("Testing"),
+    "testingDelay": MessageLookupByLibrary.simpleMessage("Testing"),
     "textScale": MessageLookupByLibrary.simpleMessage("Text Scaling"),
     "theme": MessageLookupByLibrary.simpleMessage("Theme"),
     "themeColor": MessageLookupByLibrary.simpleMessage("Theme Color"),
@@ -1304,6 +1319,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunEnableRequireAdmin": MessageLookupByLibrary.simpleMessage(
       "Enabling the TUN virtual network adapter requires Administrator or ROOT privileges.",
     ),
+    "tunRouteConflict": m14,
     "tunVirtualAddress": MessageLookupByLibrary.simpleMessage(
       "TUN Virtual Network Adapter",
     ),
@@ -1366,11 +1382,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "unnamed": MessageLookupByLibrary.simpleMessage("Unnamed"),
     "unpin": MessageLookupByLibrary.simpleMessage("Unpin"),
     "update": MessageLookupByLibrary.simpleMessage("Update"),
+    "updateDownloading": m15,
+    "updateFailed": m16,
+    "updateInstalling": MessageLookupByLibrary.simpleMessage(
+      "Opening the system installer...",
+    ),
     "updateTime": MessageLookupByLibrary.simpleMessage("Update Time"),
     "upload": MessageLookupByLibrary.simpleMessage("Upload"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("Get profile via URL"),
-    "urlTip": m14,
+    "urlTip": m17,
     "useGlobalScriptOverride": MessageLookupByLibrary.simpleMessage(
       "Use Global Script Override",
     ),
@@ -1416,12 +1437,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "Requires administrator privileges",
     ),
-    "years": m15,
-    "testingDelay": MessageLookupByLibrary.simpleMessage("Testing"),
-    "tunRouteConflict": _custom_tunRouteConflict,
-    "downloadAndInstall": MessageLookupByLibrary.simpleMessage("Download and Install"),
-    "updateDownloading": _custom_updateDownloading,
-    "updateInstalling": MessageLookupByLibrary.simpleMessage("Opening the system installer..."),
-    "updateFailed": _custom_updateFailed,
+    "years": m18,
   };
 }

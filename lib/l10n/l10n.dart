@@ -166,12 +166,7 @@ class AppLocalizations {
 
   /// `Panel`
   String get networkMonitorTab {
-    return Intl.message(
-      'Panel',
-      name: 'networkMonitorTab',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Panel', name: 'networkMonitorTab', desc: '', args: []);
   }
 
   /// `Network Panel`
@@ -6363,6 +6358,7 @@ class AppLocalizations {
   String get testingDelay {
     return Intl.message('Testing', name: 'testingDelay', desc: '', args: []);
   }
+
   /// `Another VPN/TUN is still active ({interface}). Turn it off and try again.`
   String tunRouteConflict(Object interface) {
     return Intl.message(
@@ -6372,6 +6368,7 @@ class AppLocalizations {
       args: [interface],
     );
   }
+
   /// `Download and Install`
   String get downloadAndInstall {
     return Intl.message(
@@ -6381,6 +6378,7 @@ class AppLocalizations {
       args: [],
     );
   }
+
   /// `Downloading update: {progress}%`
   String updateDownloading(Object progress) {
     return Intl.message(
@@ -6390,6 +6388,7 @@ class AppLocalizations {
       args: [progress],
     );
   }
+
   /// `Opening the system installer...`
   String get updateInstalling {
     return Intl.message(
@@ -6399,6 +6398,7 @@ class AppLocalizations {
       args: [],
     );
   }
+
   /// `Update failed: {message}`
   String updateFailed(Object message) {
     return Intl.message(
@@ -6406,6 +6406,66 @@ class AppLocalizations {
       name: 'updateFailed',
       desc: '',
       args: [message],
+    );
+  }
+
+  /// `View`
+  String get menuView {
+    return Intl.message('View', name: 'menuView', desc: '', args: []);
+  }
+
+  /// `Window`
+  String get menuWindow {
+    return Intl.message('Window', name: 'menuWindow', desc: '', args: []);
+  }
+
+  /// `Hide Bettbox`
+  String get menuHideApp {
+    return Intl.message(
+      'Hide Bettbox',
+      name: 'menuHideApp',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Hide Others`
+  String get menuHideOthers {
+    return Intl.message(
+      'Hide Others',
+      name: 'menuHideOthers',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show All`
+  String get menuShowAll {
+    return Intl.message('Show All', name: 'menuShowAll', desc: '', args: []);
+  }
+
+  /// `Full Screen`
+  String get menuFullScreen {
+    return Intl.message(
+      'Full Screen',
+      name: 'menuFullScreen',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Zoom`
+  String get menuZoom {
+    return Intl.message('Zoom', name: 'menuZoom', desc: '', args: []);
+  }
+
+  /// `Bring All to Front`
+  String get menuBringAllToFront {
+    return Intl.message(
+      'Bring All to Front',
+      name: 'menuBringAllToFront',
+      desc: '',
+      args: [],
     );
   }
 }

@@ -41,6 +41,7 @@
 
 ### 应用内更新
 
+- Windows 固定 WinSparkle 0.8.1 源码 ZIP（SHA-256 `3fd7f0fb79cea9b60e31029f7bfd3c4a3f287a9b1364cec31a1292074aa75223`），通过 `.custom-build/scripts/build-winsparkle.ps1` 在 x64/ARM64 构建中编译补丁 DLL，保留 DSA 安装签名验证与已有安装退出清理。`.custom-build/scripts/patch-winsparkle.py` 回补 gzip/deflate 自动解码并发送 `Accept-Encoding` 请求头、15 秒网络操作超时、检查源一次新会话重试并清空半包、读取异步网络真实错误、下载阶段进度与文案归零；真实错误写入 `%LOCALAPPDATA%/Bettbox/updater.log`。应用接管自动检查，插件在注册回调之后初始化且禁止原生额外自动检查，连续检查点击节流 2 秒。补丁幂等与签名文件不变回归为 `.custom-build/scripts/test-winsparkle-patch.py`；构建脚本强制 `/utf-8`，启用并行编译，CI 按架构与补丁摘要缓存源码/产物，但每次仍执行本地 HTTP 真实 DLL 网络回归 `.custom-build/scripts/test-winsparkle-network.ps1`：gzip、原始 deflate、首次 503 后成功，每组连续检查三次。已在 Parallels Windows 11 ARM64 中通过两种架构的编译与上述网络回归；旧 DLL 同源 gzip 失败、非压缩连续成功。进度归零验证为源码状态转换回归，不代替最终安装包的人工视觉验收。
 - macOS 更新器回归通过 `.custom-build/scripts/test-macos-updater.sh` 使用 CocoaPods Sparkle 与 Flutter SDK 开发框架编译，不从已裁剪 Headers/Modules 的 Release App 导入模块；测试程序按 Runner 原生架构执行，不依赖 Rosetta。中文资源仍校验最终 App，按字符串字典语义比较，兼容打包时 plist 格式转换。
 - macOS Sparkle 更新框固定使用内置简体中文字符串；`macos/Podfile` 在每次依赖安装后调用 `.custom-build/scripts/localize-sparkle.rb`，覆盖所有 Sparkle 字符串本地化分支，不修改系统语言偏好。本地 `plugins/auto_updater_macos` 通过 `SUVersionDisplay` 同时展示最新与本机的 `短版本+构建号`，内部构建号比较保持不变；Swift 回归位于插件 `macos/Tests/main.swift`，自定义构建校验格式化结果与最终包中文资源。
 - 发布后读取 `uclort/Bettbox` Release 的完整 `body`，通过 `.custom-build/scripts/render-release-notes.py` 转为独立 HTML 正文并内联到桌面 appcast `description`，不再将 GitHub 整页设为 `releaseNotesLink`；GitHub Markdown 转换失败时保留完整转义正文。保留完整发布页入口并限制脚本加载，HTML/CDATA/失败兜底回归为 `.custom-build/scripts/test-release-notes.py`。
@@ -66,6 +67,7 @@
 
 ### macOS 与 Windows 托盘
 
+- macOS 顶部应用菜单通过 `lib/widgets/macos_menu_bar.dart` 接入 MaterialApp 已解析的本地化，沿用显式语言、跟随系统与不支持语言回退规则，支持 7 种主工程语言且切换即时生效。保留关于、设置、检查更新、隐藏、编辑、窗口和安全退出，删除 Services/查找/拼写/替换/朗读/空 Help 等无效模板入口；菜单操作由 `lib/plugins/app.dart` 与 `macos/Runner/MainFlutterWindow.swift` 的允许列表转发到 AppKit 响应链，编辑快捷键保留系统语义。原生菜单本地化回归为 `test/widgets/macos_menu_bar_test.dart`，菜单文字源为 `arb/intl_*.arb`。
 - 桌面托盘提供系统代理、虚拟网卡、重启内核、重启软件、自动启动、亮屏锁、策略组和节点选择；macOS 与 Windows 使用同一套左右键行为配置，可分别设置为显示窗口或显示菜单。
 - Dock 图标完全跟随主窗口状态：窗口显示或最小化时显示，窗口关闭到托盘或静默启动时隐藏；不再提供“常驻 DOCK”开关，也不读取历史偏好。代码位于 `plugins/window_ext/macos/Classes/WindowExtPlugin.swift`、`macos/Runner/AppDelegate.swift` 与 `macos/Runner/MainFlutterWindow.swift`，策略映射测试位于 `macos/RunnerTests/RunnerTests.swift`。
 - macOS 与 Windows 均支持独立开启实时上传/下载速率；系统代理与虚拟网卡均关闭时立即归零并显示为未启用状态。

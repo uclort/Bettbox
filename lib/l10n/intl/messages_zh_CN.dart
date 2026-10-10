@@ -49,15 +49,15 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m13(count) => "已选择 ${count} 项";
 
-  static String m14(label) => "${label}必须为URL";
+  static String m14(interface) => "检测到其他 VPN/TUN 仍在运行（${interface}），请关闭后重试。";
 
-  static String m15(count) => "${Intl.plural(count, other: '年')}";
+  static String m15(progress) => "正在下载更新：${progress}%";
 
-  static String _custom_tunRouteConflict(interface) => "检测到其他 VPN/TUN 仍在运行（${interface}），请关闭后重试。";
+  static String m16(message) => "更新失败：${message}";
 
-  static String _custom_updateDownloading(progress) => "正在下载更新：${progress}%";
+  static String m17(label) => "${label}必须为URL";
 
-  static String _custom_updateFailed(message) => "更新失败：${message}";
+  static String m18(count) => "${Intl.plural(count, other: '年')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -305,6 +305,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "domain": MessageLookupByLibrary.simpleMessage("组织 / 域名"),
     "doubleBounce": MessageLookupByLibrary.simpleMessage("双重弹奏"),
     "download": MessageLookupByLibrary.simpleMessage("下载"),
+    "downloadAndInstall": MessageLookupByLibrary.simpleMessage("下载并安装"),
     "dozeSuspend": MessageLookupByLibrary.simpleMessage("休眠支持"),
     "dozeSuspendDesc": MessageLookupByLibrary.simpleMessage(
       "开启后同步系统 Doze 休眠模式",
@@ -528,6 +529,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "memoryInfoDesc": MessageLookupByLibrary.simpleMessage(
       "当前内存信息数值显示为内核运行时的动态堆栈内存占用，非完整 App 内存统计，仅供参考。",
     ),
+    "menuBringAllToFront": MessageLookupByLibrary.simpleMessage("全部置于前台"),
+    "menuFullScreen": MessageLookupByLibrary.simpleMessage("全屏"),
+    "menuHideApp": MessageLookupByLibrary.simpleMessage("隐藏 Bettbox"),
+    "menuHideOthers": MessageLookupByLibrary.simpleMessage("隐藏其他应用"),
+    "menuShowAll": MessageLookupByLibrary.simpleMessage("显示全部"),
+    "menuView": MessageLookupByLibrary.simpleMessage("显示"),
+    "menuWindow": MessageLookupByLibrary.simpleMessage("窗口"),
+    "menuZoom": MessageLookupByLibrary.simpleMessage("缩放"),
     "messageTest": MessageLookupByLibrary.simpleMessage("消息测试"),
     "messageTestTip": MessageLookupByLibrary.simpleMessage("这是一条消息。"),
     "min": MessageLookupByLibrary.simpleMessage("最小"),
@@ -554,11 +563,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "navConnections": MessageLookupByLibrary.simpleMessage("连接"),
     "navTools": MessageLookupByLibrary.simpleMessage("更多"),
     "network": MessageLookupByLibrary.simpleMessage("网络"),
-    "networkMonitorTab": MessageLookupByLibrary.simpleMessage("面板"),
-    "networkPanel": MessageLookupByLibrary.simpleMessage("网络面板"),
-    "networkPanelDesc": MessageLookupByLibrary.simpleMessage(
-      "查看网络请求、连接和流量信息",
-    ),
     "networkDesc": MessageLookupByLibrary.simpleMessage("修改网络相关设置"),
     "networkDetection": MessageLookupByLibrary.simpleMessage("网络检测"),
     "networkErrorRetryLater": MessageLookupByLibrary.simpleMessage(
@@ -570,6 +574,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkMatchHint": MessageLookupByLibrary.simpleMessage(
       "输入 IP、CIDR 或 Gateway:IP/CIDR",
     ),
+    "networkMonitorTab": MessageLookupByLibrary.simpleMessage("面板"),
+    "networkPanel": MessageLookupByLibrary.simpleMessage("网络面板"),
+    "networkPanelDesc": MessageLookupByLibrary.simpleMessage("查看网络请求、连接和流量信息"),
     "networkSpeed": MessageLookupByLibrary.simpleMessage("网络速度"),
     "networkSpeedNotification": MessageLookupByLibrary.simpleMessage("网速通知"),
     "networkSpeedNotificationDesc": MessageLookupByLibrary.simpleMessage(
@@ -902,6 +909,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tcpConcurrentDesc": MessageLookupByLibrary.simpleMessage("开启后允许 TCP 并发连接"),
     "testUrl": MessageLookupByLibrary.simpleMessage("测试链接"),
     "testing": MessageLookupByLibrary.simpleMessage("检测中"),
+    "testingDelay": MessageLookupByLibrary.simpleMessage("测速中"),
     "textScale": MessageLookupByLibrary.simpleMessage("文本缩放"),
     "theme": MessageLookupByLibrary.simpleMessage("主题"),
     "themeColor": MessageLookupByLibrary.simpleMessage("主题色彩"),
@@ -937,6 +945,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunEnableRequireAdmin": MessageLookupByLibrary.simpleMessage(
       "启用 TUN 虚拟网卡功能需要管理员或 Root 权限",
     ),
+    "tunRouteConflict": m14,
     "tunVirtualAddress": MessageLookupByLibrary.simpleMessage("TUN 虚拟网卡地址"),
     "tunnel": MessageLookupByLibrary.simpleMessage("Tunnel"),
     "tunnelAddress": MessageLookupByLibrary.simpleMessage("监听地址"),
@@ -979,11 +988,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "unnamed": MessageLookupByLibrary.simpleMessage("未命名"),
     "unpin": MessageLookupByLibrary.simpleMessage("取消置顶"),
     "update": MessageLookupByLibrary.simpleMessage("更新"),
+    "updateDownloading": m15,
+    "updateFailed": m16,
+    "updateInstalling": MessageLookupByLibrary.simpleMessage("正在打开系统安装程序..."),
     "updateTime": MessageLookupByLibrary.simpleMessage("更新时间"),
     "upload": MessageLookupByLibrary.simpleMessage("上传"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("通过 URL 获取配置文件"),
-    "urlTip": m14,
+    "urlTip": m17,
     "useGlobalScriptOverride": MessageLookupByLibrary.simpleMessage("使用全局脚本覆写"),
     "useHosts": MessageLookupByLibrary.simpleMessage("使用Hosts"),
     "useSystemHosts": MessageLookupByLibrary.simpleMessage("使用系统 Hosts"),
@@ -1017,12 +1029,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "whitelistMode": MessageLookupByLibrary.simpleMessage("白名单模式"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("写入系统"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage("需要管理员权限"),
-    "years": m15,
-    "testingDelay": MessageLookupByLibrary.simpleMessage("测速中"),
-    "tunRouteConflict": _custom_tunRouteConflict,
-    "downloadAndInstall": MessageLookupByLibrary.simpleMessage("下载并安装"),
-    "updateDownloading": _custom_updateDownloading,
-    "updateInstalling": MessageLookupByLibrary.simpleMessage("正在打开系统安装程序..."),
-    "updateFailed": _custom_updateFailed,
+    "years": m18,
   };
 }

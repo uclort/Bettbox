@@ -49,15 +49,16 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m13(count) => "${count}개 선택됨";
 
-  static String m14(label) => "${label} 항목은 올바른 URL이어야 합니다";
+  static String m14(interface) =>
+      "다른 VPN/TUN이 아직 실행 중입니다(${interface}). 종료한 후 다시 시도하세요.";
 
-  static String m15(count) => "${Intl.plural(count, other: '#년')}";
+  static String m15(progress) => "업데이트 다운로드 중: ${progress}%";
 
-  static String _custom_tunRouteConflict(interface) => "다른 VPN/TUN이 아직 실행 중입니다(${interface}). 종료한 후 다시 시도하세요.";
+  static String m16(message) => "업데이트 실패: ${message}";
 
-  static String _custom_updateDownloading(progress) => "업데이트 다운로드 중: ${progress}%";
+  static String m17(label) => "${label} 항목은 올바른 URL이어야 합니다";
 
-  static String _custom_updateFailed(message) => "업데이트 실패: ${message}";
+  static String m18(count) => "${Intl.plural(count, other: '#년')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -351,6 +352,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "domain": MessageLookupByLibrary.simpleMessage("조직 / 도메인"),
     "doubleBounce": MessageLookupByLibrary.simpleMessage("더블 바운스"),
     "download": MessageLookupByLibrary.simpleMessage("다운로드"),
+    "downloadAndInstall": MessageLookupByLibrary.simpleMessage("다운로드 및 설치"),
     "dozeSuspend": MessageLookupByLibrary.simpleMessage("절전 모드 연동"),
     "dozeSuspendDesc": MessageLookupByLibrary.simpleMessage(
       "시스템 Doze 절전 모드와 동기화",
@@ -594,6 +596,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "memoryInfoDesc": MessageLookupByLibrary.simpleMessage(
       "표시되는 메모리 값은 코어 동적 힙 점유량이며, 전체 앱 메모리 통계가 아닙니다 (참고용).",
     ),
+    "menuBringAllToFront": MessageLookupByLibrary.simpleMessage("모두 앞으로 가져오기"),
+    "menuFullScreen": MessageLookupByLibrary.simpleMessage("전체 화면"),
+    "menuHideApp": MessageLookupByLibrary.simpleMessage("Bettbox 가리기"),
+    "menuHideOthers": MessageLookupByLibrary.simpleMessage("기타 가리기"),
+    "menuShowAll": MessageLookupByLibrary.simpleMessage("모두 보기"),
+    "menuView": MessageLookupByLibrary.simpleMessage("보기"),
+    "menuWindow": MessageLookupByLibrary.simpleMessage("윈도우"),
+    "menuZoom": MessageLookupByLibrary.simpleMessage("확대/축소"),
     "messageTest": MessageLookupByLibrary.simpleMessage("메시지 테스트"),
     "messageTestTip": MessageLookupByLibrary.simpleMessage("테스트 메시지입니다."),
     "min": MessageLookupByLibrary.simpleMessage("최소"),
@@ -622,11 +632,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "navConnections": MessageLookupByLibrary.simpleMessage("연결"),
     "navTools": MessageLookupByLibrary.simpleMessage("도구"),
     "network": MessageLookupByLibrary.simpleMessage("네트워크"),
-    "networkMonitorTab": MessageLookupByLibrary.simpleMessage("패널"),
-    "networkPanel": MessageLookupByLibrary.simpleMessage("네트워크 패널"),
-    "networkPanelDesc": MessageLookupByLibrary.simpleMessage(
-      "네트워크 요청, 연결 및 트래픽 보기",
-    ),
     "networkDesc": MessageLookupByLibrary.simpleMessage("네트워크 관련 설정 변경"),
     "networkDetection": MessageLookupByLibrary.simpleMessage("네트워크 진단"),
     "networkErrorRetryLater": MessageLookupByLibrary.simpleMessage(
@@ -639,6 +644,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkMatch": MessageLookupByLibrary.simpleMessage("네트워크 일치"),
     "networkMatchHint": MessageLookupByLibrary.simpleMessage(
       "IP, CIDR 또는 Gateway:IP/CIDR 입력",
+    ),
+    "networkMonitorTab": MessageLookupByLibrary.simpleMessage("패널"),
+    "networkPanel": MessageLookupByLibrary.simpleMessage("네트워크 패널"),
+    "networkPanelDesc": MessageLookupByLibrary.simpleMessage(
+      "네트워크 요청, 연결 및 트래픽 보기",
     ),
     "networkSpeed": MessageLookupByLibrary.simpleMessage("네트워크 속도"),
     "networkSpeedNotification": MessageLookupByLibrary.simpleMessage("속도 알림"),
@@ -1016,6 +1026,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "testUrl": MessageLookupByLibrary.simpleMessage("테스트 URL"),
     "testing": MessageLookupByLibrary.simpleMessage("검사 중"),
+    "testingDelay": MessageLookupByLibrary.simpleMessage("테스트 중"),
     "textScale": MessageLookupByLibrary.simpleMessage("텍스트 배율"),
     "theme": MessageLookupByLibrary.simpleMessage("테마"),
     "themeColor": MessageLookupByLibrary.simpleMessage("테마 색상"),
@@ -1053,6 +1064,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunEnableRequireAdmin": MessageLookupByLibrary.simpleMessage(
       "TUN 가상 어댑터 기능을 사용하려면 관리자(ROOT) 권한이 필요합니다",
     ),
+    "tunRouteConflict": m14,
     "tunVirtualAddress": MessageLookupByLibrary.simpleMessage(
       "TUN 가상 네트워크 어댑터",
     ),
@@ -1111,11 +1123,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "unnamed": MessageLookupByLibrary.simpleMessage("제목 없음"),
     "unpin": MessageLookupByLibrary.simpleMessage("고정 해제"),
     "update": MessageLookupByLibrary.simpleMessage("업데이트"),
+    "updateDownloading": m15,
+    "updateFailed": m16,
+    "updateInstalling": MessageLookupByLibrary.simpleMessage(
+      "시스템 설치 프로그램을 여는 중...",
+    ),
     "updateTime": MessageLookupByLibrary.simpleMessage("업데이트 시간"),
     "upload": MessageLookupByLibrary.simpleMessage("업로드"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("URL 주소로 프로필 가져오기"),
-    "urlTip": m14,
+    "urlTip": m17,
     "useGlobalScriptOverride": MessageLookupByLibrary.simpleMessage(
       "글로벌 스크립트 오버라이드 사용",
     ),
@@ -1153,12 +1170,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "whitelistMode": MessageLookupByLibrary.simpleMessage("화이트리스트 모드"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("시스템 적용"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage("관리자 권한이 필요합니다"),
-    "years": m15,
-    "testingDelay": MessageLookupByLibrary.simpleMessage("테스트 중"),
-    "tunRouteConflict": _custom_tunRouteConflict,
-    "downloadAndInstall": MessageLookupByLibrary.simpleMessage("다운로드 및 설치"),
-    "updateDownloading": _custom_updateDownloading,
-    "updateInstalling": MessageLookupByLibrary.simpleMessage("시스템 설치 프로그램을 여는 중..."),
-    "updateFailed": _custom_updateFailed,
+    "years": m18,
   };
 }

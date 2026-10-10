@@ -54,16 +54,17 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m13(count) => "Выбрано: ${count}";
 
-  static String m14(label) => "${label} должен быть URL";
+  static String m14(interface) =>
+      "Другая VPN/TUN всё ещё активна (${interface}). Отключите её и повторите попытку.";
 
-  static String m15(count) =>
+  static String m15(progress) => "Загрузка обновления: ${progress}%";
+
+  static String m16(message) => "Ошибка обновления: ${message}";
+
+  static String m17(label) => "${label} должен быть URL";
+
+  static String m18(count) =>
       "${Intl.plural(count, one: 'год', few: 'года', many: 'лет', other: 'лет')}";
-
-  static String _custom_tunRouteConflict(interface) => "Другая VPN/TUN всё ещё активна (${interface}). Отключите её и повторите попытку.";
-
-  static String _custom_updateDownloading(progress) => "Загрузка обновления: ${progress}%";
-
-  static String _custom_updateFailed(message) => "Ошибка обновления: ${message}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -435,6 +436,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "domain": MessageLookupByLibrary.simpleMessage("Домен"),
     "doubleBounce": MessageLookupByLibrary.simpleMessage("Двойной отскок"),
     "download": MessageLookupByLibrary.simpleMessage("Загрузка"),
+    "downloadAndInstall": MessageLookupByLibrary.simpleMessage(
+      "Скачать и установить",
+    ),
     "dozeSuspend": MessageLookupByLibrary.simpleMessage("Поддержка Doze"),
     "dozeSuspendDesc": MessageLookupByLibrary.simpleMessage(
       "Синхронизация с режимом сна Android",
@@ -754,6 +758,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "memoryInfoDesc": MessageLookupByLibrary.simpleMessage(
       "Текущее значение памяти — это динамическое потребление стека ядра во время выполнения, а не полная статистика памяти приложения, только для справки.",
     ),
+    "menuBringAllToFront": MessageLookupByLibrary.simpleMessage(
+      "Все окна на передний план",
+    ),
+    "menuFullScreen": MessageLookupByLibrary.simpleMessage("Полный экран"),
+    "menuHideApp": MessageLookupByLibrary.simpleMessage("Скрыть Bettbox"),
+    "menuHideOthers": MessageLookupByLibrary.simpleMessage("Скрыть остальные"),
+    "menuShowAll": MessageLookupByLibrary.simpleMessage("Показать все"),
+    "menuView": MessageLookupByLibrary.simpleMessage("Вид"),
+    "menuWindow": MessageLookupByLibrary.simpleMessage("Окно"),
+    "menuZoom": MessageLookupByLibrary.simpleMessage("Масштаб"),
     "messageTest": MessageLookupByLibrary.simpleMessage("Тест сообщения"),
     "messageTestTip": MessageLookupByLibrary.simpleMessage(
       "Это тестовое сообщение.",
@@ -794,11 +808,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "navConnections": MessageLookupByLibrary.simpleMessage("Соединения"),
     "navTools": MessageLookupByLibrary.simpleMessage("Еще"),
     "network": MessageLookupByLibrary.simpleMessage("Сеть"),
-    "networkMonitorTab": MessageLookupByLibrary.simpleMessage("Панель"),
-    "networkPanel": MessageLookupByLibrary.simpleMessage("Сетевая панель"),
-    "networkPanelDesc": MessageLookupByLibrary.simpleMessage(
-      "Просмотр сетевых запросов, подключений и трафика",
-    ),
     "networkDesc": MessageLookupByLibrary.simpleMessage("Настройки сети"),
     "networkDetection": MessageLookupByLibrary.simpleMessage("IP сети"),
     "networkErrorRetryLater": MessageLookupByLibrary.simpleMessage(
@@ -811,6 +820,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkMatch": MessageLookupByLibrary.simpleMessage("Сопоставление сети"),
     "networkMatchHint": MessageLookupByLibrary.simpleMessage(
       "Введите IP или CIDR, максимум 2, через запятую",
+    ),
+    "networkMonitorTab": MessageLookupByLibrary.simpleMessage("Панель"),
+    "networkPanel": MessageLookupByLibrary.simpleMessage("Сетевая панель"),
+    "networkPanelDesc": MessageLookupByLibrary.simpleMessage(
+      "Просмотр сетевых запросов, подключений и трафика",
     ),
     "networkSpeed": MessageLookupByLibrary.simpleMessage("Скорость сети"),
     "networkSpeedNotification": MessageLookupByLibrary.simpleMessage(
@@ -1302,6 +1316,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "testUrl": MessageLookupByLibrary.simpleMessage("URL теста"),
     "testing": MessageLookupByLibrary.simpleMessage("Проверка"),
+    "testingDelay": MessageLookupByLibrary.simpleMessage("Тестирование"),
     "textScale": MessageLookupByLibrary.simpleMessage("Масштаб текста"),
     "theme": MessageLookupByLibrary.simpleMessage("Тема"),
     "themeColor": MessageLookupByLibrary.simpleMessage("Цвет темы"),
@@ -1351,6 +1366,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunEnableRequireAdmin": MessageLookupByLibrary.simpleMessage(
       "Для включения режима TUN требуются права администратора или ROOT.",
     ),
+    "tunRouteConflict": m14,
     "tunVirtualAddress": MessageLookupByLibrary.simpleMessage(
       "Адрес виртуального сетевого адаптера TUN",
     ),
@@ -1423,11 +1439,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "unnamed": MessageLookupByLibrary.simpleMessage("Без имени"),
     "unpin": MessageLookupByLibrary.simpleMessage("Открепить"),
     "update": MessageLookupByLibrary.simpleMessage("Обновить"),
+    "updateDownloading": m15,
+    "updateFailed": m16,
+    "updateInstalling": MessageLookupByLibrary.simpleMessage(
+      "Открытие системного установщика...",
+    ),
     "updateTime": MessageLookupByLibrary.simpleMessage("Время обновления"),
     "upload": MessageLookupByLibrary.simpleMessage("Отправка"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("Получить профиль по URL"),
-    "urlTip": m14,
+    "urlTip": m17,
     "useGlobalScriptOverride": MessageLookupByLibrary.simpleMessage(
       "Глобальное переопределение",
     ),
@@ -1479,12 +1500,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "Требуются права администратора",
     ),
-    "years": m15,
-    "testingDelay": MessageLookupByLibrary.simpleMessage("Тестирование"),
-    "tunRouteConflict": _custom_tunRouteConflict,
-    "downloadAndInstall": MessageLookupByLibrary.simpleMessage("Скачать и установить"),
-    "updateDownloading": _custom_updateDownloading,
-    "updateInstalling": MessageLookupByLibrary.simpleMessage("Открытие системного установщика..."),
-    "updateFailed": _custom_updateFailed,
+    "years": m18,
   };
 }

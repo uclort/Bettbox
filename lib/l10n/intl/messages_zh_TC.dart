@@ -49,15 +49,15 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m13(count) => "已選擇 ${count} 項";
 
-  static String m14(label) => "${label}必須為 URL";
+  static String m14(interface) => "偵測到其他 VPN/TUN 仍在運行（${interface}），請關閉後重試。";
 
-  static String m15(count) => "${Intl.plural(count, other: '年')}";
+  static String m15(progress) => "正在下載更新：${progress}%";
 
-  static String _custom_tunRouteConflict(interface) => "偵測到其他 VPN/TUN 仍在運行（${interface}），請關閉後重試。";
+  static String m16(message) => "更新失敗：${message}";
 
-  static String _custom_updateDownloading(progress) => "正在下載更新：${progress}%";
+  static String m17(label) => "${label}必須為 URL";
 
-  static String _custom_updateFailed(message) => "更新失敗：${message}";
+  static String m18(count) => "${Intl.plural(count, other: '年')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -307,6 +307,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "domain": MessageLookupByLibrary.simpleMessage("組織 / 域名"),
     "doubleBounce": MessageLookupByLibrary.simpleMessage("雙重彈奏"),
     "download": MessageLookupByLibrary.simpleMessage("下載"),
+    "downloadAndInstall": MessageLookupByLibrary.simpleMessage("下載並安裝"),
     "dozeSuspend": MessageLookupByLibrary.simpleMessage("休眠支援"),
     "dozeSuspendDesc": MessageLookupByLibrary.simpleMessage(
       "開啟後同步系統 Doze 休眠模式",
@@ -536,6 +537,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "memoryInfoDesc": MessageLookupByLibrary.simpleMessage(
       "目前記憶體資訊數值顯示為核心運作時的動態堆疊記憶體佔用，非完整 App 記憶體統計，僅供參考。",
     ),
+    "menuBringAllToFront": MessageLookupByLibrary.simpleMessage("全部置於最前"),
+    "menuFullScreen": MessageLookupByLibrary.simpleMessage("全螢幕"),
+    "menuHideApp": MessageLookupByLibrary.simpleMessage("隱藏 Bettbox"),
+    "menuHideOthers": MessageLookupByLibrary.simpleMessage("隱藏其他應用程式"),
+    "menuShowAll": MessageLookupByLibrary.simpleMessage("顯示全部"),
+    "menuView": MessageLookupByLibrary.simpleMessage("顯示"),
+    "menuWindow": MessageLookupByLibrary.simpleMessage("視窗"),
+    "menuZoom": MessageLookupByLibrary.simpleMessage("縮放"),
     "messageTest": MessageLookupByLibrary.simpleMessage("訊息測試"),
     "messageTestTip": MessageLookupByLibrary.simpleMessage("這是一條訊息。"),
     "min": MessageLookupByLibrary.simpleMessage("最小"),
@@ -564,11 +573,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "navConnections": MessageLookupByLibrary.simpleMessage("連線"),
     "navTools": MessageLookupByLibrary.simpleMessage("更多"),
     "network": MessageLookupByLibrary.simpleMessage("網路"),
-    "networkMonitorTab": MessageLookupByLibrary.simpleMessage("面板"),
-    "networkPanel": MessageLookupByLibrary.simpleMessage("網路面板"),
-    "networkPanelDesc": MessageLookupByLibrary.simpleMessage(
-      "查看網路請求、連線與流量資訊",
-    ),
     "networkDesc": MessageLookupByLibrary.simpleMessage("修改網路相關設定"),
     "networkDetection": MessageLookupByLibrary.simpleMessage("網路檢測"),
     "networkErrorRetryLater": MessageLookupByLibrary.simpleMessage(
@@ -580,6 +584,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkMatchHint": MessageLookupByLibrary.simpleMessage(
       "輸入 IP、CIDR 或 Gateway:IP/CIDR",
     ),
+    "networkMonitorTab": MessageLookupByLibrary.simpleMessage("面板"),
+    "networkPanel": MessageLookupByLibrary.simpleMessage("網路面板"),
+    "networkPanelDesc": MessageLookupByLibrary.simpleMessage("查看網路請求、連線與流量資訊"),
     "networkSpeed": MessageLookupByLibrary.simpleMessage("網路速度"),
     "networkSpeedNotification": MessageLookupByLibrary.simpleMessage("網速通知"),
     "networkSpeedNotificationDesc": MessageLookupByLibrary.simpleMessage(
@@ -949,6 +956,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunEnableRequireAdmin": MessageLookupByLibrary.simpleMessage(
       "啟用 TUN 虛擬網卡功能需要管理員或 Root 權限",
     ),
+    "tunRouteConflict": m14,
     "tunVirtualAddress": MessageLookupByLibrary.simpleMessage("TUN 虛擬網卡位址"),
     "tunnel": MessageLookupByLibrary.simpleMessage("Tunnel"),
     "tunnelAddress": MessageLookupByLibrary.simpleMessage("監聽地址"),
@@ -993,11 +1001,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "unnamed": MessageLookupByLibrary.simpleMessage("未命名"),
     "unpin": MessageLookupByLibrary.simpleMessage("取消置頂"),
     "update": MessageLookupByLibrary.simpleMessage("更新"),
+    "updateDownloading": m15,
+    "updateFailed": m16,
+    "updateInstalling": MessageLookupByLibrary.simpleMessage("正在開啟系統安裝程式..."),
     "updateTime": MessageLookupByLibrary.simpleMessage("更新時間"),
     "upload": MessageLookupByLibrary.simpleMessage("上傳"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("透過 URL 獲取設定檔"),
-    "urlTip": m14,
+    "urlTip": m17,
     "useGlobalScriptOverride": MessageLookupByLibrary.simpleMessage(
       "使用全域指令碼覆寫",
     ),
@@ -1033,11 +1044,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "whitelistMode": MessageLookupByLibrary.simpleMessage("白名單模式"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("寫入系統"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage("需要管理員權限"),
-    "years": m15,
-    "tunRouteConflict": _custom_tunRouteConflict,
-    "downloadAndInstall": MessageLookupByLibrary.simpleMessage("下載並安裝"),
-    "updateDownloading": _custom_updateDownloading,
-    "updateInstalling": MessageLookupByLibrary.simpleMessage("正在開啟系統安裝程式..."),
-    "updateFailed": _custom_updateFailed,
+    "years": m18,
   };
 }

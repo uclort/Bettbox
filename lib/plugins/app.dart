@@ -42,6 +42,12 @@ class App {
     return _instance!;
   }
 
+  Future<void> performMacOSMenuAction(String action) async {
+    await methodChannel.invokeMethod<void>('performMenuAction', {
+      'action': action,
+    });
+  }
+
   Future<bool?> moveTaskToBack() async {
     return await methodChannel.invokeMethod<bool>('moveTaskToBack');
   }
