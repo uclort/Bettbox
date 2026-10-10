@@ -6,9 +6,9 @@
     <description>Bettbox 自定义版本更新源</description>
     <language>zh-CN</language>
     <item>
-      <title>Bettbox 1.19.3+2090000187</title>
-      <pubDate>Sat, 10 Oct 2026 09:16:13 +0000</pubDate>
-      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000187-r20261010090311-8edd8e391edc-2c8fb62cd4c6</link>
+      <title>Bettbox 1.19.3+2090000188</title>
+      <pubDate>Sat, 10 Oct 2026 14:03:27 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000188-r20261010134036-5444e2a6e873-2c8fb62cd4c6</link>
       <description><![CDATA[<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https:;">
@@ -20,12 +20,20 @@ pre { white-space: pre-wrap; } code { font-size: .92em; }
 img,table { max-width: 100%; } table { border-collapse: collapse; } td,th { border: 1px solid #888; padding: 6px; }
 a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; padding-top: 12px; }
 </style></head><body><p dir="auto">基于上游 Bettbox <code class="notranslate">main@26865630fef4</code> 构建的自定义版本。</p>
-<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.3+2090000187</code></strong></p>
+<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.3+2090000188</code></strong></p>
 <h2 dir="auto">本次变更（相较上一自定义 Release）</h2>
 <ul dir="auto">
-<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000186-r20261010084225-8edd8e391edc-2c8fb62cd4c6"><code class="notranslate">custom-v1.19.3+2090000186-r20261010084225-8edd8e391edc-2c8fb62cd4c6</code></a> → <code class="notranslate">custom-v1.19.3+2090000187-r20261010090311-8edd8e391edc-2c8fb62cd4c6</code></li>
-<li>无新的应用或内核功能变更。</li>
+<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000187-r20261010090311-8edd8e391edc-2c8fb62cd4c6"><code class="notranslate">custom-v1.19.3+2090000187-r20261010090311-8edd8e391edc-2c8fb62cd4c6</code></a> → <code class="notranslate">custom-v1.19.3+2090000188-r20261010134036-5444e2a6e873-2c8fb62cd4c6</code></li>
 </ul>
+<h3 dir="auto">2026-10-10 修复 Windows 更新检查与 macOS 菜单本地化</h3>
+<ul dir="auto">
+<li>Windows 更新器回补压缩 appcast 解码；检查失败允许一次短重试并重新建立 WinINet 会话、清空半包，网络操作设置超时，连续点击检查节流，避免原生自动检查与主工程检查重复。</li>
+<li>检查切换至下载时立即重置进度条与下载文案，不再显示检查阶段的残留进度。</li>
+<li>Windows 更新器记录真实网络/解析错误至 <code class="notranslate">%LOCALAPPDATA%/Bettbox/updater.log</code>，便于定位间歇性失败；保留现有 DSA 签名校验、版本比较与安装清理流程。</li>
+<li>macOS 顶部菜单跟随主工程语言设置，支持简体/繁体中文与其他应用支持语言，切换即时生效；关于、设置和检查更新连接有效入口。</li>
+<li>精简 macOS 默认模板菜单，移除未实现的服务、查找、拼写、替换、朗读和空帮助菜单，保留常用编辑快捷键、窗口管理和安全退出。</li>
+</ul>
+<p dir="auto">验证：Parallels Windows 11 中 x64/ARM64 更新器编译、gzip/原始 deflate/首次 503 重试真实 DLL 回归通过；macOS 主工程原生编译通过，桌面网络、托盘、更新展示及菜单语言切换共 55 项 Flutter 回归通过。下载进度归零已通过源码状态转换回归，最终安装包仍需人工视觉验收。</p>
 <h2 dir="auto">本包改动（相较上游版本）</h2>
 <h3 dir="auto">上游融合必检</h3>
 <ul dir="auto">
@@ -68,6 +76,7 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 </ul>
 <h3 dir="auto">应用内更新</h3>
 <ul dir="auto">
+<li>Windows 固定 WinSparkle 0.8.1 源码 ZIP（SHA-256 <code class="notranslate">3fd7f0fb79cea9b60e31029f7bfd3c4a3f287a9b1364cec31a1292074aa75223</code>），通过 <code class="notranslate">.custom-build/scripts/build-winsparkle.ps1</code> 在 x64/ARM64 构建中编译补丁 DLL，保留 DSA 安装签名验证与已有安装退出清理。<code class="notranslate">.custom-build/scripts/patch-winsparkle.py</code> 回补 gzip/deflate 自动解码并发送 <code class="notranslate">Accept-Encoding</code> 请求头、15 秒网络操作超时、检查源一次新会话重试并清空半包、读取异步网络真实错误、下载阶段进度与文案归零；真实错误写入 <code class="notranslate">%LOCALAPPDATA%/Bettbox/updater.log</code>。应用接管自动检查，插件在注册回调之后初始化且禁止原生额外自动检查，连续检查点击节流 2 秒。补丁幂等与签名文件不变回归为 <code class="notranslate">.custom-build/scripts/test-winsparkle-patch.py</code>；构建脚本强制 <code class="notranslate">/utf-8</code>，启用并行编译，CI 按架构与补丁摘要缓存源码/产物，但每次仍执行本地 HTTP 真实 DLL 网络回归 <code class="notranslate">.custom-build/scripts/test-winsparkle-network.ps1</code>：gzip、原始 deflate、首次 503 后成功，每组连续检查三次。已在 Parallels Windows 11 ARM64 中通过两种架构的编译与上述网络回归；旧 DLL 同源 gzip 失败、非压缩连续成功。进度归零验证为源码状态转换回归，不代替最终安装包的人工视觉验收。</li>
 <li>macOS 更新器回归通过 <code class="notranslate">.custom-build/scripts/test-macos-updater.sh</code> 使用 CocoaPods Sparkle 与 Flutter SDK 开发框架编译，不从已裁剪 Headers/Modules 的 Release App 导入模块；测试程序按 Runner 原生架构执行，不依赖 Rosetta。中文资源仍校验最终 App，按字符串字典语义比较，兼容打包时 plist 格式转换。</li>
 <li>macOS Sparkle 更新框固定使用内置简体中文字符串；<code class="notranslate">macos/Podfile</code> 在每次依赖安装后调用 <code class="notranslate">.custom-build/scripts/localize-sparkle.rb</code>，覆盖所有 Sparkle 字符串本地化分支，不修改系统语言偏好。本地 <code class="notranslate">plugins/auto_updater_macos</code> 通过 <code class="notranslate">SUVersionDisplay</code> 同时展示最新与本机的 <code class="notranslate">短版本+构建号</code>，内部构建号比较保持不变；Swift 回归位于插件 <code class="notranslate">macos/Tests/main.swift</code>，自定义构建校验格式化结果与最终包中文资源。</li>
 <li>发布后读取 <code class="notranslate">uclort/Bettbox</code> Release 的完整 <code class="notranslate">body</code>，通过 <code class="notranslate">.custom-build/scripts/render-release-notes.py</code> 转为独立 HTML 正文并内联到桌面 appcast <code class="notranslate">description</code>，不再将 GitHub 整页设为 <code class="notranslate">releaseNotesLink</code>；GitHub Markdown 转换失败时保留完整转义正文。保留完整发布页入口并限制脚本加载，HTML/CDATA/失败兜底回归为 <code class="notranslate">.custom-build/scripts/test-release-notes.py</code>。</li>
@@ -93,6 +102,7 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 </ul>
 <h3 dir="auto">macOS 与 Windows 托盘</h3>
 <ul dir="auto">
+<li>macOS 顶部应用菜单通过 <code class="notranslate">lib/widgets/macos_menu_bar.dart</code> 接入 MaterialApp 已解析的本地化，沿用显式语言、跟随系统与不支持语言回退规则，支持 7 种主工程语言且切换即时生效。保留关于、设置、检查更新、隐藏、编辑、窗口和安全退出，删除 Services/查找/拼写/替换/朗读/空 Help 等无效模板入口；菜单操作由 <code class="notranslate">lib/plugins/app.dart</code> 与 <code class="notranslate">macos/Runner/MainFlutterWindow.swift</code> 的允许列表转发到 AppKit 响应链，编辑快捷键保留系统语义。原生菜单本地化回归为 <code class="notranslate">test/widgets/macos_menu_bar_test.dart</code>，菜单文字源为 <code class="notranslate">arb/intl_*.arb</code>。</li>
 <li>桌面托盘提供系统代理、虚拟网卡、重启内核、重启软件、自动启动、亮屏锁、策略组和节点选择；macOS 与 Windows 使用同一套左右键行为配置，可分别设置为显示窗口或显示菜单。</li>
 <li>Dock 图标完全跟随主窗口状态：窗口显示或最小化时显示，窗口关闭到托盘或静默启动时隐藏；不再提供“常驻 DOCK”开关，也不读取历史偏好。代码位于 <code class="notranslate">plugins/window_ext/macos/Classes/WindowExtPlugin.swift</code>、<code class="notranslate">macos/Runner/AppDelegate.swift</code> 与 <code class="notranslate">macos/Runner/MainFlutterWindow.swift</code>，策略映射测试位于 <code class="notranslate">macos/RunnerTests/RunnerTests.swift</code>。</li>
 <li>macOS 与 Windows 均支持独立开启实时上传/下载速率；系统代理与虚拟网卡均关闭时立即归零并显示为未启用状态。</li>
@@ -163,16 +173,16 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <h2 dir="auto">构建信息</h2>
 <ul dir="auto">
 <li>上游 Bettbox main 基线：<code class="notranslate">main@26865630fef4</code></li>
-<li>最终安装版本：<code class="notranslate">1.19.3+2090000187</code></li>
+<li>最终安装版本：<code class="notranslate">1.19.3+2090000188</code></li>
 <li>上游源码版本：<code class="notranslate">1.19.3+2026092601</code></li>
-<li>Bettbox custom-build commit：<code class="notranslate">8edd8e391edc438b2041f8139e7a0e17e8a5e76b</code></li>
+<li>Bettbox custom-build commit：<code class="notranslate">5444e2a6e873629c34824207178dbf37920a6e1e</code></li>
 </ul>
 <p dir="auto">Release 仅包含本次 Action 生成的安装包，不包含私有自定义 Mihomo 源码。</p>
 <p dir="auto">Windows 与 macOS 安装包未做商业代码签名；Android 安装包使用 Bettbox 自定义版固定 Release 签名。</p>
-<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3%2B2090000187-r20261010090311-8edd8e391edc-2c8fb62cd4c6">查看完整发布页</a></footer></body></html>]]></description>
-      <sparkle:version>2090000187</sparkle:version>
-      <sparkle:shortVersionString>1.19.3+2090000187</sparkle:shortVersionString>
-      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.3+2090000187-r20261010090311-8edd8e391edc-2c8fb62cd4c6/Bettbox-1.19.3-windows-amd64-setup.exe" length="44911828" type="application/octet-stream" sparkle:os="windows" sparkle:dsaSignature="MDwCHFECmkN1tasVVVno1YdPIpb/cjYA9LQpaKgxvg4CHBXHwx6QCAfQ2NJ0/qMuNV1sDmcBiZ2fpmTngaU=" />
+<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3%2B2090000188-r20261010134036-5444e2a6e873-2c8fb62cd4c6">查看完整发布页</a></footer></body></html>]]></description>
+      <sparkle:version>2090000188</sparkle:version>
+      <sparkle:shortVersionString>1.19.3+2090000188</sparkle:shortVersionString>
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.3+2090000188-r20261010134036-5444e2a6e873-2c8fb62cd4c6/Bettbox-1.19.3-windows-amd64-setup.exe" length="44935707" type="application/octet-stream" sparkle:os="windows" sparkle:dsaSignature="MD0CHF/a4fDDfDFsdFP75mmzVn5dXn4R+sqdmLSEZMsCHQCPk88SNneuhxqrcCBfZs3oZoC14Fx3YxVlZihp" />
     </item>
   </channel>
 </rss>
