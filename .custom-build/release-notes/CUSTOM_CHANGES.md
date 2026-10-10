@@ -41,6 +41,7 @@
 
 ### 应用内更新
 
+- macOS 更新器回归通过 `.custom-build/scripts/test-macos-updater.sh` 使用 CocoaPods Sparkle 与 Flutter SDK 开发框架编译，不从已裁剪 Headers/Modules 的 Release App 导入模块；测试程序按 Runner 原生架构执行，不依赖 Rosetta。中文资源仍校验最终 App，按字符串字典语义比较，兼容打包时 plist 格式转换。
 - macOS Sparkle 更新框固定使用内置简体中文字符串；`macos/Podfile` 在每次依赖安装后调用 `.custom-build/scripts/localize-sparkle.rb`，覆盖所有 Sparkle 字符串本地化分支，不修改系统语言偏好。本地 `plugins/auto_updater_macos` 通过 `SUVersionDisplay` 同时展示最新与本机的 `短版本+构建号`，内部构建号比较保持不变；Swift 回归位于插件 `macos/Tests/main.swift`，自定义构建校验格式化结果与最终包中文资源。
 - 发布后读取 `uclort/Bettbox` Release 的完整 `body`，通过 `.custom-build/scripts/render-release-notes.py` 转为独立 HTML 正文并内联到桌面 appcast `description`，不再将 GitHub 整页设为 `releaseNotesLink`；GitHub Markdown 转换失败时保留完整转义正文。保留完整发布页入口并限制脚本加载，HTML/CDATA/失败兜底回归为 `.custom-build/scripts/test-release-notes.py`。
 - Android 静态更新 JSON 保存完整 Release Markdown，`lib/widgets/app_update_dialog.dart` 配合 `lib/controller.dart` 展示可滚动的完整说明、当前与最新完整版本及发布页入口；正文支持标题、列表和链接，链接仅允许 HTTP/HTTPS。回归为 `test/widgets/app_update_dialog_test.dart`。

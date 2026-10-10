@@ -974,22 +974,7 @@ jobs:
         run: |
           set -euo pipefail
           app_path="$(find build/macos/Build/Products/Release -maxdepth 1 -name '*.app' -print -quit)"
-          test_target="arm64-apple-macosx11.0"
-          if [[ "${{ matrix.arch }}" == "amd64" ]]; then
-            test_target="x86_64-apple-macosx10.15"
-          fi
-          frameworks="${app_path}/Contents/Frameworks"
-          swiftc -target "${test_target}" -F "${frameworks}" \
-            -framework Sparkle -framework FlutterMacOS \
-            -Xlinker -rpath -Xlinker "${frameworks}" \
-            plugins/auto_updater_macos/macos/Classes/AutoUpdater.swift \
-            plugins/auto_updater_macos/macos/Tests/main.swift \
-            -o "${RUNNER_TEMP}/updater-version-test"
-          "${RUNNER_TEMP}/updater-version-test"
-          resources="${frameworks}/Sparkle.framework/Resources"
-          for strings in "${resources}"/*.lproj/Sparkle.strings; do
-            cmp "${resources}/zh_CN.lproj/Sparkle.strings" "${strings}"
-          done
+          bash .custom-build/scripts/test-macos-updater.sh "${app_path}" "${{ matrix.arch }}"
 
       - name: 签署桌面更新包并生成更新元数据
         if: matrix.platform == 'macos' || matrix.platform == 'windows'
