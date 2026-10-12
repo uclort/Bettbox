@@ -6,9 +6,9 @@
     <description>Bettbox 自定义版本更新源</description>
     <language>zh-CN</language>
     <item>
-      <title>Bettbox 1.19.3+2090000188</title>
-      <pubDate>Sat, 10 Oct 2026 14:03:27 +0000</pubDate>
-      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000188-r20261010134036-5444e2a6e873-2c8fb62cd4c6</link>
+      <title>Bettbox 1.19.3+2090000189</title>
+      <pubDate>Mon, 12 Oct 2026 01:56:04 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000189-r20261012014032-1761bbb4fb5e-2c8fb62cd4c6</link>
       <description><![CDATA[<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https:;">
@@ -20,20 +20,18 @@ pre { white-space: pre-wrap; } code { font-size: .92em; }
 img,table { max-width: 100%; } table { border-collapse: collapse; } td,th { border: 1px solid #888; padding: 6px; }
 a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; padding-top: 12px; }
 </style></head><body><p dir="auto">基于上游 Bettbox <code class="notranslate">main@26865630fef4</code> 构建的自定义版本。</p>
-<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.3+2090000188</code></strong></p>
+<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.3+2090000189</code></strong></p>
 <h2 dir="auto">本次变更（相较上一自定义 Release）</h2>
 <ul dir="auto">
-<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000187-r20261010090311-8edd8e391edc-2c8fb62cd4c6"><code class="notranslate">custom-v1.19.3+2090000187-r20261010090311-8edd8e391edc-2c8fb62cd4c6</code></a> → <code class="notranslate">custom-v1.19.3+2090000188-r20261010134036-5444e2a6e873-2c8fb62cd4c6</code></li>
+<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000188-r20261010134036-5444e2a6e873-2c8fb62cd4c6"><code class="notranslate">custom-v1.19.3+2090000188-r20261010134036-5444e2a6e873-2c8fb62cd4c6</code></a> → <code class="notranslate">custom-v1.19.3+2090000189-r20261012014032-1761bbb4fb5e-2c8fb62cd4c6</code></li>
 </ul>
-<h3 dir="auto">2026-10-10 修复 Windows 更新检查与 macOS 菜单本地化</h3>
+<h3 dir="auto">2026-10-12 修复 macOS 菜单消失与关闭恢复异常</h3>
 <ul dir="auto">
-<li>Windows 更新器回补压缩 appcast 解码；检查失败允许一次短重试并重新建立 WinINet 会话、清空半包，网络操作设置超时，连续点击检查节流，避免原生自动检查与主工程检查重复。</li>
-<li>检查切换至下载时立即重置进度条与下载文案，不再显示检查阶段的残留进度。</li>
-<li>Windows 更新器记录真实网络/解析错误至 <code class="notranslate">%LOCALAPPDATA%/Bettbox/updater.log</code>，便于定位间歇性失败；保留现有 DSA 签名校验、版本比较与安装清理流程。</li>
-<li>macOS 顶部菜单跟随主工程语言设置，支持简体/繁体中文与其他应用支持语言，切换即时生效；关于、设置和检查更新连接有效入口。</li>
-<li>精简 macOS 默认模板菜单，移除未实现的服务、查找、拼写、替换、朗读和空帮助菜单，保留常用编辑快捷键、窗口管理和安全退出。</li>
+<li>修复菜单组件放在响应式布局内部导致新实例注册后被旧实例销毁清空的问题；菜单固定在布局外层，主窗口尺寸、布局和前后台切换不再销毁菜单。</li>
+<li>原生菜单仅随主工程语言变化更新，避免网速/窗口状态刷新时反复替换原生菜单及回调。</li>
+<li>Cmd+W 统一走红色关闭按钮的关闭拦截、偏好保存和后台处理链；macOS 聚焦时立即恢复渲染并取消旧暂停任务，Windows 保持原有处理。</li>
+<li>补充布局切换菜单生命周期、重复注册防护与 Cmd+W 原生关闭调用回归。</li>
 </ul>
-<p dir="auto">验证：Parallels Windows 11 中 x64/ARM64 更新器编译、gzip/原始 deflate/首次 503 重试真实 DLL 回归通过；macOS 主工程原生编译通过，桌面网络、托盘、更新展示及菜单语言切换共 55 项 Flutter 回归通过。下载进度归零已通过源码状态转换回归，最终安装包仍需人工视觉验收。</p>
 <h2 dir="auto">本包改动（相较上游版本）</h2>
 <h3 dir="auto">上游融合必检</h3>
 <ul dir="auto">
@@ -102,7 +100,7 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 </ul>
 <h3 dir="auto">macOS 与 Windows 托盘</h3>
 <ul dir="auto">
-<li>macOS 顶部应用菜单通过 <code class="notranslate">lib/widgets/macos_menu_bar.dart</code> 接入 MaterialApp 已解析的本地化，沿用显式语言、跟随系统与不支持语言回退规则，支持 7 种主工程语言且切换即时生效。保留关于、设置、检查更新、隐藏、编辑、窗口和安全退出，删除 Services/查找/拼写/替换/朗读/空 Help 等无效模板入口；菜单操作由 <code class="notranslate">lib/plugins/app.dart</code> 与 <code class="notranslate">macos/Runner/MainFlutterWindow.swift</code> 的允许列表转发到 AppKit 响应链，编辑快捷键保留系统语义。原生菜单本地化回归为 <code class="notranslate">test/widgets/macos_menu_bar_test.dart</code>，菜单文字源为 <code class="notranslate">arb/intl_*.arb</code>。</li>
+<li>macOS 顶部应用菜单通过 <code class="notranslate">lib/widgets/macos_menu_bar.dart</code> 接入 MaterialApp 已解析的本地化，沿用显式语言、跟随系统与不支持语言回退规则，支持 7 种主工程语言且切换即时生效。保留关于、设置、检查更新、隐藏、编辑、窗口和安全退出，删除 Services/查找/拼写/替换/朗读/空 Help 等无效模板入口；菜单操作由 <code class="notranslate">lib/plugins/app.dart</code> 与 <code class="notranslate">macos/Runner/MainFlutterWindow.swift</code> 的允许列表转发到 AppKit 响应链，编辑快捷键保留系统语义。菜单组件固定在 MaterialApp.builder 响应式布局外层，仅语言变化时重新生成原生菜单，避免布局切换后旧实例 dispose 清空新菜单。<code class="notranslate">Cmd+W</code> 调用 windowManager.close，沿用红色关闭按钮的保存/拦截/后台链；macOS 聚焦立即取消暂停并恢复渲染，不依赖异步 backgroundMode 状态。菜单生命周期、布局切换不清空/不重复注册、语言切换与关闭快捷键回归为 <code class="notranslate">test/widgets/macos_menu_bar_test.dart</code>，菜单文字源为 <code class="notranslate">arb/intl_*.arb</code>；窗口恢复修复位于 <code class="notranslate">lib/manager/window_manager.dart</code>。</li>
 <li>桌面托盘提供系统代理、虚拟网卡、重启内核、重启软件、自动启动、亮屏锁、策略组和节点选择；macOS 与 Windows 使用同一套左右键行为配置，可分别设置为显示窗口或显示菜单。</li>
 <li>Dock 图标完全跟随主窗口状态：窗口显示或最小化时显示，窗口关闭到托盘或静默启动时隐藏；不再提供“常驻 DOCK”开关，也不读取历史偏好。代码位于 <code class="notranslate">plugins/window_ext/macos/Classes/WindowExtPlugin.swift</code>、<code class="notranslate">macos/Runner/AppDelegate.swift</code> 与 <code class="notranslate">macos/Runner/MainFlutterWindow.swift</code>，策略映射测试位于 <code class="notranslate">macos/RunnerTests/RunnerTests.swift</code>。</li>
 <li>macOS 与 Windows 均支持独立开启实时上传/下载速率；系统代理与虚拟网卡均关闭时立即归零并显示为未启用状态。</li>
@@ -173,16 +171,16 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <h2 dir="auto">构建信息</h2>
 <ul dir="auto">
 <li>上游 Bettbox main 基线：<code class="notranslate">main@26865630fef4</code></li>
-<li>最终安装版本：<code class="notranslate">1.19.3+2090000188</code></li>
+<li>最终安装版本：<code class="notranslate">1.19.3+2090000189</code></li>
 <li>上游源码版本：<code class="notranslate">1.19.3+2026092601</code></li>
-<li>Bettbox custom-build commit：<code class="notranslate">5444e2a6e873629c34824207178dbf37920a6e1e</code></li>
+<li>Bettbox custom-build commit：<code class="notranslate">1761bbb4fb5e9958e0c705810fd630ef07980591</code></li>
 </ul>
 <p dir="auto">Release 仅包含本次 Action 生成的安装包，不包含私有自定义 Mihomo 源码。</p>
 <p dir="auto">Windows 与 macOS 安装包未做商业代码签名；Android 安装包使用 Bettbox 自定义版固定 Release 签名。</p>
-<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3%2B2090000188-r20261010134036-5444e2a6e873-2c8fb62cd4c6">查看完整发布页</a></footer></body></html>]]></description>
-      <sparkle:version>2090000188</sparkle:version>
-      <sparkle:shortVersionString>1.19.3+2090000188</sparkle:shortVersionString>
-      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.3+2090000188-r20261010134036-5444e2a6e873-2c8fb62cd4c6/Bettbox-1.19.3-macos-arm64.dmg" length="71799285" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="/fOuw+EVah11OAs3NjSRBmq+agECtGyETh3nKbkJEf6frGB91N+iNlqoyAwJeBukNqkUsvt0sejAJbITEv3hAw==" />
+<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3%2B2090000189-r20261012014032-1761bbb4fb5e-2c8fb62cd4c6">查看完整发布页</a></footer></body></html>]]></description>
+      <sparkle:version>2090000189</sparkle:version>
+      <sparkle:shortVersionString>1.19.3+2090000189</sparkle:shortVersionString>
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.3+2090000189-r20261012014032-1761bbb4fb5e-2c8fb62cd4c6/Bettbox-1.19.3-macos-arm64.dmg" length="71801248" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="v+wiXRH1VMpKJYNAUDwP8WosJCI+w3JqhBJbTX2tZUO4arWEHW5OjU4fmg/7eN9u/ab0trP0WxF2UY428eB4Ag==" />
     </item>
   </channel>
 </rss>
