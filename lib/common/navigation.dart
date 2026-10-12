@@ -15,13 +15,13 @@ class Navigation {
     return [
       NavigationItem(
         keep: false,
-        icon: Icon(Icons.space_dashboard),
+        icon: Icon(Icons.home_rounded),
         label: PageLabel.dashboard,
         builder: (_) =>
             DashboardView(key: const GlobalObjectKey(PageLabel.dashboard)),
       ),
       NavigationItem(
-        icon: const Icon(Icons.article),
+        icon: const Icon(Icons.explore),
         label: PageLabel.proxies,
         builder: (_) => ProviderScope(
           overrides: [queryProvider.overrideWith(() => Query())],
@@ -32,7 +32,7 @@ class Navigation {
             : [],
       ),
       NavigationItem(
-        icon: Icon(Icons.folder),
+        icon: const Icon(Icons.folder_shared),
         label: PageLabel.profiles,
         builder: (_) =>
             ProfilesView(key: const GlobalObjectKey(PageLabel.profiles)),
@@ -61,7 +61,7 @@ class Navigation {
         modes: [NavigationItemMode.more],
       ),
       NavigationItem(
-        icon: Icon(Icons.functions),
+        icon: const Icon(Icons.terminal_outlined),
         label: PageLabel.script,
         description: 'scriptDesc',
         builder: (_) =>

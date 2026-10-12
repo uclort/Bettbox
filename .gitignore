@@ -79,3 +79,11 @@ app.*.map.json
 # FVM Version Cache
 .fvm/
 .fvmrc
+
+/assets/data/GeoSite.dat
+/assets/data/geoip.metadb
+/assets/data/ASN.mmdb
+/assets/data/zash.zip
+
+# 私有内核检出目录不进入公开仓库。
+/.custom-build/runtime/

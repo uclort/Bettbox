@@ -114,6 +114,7 @@ bool startProxy(const int port,
   std::wstring bypass_list = L"<local>";
   for (const auto& domain : bypassDomain) {
     const auto& value = std::get<std::string>(domain);
+    if (value == "::1") continue;
     bypass_list += L";";
     bypass_list.append(value.begin(), value.end());
   }

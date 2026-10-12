@@ -164,31 +164,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Panel`
-  String get networkMonitorTab {
-    return Intl.message('Panel', name: 'networkMonitorTab', desc: '', args: []);
-  }
-
-  /// `Network Panel`
-  String get networkPanel {
-    return Intl.message(
-      'Network Panel',
-      name: 'networkPanel',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `View network requests, connections, and traffic`
-  String get networkPanelDesc {
-    return Intl.message(
-      'View network requests, connections, and traffic',
-      name: 'networkPanelDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Traffic Usage`
   String get trafficUsage {
     return Intl.message(
@@ -474,6 +449,26 @@ class AppLocalizations {
     );
   }
 
+  /// `Loopback Protection`
+  String get loopbackProtection {
+    return Intl.message(
+      'Loopback Protection',
+      name: 'loopbackProtection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Block loopback traffic from network errors`
+  String get loopbackProtectionDesc {
+    return Intl.message(
+      'Block loopback traffic from network errors',
+      name: 'loopbackProtectionDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Disable QUIC`
   String get disableQuic {
     return Intl.message(
@@ -559,6 +554,26 @@ class AppLocalizations {
     return Intl.message(
       'Always show the title bar buttons in the top-right corner',
       name: 'alwaysShowTitleBarDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Keep in Dock`
+  String get keepDockIcon {
+    return Intl.message(
+      'Keep in Dock',
+      name: 'keepDockIcon',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Keep the app icon in the Dock`
+  String get keepDockIconDesc {
+    return Intl.message(
+      'Keep the app icon in the Dock',
+      name: 'keepDockIconDesc',
       desc: '',
       args: [],
     );
@@ -4224,6 +4239,16 @@ class AppLocalizations {
     return Intl.message('Stack Mode', name: 'stackMode', desc: '', args: []);
   }
 
+  /// `Congestion Controller`
+  String get congestionController {
+    return Intl.message(
+      'Congestion Controller',
+      name: 'congestionController',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Strict Route`
   String get strictRoute {
     return Intl.message(
@@ -4809,20 +4834,20 @@ class AppLocalizations {
     );
   }
 
-  /// `Haptic Feedback`
+  /// `Animation Feedback`
   String get navBarHapticFeedback {
     return Intl.message(
-      'Haptic Feedback',
+      'Animation Feedback',
       name: 'navBarHapticFeedback',
       desc: '',
       args: [],
     );
   }
 
-  /// `Vibrate on navigation tab switch`
+  /// `Bottom navigation bar animation and haptic feedback`
   String get navBarHapticFeedbackDesc {
     return Intl.message(
-      'Vibrate on navigation tab switch',
+      'Bottom navigation bar animation and haptic feedback',
       name: 'navBarHapticFeedbackDesc',
       desc: '',
       args: [],
@@ -5474,6 +5499,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Other Settings`
+  String get scriptOtherOptions {
+    return Intl.message(
+      'Other Settings',
+      name: 'scriptOtherOptions',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Wakelock`
   String get wakelock {
     return Intl.message('Wakelock', name: 'wakelock', desc: '', args: []);
@@ -6029,6 +6064,16 @@ class AppLocalizations {
     );
   }
 
+  /// `More Streaming Unlock Items`
+  String get mediaUnlockMoreStreamingPlatforms {
+    return Intl.message(
+      'More Streaming Unlock Items',
+      name: 'mediaUnlockMoreStreamingPlatforms',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Show more IP details`
   String get mediaUnlockExtraDetails {
     return Intl.message(
@@ -6349,6 +6394,96 @@ class AppLocalizations {
     return Intl.message(
       'Username cannot contain colons',
       name: 'usernameCannotContainColon',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `LAN & Gateway`
+  String get intranetAndGateway {
+    return Intl.message(
+      'LAN & Gateway',
+      name: 'intranetAndGateway',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Gateway`
+  String get defaultGateway {
+    return Intl.message('Gateway', name: 'defaultGateway', desc: '', args: []);
+  }
+
+  /// `LAN Sharing`
+  String get lanSharing {
+    return Intl.message('LAN Sharing', name: 'lanSharing', desc: '', args: []);
+  }
+
+  /// `Shared Address`
+  String get sharedAddress {
+    return Intl.message(
+      'Shared Address',
+      name: 'sharedAddress',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `DNS Resolution`
+  String get dnsResolution {
+    return Intl.message(
+      'DNS Resolution',
+      name: 'dnsResolution',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `DNS`
+  String get systemDns {
+    return Intl.message('DNS', name: 'systemDns', desc: '', args: []);
+  }
+
+  /// `Enabled`
+  String get enabled {
+    return Intl.message('Enabled', name: 'enabled', desc: '', args: []);
+  }
+
+  /// `Disabled`
+  String get disabled {
+    return Intl.message('Disabled', name: 'disabled', desc: '', args: []);
+  }
+
+  /// `Open Gateway`
+  String get openRouterAdmin {
+    return Intl.message(
+      'Open Gateway',
+      name: 'openRouterAdmin',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Panel`
+  String get networkMonitorTab {
+    return Intl.message('Panel', name: 'networkMonitorTab', desc: '', args: []);
+  }
+
+  /// `Network Panel`
+  String get networkPanel {
+    return Intl.message(
+      'Network Panel',
+      name: 'networkPanel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `View network requests, connections, and traffic`
+  String get networkPanelDesc {
+    return Intl.message(
+      'View network requests, connections, and traffic',
+      name: 'networkPanelDesc',
       desc: '',
       args: [],
     );

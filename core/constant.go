@@ -64,6 +64,7 @@ type tunSchema struct {
 	RouteExcludeAddress   *[]netip.Prefix    `yaml:"route-exclude-address" json:"route-exclude-address,omitempty"`
 	StrictRoute           *bool              `yaml:"strict-route" json:"strict-route,omitempty"`
 	DisableICMPForwarding *bool              `yaml:"disable-icmp-forwarding" json:"disable-icmp-forwarding,omitempty"`
+	CongestionController  *string            `yaml:"congestion-controller" json:"congestion-controller,omitempty"`
 }
 
 type ChangeProxyParams struct {
@@ -133,6 +134,12 @@ const (
 	getModeMethod                         Method = "getMode"
 	parseExternalProviderContentMethod    Method = "parseExternalProviderContent"
 	getCoreStatusMethod                   Method = "getCoreStatus"
+	getRequestsMethod                     Method = "getRequests"
+	startTrackRequestsMethod              Method = "startTrackRequests"
+	stopTrackRequestsMethod               Method = "stopTrackRequests"
+	clearRequestsMethod                   Method = "clearRequests"
+	getLogsMethod                         Method = "getLogs"
+	clearLogsMethod                       Method = "clearLogs"
 )
 
 type Method string

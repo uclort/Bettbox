@@ -514,9 +514,7 @@ class AppController {
         _backgroundLoad();
       } catch (e) {
         commonPrint.log('桌面 TUN 快速启动失败：$e');
-        await _recoverDesktopTunStartup(
-          baselineConfigured: baselineConfigured,
-        );
+        await _recoverDesktopTunStartup(baselineConfigured: baselineConfigured);
         globalState.showNotifier(e.formatError);
         return;
       }
@@ -613,9 +611,7 @@ class AppController {
       final tunEnabled =
           _ref.read(patchClashConfigProvider).tun.enable ||
           _ref.read(realTunEnableProvider);
-      final systemProxyEnabled = _ref
-          .read(networkSettingProvider)
-          .systemProxy;
+      final systemProxyEnabled = _ref.read(networkSettingProvider).systemProxy;
       if (!force &&
           !tunEnabled &&
           !systemProxyEnabled &&
@@ -731,7 +727,10 @@ class AppController {
       return false;
     }
     await _initCore();
-    await currentProfile.checkAndUpdate();
+    final isFileExists = await currentProfile.check();
+    if (!isFileExists) {
+      await currentProfile.checkAndUpdate();
+    }
     final patchConfig = _ref.read(patchClashConfigProvider);
     final targetTun = enableTun ?? patchConfig.tun.enable;
 
@@ -788,23 +787,7 @@ class AppController {
   }
 
   Future<bool> _shouldUpdateDashboardTick() async {
-    final lifecycleState = WidgetsBinding.instance.lifecycleState;
-    final isPinned =
-        system.isDesktop &&
-        _ref.read(windowSettingProvider.select((s) => s.isPinned));
-    if (!isPinned && lifecycleState != AppLifecycleState.resumed) return false;
-
-    if (system.isDesktop) {
-      final isPinned = _ref.read(
-        windowSettingProvider.select((s) => s.isPinned),
-      );
-      if (isPinned) return true;
-      if (await window?.isVisible == false) return false;
-      if (await window?.isMinimized == true) return false;
-      return true;
-    }
-
-    return true;
+    return dashboardRefreshManager.isActive();
   }
 
   Future<void> updateTraffic() async {
@@ -980,11 +963,7 @@ class AppController {
 
   Future<bool> updateClashConfig() {
     return _coreLifecycleLock.synchronized(() async {
-      return await safeRun(
-            _updateClashConfig,
-            needLoading: true,
-          ) ??
-          false;
+      return await safeRun(_updateClashConfig, needLoading: true) ?? false;
     });
   }
 
@@ -1061,9 +1040,7 @@ class AppController {
           break;
         case AuthorizeCode.error:
           globalState.showNotifier(appLocalizations.tunEnableRequireAdmin);
-          return Result<bool>.error(
-            appLocalizations.tunEnableRequireAdmin,
-          );
+          return Result<bool>.error(appLocalizations.tunEnableRequireAdmin);
       }
     }
     return Result.success(enableTun);
@@ -1084,7 +1061,12 @@ class AppController {
   Future<void> _applyProfile() async {
     _invalidateCoreReads();
     _ref.read(delayDataSourceProvider.notifier).value = {};
-    unawaited(clashCore.requestGc());
+    unawaited(
+      clashCore.requestGc().then<void>(
+        (_) {},
+        onError: (Object e) => commonPrint.log('requestGc ignored: $e'),
+      ),
+    );
     final configured = await _setupCoreConfig();
     if (!configured) return;
     final providers = await clashCore.getExternalProviders();
@@ -1139,7 +1121,7 @@ class AppController {
           globalState.showNotifier(err.toString());
         }
       }
-      _ref.read(logsProvider.notifier).value = FixedList(maxLength);
+      _ref.read(logsProvider.notifier).value = FixedList(maxLogLength);
       _ref.read(requestsProvider.notifier).value = FixedList(maxLength);
       globalState.computeHeightMapCache = {};
       addCheckIpNumDebounce();
@@ -1647,6 +1629,10 @@ class AppController {
   Future<void> _initCore() {
     return _initCoreFuture ??= () async {
       try {
+        if (!await _waitForCoreConnection()) {
+          commonPrint.log('core not connected yet, skipping init');
+          return;
+        }
         final isInit = await clashCore.isInit;
         if (!isInit) {
           await clashCore.init();
@@ -1656,6 +1642,17 @@ class AppController {
         _initCoreFuture = null;
       }
     }();
+  }
+
+  Future<bool> _waitForCoreConnection() async {
+    final completer = clashService?.socketCompleter;
+    if (completer == null || completer.isCompleted) return true;
+    try {
+      await completer.future.timeout(const Duration(seconds: 15));
+      return true;
+    } on TimeoutException {
+      return false;
+    }
   }
 
   void startWakelockAutoRecovery() {
@@ -1784,7 +1781,9 @@ class AppController {
       try {
         await _initStatus();
       } catch (e) {
-        commonPrint.log('_initStatus failed, falling back to basic startup: $e');
+        commonPrint.log(
+          '_initStatus failed, falling back to basic startup: $e',
+        );
         try {
           await applyProfile(silence: true);
         } catch (e2) {
@@ -1796,7 +1795,9 @@ class AppController {
     }
 
     autoLaunch?.updateStatus(_ref.read(appSettingProvider).autoLaunch);
-    autoUpdateProfiles();
+    Future.delayed(const Duration(seconds: 5), () {
+      autoUpdateProfiles();
+    });
     autoCheckUpdate();
 
     await syncDesktopRuntimeState(preferCurrentState: true);

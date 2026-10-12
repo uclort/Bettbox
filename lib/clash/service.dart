@@ -11,6 +11,7 @@ import 'package:bett_box/models/core.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/utils/frame_codec.dart';
 import 'package:bett_box/utils/platform_check.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
 class ClashService extends ClashHandlerInterface {
@@ -118,6 +119,21 @@ class ClashService extends ClashHandlerInterface {
     );
   }
 
+  Future<void> _rebindTransport() async {
+    await _destroySocket();
+    await (await serverCompleter.future).close();
+    await _deleteSocketFile();
+    serverCompleter = Completer();
+    if (_transportType == TransportType.unixSocket) {
+      _socketPath = p.join(
+        Directory.systemTemp.path,
+        'Bettbox_${Random().nextInt(10000)}.sock',
+      );
+    }
+    _initServer();
+    await serverCompleter.future;
+  }
+
   @override
   Future<void> reStart() async {
     final completer = Completer<void>();
@@ -205,50 +221,89 @@ class ClashService extends ClashHandlerInterface {
         }
       }
 
-      final coreProcess = await Process.start(appPath.corePath, [
-        arg,
-      ], environment: environment);
-      process = coreProcess;
-      coreProcess.stdout.listen((_) {});
-      var lastCoreError = '';
-      coreProcess.stderr.listen((e) {
-        final error = utf8.decode(e);
-        if (error.isNotEmpty) {
-          lastCoreError = error.trim();
-          commonPrint.log(error);
+      if (system.isWindows && AppIdentity.isDev) {
+        try {
+          await Process.run('taskkill', [
+            '/F',
+            '/IM',
+            '${AppIdentity.coreExecutableName}.exe',
+          ]);
+        } catch (_) {}
+      }
+      var connected = await _startCoreDirectly(arg, environment);
+      if (!connected) {
+        commonPrint.log('核心未连接，重建控制通道后重试一次');
+        final failedProcess = process;
+        process = null;
+        failedProcess?.kill();
+        if (failedProcess != null) {
+          await failedProcess.exitCode.timeout(
+            const Duration(seconds: 2),
+            onTimeout: () {
+              failedProcess.kill(ProcessSignal.sigkill);
+              return -1;
+            },
+          );
         }
-      });
-      unawaited(
-        coreProcess.exitCode.then((exitCode) {
-          if (!identical(process, coreProcess) ||
-              _isDestroying ||
-              globalState.isExiting) {
-            return;
-          }
-          process = null;
-          final details =
-              'BettboxCore 异常退出（代码 $exitCode）'
-              '${lastCoreError.isEmpty ? '' : ': $lastCoreError'}';
-          final socket = _activeSocket;
-          if (socket != null) {
-            _handleSocketClosed(socket, details: details);
-          } else {
-            _notifyUnexpectedExit(details);
-          }
-          commonPrint.log(details);
-        }),
-      );
-      if (!await _waitForCoreReady()) {
-        if (identical(process, coreProcess)) {
-          process = null;
-        }
-        coreProcess.kill();
+        await _rebindTransport();
+        final retryArg = _transportType == TransportType.unixSocket
+            ? _socketPath!
+            : '${(await serverCompleter.future).port}';
+        connected = await _startCoreDirectly(retryArg, environment);
+      }
+      if (!connected) {
+        final failedProcess = process;
+        process = null;
+        failedProcess?.kill();
         throw StateError('BettboxCore 启动超时，未建立控制连接');
       }
       _setWindowsCorePriority();
     } finally {
       isStarting = false;
     }
+  }
+
+  Future<bool> _startCoreDirectly(
+    String arg,
+    Map<String, String> environment,
+  ) async {
+    if (system.isLinux && appPath.isAppImage) {
+      await appPath.ensureAppImageCoreSynced();
+    }
+    final coreProcess = await Process.start(appPath.corePath, [
+      arg,
+    ], environment: environment);
+    process = coreProcess;
+    coreProcess.stdout.listen((_) {});
+    var lastCoreError = '';
+    coreProcess.stderr.listen((e) {
+      final error = utf8.decode(e);
+      if (error.isNotEmpty) {
+        lastCoreError = error.trim();
+        commonPrint.log(error);
+      }
+    });
+    unawaited(
+      coreProcess.exitCode.then((exitCode) {
+        if (!identical(process, coreProcess) ||
+            _isDestroying ||
+            globalState.isExiting) {
+          return;
+        }
+        process = null;
+        final details =
+            'BettboxCore 异常退出（代码 $exitCode）'
+            '${lastCoreError.isEmpty ? '' : ': $lastCoreError'}';
+        final socket = _activeSocket;
+        if (socket != null) {
+          _handleSocketClosed(socket, details: details);
+        } else {
+          _notifyUnexpectedExit(details);
+        }
+        commonPrint.log(details);
+      }),
+    );
+    return _waitForCoreReady(coreProcess);
   }
 
   void _setWindowsCorePriority() {
@@ -266,13 +321,22 @@ class ClashService extends ClashHandlerInterface {
     );
   }
 
-  Future<bool> _waitForCoreReady() async {
+  Future<bool> _waitForCoreReady([Process? targetProcess]) async {
+    final timeout = Duration(seconds: kDebugMode || AppIdentity.isDev ? 15 : 6);
     try {
-      await socketCompleter.future.timeout(const Duration(seconds: 5));
+      if (targetProcess != null) {
+        final ready = await Future.any<bool>([
+          socketCompleter.future.then((_) => true),
+          targetProcess.exitCode.then((_) => false),
+        ]).timeout(timeout);
+        if (!ready) return false;
+      } else {
+        await socketCompleter.future.timeout(timeout);
+      }
       _unexpectedExitReported = false;
       return true;
     } catch (_) {
-      commonPrint.log('Core ready timeout after 5s');
+      commonPrint.log('核心未就绪，等待上限 ${timeout.inSeconds} 秒');
       return false;
     }
   }

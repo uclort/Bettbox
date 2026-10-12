@@ -8,6 +8,15 @@
 - `LATEST_CHANGES.md` 只记录相较上一自定义 Release 的增量，不能替代本文件。
 - 未经用户明确要求，不创建 Pull Request。
 
+### 当前上游融合基线
+
+- 2026-10-12 同步 Bettbox `main@afcc5cf0b3e1`（`1.19.5+2026100101`）与 Mihomo `v1.19.32`，保留原有全部 `BETTBOX-CUSTOM` 标记。
+- 接入上游无边框主题、可折叠侧边栏、列表和编辑器优化、GeoData 在线下载、回环流量保护及 Windows Helper 子进程管理；侧边栏继续通过 `_selectPage` 打开独立网络面板，Android 首页继续保留单一悬浮总开关。
+- 核心启动兼容上游 Linux AppImage 内核同步与控制通道重建重试；首次控制连接失败后清理旧进程和 socket 再重试一次，两次失败仍抛错并执行原有代理/TUN 回滚。Windows Helper 继续按需授权启动，macOS 网络恢复继续等待 `resetConnections` 的真实结果。
+- Windows 系统代理吸收上游 `::1` 绕过兼容处理，同时保留 WinINet/RAS 和注册表双通道启停；模型保留首次安装关闭系统代理的默认值，并接入上游历史绕过域名清洗。
+- 融合落点为 `lib/clash/service.dart`、`lib/manager/app_manager.dart`、`lib/widgets/google_bottom_nav_bar.dart`、`lib/views/dashboard/dashboard.dart`、`lib/models/config.dart`、`plugins/proxy/windows/proxy_plugin.cpp` 与 `macos/Runner/MainFlutterWindow.swift`；同步重新生成模型和七种语言资源。
+- 验证方式：`flutter analyze --no-pub`、`flutter test --no-pub`、核心包装层 `go test ./...`、下文内核指定目录的 Go 回归，以及 Release 正文和 WinSparkle 补丁回归；五平台原生构建与安装包校验由自定义发布工作流执行。
+
 ### WebDAV 配置同步边界
 
 - WebDAV 使用现有 ZIP 备份格式的 `shared-config` 范围，只同步订阅配置、配置 YAML 与 `ScriptProps.scripts`。

@@ -1,4 +1,4 @@
-import 'dart:math';
+import 'dart:math' as math;
 
 import 'package:bett_box/state.dart';
 
@@ -158,6 +158,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
       return;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final dashboardWidgets = children
           .map((item) => DashboardWidget.getDashboardWidget(item))
           .toList();
@@ -180,13 +181,8 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   @override
   Widget build(BuildContext context) {
     final dashboardState = ref.watch(dashboardStateProvider);
-    final columns = max(4 * ((dashboardState.viewWidth / 320).ceil()), 8);
     final spacing = 16.ap;
     final isMobileView = ref.watch(isMobileViewProvider);
-    final floatingBottomBarReserve = isMobileView
-        ? getFloatingBottomBarReserveHeight(context)
-        : 0.0;
-    final androidStartButtonReserve = system.isAndroid ? 72.0 : 0.0;
     final children = [
       ...dashboardState.dashboardWidgets
           .where(
@@ -195,6 +191,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
           .map((item) => item.widget),
     ];
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       _addedWidgetsNotifier.value = DashboardWidget.values
           .where(
             (item) =>
@@ -220,57 +217,70 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
           : null,
       body: Align(
         alignment: Alignment.topCenter,
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(16).copyWith(
-            bottom: 16 + floatingBottomBarReserve + androidStartButtonReserve,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildIsEdit((isEdit) {
-                if (isEdit) {
-                  return SystemBackBlock(
-                    child: CommonPopScope(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SuperGrid(
-                            key: key,
-                            crossAxisCount: columns,
-                            crossAxisSpacing: spacing,
-                            mainAxisSpacing: spacing,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final contentWidth = constraints.maxWidth;
+            final int columns = isMobileView
+                ? 8
+                : math.max<int>(8, 4 * ((contentWidth - 40) / 270).ceil());
+            return SingleChildScrollView(
+              padding: EdgeInsets.all(16).copyWith(
+                bottom:
+                    16 +
+                    (isMobileView
+                        ? getFloatingBottomBarReserveHeight(context)
+                        : 0) +
+                    (system.isAndroid ? 72.0 : 0.0),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildIsEdit((isEdit) {
+                    if (isEdit) {
+                      return SystemBackBlock(
+                        child: CommonPopScope(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              ...dashboardState.dashboardWidgets
-                                  .where(
-                                    (item) => item.platforms.contains(
-                                      SupportPlatform.currentPlatform,
-                                    ),
-                                  )
-                                  .map((item) => item.widget),
+                              SuperGrid(
+                                key: key,
+                                crossAxisCount: columns,
+                                crossAxisSpacing: spacing,
+                                mainAxisSpacing: spacing,
+                                children: [
+                                  ...dashboardState.dashboardWidgets
+                                      .where(
+                                        (item) => item.platforms.contains(
+                                          SupportPlatform.currentPlatform,
+                                        ),
+                                      )
+                                      .map((item) => item.widget),
+                                ],
+                                onUpdate: () {
+                                  _handleSave();
+                                },
+                              ),
                             ],
-                            onUpdate: () {
-                              _handleSave();
-                            },
                           ),
-                        ],
-                      ),
-                      onPop: () {
-                        _handleUpdateIsEdit();
-                        return false;
-                      },
-                    ),
-                  );
-                } else {
-                  return Grid(
-                    crossAxisCount: columns,
-                    crossAxisSpacing: spacing,
-                    mainAxisSpacing: spacing,
-                    children: [...children],
-                  );
-                }
-              }),
-            ],
-          ),
+                          onPop: () {
+                            _handleUpdateIsEdit();
+                            return false;
+                          },
+                        ),
+                      );
+                    } else {
+                      return Grid(
+                        crossAxisCount: columns,
+                        crossAxisSpacing: spacing,
+                        mainAxisSpacing: spacing,
+                        children: [...children],
+                      );
+                    }
+                  }),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );

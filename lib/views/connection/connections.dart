@@ -168,7 +168,12 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
   }
 
   void _handleCloseAll() async {
-    clashCore.closeConnections();
+    unawaited(
+      clashCore.closeConnections().then<void>(
+        (_) {},
+        onError: (Object e) => commonPrint.log('closeConnections ignored: $e'),
+      ),
+    );
     await _updateConnections();
   }
 
@@ -268,9 +273,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
                   detailTitle: appLocalizations.details,
                 );
               },
-              itemExtentBuilder: (index, _) {
-                return TrackerInfoItem.height + 1;
-              },
+              itemExtent: TrackerInfoItem.height + 1,
               itemCount: connections.length,
             ),
           );

@@ -395,6 +395,31 @@ class _BatteryOptimizationItemState
   }
 }
 
+class LoopbackProtectionItem extends ConsumerWidget {
+  const LoopbackProtectionItem({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final loopbackProtection = ref.watch(
+      vpnSettingProvider.select((state) => state.loopbackProtection),
+    );
+
+    return ListItem.switchItem(
+      title: Text(appLocalizations.loopbackProtection),
+      subtitle: Text(appLocalizations.loopbackProtectionDesc),
+      delegate: SwitchDelegate(
+        value: loopbackProtection,
+        onChanged: (bool value) async {
+          ref
+              .read(vpnSettingProvider.notifier)
+              .updateState((state) => state.copyWith(loopbackProtection: value));
+          globalState.appController.setupClashConfigDebounce();
+        },
+      ),
+    );
+  }
+}
+
 class DisableQuicSection extends ConsumerWidget {
   const DisableQuicSection({super.key});
 
@@ -734,6 +759,7 @@ class OtherSettingView extends ConsumerWidget {
       if (system.isAndroid) const DozeSuspendItem(),
       if (system.isAndroid) const QuickResponseItem(),
       if (system.isAndroid) const StoreFixItem(),
+      const LoopbackProtectionItem(),
       const DisableQuicSection(),
       if (system.isAndroid) const HighPriorityNotificationItem(),
       if (system.isAndroid) const NetworkSpeedNotificationItem(),

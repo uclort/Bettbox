@@ -41,40 +41,43 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
         ? MediaCategory.values
         : MediaCategory.values.where((c) => c != MediaCategory.china).toList();
     final categories = [null, ...availableCategories];
-    return SizedBox(
-      height: 34,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: categories.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          final cat = categories[index];
-          final isSelected = _selectedCategory == cat;
-          return FilterChip(
-            selected: isSelected,
-            showCheckmark: false,
-            label: Text(_getCategoryLabel(cat)),
-            labelStyle: context.textTheme.labelMedium?.copyWith(
-              color: isSelected
-                  ? context.colorScheme.onPrimary
-                  : context.colorScheme.onSurfaceVariant,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-            ),
-            backgroundColor: context.colorScheme.surfaceContainerHigh,
-            selectedColor: context.colorScheme.primary,
-            side: BorderSide.none,
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            onSelected: (_) {
-              setState(() {
-                _selectedCategory = cat;
-              });
-            },
-          );
-        },
+    return RepaintBoundary(
+      child: SizedBox(
+        height: 34,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: categories.length,
+          separatorBuilder: (_, _) => const SizedBox(width: 8),
+          itemBuilder: (context, index) {
+            final cat = categories[index];
+            final isSelected = _selectedCategory == cat;
+            return FilterChip(
+              key: ValueKey(cat),
+              selected: isSelected,
+              showCheckmark: false,
+              label: Text(_getCategoryLabel(cat)),
+              labelStyle: context.textTheme.labelMedium?.copyWith(
+                color: isSelected
+                    ? context.colorScheme.onPrimary
+                    : context.colorScheme.onSurfaceVariant,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              ),
+              backgroundColor: context.colorScheme.surfaceContainerHigh,
+              selectedColor: context.colorScheme.primary,
+              side: BorderSide.none,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              onSelected: (_) {
+                setState(() {
+                  _selectedCategory = cat;
+                });
+              },
+            );
+          },
+        ),
       ),
     );
   }
@@ -249,8 +252,11 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
                                   ),
                                 ),
                               ),
-                              for (final platform in MediaPlatform.values
-                                  .where((p) => p.category == category))
+                              for (final platform in MediaPlatform.values.where(
+                                  (p) =>
+                                      p.category == category &&
+                                      (ref.read(appSettingProvider).mediaUnlockMoreStreamingPlatforms ||
+                                          !moreStreamingPlatforms.contains(p))))
                                 CheckboxListTile(
                                   dense: true,
                                   contentPadding: EdgeInsets.zero,
@@ -349,6 +355,18 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  ListItem.switchItem(
+                    title: Text(appLocalizations.mediaUnlockMoreStreamingPlatforms),
+                    delegate: SwitchDelegate(
+                      value: setting.mediaUnlockMoreStreamingPlatforms,
+                      onChanged: (value) {
+                        updateSetting(
+                          (s) => s.copyWith(mediaUnlockMoreStreamingPlatforms: value),
+                        );
+                      },
+                    ),
+                  ),
+                  divider,
                   ListItem.switchItem(
                     title: Text(appLocalizations.mediaUnlockExtraDetails),
                     delegate: SwitchDelegate(
@@ -524,11 +542,12 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
     final showIp =
         showExtraDetails && ip != null && ip.isNotEmpty ? ip : null;
 
-    return Container(
+    return RepaintBoundary(
       key: ValueKey(platform),
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
         color: context.colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(14),
       ),
@@ -653,13 +672,15 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (isTesting) ...[
-                  SizedBox(
-                    width: 10,
-                    height: 10,
-                    child: SpinKitRing(
-                      color: color,
-                      lineWidth: 1.2,
-                      size: 10,
+                  RepaintBoundary(
+                    child: SizedBox(
+                      width: 10,
+                      height: 10,
+                      child: SpinKitRing(
+                        color: color,
+                        lineWidth: 1.2,
+                        size: 10,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 4),
@@ -704,8 +725,9 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   List<Widget> _buildStatusSectionSlivers({
     required String title,
@@ -757,11 +779,12 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
   @override
   Widget build(BuildContext context) {
     final isChinese = Localizations.localeOf(context).languageCode == 'zh';
-    final (showExtraDetails, refreshByCategory) = ref.watch(
+    final (showExtraDetails, refreshByCategory, showMoreStreaming) = ref.watch(
       appSettingProvider.select(
         (state) => (
           state.mediaUnlockExtraDetails,
           state.mediaUnlockRefreshByCategory,
+          state.mediaUnlockMoreStreamingPlatforms,
         ),
       ),
     );
@@ -773,11 +796,13 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
         final blockedList = <MediaPlatform>[];
         final otherList = <MediaPlatform>[];
 
-        final basePlatforms = isChinese
-            ? MediaPlatform.values
-            : MediaPlatform.values
-                .where((p) => p.category != MediaCategory.china)
-                .toList();
+        final basePlatforms = (isChinese
+                ? MediaPlatform.values
+                : MediaPlatform.values
+                    .where((p) => p.category != MediaCategory.china))
+            .where(
+                (p) => showMoreStreaming || !moreStreamingPlatforms.contains(p))
+            .toList();
 
         final effectiveCategory =
             (!isChinese && _selectedCategory == MediaCategory.china)
@@ -827,13 +852,15 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
                     },
               tooltip: appLocalizations.retry,
               icon: isCategoryLoading
-                  ? SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: SpinKitRing(
-                        color: context.colorScheme.primary,
-                        lineWidth: 1.5,
-                        size: 16,
+                  ? RepaintBoundary(
+                      child: SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: SpinKitRing(
+                          color: context.colorScheme.primary,
+                          lineWidth: 1.5,
+                          size: 16,
+                        ),
                       ),
                     )
                   : const Icon(Icons.sync),
@@ -878,7 +905,9 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
                 state: state,
                 showExtraDetails: showExtraDetails,
               ),
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              SliverToBoxAdapter(
+                child: SizedBox(height: globalState.isAndroidTV ? 48.0 : 24.0),
+              ),
             ],
           ),
         );

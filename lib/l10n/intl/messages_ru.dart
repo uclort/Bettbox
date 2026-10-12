@@ -303,6 +303,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Максимальное количество параллельных тестов задержки",
     ),
     "confirm": MessageLookupByLibrary.simpleMessage("Подтвердить"),
+    "congestionController": MessageLookupByLibrary.simpleMessage(
+      "Управление перегрузкой",
+    ),
     "connection": MessageLookupByLibrary.simpleMessage("Соединения"),
     "connections": MessageLookupByLibrary.simpleMessage("Соединения"),
     "connectionsDesc": MessageLookupByLibrary.simpleMessage(
@@ -358,6 +361,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "dashboard": MessageLookupByLibrary.simpleMessage("Главная"),
     "days": m0,
+    "defaultGateway": MessageLookupByLibrary.simpleMessage("Шлюз"),
     "defaultNameserver": MessageLookupByLibrary.simpleMessage(
       "DNS по умолчанию",
     ),
@@ -416,6 +420,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "disableQuicDesc": MessageLookupByLibrary.simpleMessage(
       "Отключить QUIC для решения сетевых проблем",
     ),
+    "disabled": MessageLookupByLibrary.simpleMessage("Отключено"),
     "disclaimer": MessageLookupByLibrary.simpleMessage(
       "Отказ от ответственности",
     ),
@@ -432,6 +437,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Перенаправить разбор в модуль DNS",
     ),
     "dnsMode": MessageLookupByLibrary.simpleMessage("Режим DNS"),
+    "dnsResolution": MessageLookupByLibrary.simpleMessage("Разрешение DNS"),
     "doYouWantToPass": MessageLookupByLibrary.simpleMessage("Разрешить"),
     "domain": MessageLookupByLibrary.simpleMessage("Домен"),
     "doubleBounce": MessageLookupByLibrary.simpleMessage("Двойной отскок"),
@@ -463,6 +469,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "enableTraySpeedDesc": MessageLookupByLibrary.simpleMessage(
       "Отображение скорости отдачи и загрузки в строке меню",
     ),
+    "enabled": MessageLookupByLibrary.simpleMessage("Включено"),
     "endpointIndependentNat": MessageLookupByLibrary.simpleMessage(
       "Улучшенный NAT",
     ),
@@ -667,6 +674,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "intelligentSelected": MessageLookupByLibrary.simpleMessage("Умный выбор"),
     "internet": MessageLookupByLibrary.simpleMessage("Интернет"),
     "interval": MessageLookupByLibrary.simpleMessage("Интервал"),
+    "intranetAndGateway": MessageLookupByLibrary.simpleMessage("LAN и шлюз"),
     "intranetIP": MessageLookupByLibrary.simpleMessage("Локальный IP"),
     "invalidIpFormat": MessageLookupByLibrary.simpleMessage(
       "Неверный формат IP или CIDR",
@@ -687,7 +695,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "keepAliveIntervalDesc": MessageLookupByLibrary.simpleMessage(
       "Интервал TCP keep-alive",
     ),
+    "keepDockIcon": MessageLookupByLibrary.simpleMessage("Закрепить в Dock"),
+    "keepDockIconDesc": MessageLookupByLibrary.simpleMessage(
+      "Сохранять иконку приложения в Dock",
+    ),
     "key": MessageLookupByLibrary.simpleMessage("Ключ"),
+    "lanSharing": MessageLookupByLibrary.simpleMessage("Общий доступ в LAN"),
     "language": MessageLookupByLibrary.simpleMessage("Язык"),
     "lastEdit": MessageLookupByLibrary.simpleMessage(
       "Последнее редактирование",
@@ -719,6 +732,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "loopbackDesc": MessageLookupByLibrary.simpleMessage(
       "Инструмент для разблокировки UWP loopback",
     ),
+    "loopbackProtection": MessageLookupByLibrary.simpleMessage(
+      "Защита от закольцовки",
+    ),
+    "loopbackProtectionDesc": MessageLookupByLibrary.simpleMessage(
+      "Блокировать закольцованный трафик из-за ошибок сети",
+    ),
     "loose": MessageLookupByLibrary.simpleMessage("Максимальная"),
     "manualRefreshIp": MessageLookupByLibrary.simpleMessage("Обновить IP"),
     "maximize": MessageLookupByLibrary.simpleMessage("Развернуть"),
@@ -737,6 +756,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "mediaUnlockMiscSettings": MessageLookupByLibrary.simpleMessage(
       "Прочие настройки",
+    ),
+    "mediaUnlockMoreStreamingPlatforms": MessageLookupByLibrary.simpleMessage(
+      "Больше платформ стриминга",
     ),
     "mediaUnlockPinnedSettingsDesc": MessageLookupByLibrary.simpleMessage(
       "Можно выбрать до 4 элементов для закрепления в виджете",
@@ -800,10 +822,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "Указать политику DNS для конкретных доменов",
     ),
     "navBarHapticFeedback": MessageLookupByLibrary.simpleMessage(
-      "Тактильная отдача",
+      "Анимация и отклик",
     ),
     "navBarHapticFeedbackDesc": MessageLookupByLibrary.simpleMessage(
-      "Вибрация при переключении нижней панели навигации",
+      "Анимация нижней панели навигации и тактильный отклик",
     ),
     "navConnections": MessageLookupByLibrary.simpleMessage("Соединения"),
     "navTools": MessageLookupByLibrary.simpleMessage("Еще"),
@@ -906,6 +928,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Считать только трафик через прокси",
     ),
     "openDashboard": MessageLookupByLibrary.simpleMessage("Открыть Zashboard"),
+    "openRouterAdmin": MessageLookupByLibrary.simpleMessage("Открыть шлюз"),
     "openSettings": MessageLookupByLibrary.simpleMessage("Открыть настройки"),
     "operatorOrAsn": MessageLookupByLibrary.simpleMessage("Организация / ASN"),
     "options": MessageLookupByLibrary.simpleMessage("Опции"),
@@ -1187,6 +1210,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "scriptDesc": MessageLookupByLibrary.simpleMessage(
       "Настройка глобального скрипта переопределения",
     ),
+    "scriptOtherOptions": MessageLookupByLibrary.simpleMessage(
+      "Другие настройки",
+    ),
     "search": MessageLookupByLibrary.simpleMessage("Поиск"),
     "seconds": MessageLookupByLibrary.simpleMessage("секунд"),
     "secretCopied": MessageLookupByLibrary.simpleMessage(
@@ -1201,6 +1227,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "serviceReady": MessageLookupByLibrary.simpleMessage("Служба готова"),
     "serviceRunning": MessageLookupByLibrary.simpleMessage("Служба запущена"),
     "settings": MessageLookupByLibrary.simpleMessage("Настройки"),
+    "sharedAddress": MessageLookupByLibrary.simpleMessage("Общий адрес"),
     "show": MessageLookupByLibrary.simpleMessage("Показать"),
     "showHiddenItems": MessageLookupByLibrary.simpleMessage("Показать скрытые"),
     "showMenu": MessageLookupByLibrary.simpleMessage("Открыть меню"),
@@ -1302,6 +1329,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "syncFailed": MessageLookupByLibrary.simpleMessage("Ошибка синхронизации"),
     "system": MessageLookupByLibrary.simpleMessage("Система"),
     "systemApp": MessageLookupByLibrary.simpleMessage("Системные приложения"),
+    "systemDns": MessageLookupByLibrary.simpleMessage("DNS"),
     "systemFont": MessageLookupByLibrary.simpleMessage("Системный шрифт"),
     "systemProxy": MessageLookupByLibrary.simpleMessage("Системный прокси"),
     "systemProxyDesc": MessageLookupByLibrary.simpleMessage(

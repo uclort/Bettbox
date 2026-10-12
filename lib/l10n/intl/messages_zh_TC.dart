@@ -214,6 +214,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "concurrencyLimit": MessageLookupByLibrary.simpleMessage("並發限制"),
     "concurrencyLimitDesc": MessageLookupByLibrary.simpleMessage("延遲測試的最大並發數量"),
     "confirm": MessageLookupByLibrary.simpleMessage("確定"),
+    "congestionController": MessageLookupByLibrary.simpleMessage("擁塞控制"),
     "connection": MessageLookupByLibrary.simpleMessage("活躍連線"),
     "connections": MessageLookupByLibrary.simpleMessage("連線"),
     "connectionsDesc": MessageLookupByLibrary.simpleMessage("查看目前連線資料"),
@@ -255,6 +256,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "darkIconDesc": MessageLookupByLibrary.simpleMessage("手動切換深色系桌面應用程式圖示"),
     "dashboard": MessageLookupByLibrary.simpleMessage("首頁"),
     "days": m0,
+    "defaultGateway": MessageLookupByLibrary.simpleMessage("閘道"),
     "defaultNameserver": MessageLookupByLibrary.simpleMessage("預設網域名稱伺服器"),
     "defaultNameserverDesc": MessageLookupByLibrary.simpleMessage(
       "用於解析 DNS 伺服器",
@@ -293,6 +295,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "disableQuicDesc": MessageLookupByLibrary.simpleMessage(
       "停用 QUIC 以解決特定網路問題",
     ),
+    "disabled": MessageLookupByLibrary.simpleMessage("已關閉"),
     "disclaimer": MessageLookupByLibrary.simpleMessage("免責聲明"),
     "disclaimerDesc": MessageLookupByLibrary.simpleMessage(
       "本軟體為開源免費軟體，僅供學習交流等非商業性質的個人測試使用，代理服務商的行為均與本軟體無關，同意聲明代表您已完全知曉並確認了這一點，如不同意，請選擇退出！",
@@ -303,6 +306,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "dnsHijack": MessageLookupByLibrary.simpleMessage("DNS 劫持"),
     "dnsHijackDesc": MessageLookupByLibrary.simpleMessage("將解析導入內部 DNS 模組"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("DNS 模式"),
+    "dnsResolution": MessageLookupByLibrary.simpleMessage("DNS 解析"),
     "doYouWantToPass": MessageLookupByLibrary.simpleMessage("是否要通過"),
     "domain": MessageLookupByLibrary.simpleMessage("組織 / 域名"),
     "doubleBounce": MessageLookupByLibrary.simpleMessage("雙重彈奏"),
@@ -326,6 +330,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "enableTraySpeedDesc": MessageLookupByLibrary.simpleMessage(
       "在選單欄顯示上傳和下載速率",
     ),
+    "enabled": MessageLookupByLibrary.simpleMessage("已開啟"),
     "endpointIndependentNat": MessageLookupByLibrary.simpleMessage("NAT 增強"),
     "endpointIndependentNatConfirmDesc": MessageLookupByLibrary.simpleMessage(
       "啟用 Endpoint-Independent NAT 功能，性能可能會略有下降，此功能僅建議您在必要且熟悉的情況下開啟",
@@ -470,6 +475,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "intelligentSelected": MessageLookupByLibrary.simpleMessage("智慧選擇"),
     "internet": MessageLookupByLibrary.simpleMessage("網際網路"),
     "interval": MessageLookupByLibrary.simpleMessage("間隔"),
+    "intranetAndGateway": MessageLookupByLibrary.simpleMessage("內網與閘道"),
     "intranetIP": MessageLookupByLibrary.simpleMessage("內網 IP"),
     "invalidIpFormat": MessageLookupByLibrary.simpleMessage("無效的 IP 或 CIDR 格式"),
     "ipAddress": MessageLookupByLibrary.simpleMessage("IP 位址"),
@@ -482,7 +488,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "itemsCount": m6,
     "just": MessageLookupByLibrary.simpleMessage("剛剛"),
     "keepAliveIntervalDesc": MessageLookupByLibrary.simpleMessage("TCP 保持活動間隔"),
+    "keepDockIcon": MessageLookupByLibrary.simpleMessage("常駐DOCK"),
+    "keepDockIconDesc": MessageLookupByLibrary.simpleMessage("在 Dock 欄保留應用圖標"),
     "key": MessageLookupByLibrary.simpleMessage("鍵"),
+    "lanSharing": MessageLookupByLibrary.simpleMessage("區域網路共享"),
     "language": MessageLookupByLibrary.simpleMessage("語言"),
     "lastEdit": MessageLookupByLibrary.simpleMessage("上次編輯"),
     "layout": MessageLookupByLibrary.simpleMessage("版面配置"),
@@ -506,6 +515,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "logsTest": MessageLookupByLibrary.simpleMessage("日誌測試"),
     "loopback": MessageLookupByLibrary.simpleMessage("迴環解鎖工具"),
     "loopbackDesc": MessageLookupByLibrary.simpleMessage("用於 UWP 迴環解鎖"),
+    "loopbackProtection": MessageLookupByLibrary.simpleMessage("迴環保護"),
+    "loopbackProtectionDesc": MessageLookupByLibrary.simpleMessage(
+      "阻斷網路錯誤引起的迴環流量",
+    ),
     "loose": MessageLookupByLibrary.simpleMessage("寬鬆"),
     "manualRefreshIp": MessageLookupByLibrary.simpleMessage("重新取得 IP"),
     "maximize": MessageLookupByLibrary.simpleMessage("最大化"),
@@ -519,6 +532,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "返回更多 IP 詳細資訊",
     ),
     "mediaUnlockMiscSettings": MessageLookupByLibrary.simpleMessage("雜項設定"),
+    "mediaUnlockMoreStreamingPlatforms": MessageLookupByLibrary.simpleMessage(
+      "更多串流媒體解鎖項目",
+    ),
     "mediaUnlockPinnedSettingsDesc": MessageLookupByLibrary.simpleMessage(
       "可選 4 個在小組件常駐展示的項目",
     ),
@@ -566,9 +582,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "nameserverPolicyDesc": MessageLookupByLibrary.simpleMessage(
       "指定對應網域名稱伺服器策略",
     ),
-    "navBarHapticFeedback": MessageLookupByLibrary.simpleMessage("觸覺回饋"),
+    "navBarHapticFeedback": MessageLookupByLibrary.simpleMessage("動畫回饋"),
     "navBarHapticFeedbackDesc": MessageLookupByLibrary.simpleMessage(
-      "底部導覽列切換震動回饋",
+      "底部導覽列動畫及震動回饋",
     ),
     "navConnections": MessageLookupByLibrary.simpleMessage("連線"),
     "navTools": MessageLookupByLibrary.simpleMessage("更多"),
@@ -643,6 +659,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "開啟後將只統計代理流量",
     ),
     "openDashboard": MessageLookupByLibrary.simpleMessage("打開 Zashboard"),
+    "openRouterAdmin": MessageLookupByLibrary.simpleMessage("開啟後台閘道"),
     "openSettings": MessageLookupByLibrary.simpleMessage("打開設定"),
     "operatorOrAsn": MessageLookupByLibrary.simpleMessage("歸屬 / ASN"),
     "options": MessageLookupByLibrary.simpleMessage("選項"),
@@ -834,6 +851,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "saveTip": MessageLookupByLibrary.simpleMessage("確定要儲存嗎？"),
     "script": MessageLookupByLibrary.simpleMessage("指令碼"),
     "scriptDesc": MessageLookupByLibrary.simpleMessage("配置全局覆寫腳本"),
+    "scriptOtherOptions": MessageLookupByLibrary.simpleMessage("其他設定"),
     "search": MessageLookupByLibrary.simpleMessage("搜尋"),
     "seconds": MessageLookupByLibrary.simpleMessage("秒"),
     "secretCopied": MessageLookupByLibrary.simpleMessage("密碼已複製到剪貼簿"),
@@ -844,6 +862,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "serviceReady": MessageLookupByLibrary.simpleMessage("服務已就緒"),
     "serviceRunning": MessageLookupByLibrary.simpleMessage("服務正在執行中"),
     "settings": MessageLookupByLibrary.simpleMessage("設定"),
+    "sharedAddress": MessageLookupByLibrary.simpleMessage("共享位址"),
     "show": MessageLookupByLibrary.simpleMessage("顯示"),
     "showHiddenItems": MessageLookupByLibrary.simpleMessage("顯示隱藏項"),
     "showMenu": MessageLookupByLibrary.simpleMessage("打開選單"),
@@ -913,6 +932,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "syncFailed": MessageLookupByLibrary.simpleMessage("同步失敗"),
     "system": MessageLookupByLibrary.simpleMessage("系統"),
     "systemApp": MessageLookupByLibrary.simpleMessage("系統應用程式"),
+    "systemDns": MessageLookupByLibrary.simpleMessage("DNS"),
     "systemFont": MessageLookupByLibrary.simpleMessage("系統字體"),
     "systemProxy": MessageLookupByLibrary.simpleMessage("系統代理"),
     "systemProxyDesc": MessageLookupByLibrary.simpleMessage("設定系統代理"),

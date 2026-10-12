@@ -14,6 +14,8 @@ class MainFlutterWindow: NSWindow {
         self.contentViewController = flutterViewController
         self.setFrame(windowFrame, display: true)
 
+        setupTitlebar()
+
         FlutterMethodChannel(
             name: "launch_at_startup", binaryMessenger: flutterViewController.engine.binaryMessenger
         )
@@ -47,6 +49,20 @@ class MainFlutterWindow: NSWindow {
     deinit {
         if let observer = systemDidWakeObserver {
             NSWorkspace.shared.notificationCenter.removeObserver(observer)
+
+        }
+    }
+
+    private func setupTitlebar() {
+        self.titleVisibility = .hidden
+        self.titlebarAppearsTransparent = true
+        self.styleMask.insert(.fullSizeContentView)
+
+        let toolbar = NSToolbar(identifier: "MainAppToolbar")
+        self.toolbar = toolbar
+        if #available(macOS 11.0, *) {
+            self.toolbarStyle = .unifiedCompact
+            self.titlebarSeparatorStyle = .none
         }
     }
 

@@ -90,7 +90,7 @@ final realTunEnableProvider =
     );
 
 typedef _$RealTunEnable = AutoDisposeNotifier<bool>;
-String _$logsHash() => r'8a29db395e07246d5e825b4f7f3de6025cbc4bac';
+String _$logsHash() => r'5fdf38e57a0f051e1f13d467e11b2935902e4821';
 
 /// See also [Logs].
 @ProviderFor(Logs)
@@ -105,7 +105,7 @@ final logsProvider = AutoDisposeNotifierProvider<Logs, FixedList<Log>>.internal(
 );
 
 typedef _$Logs = AutoDisposeNotifier<FixedList<Log>>;
-String _$requestsHash() => r'a8c21af15b0691eafdf32579391cdff20ef0dab3';
+String _$requestsHash() => r'5130689bf373c72fb7fcf54b4c282882a34589e3';
 
 /// See also [Requests].
 @ProviderFor(Requests)

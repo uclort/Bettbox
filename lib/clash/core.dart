@@ -59,11 +59,6 @@ class ClashCore {
 
   Future<bool> init() async {
     await initGeo();
-    if (globalState.config.appSetting.openLogs) {
-      clashCore.startLog();
-    } else {
-      clashCore.stopLog();
-    }
     final homeDirPath = await appPath.homeDirPath;
     return await clashInterface.init(
       InitParams(homeDir: homeDirPath, version: globalState.appState.version),
@@ -125,36 +120,56 @@ class ClashCore {
       }
 
       final globalProxy = allProxies[UsedProxy.GLOBAL.name];
-      if (globalProxy == null) return [];
+      final groupNames = <String>[];
+      final seenGroupNames = <String>{};
 
-      final allList = globalProxy['all'] as List?;
-      if (allList == null) return [];
+      if (globalProxy != null) {
+        groupNames.add(UsedProxy.GLOBAL.name);
+        seenGroupNames.add(UsedProxy.GLOBAL.name);
 
-      final groupNames = [
-        UsedProxy.GLOBAL.name,
-        ...allList.where((e) {
-          final proxy = allProxies[e];
-          if (proxy is Map) {
-            return GroupTypeExtension.valueList.contains(proxy['type']);
+        final allList = globalProxy['all'] as List?;
+        if (allList != null) {
+          for (final item in allList) {
+            final name = item.toString();
+            final proxy = allProxies[name];
+            if (proxy is Map &&
+                GroupTypeExtension.valueList.contains(proxy['type'])) {
+              if (seenGroupNames.add(name)) {
+                groupNames.add(name);
+              }
+            }
           }
-          return false;
-        }),
-      ];
-      final groupsRaw = groupNames.map((groupName) {
-        final proxyData = allProxies[groupName] as Map?;
-        if (proxyData == null) return null;
-        final group = Map<String, dynamic>.from(
-          proxyData.cast<String, dynamic>(),
-        );
-        group['all'] = ((group['all'] ?? []) as List)
-            .map((name) {
-              final p = allProxies[name];
-              return p is Map ? Map<String, dynamic>.from(p) : null;
-            })
-            .whereType<Map<String, dynamic>>()
-            .toList();
-        return group;
-      }).whereType<Map<String, dynamic>>().toList();
+        }
+      }
+
+      for (final entry in allProxies.entries) {
+        final proxy = entry.value;
+        if (proxy is Map &&
+            GroupTypeExtension.valueList.contains(proxy['type'])) {
+          final name = entry.key;
+          if (seenGroupNames.add(name)) {
+            groupNames.add(name);
+          }
+        }
+      }
+      final groupsRaw = groupNames
+          .map((groupName) {
+            final proxyData = allProxies[groupName] as Map?;
+            if (proxyData == null) return null;
+            final group = Map<String, dynamic>.from(
+              proxyData.cast<String, dynamic>(),
+            );
+            group['all'] = ((group['all'] ?? []) as List)
+                .map((name) {
+                  final p = allProxies[name];
+                  return p is Map ? Map<String, dynamic>.from(p) : null;
+                })
+                .whereType<Map<String, dynamic>>()
+                .toList();
+            return group;
+          })
+          .whereType<Map<String, dynamic>>()
+          .toList();
       return groupsRaw.map((e) => Group.fromJson(e)).toList();
     });
   }
@@ -186,8 +201,15 @@ class ClashCore {
     }
   }
 
+  void _forget(FutureOr<Object?> request, String name) {
+    Future.value(request).then<void>(
+      (_) {},
+      onError: (Object e) => commonPrint.log('$name ignored: $e'),
+    );
+  }
+
   void closeConnection(String id) {
-    clashInterface.closeConnection(id);
+    _forget(clashInterface.closeConnection(id), 'closeConnection');
   }
 
   Future<bool> closeConnections() async {
@@ -363,6 +385,50 @@ class ClashCore {
 
   void stopLog() {
     clashInterface.stopLog();
+  }
+
+  Future<List<Log>> getLogs() async {
+    final res = await clashInterface.getLogs();
+    if (res.isEmpty) {
+      return [];
+    }
+    try {
+      final logsRaw = json.decode(res) as List? ?? [];
+      return logsRaw.map((e) => Log.fromJson(e)).toList();
+    } catch (e) {
+      commonPrint.log('Failed to parse logs: $e');
+      return [];
+    }
+  }
+
+  void clearLogs() {
+    _forget(clashInterface.clearLogs(), 'clearLogs');
+  }
+
+  Future<List<TrackerInfo>> getRequests() async {
+    final res = await clashInterface.getRequests();
+    if (res.isEmpty) {
+      return [];
+    }
+    try {
+      final requestsRaw = json.decode(res) as List? ?? [];
+      return requestsRaw.map((e) => TrackerInfo.fromJson(e)).toList();
+    } catch (e) {
+      commonPrint.log('Failed to parse requests: $e');
+      return [];
+    }
+  }
+
+  void startTrackRequests() {
+    clashInterface.startTrackRequests();
+  }
+
+  void stopTrackRequests() {
+    clashInterface.stopTrackRequests();
+  }
+
+  void clearRequests() {
+    _forget(clashInterface.clearRequests(), 'clearRequests');
   }
 
   Future<void> requestGc({bool forceFreeOSMemory = false}) async {

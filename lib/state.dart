@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
@@ -93,6 +94,26 @@ class GlobalState {
     return widgets.contains(DashboardWidget.networkDetection);
   }
 
+  String getCurrentOutboundNode() {
+    final mode = config.patchClashConfig.mode;
+    if (mode == Mode.direct) {
+      return 'DIRECT';
+    }
+    final currentProfile = config.currentProfile;
+    if (currentProfile == null) {
+      return mode.name;
+    }
+    final selectedMap = currentProfile.selectedMap;
+    if (mode == Mode.global) {
+      return 'GLOBAL:${selectedMap['GLOBAL'] ?? ''}';
+    }
+    final currentGroup = currentProfile.currentGroupName;
+    final node = (currentGroup != null && selectedMap.containsKey(currentGroup))
+        ? selectedMap[currentGroup]
+        : (selectedMap['GLOBAL'] ?? selectedMap.values.firstOrNull);
+    return 'RULE:${currentGroup ?? ''}:${node ?? ''}';
+  }
+
   bool get isStart => startTime != null && startTime!.isBeforeNow;
 
   AppController get appController => _appController!;
@@ -111,6 +132,9 @@ class GlobalState {
 
   Future<void> initApp(int version) async {
     isExiting = false;
+    if (system.isLinux && appPath.isAppImage) {
+      await appPath.ensureAppImageCoreSynced();
+    }
     coreSHA256 = const String.fromEnvironment('CORE_SHA256');
     if (system.isWindows && (coreSHA256 == null || coreSHA256!.isEmpty)) {
       coreSHA256 = await _calcCoreSHA256();
@@ -121,7 +145,7 @@ class GlobalState {
       version: version,
       viewSize: Size.zero,
       requests: FixedList(maxLength),
-      logs: FixedList(maxLength),
+      logs: FixedList(maxLogLength),
       traffics: FixedList(30),
       totalTraffic: Traffic(),
       systemUiOverlayStyle: const SystemUiOverlayStyle(),
@@ -136,12 +160,44 @@ class GlobalState {
     return coreSHA256;
   }
 
+  Future<String?> _calcNativeSHA256(String path) async {
+    try {
+      ProcessResult result;
+      if (Platform.isWindows) {
+        result = await Process.run('certutil', ['-hashfile', path, 'SHA256']);
+      } else if (Platform.isMacOS) {
+        result = await Process.run('shasum', ['-a', '256', path]);
+      } else if (Platform.isLinux) {
+        result = await Process.run('sha256sum', [path]);
+      } else {
+        return null;
+      }
+
+      if (result.exitCode != 0) return null;
+      final output = result.stdout.toString();
+      final clean = output.replaceAll(' ', '');
+      final match = RegExp(r'[0-9a-fA-F]{64}').firstMatch(clean);
+      return match?.group(0)?.toLowerCase();
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<String?> _calcCoreSHA256() async {
     try {
-      final file = File(appPath.corePath);
+      final path = appPath.corePath;
+      final file = File(path);
       if (!await file.exists()) return null;
-      final digest = await sha256.bind(file.openRead()).first;
-      return digest.toString();
+
+      final nativeHash = await _calcNativeSHA256(path);
+      if (nativeHash != null && nativeHash.isNotEmpty) {
+        return nativeHash;
+      }
+
+      return await Isolate.run(() async {
+        final digest = await sha256.bind(File(path).openRead()).first;
+        return digest.toString();
+      });
     } catch (e) {
       commonPrint.log('Failed to calculate core SHA256: $e');
       return null;
@@ -486,13 +542,11 @@ class GlobalState {
           parent: animation,
           curve: Curves.easeOutCubic,
         );
-        return RepaintBoundary(
-          child: FadeTransition(
-            opacity: curved,
-            child: ScaleTransition(
-              scale: curved.drive(Tween<double>(begin: 0.94, end: 1.0)),
-              child: child,
-            ),
+        return FadeTransition(
+          opacity: curved,
+          child: ScaleTransition(
+            scale: curved.drive(Tween<double>(begin: 0.94, end: 1.0)),
+            child: RepaintBoundary(child: child),
           ),
         );
       },
@@ -625,15 +679,40 @@ class GlobalState {
   Future<void> _writeRunningConfig(Map<String, dynamic> clashConfig) async {
     final content = await encodeCompactYamlTask(clashConfig);
     final configPath = await appPath.configFilePath;
-    final tempFile = File('$configPath.${DateTime.now().microsecondsSinceEpoch}.tmp');
+    final tempFile =
+        File('$configPath.${DateTime.now().microsecondsSinceEpoch}.tmp');
     await tempFile.parent.create(recursive: true);
-    await tempFile.writeAsString(content, flush: true);
     try {
-      await tempFile.rename(configPath);
-    } catch (_) {
+      await tempFile.writeAsString(content, flush: true);
+      var success = false;
+      for (var attempt = 0; attempt < 3; attempt++) {
+        try {
+          await tempFile.rename(configPath);
+          success = true;
+          break;
+        } catch (_) {
+          try {
+            await tempFile.copy(configPath);
+            success = true;
+            break;
+          } catch (_) {
+            if (attempt < 2) {
+              await Future.delayed(Duration(milliseconds: 50 * (attempt + 1)));
+            }
+          }
+        }
+      }
+      if (!success) {
+        throw FileSystemException(
+          'Failed to write running config after retries',
+          configPath,
+        );
+      }
+    } finally {
       if (await tempFile.exists()) {
-        await tempFile.copy(configPath);
-        await tempFile.delete();
+        try {
+          await tempFile.delete();
+        } catch (_) {}
       }
     }
   }
@@ -722,6 +801,8 @@ class GlobalState {
         ? const ['any:53']
         : dnsHijack;
     rawConfig['tun']['stack'] = realPatchConfig.tun.stack.name;
+    rawConfig['tun']['congestion-controller'] =
+        realPatchConfig.tun.congestionController.name;
     rawConfig['tun']['route-address'] = realPatchConfig.tun.routeAddress;
     rawConfig['tun']['route-exclude-address'] =
         realPatchConfig.tun.routeExcludeAddress;
@@ -1010,6 +1091,30 @@ class GlobalState {
       }
     }
 
+    if (config.vpnProps.loopbackProtection) {
+      final loopbackRules = <String>[];
+      final targetPorts = <int>{
+        if (realPatchConfig.mixedPort > 0) realPatchConfig.mixedPort,
+        if (realPatchConfig.port > 0) realPatchConfig.port,
+        if (realPatchConfig.socksPort > 0) realPatchConfig.socksPort,
+        if (realPatchConfig.redirPort > 0) realPatchConfig.redirPort,
+        if (realPatchConfig.tproxyPort > 0) realPatchConfig.tproxyPort,
+        if (rawConfig['mixed-port'] is int &&
+            (rawConfig['mixed-port'] as int) > 0)
+          rawConfig['mixed-port'] as int,
+      };
+      for (final port in targetPorts) {
+        loopbackRules
+            .add('AND,((IP-CIDR,127.0.0.0/8,no-resolve),(DST-PORT,$port)),REJECT');
+        loopbackRules
+            .add('AND,((IP-CIDR,::1/128,no-resolve),(DST-PORT,$port)),REJECT');
+      }
+      if (system.isAndroid) {
+        loopbackRules.add('AND,((IN-TYPE,TUN),(DST-PORT,853)),REJECT');
+      }
+      rules = [...loopbackRules, ...rules];
+    }
+
     if (config.vpnProps.disableQuic) {
       final isRussian =
           config.appSetting.locale?.toLowerCase().startsWith('ru') ?? false;
@@ -1085,6 +1190,70 @@ class GlobalState {
       }
     }
 
+    if (targetProfile.selectedMap['GLOBAL'] == null &&
+        rawConfig['proxy-groups'] is List) {
+      final proxyGroups = rawConfig['proxy-groups'] as List;
+      final groupNames = proxyGroups
+          .whereType<Map>()
+          .map((g) => g['name']?.toString())
+          .whereType<String>()
+          .where((name) => name != 'GLOBAL' && name != 'DIRECT' && name != 'REJECT')
+          .toSet();
+
+      String? firstValidGroup;
+      for (final g in proxyGroups) {
+        if (g is Map && g['name'] is String) {
+          final name = g['name'] as String;
+          if (groupNames.contains(name)) {
+            firstValidGroup = name;
+            break;
+          }
+        }
+      }
+
+      String? matchTarget;
+      if (firstValidGroup == null) {
+        for (final rule in rules) {
+          if (rule is String) {
+            final parsed = ParsedRule.parseString(rule);
+            if (parsed.ruleAction == RuleAction.MATCH &&
+                parsed.ruleTarget != null &&
+                parsed.ruleTarget!.isNotEmpty &&
+                parsed.ruleTarget != 'DIRECT' &&
+                parsed.ruleTarget != 'REJECT') {
+              if (groupNames.contains(parsed.ruleTarget)) {
+                matchTarget = parsed.ruleTarget;
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      final defaultTarget = firstValidGroup ?? matchTarget;
+      if (defaultTarget != null) {
+        final updatedSelectedMap = Map<String, String>.from(targetProfile.selectedMap)
+          ..['GLOBAL'] = defaultTarget;
+        final updatedProfile = targetProfile.copyWith(selectedMap: updatedSelectedMap);
+        if (_appController != null) {
+          _appController!.setProfile(updatedProfile);
+        } else {
+          final profiles = List<Profile>.from(config.profiles);
+          final idx = profiles.indexWhere((p) => p.id == updatedProfile.id);
+          if (idx != -1) {
+            profiles[idx] = updatedProfile;
+            config = config.copyWith(profiles: profiles);
+          }
+        }
+      }
+    }
+
+    if (rawConfig['proxy-groups'] is List) {
+      (rawConfig['proxy-groups'] as List).removeWhere(
+        (g) => g is Map && g['name'] == 'GLOBAL',
+      );
+    }
+
     rawConfig.remove('rule');
     rawConfig['rules'] = rules;
     return rawConfig;
@@ -1143,6 +1312,8 @@ class DashboardRefreshManager {
 
   bool get isRunning => _isRunning;
 
+  Future<bool> isActive() => _isActive();
+
   Future<bool> _isActive() async {
     if (system.isDesktop) {
       final isPinned = globalState.config.windowProps.isPinned;
@@ -1162,7 +1333,16 @@ class DashboardRefreshManager {
     if (lifecycleState != null && lifecycleState != AppLifecycleState.resumed) {
       return false;
     }
+
+    if (globalState.appState.pageLabel != PageLabel.dashboard) {
+      return false;
+    }
+
     return true;
+  }
+
+  void triggerImmediateTick() {
+    _tryTick(_tickToken);
   }
 
   Future<void> _tryTick(int token) async {
@@ -1209,6 +1389,7 @@ class DetectionState {
   bool _isIpMasked = false;
   IpInfo? _rawIpInfo;
   bool _isFirstLaunch = true;
+  String? _lastCheckedOutboundNode;
 
   final state = ValueNotifier<NetworkDetectionState>(
     const NetworkDetectionState(
@@ -1254,6 +1435,7 @@ class DetectionState {
   void _onIpProgress(int requestId, IpInfo info) {
     if (requestId != _requestId) return;
     _rawIpInfo = info;
+    _lastCheckedOutboundNode = globalState.getCurrentOutboundNode();
     state.value = state.value.copyWith(
       isLoading: false,
       ipInfo: _maskIpInfo(_rawIpInfo),
@@ -1306,11 +1488,24 @@ class DetectionState {
   }
 
   void tryStartCheck() {
+    if (!globalState.hasNetworkDetectionWidget) return;
     if (!state.value.isLoading &&
         state.value.ipInfo == null &&
         (_preIsStart == null || state.value.errorMessage != null)) {
       startCheck();
     }
+  }
+
+  void checkOnForegroundResume() {
+    if (!globalState.hasNetworkDetectionWidget) return;
+    final currentNode = globalState.getCurrentOutboundNode();
+    if (state.value.ipInfo != null &&
+        _lastCheckedOutboundNode == currentNode &&
+        state.value.errorMessage == null) {
+      return;
+    }
+    _lastCheckedOutboundNode = currentNode;
+    startCheck(showLoading: state.value.ipInfo == null);
   }
 
   void _cancelPreviousRequest() {
@@ -1341,7 +1536,8 @@ class DetectionState {
     }
 
     if (res.data != null) {
-      _rawIpInfo ??= res.data;
+      _rawIpInfo = res.data;
+      _lastCheckedOutboundNode = globalState.getCurrentOutboundNode();
     }
     state.value = state.value.copyWith(
       isLoading: false,
@@ -1386,7 +1582,7 @@ class DetectionState {
       );
     }
 
-    final timeout = const Duration(seconds: 5);
+    final timeout = const Duration(seconds: 8);
 
     final res = isStart
         ? await request.checkIp(
@@ -1426,31 +1622,8 @@ class MediaUnlockStateNotifier {
   int _requestId = 0;
   Timer? _nodeChangeTimer;
   static const _nodeChangeDelay = Duration(milliseconds: 800);
-  String? _lastCheckedNodeSignature;
+  String? _lastCheckedOutboundNode;
   bool? _preIsStart;
-
-  String _getNodeSignature() {
-    final profileId = globalState.config.currentProfileId ?? '';
-    final mode = globalState.config.patchClashConfig.mode.name;
-    final selectedMap = globalState.config.currentProfile?.selectedMap ?? {};
-    final sortedEntries = selectedMap.entries.toList()
-      ..sort((a, b) => a.key.compareTo(b.key));
-    final selectedStr =
-        sortedEntries.map((e) => '${e.key}:${e.value}').join(';');
-    String activeGroupsStr = '';
-    if (globalState.isInit) {
-      try {
-        final groups = globalState.appController.ref.read(groupsProvider);
-        if (groups.isNotEmpty) {
-          final sortedGroups = groups.toList()
-            ..sort((a, b) => a.name.compareTo(b.name));
-          activeGroupsStr =
-              sortedGroups.map((g) => '${g.name}:${g.realNow}').join(';');
-        }
-      } catch (_) {}
-    }
-    return '$profileId|$mode|$selectedStr|$activeGroupsStr';
-  }
 
   final state = ValueNotifier<MediaUnlockState>(
     const MediaUnlockState(),
@@ -1621,7 +1794,7 @@ class MediaUnlockStateNotifier {
               status: MediaUnlockStatus.failed,
             );
       }
-      _lastCheckedNodeSignature = _getNodeSignature();
+      _lastCheckedOutboundNode = globalState.getCurrentOutboundNode();
       state.value = state.value.copyWith(
         isLoading: isFullCheck ? false : state.value.isLoading,
         results: nextResults,
@@ -1642,7 +1815,7 @@ class MediaUnlockStateNotifier {
           ),
         );
       }
-      _lastCheckedNodeSignature = _getNodeSignature();
+      _lastCheckedOutboundNode = globalState.getCurrentOutboundNode();
       state.value = state.value.copyWith(
         isLoading: isFullCheck ? false : state.value.isLoading,
         results: fallbackResults,
@@ -1671,8 +1844,13 @@ class MediaUnlockStateNotifier {
     bool force = false,
     List<MediaPlatform>? platforms,
   }) {
-    final targets = platforms ?? MediaPlatform.values;
-    final isFull = targets.length >= MediaPlatform.values.length;
+    final showMoreStreaming =
+        globalState.config.appSetting.mediaUnlockMoreStreamingPlatforms;
+    final allAvailable = MediaPlatform.values
+        .where((p) => showMoreStreaming || !moreStreamingPlatforms.contains(p))
+        .toList();
+    final targets = platforms ?? allAvailable;
+    final isFull = targets.length >= allAvailable.length;
     checkPlatforms(
       targets,
       force: force,
@@ -1722,7 +1900,7 @@ class MediaUnlockStateNotifier {
         testingPlatforms: {},
         isLoading: false,
       );
-      _lastCheckedNodeSignature = _getNodeSignature();
+      _lastCheckedOutboundNode = globalState.getCurrentOutboundNode();
       checkPinned(force: true);
       return;
     }
@@ -1732,12 +1910,12 @@ class MediaUnlockStateNotifier {
       if (globalState.appState.runTime == null) return;
       if (globalState.backgroundMode.value) return;
 
-      final currentSignature = _getNodeSignature();
-      if (_lastCheckedNodeSignature == currentSignature &&
+      final currentNode = globalState.getCurrentOutboundNode();
+      if (_lastCheckedOutboundNode == currentNode &&
           state.value.results.isNotEmpty) {
         return;
       }
-      _lastCheckedNodeSignature = currentSignature;
+      _lastCheckedOutboundNode = currentNode;
       final nextResults =
           Map<MediaPlatform, MediaUnlockResult>.from(state.value.results);
       for (final p in pinnedPlatforms) {
@@ -1750,6 +1928,32 @@ class MediaUnlockStateNotifier {
       );
       checkPinned(force: true);
     });
+  }
+
+  void checkOnForegroundResume() {
+    final isRunning = globalState.appState.runTime != null;
+    if (!isRunning) return;
+    if (!globalState.hasMediaUnlockWidget) return;
+    if (!globalState.config.appSetting.mediaUnlockRefreshOnNodeChange) return;
+    if (state.value.isLoading || state.value.testingPlatforms.isNotEmpty) return;
+
+    final currentNode = globalState.getCurrentOutboundNode();
+    if (state.value.results.isNotEmpty &&
+        _lastCheckedOutboundNode == currentNode) {
+      return;
+    }
+    _lastCheckedOutboundNode = currentNode;
+    final nextResults =
+        Map<MediaPlatform, MediaUnlockResult>.from(state.value.results);
+    for (final p in pinnedPlatforms) {
+      nextResults.remove(p);
+    }
+    state.value = state.value.copyWith(
+      results: nextResults,
+      testingPlatforms: {},
+      isLoading: false,
+    );
+    checkPinned(force: true);
   }
 
   void tryStartCheck() {

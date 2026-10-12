@@ -26,6 +26,8 @@ _AppSettingProps _$AppSettingPropsFromJson(
   pinnedMediaPlatforms: json['pinnedMediaPlatforms'] == null
       ? defaultPinnedMediaPlatforms
       : pinnedMediaPlatformsSafeFromJson(json['pinnedMediaPlatforms'] as List?),
+  mediaUnlockMoreStreamingPlatforms:
+      json['mediaUnlockMoreStreamingPlatforms'] as bool? ?? false,
   mediaUnlockExtraDetails: json['mediaUnlockExtraDetails'] as bool? ?? false,
   mediaUnlockRefreshOnNodeChange:
       json['mediaUnlockRefreshOnNodeChange'] as bool? ?? true,
@@ -74,6 +76,8 @@ Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
       'pinnedMediaPlatforms': instance.pinnedMediaPlatforms
           .map((e) => _$MediaPlatformEnumMap[e]!)
           .toList(),
+      'mediaUnlockMoreStreamingPlatforms':
+          instance.mediaUnlockMoreStreamingPlatforms,
       'mediaUnlockExtraDetails': instance.mediaUnlockExtraDetails,
       'mediaUnlockRefreshOnNodeChange': instance.mediaUnlockRefreshOnNodeChange,
       'mediaUnlockColorfulIcons': instance.mediaUnlockColorfulIcons,
@@ -182,6 +186,11 @@ const _$MediaPlatformEnumMap = {
   MediaPlatform.kraken: 'kraken',
   MediaPlatform.cryptocom: 'cryptocom',
   MediaPlatform.phantom: 'phantom',
+  MediaPlatform.paypal: 'paypal',
+  MediaPlatform.mytvsuper: 'mytvsuper',
+  MediaPlatform.viutv: 'viutv',
+  MediaPlatform.hoytv: 'hoytv',
+  MediaPlatform.rthk: 'rthk',
 };
 
 _AccessControl _$AccessControlFromJson(Map<String, dynamic> json) =>
@@ -268,6 +277,7 @@ _VpnProps _$VpnPropsFromJson(Map<String, dynamic> json) => _VpnProps(
   smartAutoStopNetworks: json['smartAutoStopNetworks'] as String? ?? '',
   storeFix: json['storeFix'] as bool? ?? false,
   networkFix: json['networkFix'] as bool? ?? false,
+  loopbackProtection: json['loopbackProtection'] as bool? ?? true,
   disableQuic: json['disableQuic'] as bool? ?? false,
   highPriorityNotification: json['highPriorityNotification'] as bool? ?? false,
   networkSpeedNotification: json['networkSpeedNotification'] as bool? ?? false,
@@ -303,6 +313,7 @@ Map<String, dynamic> _$VpnPropsToJson(_VpnProps instance) => <String, dynamic>{
   'smartAutoStopNetworks': instance.smartAutoStopNetworks,
   'storeFix': instance.storeFix,
   'networkFix': instance.networkFix,
+  'loopbackProtection': instance.loopbackProtection,
   'disableQuic': instance.disableQuic,
   'highPriorityNotification': instance.highPriorityNotification,
   'networkSpeedNotification': instance.networkSpeedNotification,
@@ -326,11 +337,9 @@ const _$TrayClickBehaviorEnumMap = {
 _NetworkProps _$NetworkPropsFromJson(Map<String, dynamic> json) =>
     _NetworkProps(
       systemProxy: json['systemProxy'] as bool? ?? false,
-      bypassDomain:
-          (json['bypassDomain'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
-          defaultBypassDomain,
+      bypassDomain: json['bypassDomain'] == null
+          ? defaultBypassDomain
+          : bypassDomainSafeFromJson(json['bypassDomain'] as List?),
       bypassPrivateRoute: json['bypassPrivateRoute'] as bool? ?? true,
       bypassPrivateRouteAddress:
           (json['bypassPrivateRouteAddress'] as List<dynamic>?)

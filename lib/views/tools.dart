@@ -19,6 +19,7 @@ import 'package:bett_box/views/config/ntp.dart';
 import 'package:bett_box/views/config/sniffer.dart';
 import 'package:bett_box/views/config/tunnel.dart';
 import 'package:bett_box/views/connection/connections.dart';
+import 'package:bett_box/views/connection/requests.dart';
 import 'package:bett_box/views/hotkey.dart';
 import 'package:bett_box/views/other_setting.dart';
 import 'package:bett_box/widgets/widgets.dart';
@@ -71,6 +72,9 @@ class _ToolViewState extends ConsumerState<ToolsView> {
   Widget _buildNavigationPage(NavigationItem navigationItem) {
     if (navigationItem.label == PageLabel.connections) {
       return const ConnectionsView(respectCurrentPage: false);
+    }
+    if (navigationItem.label == PageLabel.requests) {
+      return const RequestsView();
     }
     return navigationItem.builder(context);
   }
@@ -289,7 +293,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         title: appLocalizations.basicConfig,
         subtitle: appLocalizations.basicConfigDesc,
         category: settingsCategory,
-        leading: const Icon(Icons.edit),
+        leading: const Icon(Icons.developer_board_rounded),
         onTap: (context, _) => _pushPage(
           context,
           appLocalizations.basicConfig,
@@ -580,6 +584,16 @@ class _ToolViewState extends ConsumerState<ToolsView> {
             const OtherSettingView(),
           ),
         ),
+      _SearchItem(
+        title: appLocalizations.loopbackProtection,
+        subtitle: appLocalizations.loopbackProtectionDesc,
+        category: otherSettingsCategory,
+        onTap: (context, _) => _pushPage(
+          context,
+          appLocalizations.otherSettings,
+          const OtherSettingView(),
+        ),
+      ),
       _SearchItem(
         title: appLocalizations.disableQuic,
         subtitle: appLocalizations.disableQuicDesc,
@@ -1564,7 +1578,7 @@ class _ConfigItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListItem.next(
-      leading: const Icon(Icons.edit),
+      leading: const Icon(Icons.developer_board_rounded),
       title: Text(appLocalizations.basicConfig),
       subtitle: Text(appLocalizations.basicConfigDesc),
       delegate: NextDelegate(

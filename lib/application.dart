@@ -13,6 +13,7 @@ import 'package:bett_box/providers/providers.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/macos_menu_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -121,6 +122,9 @@ class ApplicationState extends ConsumerState<Application>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    if (system.isAndroid) {
+      unawaited(SystemNavigator.setFrameworkHandlesBack(true));
+    }
     globalState.backgroundMode.addListener(_syncAutoUpdateTasks);
     _syncAutoUpdateTasks();
     globalState.appController = AppController(context, ref);
@@ -394,9 +398,7 @@ class ApplicationState extends ConsumerState<Application>
                 );
                 // BETTBOX-CUSTOM: 菜单必须在响应式布局外保持同一生命周期。
                 // 否则旧 PlatformMenuBar 的 dispose 会清空新实例刚注册的菜单。
-                return system.isMacOS
-                    ? MacOSMenuBar(child: content)
-                    : content;
+                return system.isMacOS ? MacOSMenuBar(child: content) : content;
               },
               scrollBehavior: BaseScrollBehavior(),
               title: appName,
@@ -407,6 +409,16 @@ class ApplicationState extends ConsumerState<Application>
               theme: ThemeData(
                 useMaterial3: true,
                 pageTransitionsTheme: _pageTransitionsTheme,
+                scaffoldBackgroundColor: _getAppColorScheme(
+                  brightness: Brightness.light,
+                  primaryColor: themeProps.primaryColor,
+                ).surfaceContainer,
+                appBarTheme: const AppBarTheme(
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  scrolledUnderElevation: 0,
+                  surfaceTintColor: Colors.transparent,
+                ),
                 colorScheme: _getAppColorScheme(
                   brightness: Brightness.light,
                   primaryColor: themeProps.primaryColor,
@@ -485,15 +497,22 @@ class ApplicationState extends ConsumerState<Application>
                     color: Colors.black87,
                     borderRadius: BorderRadius.all(Radius.circular(10)),
                   ),
-                  textStyle: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                  ),
+                  textStyle: TextStyle(color: Colors.white, fontSize: 12),
                 ),
               ),
               darkTheme: ThemeData(
                 useMaterial3: true,
                 pageTransitionsTheme: _pageTransitionsTheme,
+                scaffoldBackgroundColor: _getAppColorScheme(
+                  brightness: Brightness.dark,
+                  primaryColor: themeProps.primaryColor,
+                ).toPureBlack(themeProps.pureBlack).surfaceContainer,
+                appBarTheme: const AppBarTheme(
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  scrolledUnderElevation: 0,
+                  surfaceTintColor: Colors.transparent,
+                ),
                 colorScheme: _getAppColorScheme(
                   brightness: Brightness.dark,
                   primaryColor: themeProps.primaryColor,
@@ -584,10 +603,7 @@ class ApplicationState extends ConsumerState<Application>
                     color: Colors.black87,
                     borderRadius: BorderRadius.all(Radius.circular(10)),
                   ),
-                  textStyle: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                  ),
+                  textStyle: TextStyle(color: Colors.white, fontSize: 12),
                 ),
               ),
               home: child!,
