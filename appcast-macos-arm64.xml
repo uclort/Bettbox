@@ -6,9 +6,9 @@
     <description>Bettbox 自定义版本更新源</description>
     <language>zh-CN</language>
     <item>
-      <title>Bettbox 1.19.3+2090000189</title>
-      <pubDate>Mon, 12 Oct 2026 01:56:04 +0000</pubDate>
-      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000189-r20261012014032-1761bbb4fb5e-2c8fb62cd4c6</link>
+      <title>Bettbox 1.19.5+2090000190</title>
+      <pubDate>Mon, 12 Oct 2026 10:07:25 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.5+2090000190-r20261012095023-908f72e06b73-4b63534f76cf</link>
       <description><![CDATA[<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https:;">
@@ -19,18 +19,54 @@ h1,h2,h3 { line-height: 1.35; } h1 { font-size: 22px; } h2 { font-size: 18px; } 
 pre { white-space: pre-wrap; } code { font-size: .92em; }
 img,table { max-width: 100%; } table { border-collapse: collapse; } td,th { border: 1px solid #888; padding: 6px; }
 a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; padding-top: 12px; }
-</style></head><body><p dir="auto">基于上游 Bettbox <code class="notranslate">main@26865630fef4</code> 构建的自定义版本。</p>
-<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.3+2090000189</code></strong></p>
+</style></head><body><p dir="auto">基于上游 Bettbox <code class="notranslate">main@afcc5cf0b3e1</code> 构建的自定义版本。</p>
+<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.5+2090000190</code></strong></p>
 <h2 dir="auto">本次变更（相较上一自定义 Release）</h2>
 <ul dir="auto">
-<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000188-r20261010134036-5444e2a6e873-2c8fb62cd4c6"><code class="notranslate">custom-v1.19.3+2090000188-r20261010134036-5444e2a6e873-2c8fb62cd4c6</code></a> → <code class="notranslate">custom-v1.19.3+2090000189-r20261012014032-1761bbb4fb5e-2c8fb62cd4c6</code></li>
+<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3+2090000189-r20261012014032-1761bbb4fb5e-2c8fb62cd4c6"><code class="notranslate">custom-v1.19.3+2090000189-r20261012014032-1761bbb4fb5e-2c8fb62cd4c6</code></a> → <code class="notranslate">custom-v1.19.5+2090000190-r20261012095023-908f72e06b73-4b63534f76cf</code></li>
+<li>上游基线：<code class="notranslate">main@26865630fef4</code> → <code class="notranslate">main@afcc5cf0b3e1</code></li>
 </ul>
-<h3 dir="auto">2026-10-12 修复 macOS 菜单消失与关闭恢复异常</h3>
+<h3 dir="auto">上游同步</h3>
 <ul dir="auto">
-<li>修复菜单组件放在响应式布局内部导致新实例注册后被旧实例销毁清空的问题；菜单固定在布局外层，主窗口尺寸、布局和前后台切换不再销毁菜单。</li>
-<li>原生菜单仅随主工程语言变化更新，避免网速/窗口状态刷新时反复替换原生菜单及回调。</li>
-<li>Cmd+W 统一走红色关闭按钮的关闭拦截、偏好保存和后台处理链；macOS 聚焦时立即恢复渲染并取消旧暂停任务，Windows 保持原有处理。</li>
-<li>补充布局切换菜单生命周期、重复注册防护与 Cmd+W 原生关闭调用回归。</li>
+<li>Optimize Windows helper on upgrade (<code class="notranslate">54d7e006</code>)</li>
+<li>Bump version (<code class="notranslate">3630570c</code>)</li>
+<li>Improve core stability and file operations (<code class="notranslate">91bf18d3</code>)</li>
+<li>Better log request energy-saving (<code class="notranslate">64aea919</code>)</li>
+<li>Adjust geodata and zashboard to online download (<code class="notranslate">92e71737</code>)</li>
+<li>Optimize network detection on app resume (<code class="notranslate">ec361a5e</code>)</li>
+<li>Fix code-forge annotation issue (<code class="notranslate">a7ca56d3</code>)</li>
+<li>Add more midea unlocktest (<code class="notranslate">340179ad</code>)</li>
+<li>Update core (<code class="notranslate">b9f0f272</code>)</li>
+<li>Add congestion-controller for mips (<code class="notranslate">7ccf65bb</code>)</li>
+<li>Update readme (<code class="notranslate">31893466</code>)</li>
+<li>Fix bypass domain on Windows (<code class="notranslate">7d451537</code>)</li>
+<li>Improve core stability (<code class="notranslate">23653235</code>)</li>
+<li>Optimize UI performance (<code class="notranslate">f3d2b939</code>)</li>
+<li>Better IP info dialog (<code class="notranslate">4fd9d35b</code>)</li>
+<li>Support policy group options in script settings (<code class="notranslate">631c8a18</code>)</li>
+<li>Update core (<code class="notranslate">d7d74cd4</code>)</li>
+<li>Release v1.19.4 (<code class="notranslate">45d6fd37</code>)</li>
+<li>Optimize global groups parsing logic (<code class="notranslate">0faa0d6d</code>)</li>
+<li>Improve Windows helper process management (<code class="notranslate">2c03f845</code>)</li>
+<li>Add permission guard for unix core (<code class="notranslate">cd3fa4a9</code>)</li>
+<li>Optimize Linux packaging and setcap support (<code class="notranslate">69d86271</code>)</li>
+<li>Optimize override rule interaction (<code class="notranslate">318fdfe2</code>)</li>
+<li>Better native acceleration for hash calculation (<code class="notranslate">261efb5b</code>)</li>
+<li>Optimize code-forge details (<code class="notranslate">32d42a5c</code>)</li>
+<li>New borderless style theme (<code class="notranslate">d9e17e8d</code>)</li>
+<li>Optimize list and reverse scrolling (<code class="notranslate">39b88b17</code>)</li>
+<li>Optimize outbound state checks (<code class="notranslate">fb61c3ce</code>)</li>
+<li>Add loopback traffic protection (<code class="notranslate">3509dc7d</code>)</li>
+<li>Bump version (<code class="notranslate">afcc5cf0</code>)</li>
+<li>自定义 Mihomo 源码：<code class="notranslate">3f04fddf97e6</code> → <code class="notranslate">2022f12cc37f</code></li>
+</ul>
+<h3 dir="auto">2026-10-12 同步 Bettbox 1.19.5 与 Mihomo v1.19.32</h3>
+<ul dir="auto">
+<li>同步 Bettbox 上游 <code class="notranslate">26865630fef4 → afcc5cf0b3e1</code> 的 30 个提交，包含无边框主题、可折叠侧边栏、列表和编辑器优化、策略组脚本选项、GeoData 在线下载、回环流量保护以及 Windows Helper 进程管理改进。</li>
+<li>更新内置 Mihomo 至 <code class="notranslate">v1.19.32</code>，重新生成并固定私有 Snell v6 内核；保留接口 DNS 跟随与回退、macOS Scoped Resolver、TUN 关闭处理和连接变更通知。</li>
+<li>融合新版界面后继续保留独立网络面板、WebDAV 共享配置边界、统一代理/TUN 启停、Android 悬浮总开关、macOS 菜单与 Dock 生命周期，以及 Windows 原生托盘测速和应用内更新。</li>
+<li>核心启动接入上游控制通道重建重试与 Linux AppImage 内核同步，保留启动失败及 IPC 断开的网络开关回滚；Windows Helper 仍按需启动、退出时停止，安装器升级不主动创建或启动服务。</li>
+<li>Windows 代理接入上游 IPv6 回环绕过兼容处理，保留注册表与 WinINet 双通道启停，并同步重新生成模型与七种语言资源。</li>
 </ul>
 <h2 dir="auto">本包改动（相较上游版本）</h2>
 <h3 dir="auto">上游融合必检</h3>
@@ -40,6 +76,15 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>本文件只登记当前仍保留的自定义功能；修改、迁移、删除或被上游等价能力替代时必须同步更新。</li>
 <li><code class="notranslate">LATEST_CHANGES.md</code> 只记录相较上一自定义 Release 的增量，不能替代本文件。</li>
 <li>未经用户明确要求，不创建 Pull Request。</li>
+</ul>
+<h3 dir="auto">当前上游融合基线</h3>
+<ul dir="auto">
+<li>2026-10-12 同步 Bettbox <code class="notranslate">main@afcc5cf0b3e1</code>（<code class="notranslate">1.19.5+2026100101</code>）与 Mihomo <code class="notranslate">v1.19.32</code>，保留原有全部 <code class="notranslate">BETTBOX-CUSTOM</code> 标记。</li>
+<li>接入上游无边框主题、可折叠侧边栏、列表和编辑器优化、GeoData 在线下载、回环流量保护及 Windows Helper 子进程管理；侧边栏继续通过 <code class="notranslate">_selectPage</code> 打开独立网络面板，Android 首页继续保留单一悬浮总开关。</li>
+<li>核心启动兼容上游 Linux AppImage 内核同步与控制通道重建重试；首次控制连接失败后清理旧进程和 socket 再重试一次，两次失败仍抛错并执行原有代理/TUN 回滚。Windows Helper 继续按需授权启动，macOS 网络恢复继续等待 <code class="notranslate">resetConnections</code> 的真实结果。</li>
+<li>Windows 系统代理吸收上游 <code class="notranslate">::1</code> 绕过兼容处理，同时保留 WinINet/RAS 和注册表双通道启停；模型保留首次安装关闭系统代理的默认值，并接入上游历史绕过域名清洗。</li>
+<li>融合落点为 <code class="notranslate">lib/clash/service.dart</code>、<code class="notranslate">lib/manager/app_manager.dart</code>、<code class="notranslate">lib/widgets/google_bottom_nav_bar.dart</code>、<code class="notranslate">lib/views/dashboard/dashboard.dart</code>、<code class="notranslate">lib/models/config.dart</code>、<code class="notranslate">plugins/proxy/windows/proxy_plugin.cpp</code> 与 <code class="notranslate">macos/Runner/MainFlutterWindow.swift</code>；同步重新生成模型和七种语言资源。</li>
+<li>验证方式：<code class="notranslate">flutter analyze --no-pub</code>、<code class="notranslate">flutter test --no-pub</code>、核心包装层 <code class="notranslate">go test ./...</code>、下文内核指定目录的 Go 回归，以及 Release 正文和 WinSparkle 补丁回归；五平台原生构建与安装包校验由自定义发布工作流执行。</li>
 </ul>
 <h3 dir="auto">WebDAV 配置同步边界</h3>
 <ul dir="auto">
@@ -170,17 +215,17 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 </ul>
 <h2 dir="auto">构建信息</h2>
 <ul dir="auto">
-<li>上游 Bettbox main 基线：<code class="notranslate">main@26865630fef4</code></li>
-<li>最终安装版本：<code class="notranslate">1.19.3+2090000189</code></li>
-<li>上游源码版本：<code class="notranslate">1.19.3+2026092601</code></li>
-<li>Bettbox custom-build commit：<code class="notranslate">1761bbb4fb5e9958e0c705810fd630ef07980591</code></li>
+<li>上游 Bettbox main 基线：<code class="notranslate">main@afcc5cf0b3e1</code></li>
+<li>最终安装版本：<code class="notranslate">1.19.5+2090000190</code></li>
+<li>上游源码版本：<code class="notranslate">1.19.5+2026100101</code></li>
+<li>Bettbox custom-build commit：<code class="notranslate">908f72e06b73e31cf85619926585d9370fd89eec</code></li>
 </ul>
 <p dir="auto">Release 仅包含本次 Action 生成的安装包，不包含私有自定义 Mihomo 源码。</p>
 <p dir="auto">Windows 与 macOS 安装包未做商业代码签名；Android 安装包使用 Bettbox 自定义版固定 Release 签名。</p>
-<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.3%2B2090000189-r20261012014032-1761bbb4fb5e-2c8fb62cd4c6">查看完整发布页</a></footer></body></html>]]></description>
-      <sparkle:version>2090000189</sparkle:version>
-      <sparkle:shortVersionString>1.19.3+2090000189</sparkle:shortVersionString>
-      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.3+2090000189-r20261012014032-1761bbb4fb5e-2c8fb62cd4c6/Bettbox-1.19.3-macos-arm64.dmg" length="71801248" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="v+wiXRH1VMpKJYNAUDwP8WosJCI+w3JqhBJbTX2tZUO4arWEHW5OjU4fmg/7eN9u/ab0trP0WxF2UY428eB4Ag==" />
+<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.5%2B2090000190-r20261012095023-908f72e06b73-4b63534f76cf">查看完整发布页</a></footer></body></html>]]></description>
+      <sparkle:version>2090000190</sparkle:version>
+      <sparkle:shortVersionString>1.19.5+2090000190</sparkle:shortVersionString>
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.5+2090000190-r20261012095023-908f72e06b73-4b63534f76cf/Bettbox-1.19.5-macos-arm64.dmg" length="70723589" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="UMZaDb80AupFzM6MaYwJfhrzlk9U/FIahE27HxpLi6P9bg+Q1kx+EzH8aiFNbQPh+4lzb542UP7fpwtT8XI7BA==" />
     </item>
   </channel>
 </rss>
