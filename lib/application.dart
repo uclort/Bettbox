@@ -374,10 +374,7 @@ class ApplicationState extends ConsumerState<Application>
                 GlobalWidgetsLocalizations.delegate,
               ],
               builder: (_, child) {
-                if (system.isMacOS) {
-                  child = MacOSMenuBar(child: child!);
-                }
-                return Directionality(
+                final content = Directionality(
                   textDirection: TextDirection.ltr,
                   child: ValueListenableBuilder<bool>(
                     valueListenable: globalState.animationEnabled,
@@ -395,6 +392,11 @@ class ApplicationState extends ConsumerState<Application>
                     },
                   ),
                 );
+                // BETTBOX-CUSTOM: 菜单必须在响应式布局外保持同一生命周期。
+                // 否则旧 PlatformMenuBar 的 dispose 会清空新实例刚注册的菜单。
+                return system.isMacOS
+                    ? MacOSMenuBar(child: content)
+                    : content;
               },
               scrollBehavior: BaseScrollBehavior(),
               title: appName,

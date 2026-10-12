@@ -171,7 +171,16 @@ class _WindowContainerState extends ConsumerState<WindowManager>
 
   @override
   void onWindowFocus() {
-    if (globalState.backgroundMode.value) {
+    if (system.isMacOS) {
+      // BETTBOX-CUSTOM: 异步隐藏/聚焦可能交错，恢复不能只依赖 backgroundMode。
+      // 先取消旧暂停，再立即恢复帧回调，避免可见窗口仍停留在上一帧。
+      _renderToggleTimer?.cancel();
+      _pendingRenderResume = true;
+      globalState.handleForeground();
+      render?.resume();
+      unawaited(globalState.resumeForegroundUpdates());
+      unawaited(globalState.appController.syncWakelockIfNeeded());
+    } else if (globalState.backgroundMode.value) {
       globalState.handleForeground();
       _scheduleRenderToggle(true);
       unawaited(globalState.resumeForegroundUpdates());

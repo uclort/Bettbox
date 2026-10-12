@@ -67,7 +67,7 @@
 
 ### macOS 与 Windows 托盘
 
-- macOS 顶部应用菜单通过 `lib/widgets/macos_menu_bar.dart` 接入 MaterialApp 已解析的本地化，沿用显式语言、跟随系统与不支持语言回退规则，支持 7 种主工程语言且切换即时生效。保留关于、设置、检查更新、隐藏、编辑、窗口和安全退出，删除 Services/查找/拼写/替换/朗读/空 Help 等无效模板入口；菜单操作由 `lib/plugins/app.dart` 与 `macos/Runner/MainFlutterWindow.swift` 的允许列表转发到 AppKit 响应链，编辑快捷键保留系统语义。原生菜单本地化回归为 `test/widgets/macos_menu_bar_test.dart`，菜单文字源为 `arb/intl_*.arb`。
+- macOS 顶部应用菜单通过 `lib/widgets/macos_menu_bar.dart` 接入 MaterialApp 已解析的本地化，沿用显式语言、跟随系统与不支持语言回退规则，支持 7 种主工程语言且切换即时生效。保留关于、设置、检查更新、隐藏、编辑、窗口和安全退出，删除 Services/查找/拼写/替换/朗读/空 Help 等无效模板入口；菜单操作由 `lib/plugins/app.dart` 与 `macos/Runner/MainFlutterWindow.swift` 的允许列表转发到 AppKit 响应链，编辑快捷键保留系统语义。菜单组件固定在 MaterialApp.builder 响应式布局外层，仅语言变化时重新生成原生菜单，避免布局切换后旧实例 dispose 清空新菜单。`Cmd+W` 调用 windowManager.close，沿用红色关闭按钮的保存/拦截/后台链；macOS 聚焦立即取消暂停并恢复渲染，不依赖异步 backgroundMode 状态。菜单生命周期、布局切换不清空/不重复注册、语言切换与关闭快捷键回归为 `test/widgets/macos_menu_bar_test.dart`，菜单文字源为 `arb/intl_*.arb`；窗口恢复修复位于 `lib/manager/window_manager.dart`。
 - 桌面托盘提供系统代理、虚拟网卡、重启内核、重启软件、自动启动、亮屏锁、策略组和节点选择；macOS 与 Windows 使用同一套左右键行为配置，可分别设置为显示窗口或显示菜单。
 - Dock 图标完全跟随主窗口状态：窗口显示或最小化时显示，窗口关闭到托盘或静默启动时隐藏；不再提供“常驻 DOCK”开关，也不读取历史偏好。代码位于 `plugins/window_ext/macos/Classes/WindowExtPlugin.swift`、`macos/Runner/AppDelegate.swift` 与 `macos/Runner/MainFlutterWindow.swift`，策略映射测试位于 `macos/RunnerTests/RunnerTests.swift`。
 - macOS 与 Windows 均支持独立开启实时上传/下载速率；系统代理与虚拟网卡均关闭时立即归零并显示为未启用状态。
