@@ -18,7 +18,19 @@ mixin ClashInterface {
 
   Future<bool> forceGc({bool forceFreeOSMemory = false});
 
-  FutureOr<String> validateConfig(String data, {String? ageSecretKey});
+  FutureOr<String> validateConfig(
+    String data, {
+    String? ageSecretKey,
+    SetupParams? setup,
+  });
+
+  Future<Result> getRuntimeConfig(SetupParams setupParams);
+
+  Future<Result> exportConfig(
+    String path,
+    String output, {
+    String? ageSecretKey,
+  });
 
   FutureOr<String> decryptAgeConfig(String data, String ageSecretKey);
 
@@ -32,9 +44,9 @@ mixin ClashInterface {
 
   FutureOr<String> updateConfig(UpdateParams updateParams);
 
-  FutureOr<String> setupConfig(SetupParams setupParams);
+  FutureOr<SetupResult> setupConfig(SetupParams setupParams);
 
-  FutureOr<Map> getProxies();
+  FutureOr<String> getProxies();
 
   FutureOr<String> changeProxy(ChangeProxyParams changeProxyParams);
 
@@ -114,11 +126,17 @@ mixin AndroidClashInterface {
   Future<DateTime?> getRunTime();
 }
 
+class CoreDisconnectedException implements Exception {
+  const CoreDisconnectedException();
+}
+
 abstract class ClashHandlerInterface with ClashInterface {
   Map<String, Completer> callbackCompleterMap = {};
+  final Map<String, Object> _requestChannels = {};
 
   Future<void> handleResult(ActionResult result) async {
-    final completer = callbackCompleterMap[result.id];
+    final completer = callbackCompleterMap.remove(result.id);
+    _requestChannels.remove(result.id);
     try {
       switch (result.method) {
         case ActionMethod.message:
@@ -126,6 +144,8 @@ abstract class ClashHandlerInterface with ClashInterface {
           completer?.complete(true);
           return;
         case ActionMethod.getConfig:
+        case ActionMethod.getRuntimeConfig:
+        case ActionMethod.exportConfig:
         case ActionMethod.convertAgeSecretKeyToPublicKey:
           completer?.complete(result.toResult);
           return;
@@ -137,11 +157,25 @@ abstract class ClashHandlerInterface with ClashInterface {
           return;
       }
     } catch (e) {
-      commonPrint.log('${result.id} error $e');
+      commonPrint.warn('${result.id} error $e');
     }
   }
 
-  FutureOr<void> sendMessage(String message);
+  FutureOr<Object?> sendMessage(String message);
+
+  void abortRequests(Object channel) {
+    final ids = _requestChannels.entries
+        .where((entry) => identical(entry.value, channel))
+        .map((entry) => entry.key)
+        .toList();
+    for (final id in ids) {
+      _requestChannels.remove(id);
+      final completer = callbackCompleterMap.remove(id);
+      if (completer != null && !completer.isCompleted) {
+        completer.completeError(const CoreDisconnectedException());
+      }
+    }
+  }
 
   FutureOr<void> reStart();
 
@@ -156,7 +190,8 @@ abstract class ClashHandlerInterface with ClashInterface {
   }) async {
     final id = '${method.name}#${utils.id}';
 
-    callbackCompleterMap[id] = Completer<T>();
+    final completer = Completer<T>();
+    callbackCompleterMap[id] = completer;
 
     dynamic mDefaultValue = defaultValue;
     if (mDefaultValue == null) {
@@ -168,34 +203,42 @@ abstract class ClashHandlerInterface with ClashInterface {
         mDefaultValue = <String, dynamic>{};
       }
     }
+    final FutureOr<T> Function() fallback = onTimeout ?? () => mDefaultValue;
 
     try {
-      await sendMessage(
+      final channel = await sendMessage(
         json.encode(Action(id: id, method: method, data: data)),
       );
+      if (channel != null && !completer.isCompleted) {
+        _requestChannels[id] = channel;
+      }
+    } on CoreDisconnectedException {
+      callbackCompleterMap.remove(id);
+      return fallback();
     } catch (e) {
       callbackCompleterMap.remove(id);
       rethrow;
     }
 
-    return (callbackCompleterMap[id] as Completer<T>).safeFuture(
-      timeout: timeout,
-      onLast: () {
-        callbackCompleterMap.remove(id);
-      },
-      onTimeout:
-          onTimeout ??
-          () {
-            return mDefaultValue;
-          },
-      functionName: id,
-    );
+    try {
+      return await completer.safeFuture(
+        timeout: timeout,
+        onLast: () {
+          callbackCompleterMap.remove(id);
+          _requestChannels.remove(id);
+        },
+        onTimeout: fallback,
+        functionName: id,
+      );
+    } on CoreDisconnectedException {
+      return fallback();
+    }
   }
 
   void _invokeAndForget(ActionMethod method, {dynamic data}) {
     invoke(method: method, data: data).then<void>(
       (_) {},
-      onError: (Object e) => commonPrint.log('${method.name} ignored: $e'),
+      onError: (Object e) => commonPrint.debug('${method.name} ignored: $e'),
     );
   }
 
@@ -237,11 +280,47 @@ abstract class ClashHandlerInterface with ClashInterface {
   }
 
   @override
-  FutureOr<String> validateConfig(String data, {String? ageSecretKey}) {
-    final params = {'data': data, 'age-secret-key': ageSecretKey ?? ''};
+  FutureOr<String> validateConfig(
+    String data, {
+    String? ageSecretKey,
+    SetupParams? setup,
+  }) {
+    final params = {
+      'data': data,
+      'age-secret-key': ageSecretKey ?? '',
+      'setup': ?setup,
+    };
     return invoke<String>(
       method: ActionMethod.validateConfig,
       data: json.encode(params),
+    );
+  }
+
+  @override
+  Future<Result> getRuntimeConfig(SetupParams setupParams) {
+    return invoke<Result>(
+      method: ActionMethod.getRuntimeConfig,
+      data: json.encode(setupParams),
+      timeout: const Duration(seconds: 60),
+      defaultValue: Result.success(''),
+    );
+  }
+
+  @override
+  Future<Result> exportConfig(
+    String path,
+    String output, {
+    String? ageSecretKey,
+  }) {
+    return invoke<Result>(
+      method: ActionMethod.exportConfig,
+      data: json.encode({
+        'path': path,
+        'age-secret-key': ageSecretKey ?? '',
+        'output': output,
+      }),
+      timeout: const Duration(seconds: 60),
+      defaultValue: Result.error('exportConfig timeout'),
     );
   }
 
@@ -277,14 +356,15 @@ abstract class ClashHandlerInterface with ClashInterface {
   }
 
   @override
-  Future<String> setupConfig(SetupParams setupParams) async {
-    final data = await Isolate.run(() => json.encode(setupParams));
-    return await invoke<String>(
+  Future<SetupResult> setupConfig(SetupParams setupParams) async {
+    final params = await Isolate.run(() => json.encode(setupParams));
+    final data = await invoke<dynamic>(
       method: ActionMethod.setupConfig,
-      data: data,
+      data: params,
       timeout: const Duration(seconds: 60),
       onTimeout: () => throw TimeoutException('setupConfig timeout'),
     );
+    return SetupResult.fromData(data);
   }
 
   @override
@@ -293,8 +373,8 @@ abstract class ClashHandlerInterface with ClashInterface {
   }
 
   @override
-  Future<Map> getProxies() {
-    return invoke<Map>(
+  Future<String> getProxies() {
+    return invoke<String>(
       method: ActionMethod.getProxies,
       timeout: Duration(seconds: 5),
     );

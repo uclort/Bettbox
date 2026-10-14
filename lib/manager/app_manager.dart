@@ -1,14 +1,17 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:bett_box/clash/core.dart';
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/enum/enum.dart';
+import 'package:bett_box/models/models.dart';
 import 'package:bett_box/plugins/app.dart';
 import 'package:bett_box/providers/providers.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/views/network_monitor.dart';
+import 'package:bett_box/views/tools.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
@@ -28,6 +31,7 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
   Timer? _dashboardRefreshDebounceTimer;
   Timer? _missedUpdateCheckTimer;
   DateTime? _lastMissedUpdateCheck;
+  AppLifecycleState? _lifecycleState;
   late final VoidCallback _dashboardTickListener;
 
   static const _missedUpdateCheckDelay = Duration(seconds: 5);
@@ -37,6 +41,7 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _lifecycleState = WidgetsBinding.instance.lifecycleState;
     _dashboardTickListener = () {
       if (!globalState.isStart) {
         return;
@@ -54,6 +59,11 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
     ref.listenManual(checkIpProvider, (prev, next) {
       if (next.b && (prev?.a != next.a)) {
         detectionState.startCheck();
+      }
+    });
+    ref.listenManual(initProvider, (prev, next) {
+      if (next) {
+        detectionState.flushPendingCheck();
       }
     });
     ref.listenManual(checkMediaUnlockProvider, (prev, next) {
@@ -161,10 +171,15 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
 
   @override
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
+    final previousState = _lifecycleState;
+    _lifecycleState = state;
+    final isLeaving =
+        previousState == null || state.index > previousState.index;
     final isBackgroundState =
-        state == AppLifecycleState.paused ||
-        state == AppLifecycleState.hidden ||
-        (state == AppLifecycleState.inactive && !system.isDesktop);
+        isLeaving &&
+        (state == AppLifecycleState.paused ||
+            state == AppLifecycleState.hidden ||
+            (state == AppLifecycleState.inactive && !system.isDesktop));
 
     if (isBackgroundState) {
       _missedUpdateCheckTimer?.cancel();
@@ -182,7 +197,7 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
           await globalState.appController.updateGroups();
         }
       } catch (e) {
-        commonPrint.log('foreground core refresh skipped: $e');
+        commonPrint.debug('foreground core refresh skipped: $e');
       }
 
       detectionState.checkOnForegroundResume();
@@ -237,37 +252,15 @@ class AppEnvManager extends StatelessWidget {
   }
 }
 
-final sidebarCollapsedProvider =
-    StateNotifierProvider<SidebarCollapsedNotifier, bool>((ref) {
-      return SidebarCollapsedNotifier();
-    });
-
-class SidebarCollapsedNotifier extends StateNotifier<bool> {
-  SidebarCollapsedNotifier() : super(false) {
-    _init();
-  }
-
-  Future<void> _init() async {
-    final prefs = await preferences.sharedPreferencesCompleter.future;
-    state = prefs?.getBool(sidebarCollapsedKey) ?? false;
-  }
-
-  Future<void> toggle() async {
-    final next = !state;
-    state = next;
-    final prefs = await preferences.sharedPreferencesCompleter.future;
-    await prefs?.setBool(sidebarCollapsedKey, next);
-  }
-
-  Future<void> setCollapsed(bool value) async {
-    state = value;
-    final prefs = await preferences.sharedPreferencesCompleter.future;
-    await prefs?.setBool(sidebarCollapsedKey, value);
-  }
-}
-
 const _sidebarAnimDuration = Duration(milliseconds: 200);
 const _sidebarAnimCurve = Curves.easeOutCubic;
+const double _sidebarExpandedWidth = 132.0;
+const double _sidebarCollapsedWidth = 56.0;
+const double _sidebarHeaderHeight = 46.0;
+const double _sidebarItemHeight = 38.0;
+const double _sidebarIconSize = 21.0;
+const double _sidebarItemRadius = 10.0;
+const double _sidebarToggleTouchSlack = 12.0;
 
 class _SidebarToggleButton extends StatefulWidget {
   final VoidCallback onTap;
@@ -309,32 +302,37 @@ class _SidebarToggleButtonState extends State<_SidebarToggleButton> {
         onTapUp: (_) => setState(() => _isPressed = false),
         onTapCancel: () => setState(() => _isPressed = false),
         onTap: widget.onTap,
-        child: AnimatedScale(
-          scale: _isPressed ? 0.92 : 1.0,
-          duration: const Duration(milliseconds: 100),
-          curve: Curves.easeOutCubic,
-          child: AnimatedContainer(
+        child: Padding(
+          padding: system.isDesktop
+              ? EdgeInsets.zero
+              : const EdgeInsets.fromLTRB(0, 6, _sidebarToggleTouchSlack, 6),
+          child: AnimatedScale(
+            scale: _isPressed ? 0.92 : 1.0,
             duration: const Duration(milliseconds: 100),
             curve: Curves.easeOutCubic,
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: bgColor,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            alignment: Alignment.center,
-            child: TweenAnimationBuilder<double>(
-              tween: Tween<double>(end: widget.isCollapsed ? 1.0 : 0.0),
-              duration: _sidebarAnimDuration,
-              curve: _sidebarAnimCurve,
-              builder: (context, progress, _) {
-                return _SidebarIcon(
-                  color: iconColor,
-                  width: 15,
-                  height: 13,
-                  progress: progress,
-                );
-              },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 100),
+              curve: Curves.easeOutCubic,
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              alignment: Alignment.center,
+              child: TweenAnimationBuilder<double>(
+                tween: Tween<double>(end: widget.isCollapsed ? 1.0 : 0.0),
+                duration: _sidebarAnimDuration,
+                curve: _sidebarAnimCurve,
+                builder: (context, progress, _) {
+                  return _SidebarIcon(
+                    color: iconColor,
+                    width: 15,
+                    height: 13,
+                    progress: progress,
+                  );
+                },
+              ),
             ),
           ),
         ),
@@ -463,7 +461,7 @@ class AppSidebarContainer extends ConsumerWidget {
     globalState.appController.toPage(label);
   }
 
-  double get _headerHeight => 46.0;
+  double get _headerHeight => _sidebarHeaderHeight;
 
   Widget _buildLoading({
     required bool isCollapsed,
@@ -503,15 +501,103 @@ class AppSidebarContainer extends ConsumerWidget {
     );
   }
 
+  static (String, TextScaler, String?, double)? _expandedWidthCache;
+
+  double _calculateExpandedWidth(
+    BuildContext context,
+    List<NavigationItem> items,
+  ) {
+    if (items.isEmpty) return _sidebarExpandedWidth;
+    final labels = items.map((item) => item.label.localizedName).join('\n');
+    final scaler =
+        MediaQuery.maybeTextScalerOf(context) ?? TextScaler.noScaling;
+    final fontFamily = context.textTheme.labelLarge?.fontFamily;
+    final cache = _expandedWidthCache;
+    if (cache != null &&
+        cache.$1 == labels &&
+        cache.$2 == scaler &&
+        cache.$3 == fontFamily) {
+      return cache.$4;
+    }
+    final width = _measureExpandedWidth(context, items, scaler);
+    _expandedWidthCache = (labels, scaler, fontFamily, width);
+    return width;
+  }
+
+  double _measureExpandedWidth(
+    BuildContext context,
+    List<NavigationItem> items,
+    TextScaler textScaler,
+  ) {
+    final textStyle = (context.textTheme.labelLarge ?? const TextStyle())
+        .copyWith(
+          fontSize: 13.5,
+          letterSpacing: 0.2,
+          fontWeight: FontWeight.w600,
+        );
+    final direction = Directionality.maybeOf(context) ?? TextDirection.ltr;
+
+    double maxTextWidth = 0.0;
+    for (final item in items) {
+      final painter = TextPainter(
+        text: TextSpan(text: item.label.localizedName, style: textStyle),
+        textDirection: direction,
+        textScaler: textScaler,
+        maxLines: 1,
+      )..layout();
+      if (painter.width > maxTextWidth) {
+        maxTextWidth = painter.width;
+      }
+      painter.dispose();
+    }
+
+    final requiredWidth = 18.0 + _sidebarItemHeight + maxTextWidth + 10.0;
+    final itemsWidth = requiredWidth <= 110.0
+        ? 118.0
+        : requiredWidth <= 120.0
+        ? 132.0
+        : requiredWidth <= 136.0
+        ? 148.0
+        : 156.0;
+    if (system.isMacOS) return itemsWidth;
+    final brandPainter = TextPainter(
+      text: TextSpan(
+        text: AppIdentity.productName,
+        style: _brandTextStyle(context),
+      ),
+      textDirection: direction,
+      textScaler: textScaler,
+      maxLines: 1,
+    )..layout();
+    final headerWidth =
+        14.0 +
+        brandPainter.width +
+        8.0 +
+        28.0 +
+        (system.isDesktop ? 10.0 : _sidebarToggleTouchSlack);
+    brandPainter.dispose();
+    return math.max(itemsWidth, headerWidth.ceilToDouble());
+  }
+
+  TextStyle? _brandTextStyle(BuildContext context) {
+    return context.textTheme.titleMedium?.copyWith(
+      fontWeight: FontWeight.bold,
+      fontSize: 14.5,
+      letterSpacing: 0.3,
+    );
+  }
+
   Widget _buildBackground({
     required BuildContext context,
     required bool isCollapsed,
+    required double expandedWidth,
+    required double leftInset,
     required Widget child,
   }) {
     return AnimatedContainer(
       duration: _sidebarAnimDuration,
       curve: _sidebarAnimCurve,
-      width: isCollapsed ? 56 : 152,
+      width: (isCollapsed ? _sidebarCollapsedWidth : expandedWidth) + leftInset,
       child: ClipRect(
         child: Material(color: Colors.transparent, child: child),
       ),
@@ -551,8 +637,8 @@ class AppSidebarContainer extends ConsumerWidget {
               padding: const EdgeInsets.only(
                 left: 80,
                 right: 10,
-                top: 7,
-                bottom: 11,
+                top: 6,
+                bottom: 12,
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -575,19 +661,29 @@ class AppSidebarContainer extends ConsumerWidget {
         children: [
           if (system.isDesktop) dragArea,
           Padding(
-            padding: const EdgeInsets.only(left: 14, right: 10),
+            padding: EdgeInsets.only(
+              left: 14,
+              right: system.isDesktop ? 10 : 0,
+            ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  AppIdentity.productName,
-                  style: context.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14.5,
-                    letterSpacing: 0.3,
-                  ),
+                AnimatedSize(
+                  duration: _sidebarAnimDuration,
+                  curve: _sidebarAnimCurve,
+                  alignment: Alignment.centerLeft,
+                  child: isCollapsed && !system.isDesktop
+                      ? const SizedBox.shrink()
+                      : Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Text(
+                            AppIdentity.productName,
+                            maxLines: 1,
+                            softWrap: false,
+                            style: _brandTextStyle(context),
+                          ),
+                        ),
                 ),
-                const SizedBox(width: 8),
                 Padding(
                   padding: const EdgeInsets.only(top: 1),
                   child: _SidebarToggleButton(
@@ -605,6 +701,7 @@ class AppSidebarContainer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(appSettingProvider.select((s) => s.locale));
     final (navigationItems, isMobileView, currentIndex) = ref.watch(
       navigationStateProvider.select(
         (state) => (
@@ -617,42 +714,44 @@ class AppSidebarContainer extends ConsumerWidget {
     if (isMobileView) {
       return child;
     }
+    final expandedWidth = _calculateExpandedWidth(context, navigationItems);
     final needSafeArea = !system.isDesktop;
-    final isCollapsed = ref.watch(sidebarCollapsedProvider);
-    final onToggle = ref.read(sidebarCollapsedProvider.notifier).toggle;
+    final leftInset = needSafeArea ? MediaQuery.paddingOf(context).left : 0.0;
+    final isCollapsed = ref.watch(
+      appSettingProvider.select((s) => s.sidebarCollapsed),
+    );
+    final (sidebarFlyout, sidebarFlyoutOutsideTools) = ref.watch(
+      appSettingProvider.select(
+        (s) => (s.sidebarFlyout, s.sidebarFlyoutOutsideTools),
+      ),
+    );
+    void onToggle() => ref
+        .read(appSettingProvider.notifier)
+        .updateState(
+          (state) => state.copyWith(sidebarCollapsed: !state.sidebarCollapsed),
+        );
     final isLight = context.colorScheme.brightness == Brightness.light;
     final pureBlack = ref.watch(
       themeSettingProvider.select((s) => s.pureBlack),
     );
-    final bgGradient = LinearGradient(
-      begin: const Alignment(-1.0, -0.3),
-      end: const Alignment(1.0, 0.4),
-      colors: isLight
-          ? [
-              context.colorScheme.surfaceContainer,
-              Color.lerp(
-                context.colorScheme.surfaceContainer,
-                context.colorScheme.surfaceContainerLowest,
-                0.85,
-              )!,
-            ]
-          : (!pureBlack
-                ? [
-                    context.colorScheme.surfaceContainer,
-                    Color.lerp(
-                      context.colorScheme.surfaceContainer,
-                      context.colorScheme.surfaceContainerHigh,
-                      0.35,
-                    )!,
-                  ]
-                : [
-                    context.colorScheme.surfaceContainer,
-                    context.colorScheme.surfaceContainer,
-                  ]),
-    );
+    final washColor = context.colorScheme.surfaceContainer;
+    final baseColor = isLight
+        ? Color.lerp(
+            washColor,
+            context.colorScheme.surfaceContainerLowest,
+            0.85,
+          )!
+        : (pureBlack
+              ? washColor
+              : Color.lerp(
+                  washColor,
+                  context.colorScheme.surfaceContainerHigh,
+                  0.35,
+                )!);
     return _SidebarOverlay(
-      child: DecoratedBox(
-        decoration: BoxDecoration(gradient: bgGradient),
+      child: _WashBackground(
+        baseColor: baseColor,
+        washColor: washColor,
         child: Material(
           color: Colors.transparent,
           child: Stack(
@@ -666,6 +765,8 @@ class AppSidebarContainer extends ConsumerWidget {
                         _buildBackground(
                           context: context,
                           isCollapsed: isCollapsed,
+                          expandedWidth: expandedWidth,
+                          leftInset: leftInset,
                           child: SafeArea(
                             left: true,
                             top: needSafeArea,
@@ -714,21 +815,29 @@ class AppSidebarContainer extends ConsumerWidget {
                                         autofocus: true,
                                         child: ListView.separated(
                                           padding: const EdgeInsets.symmetric(
-                                            horizontal: 10,
+                                            horizontal: 9,
                                             vertical: 4,
                                           ),
                                           itemCount: navigationItems.length,
                                           separatorBuilder: (_, _) =>
-                                              const SizedBox(height: 3),
+                                              const SizedBox(height: 3.5),
                                           itemBuilder: (context, index) {
                                             final item = navigationItems[index];
                                             final isSelected =
                                                 currentIndex == index;
-                                            return _SidebarItem(
+                                            final hasFlyout =
+                                                sidebarFlyout &&
+                                                item.label == PageLabel.tools &&
+                                                !(sidebarFlyoutOutsideTools &&
+                                                    isSelected);
+                                            final sidebarItem = _SidebarItem(
                                               icon: item.icon,
                                               label: item.label.localizedName,
                                               isSelected: isSelected,
                                               isCollapsed: isCollapsed,
+                                              hasTooltip:
+                                                  !hasFlyout && !isSelected,
+                                              expandedWidth: expandedWidth,
                                               onTap: () {
                                                 if (currentIndex == index) {
                                                   final pageContext =
@@ -745,6 +854,13 @@ class AppSidebarContainer extends ConsumerWidget {
                                                 }
                                                 _selectPage(item.label);
                                               },
+                                            );
+                                            if (!hasFlyout) {
+                                              return sidebarItem;
+                                            }
+                                            return _SidebarFlyout(
+                                              title: item.label.localizedName,
+                                              child: sidebarItem,
                                             );
                                           },
                                         ),
@@ -782,7 +898,7 @@ class AppSidebarContainer extends ConsumerWidget {
               Positioned(
                 top: 0,
                 left: 0,
-                width: 152,
+                width: expandedWidth + leftInset,
                 height:
                     _headerHeight +
                     (needSafeArea ? MediaQuery.paddingOf(context).top : 0),
@@ -813,6 +929,8 @@ class _SidebarItem extends StatefulWidget {
   final String label;
   final bool isSelected;
   final bool isCollapsed;
+  final bool hasTooltip;
+  final double expandedWidth;
   final VoidCallback onTap;
 
   const _SidebarItem({
@@ -820,6 +938,8 @@ class _SidebarItem extends StatefulWidget {
     required this.label,
     required this.isSelected,
     this.isCollapsed = false,
+    this.hasTooltip = true,
+    required this.expandedWidth,
     required this.onTap,
   });
 
@@ -850,47 +970,59 @@ class _SidebarItemState extends State<_SidebarItem> {
         : colorScheme.onSurfaceVariant;
 
     final iconWidget = IconTheme(
-      data: IconThemeData(color: foregroundColor, size: 19),
+      data: IconThemeData(color: foregroundColor, size: _sidebarIconSize),
       child: widget.icon,
     );
+
+    final expandedItemWidth = widget.expandedWidth - 18.0;
 
     final content = AnimatedContainer(
       duration: _sidebarAnimDuration,
       curve: _sidebarAnimCurve,
-      height: 36,
+      height: _sidebarItemHeight,
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(_sidebarItemRadius),
       ),
-      child: Row(
-        children: [
-          SizedBox(width: 36, height: 36, child: Center(child: iconWidget)),
-          Expanded(
-            child: ClipRect(
-              child: Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 150),
-                  opacity: isCollapsed ? 0.0 : 1.0,
-                  curve: _sidebarAnimCurve,
-                  child: Text(
-                    widget.label,
-                    maxLines: 1,
-                    softWrap: false,
-                    overflow: TextOverflow.fade,
-                    style: context.textTheme.labelLarge?.copyWith(
-                      color: foregroundColor,
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.w500,
-                      fontSize: 13,
+      child: ClipRect(
+        child: OverflowBox(
+          alignment: AlignmentDirectional.centerStart,
+          minWidth: expandedItemWidth,
+          maxWidth: expandedItemWidth,
+          child: Row(
+            children: [
+              SizedBox(
+                width: _sidebarItemHeight,
+                height: _sidebarItemHeight,
+                child: Center(child: iconWidget),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 150),
+                    opacity: isCollapsed ? 0.0 : 1.0,
+                    curve: _sidebarAnimCurve,
+                    child: Text(
+                      widget.label,
+                      maxLines: 1,
+                      softWrap: false,
+                      overflow: TextOverflow.clip,
+                      style: context.textTheme.labelLarge?.copyWith(
+                        color: foregroundColor,
+                        fontWeight: isSelected
+                            ? FontWeight.w600
+                            : FontWeight.w500,
+                        fontSize: 13.5,
+                        letterSpacing: 0.2,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
 
@@ -905,10 +1037,10 @@ class _SidebarItemState extends State<_SidebarItem> {
       ),
     );
 
-    if (isCollapsed) {
+    if (isCollapsed && widget.hasTooltip) {
       return Tooltip(
         message: widget.label,
-        waitDuration: const Duration(milliseconds: 350),
+        waitDuration: const Duration(milliseconds: 150),
         positionDelegate: (context) {
           final x = context.target.dx + context.targetSize.width / 2 + 12;
           final y = (context.target.dy - context.tooltipSize.height / 2).clamp(
@@ -922,5 +1054,280 @@ class _SidebarItemState extends State<_SidebarItem> {
     }
 
     return itemWidget;
+  }
+}
+
+class _SidebarFlyout extends ConsumerStatefulWidget {
+  final String title;
+  final Widget child;
+
+  const _SidebarFlyout({required this.title, required this.child});
+
+  @override
+  ConsumerState<_SidebarFlyout> createState() => _SidebarFlyoutState();
+}
+
+class _SidebarFlyoutState extends ConsumerState<_SidebarFlyout>
+    with SingleTickerProviderStateMixin {
+  final _portalController = OverlayPortalController();
+  late final _animationController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 150),
+    reverseDuration: const Duration(milliseconds: 100),
+  );
+  late final _animation = CurvedAnimation(
+    parent: _animationController,
+    curve: Curves.easeOutCubic,
+  );
+  Timer? _timer;
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _animation.dispose();
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _handleEnter() {
+    _timer?.cancel();
+    if (_portalController.isShowing) {
+      _animationController.forward();
+      return;
+    }
+    final delay = ref.read(appSettingProvider).sidebarFlyoutDelay.duration;
+    _timer = Timer(delay, () {
+      _portalController.show();
+      _animationController.forward();
+    });
+  }
+
+  void _handleExit() {
+    _timer?.cancel();
+    _timer = Timer(const Duration(milliseconds: 100), _hide);
+  }
+
+  void _hide() {
+    _timer?.cancel();
+    _animationController.reverse().whenCompleteOrCancel(() {
+      if (mounted && _animationController.isDismissed) {
+        _portalController.hide();
+      }
+    });
+  }
+
+  void _handleOpen(ToolsShortcut shortcut) {
+    _timer?.cancel();
+    _animationController.value = 0;
+    _portalController.hide();
+    if (shortcut.builder != null) {
+      globalState.appController.toPage(PageLabel.tools);
+    }
+    final navigatorContext = globalState.navigatorKey.currentContext;
+    if (navigatorContext == null) {
+      return;
+    }
+    shortcut.open(navigatorContext);
+  }
+
+  Widget _buildItem(BuildContext context, ToolsShortcut shortcut) {
+    final colorScheme = context.colorScheme;
+    final subtitle = shortcut.subtitle;
+    return InkWell(
+      borderRadius: BorderRadius.circular(_sidebarItemRadius),
+      onTap: () => _handleOpen(shortcut),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+        child: Row(
+          children: [
+            IconTheme(
+              data: IconThemeData(
+                color: colorScheme.onSurfaceVariant,
+                size: _sidebarIconSize,
+              ),
+              child: shortcut.icon,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    shortcut.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  if (subtitle != null)
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPanel(
+    BuildContext context,
+    List<ToolsShortcut> shortcuts,
+    bool pureBlack,
+  ) {
+    final itemBox = this.context.findRenderObject();
+    final overlayBox = Overlay.of(this.context).context.findRenderObject();
+    if (itemBox is! RenderBox || overlayBox is! RenderBox) {
+      return const SizedBox.shrink();
+    }
+    final left = itemBox
+        .localToGlobal(Offset(itemBox.size.width, 0), ancestor: overlayBox)
+        .dx;
+    final colorScheme = context.colorScheme;
+    final isLight = colorScheme.brightness == Brightness.light;
+    final viewPadding = system.isDesktop
+        ? EdgeInsets.zero
+        : MediaQuery.paddingOf(context);
+    return Positioned(
+      left: left,
+      top: viewPadding.top + _sidebarHeaderHeight,
+      bottom: 0,
+      child: MouseRegion(
+        onEnter: (_) => _handleEnter(),
+        onExit: (_) => _handleExit(),
+        child: Padding(
+          padding: EdgeInsets.only(left: 13, bottom: viewPadding.bottom + 8),
+          child: FadeTransition(
+            opacity: _animation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(-0.04, 0),
+                end: Offset.zero,
+              ).animate(_animation),
+              child: Material(
+                color: isLight || pureBlack
+                    ? colorScheme.surfaceContainerLow
+                    : colorScheme.surfaceContainerHighest,
+                elevation: 6,
+                shadowColor: Colors.black.withValues(
+                  alpha: isLight ? 0.35 : 0.6,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(
+                    color: colorScheme.outlineVariant.withValues(
+                      alpha: isLight ? 0.6 : 0.5,
+                    ),
+                  ),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minWidth: 168,
+                    maxWidth: 280,
+                  ),
+                  child: IntrinsicWidth(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(10, 10, 14, 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
+                            child: Text(
+                              widget.title,
+                              style: context.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          for (final shortcut in shortcuts)
+                            _buildItem(context, shortcut),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final moreItems = ref.watch(
+      moreToolsSelectorStateProvider.select((state) => state.navigationItems),
+    );
+    final entries = ref.watch(
+      appSettingProvider.select((state) => state.sidebarFlyoutEntries),
+    );
+    final shortcuts = getToolsShortcuts(moreItems, entries);
+    final pureBlack = ref.watch(
+      themeSettingProvider.select((state) => state.pureBlack),
+    );
+    return OverlayPortal(
+      controller: _portalController,
+      overlayChildBuilder: (context) =>
+          _buildPanel(context, shortcuts, pureBlack),
+      child: MouseRegion(
+        onEnter: (_) => _handleEnter(),
+        onExit: (_) => _handleExit(),
+        child: Listener(onPointerDown: (_) => _hide(), child: widget.child),
+      ),
+    );
+  }
+}
+
+class _WashBackground extends StatelessWidget {
+  final Color baseColor;
+  final Color washColor;
+  final Widget child;
+
+  const _WashBackground({
+    required this.baseColor,
+    required this.washColor,
+    required this.child,
+  });
+
+  Decoration _wash(Alignment center, double radius) {
+    return BoxDecoration(
+      gradient: RadialGradient(
+        center: center,
+        radius: radius,
+        stops: const [0, 0.25, 0.5, 0.75, 1],
+        colors: [
+          for (final alpha in const [1.0, 0.8, 0.45, 0.14, 0.0])
+            washColor.withValues(alpha: alpha),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (baseColor == washColor) {
+      return ColoredBox(color: baseColor, child: child);
+    }
+    return ColoredBox(
+      color: baseColor,
+      child: DecoratedBox(
+        decoration: _wash(const Alignment(-1, -1), 1.2),
+        child: DecoratedBox(
+          decoration: _wash(const Alignment(-1, 1.1), 1),
+          child: child,
+        ),
+      ),
+    );
   }
 }

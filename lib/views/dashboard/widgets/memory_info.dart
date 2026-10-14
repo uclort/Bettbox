@@ -5,7 +5,7 @@ import 'package:bett_box/common/common.dart';
 import 'package:bett_box/models/common.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'core_status_dialog.dart';
 
@@ -101,7 +101,7 @@ class _MemoryInfoState extends State<MemoryInfo> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: getWidgetHeight(1),
+      height: getWidgetHeight(context, 1),
       child: CommonCard(
         onPressed: () => showCoreStatusDialog(context),
         onLongPress: () async {
@@ -190,16 +190,14 @@ class _MemoryInfoState extends State<MemoryInfo> {
                       children: [
                         Text(
                           _memoryValue.showValue,
-                          style: context.textTheme.bodyMedium?.toLight.adjustSize(
-                            1,
-                          ),
+                          style: context.textTheme.bodyMedium?.toLight
+                              .adjustSize(1),
                         ),
                         const SizedBox(width: 8),
                         Text(
                           _memoryValue.showUnit,
-                          style: context.textTheme.bodyMedium?.toLight.adjustSize(
-                            1,
-                          ),
+                          style: context.textTheme.bodyMedium?.toLight
+                              .adjustSize(1),
                         ),
                       ],
                     ),

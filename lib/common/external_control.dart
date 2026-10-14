@@ -24,7 +24,7 @@ class ExternalControl {
         await _startUnixSocket();
         return;
       } catch (e) {
-        commonPrint.log(
+        commonPrint.warn(
           'ExternalControl UDS bind failed, falling back to TCP: $e',
         );
       }
@@ -264,7 +264,7 @@ class ExternalControl {
       case 'show':
         window?.show();
       default:
-        commonPrint.log('ExternalControl unknown command: $command');
+        commonPrint.warn('ExternalControl unknown command: $command');
     }
   }
 }

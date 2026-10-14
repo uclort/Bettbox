@@ -308,7 +308,7 @@ _Dns _$DnsFromJson(Map<String, dynamic> json) => _Dns(
       (json['proxy-server-nameserver'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList() ??
-      const ['https://120.53.53.53/dns-query#DIRECT'],
+      const ['tls://223.6.6.6#DIRECT', 'https://doh.pub/dns-query#DIRECT'],
   directNameserver:
       (json['direct-nameserver'] as List<dynamic>?)
           ?.map((e) => e as String)

@@ -22,7 +22,9 @@ class UiManager {
       final uiPath = await appPath.uiPath;
       final uiDir = Directory(uiPath);
       final versionFile = File(join(uiPath, '.ui_version'));
-      final appVersionFile = File(join(File(uiPath).parent.path, '.ui_app_version'));
+      final appVersionFile = File(
+        join(File(uiPath).parent.path, '.ui_app_version'),
+      );
       final currentVersion = globalState.packageInfo.version;
 
       if (await uiDir.exists() && (await uiDir.list().toList()).isNotEmpty) {
@@ -38,7 +40,9 @@ class UiManager {
           await appVersionFile.writeAsString(currentVersion);
           return;
         }
-        commonPrint.log('UI version mismatch: $deployedVersion -> $currentVersion');
+        commonPrint.log(
+          'UI version mismatch: $deployedVersion -> $currentVersion',
+        );
         await clearUI();
       }
 
@@ -47,7 +51,7 @@ class UiManager {
       await uiDir.create(recursive: true);
 
       final zipData = await rootBundle.load('assets/data/zash.zip');
-      
+
       final bytes = Uint8List.fromList(zipData.buffer.asUint8List());
 
       final tempPath = await appPath.tempPath;
@@ -96,14 +100,19 @@ class UiManager {
 
       await appVersionFile.writeAsString(currentVersion);
 
-      commonPrint.log('UI extracted successfully to: $uiPath (v$currentVersion)');
+      commonPrint.log(
+        'UI extracted successfully to: $uiPath (v$currentVersion)',
+      );
     } catch (e) {
-      commonPrint.log('Error extracting UI: $e');
+      commonPrint.error('Error extracting UI: $e');
       rethrow;
     }
   }
 
-  static Future<void> _copyDirectory(Directory source, Directory destination) async {
+  static Future<void> _copyDirectory(
+    Directory source,
+    Directory destination,
+  ) async {
     await for (final entity in source.list(recursive: false)) {
       if (entity is Directory) {
         final newDirectory = Directory(
@@ -128,7 +137,7 @@ class UiManager {
         commonPrint.log('UI cleared successfully');
       }
     } catch (e) {
-      commonPrint.log('Error clearing UI: $e');
+      commonPrint.warn('Error clearing UI: $e');
     }
   }
 }

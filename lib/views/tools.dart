@@ -23,7 +23,7 @@ import 'package:bett_box/views/connection/requests.dart';
 import 'package:bett_box/views/hotkey.dart';
 import 'package:bett_box/views/other_setting.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' show dirname, join;
@@ -50,6 +50,130 @@ class _SearchItem {
     this.leading,
     required this.onTap,
   });
+}
+
+class ToolsShortcut {
+  final Widget icon;
+  final String title;
+  final String? subtitle;
+  final WidgetBuilder? builder;
+  final VoidCallback? onTap;
+  final bool wrap;
+
+  const ToolsShortcut({
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    this.builder,
+    this.onTap,
+    this.wrap = true,
+  });
+
+  void open(BuildContext context) {
+    final builder = this.builder;
+    if (builder == null) {
+      onTap?.call();
+      return;
+    }
+    showExtend(
+      context,
+      props: const ExtendProps(forceFull: true),
+      builder: (_, type) {
+        final child = builder(context);
+        return wrap
+            ? AdaptiveSheetScaffold(type: type, title: title, body: child)
+            : child;
+      },
+    );
+  }
+}
+
+List<ToolsShortcut> getToolsShortcuts(
+  List<NavigationItem> moreItems,
+  List<SidebarFlyoutEntry> entries,
+) {
+  ToolsShortcut? buildNavigationShortcut(PageLabel label) {
+    final item = moreItems.where((item) => item.label == label).firstOrNull;
+    if (item == null) {
+      return null;
+    }
+    return ToolsShortcut(
+      icon: item.icon,
+      title: Intl.message(item.label.name),
+      subtitle: switch (item.description) {
+        final description? => Intl.message(description),
+        null => null,
+      },
+      builder: item.builder,
+      wrap: false,
+    );
+  }
+
+  return [
+    for (final entry in SidebarFlyoutEntry.supportedValues)
+      if (entries.contains(entry))
+        ?switch (entry) {
+          SidebarFlyoutEntry.resources => buildNavigationShortcut(
+            PageLabel.resources,
+          ),
+          SidebarFlyoutEntry.script => buildNavigationShortcut(
+            PageLabel.script,
+          ),
+          SidebarFlyoutEntry.theme => ToolsShortcut(
+            icon: const Icon(Icons.style),
+            title: appLocalizations.theme,
+            subtitle: appLocalizations.themeDesc,
+            builder: (_) => const ThemeView(),
+          ),
+          SidebarFlyoutEntry.backupAndRecovery => ToolsShortcut(
+            icon: const Icon(Icons.cloud_sync),
+            title: appLocalizations.backupAndRecovery,
+            subtitle: appLocalizations.backupAndRecoveryDesc,
+            builder: (_) => const BackupAndRecovery(),
+          ),
+          SidebarFlyoutEntry.hotkeyManagement => ToolsShortcut(
+            icon: const Icon(Icons.keyboard),
+            title: appLocalizations.hotkeyManagement,
+            subtitle: appLocalizations.hotkeyManagementDesc,
+            builder: (_) => const HotKeyView(),
+          ),
+          SidebarFlyoutEntry.loopback => ToolsShortcut(
+            icon: const Icon(Icons.lock),
+            title: appLocalizations.loopback,
+            subtitle: appLocalizations.loopbackDesc,
+            onTap: () {
+              windows?.runas(
+                '"${join(dirname(Platform.resolvedExecutable), "WindowsLoopbackManager.exe")}"',
+                '',
+                showWindow: true,
+              );
+            },
+          ),
+          SidebarFlyoutEntry.basicConfig => ToolsShortcut(
+            icon: const Icon(Icons.developer_board_rounded),
+            title: appLocalizations.basicConfig,
+            subtitle: appLocalizations.basicConfigDesc,
+            builder: (_) => const ConfigView(),
+          ),
+          SidebarFlyoutEntry.otherSettings => ToolsShortcut(
+            icon: const Icon(Icons.settings_suggest_outlined),
+            title: appLocalizations.otherSettings,
+            subtitle: appLocalizations.otherSettingsDesc,
+            builder: (_) => const OtherSettingView(),
+          ),
+          SidebarFlyoutEntry.application => ToolsShortcut(
+            icon: const Icon(Icons.settings),
+            title: appLocalizations.application,
+            subtitle: appLocalizations.applicationDesc,
+            builder: (_) => const ApplicationSettingView(),
+          ),
+          SidebarFlyoutEntry.about => ToolsShortcut(
+            icon: const Icon(Icons.info),
+            title: appLocalizations.about,
+            builder: (_) => const AboutView(),
+          ),
+        },
+  ];
 }
 
 class _GeneralListView extends StatelessWidget {
@@ -99,42 +223,9 @@ class _ToolViewState extends ConsumerState<ToolsView> {
     BuildContext context, {
     required String title,
     required List<Widget> items,
+    bool isFirst = false,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ListHeader(
-            title: title,
-            padding: const EdgeInsets.only(left: 8, bottom: 8),
-          ),
-          CommonCard(
-            type: CommonCardType.filled,
-            child: Column(
-              children: [
-                for (var i = 0; i < items.length; i++) ...[
-                  items[i],
-                  if (i != items.length - 1)
-                    Divider(
-                      height: 1,
-                      thickness: 1,
-                      color: context.colorScheme.outlineVariant.withValues(
-                        alpha:
-                            context.colorScheme.brightness == Brightness.light
-                            ? 0.6
-                            : 0.45,
-                      ),
-                      indent: 16,
-                      endIndent: 16,
-                    ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+    return SectionContainer(title: title, items: items, isFirst: isFirst);
   }
 
   String _query = '';
@@ -501,13 +592,24 @@ class _ToolViewState extends ConsumerState<ToolsView> {
       _SearchItem(
         title: appLocalizations.autoCloseConnections,
         subtitle: appLocalizations.autoCloseConnectionsDesc,
-        category: appCategory,
+        category: otherSettingsCategory,
         onTap: (context, _) => _pushPage(
           context,
-          appLocalizations.application,
-          const ApplicationSettingView(),
+          appLocalizations.otherSettings,
+          const OtherSettingView(),
         ),
       ),
+      if (system.isAndroid)
+        _SearchItem(
+          title: appLocalizations.flushDnsOnNetworkChange,
+          subtitle: appLocalizations.flushDnsOnNetworkChangeDesc,
+          category: otherSettingsCategory,
+          onTap: (context, _) => _pushPage(
+            context,
+            appLocalizations.otherSettings,
+            const OtherSettingView(),
+          ),
+        ),
       _SearchItem(
         title: appLocalizations.onlyStatisticsProxy,
         subtitle: appLocalizations.onlyStatisticsProxyDesc,
@@ -1371,6 +1473,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
           return _buildModernSection(
             context,
             title: appLocalizations.more,
+            isFirst: true,
             items: state.navigationItems
                 .map((item) => _buildNavigationMenuItem(item))
                 .toList(),
@@ -1402,17 +1505,19 @@ class _ToolViewState extends ConsumerState<ToolsView> {
     return CommonScaffold(
       title: appLocalizations.tools,
       searchState: AppBarSearchState(onSearch: _onSearchChanged),
-      body: ListView.builder(
-        key: _query.isEmpty ? toolsStoreKey : null,
-        itemCount: _query.isEmpty ? items.length : searchResults.length,
-        itemBuilder: (_, index) {
-          return _query.isEmpty ? items[index] : searchResults[index];
-        },
-        padding: EdgeInsets.only(
-          bottom:
-              (globalState.isAndroidTV ? 80.0 : 20.0) +
-              (isMobileView ? getFloatingBottomBarReserveHeight(context) : 0),
-          top: 8,
+      body: ScrollEdgeRise(
+        builder: (context, rise) => ListView.builder(
+          key: _query.isEmpty ? toolsStoreKey : null,
+          itemCount: _query.isEmpty ? items.length : searchResults.length,
+          itemBuilder: (_, index) {
+            return _query.isEmpty ? items[index] : searchResults[index];
+          },
+          padding: EdgeInsets.only(
+            bottom:
+                (globalState.isAndroidTV ? 80.0 : 20.0) +
+                (isMobileView ? getFloatingBottomBarReserveHeight(context) : 0),
+            top: 8 + rise,
+          ),
         ),
       ),
     );

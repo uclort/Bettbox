@@ -1,5 +1,5 @@
 import 'package:bett_box/widgets/dialog.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:markdown_widget/markdown_widget.dart';
 
 class AppUpdateDialog extends StatelessWidget {
@@ -52,13 +52,16 @@ class AppUpdateDialog extends StatelessWidget {
           const Divider(height: 28),
           Text('更新内容', style: theme.textTheme.titleSmall),
           const SizedBox(height: 12),
-          MarkdownBlock(
-            data: notes.trim().isEmpty ? '暂未提供更新说明，请查看完整发布页。' : notes,
-            config:
-                (theme.brightness == Brightness.dark
-                        ? MarkdownConfig.darkConfig
-                        : MarkdownConfig.defaultConfig)
-                    .copy(configs: [LinkConfig(onTap: openSafeUrl)]),
+          SelectionArea(
+            child: MarkdownBlock(
+              selectable: false,
+              data: notes.trim().isEmpty ? '暂未提供更新说明，请查看完整发布页。' : notes,
+              config:
+                  (theme.brightness == Brightness.dark
+                          ? MarkdownConfig.darkConfig
+                          : MarkdownConfig.defaultConfig)
+                      .copy(configs: [LinkConfig(onTap: openSafeUrl)]),
+            ),
           ),
           if (releaseUrl.isNotEmpty)
             TextButton.icon(

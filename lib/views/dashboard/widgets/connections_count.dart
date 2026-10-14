@@ -5,7 +5,7 @@ import 'package:bett_box/common/common.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/views/connection/connections.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class ConnectionsCount extends StatefulWidget {
   const ConnectionsCount({super.key});
@@ -59,7 +59,7 @@ class _ConnectionsCountState extends State<ConnectionsCount> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: getWidgetHeight(1),
+      height: getWidgetHeight(context, 1),
       child: CommonCard(
         info: Info(
           iconData: Icons.cable_rounded,

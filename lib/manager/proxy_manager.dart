@@ -7,8 +7,7 @@ import 'package:bett_box/providers/app.dart';
 import 'package:bett_box/providers/config.dart';
 import 'package:bett_box/providers/state.dart';
 import 'package:bett_box/state.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 @visibleForTesting
@@ -46,9 +45,7 @@ class _ProxyManagerState extends ConsumerState<ProxyManager> {
       updated = await proxy?.stopProxy();
     }
     if (updated != true) {
-      throw StateError(
-        isStart && systemProxy ? '系统代理启用失败' : '系统代理关闭失败',
-      );
+      throw StateError(isStart && systemProxy ? '系统代理启用失败' : '系统代理关闭失败');
     }
   }
 

@@ -46,6 +46,10 @@ extension DateTimeExtension on DateTime {
     return toLocal().toString().substring(0, 19);
   }
 
+  String get showFullMillis {
+    return toLocal().toString().substring(0, 23);
+  }
+
   String get showTime {
     return toLocal().toString().substring(10, 19);
   }

@@ -1,10 +1,9 @@
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/providers/config.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:bett_box/clash/core.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/views/config/dns.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class DnsOverride extends StatelessWidget {
@@ -35,8 +34,7 @@ class DnsOverride extends StatelessWidget {
 
     // Clear cache after user confirms
     if (result == true) {
-      await clashCore.flushFakeIP();
-      await clashCore.flushDnsCache();
+      await globalState.appController.flushDns();
       globalState.showNotifier(appLocalizations.success);
     }
   }
@@ -44,7 +42,7 @@ class DnsOverride extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: getWidgetHeight(1),
+      height: getWidgetHeight(context, 1),
       child: CommonCard(
         info: Info(label: 'DNS', iconData: Icons.dns),
         onPressed: () {

@@ -4,7 +4,7 @@ import 'package:bett_box/models/models.dart';
 import 'package:bett_box/providers/providers.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 Future<void> _handleNetworkConfigChange(WidgetRef ref) async {
@@ -329,9 +329,10 @@ class TunCongestionControllerItem extends ConsumerWidget {
           if (value == null) {
             return;
           }
-          ref.read(patchClashConfigProvider.notifier).updateState(
-                (state) =>
-                    state.copyWith.tun(congestionController: value),
+          ref
+              .read(patchClashConfigProvider.notifier)
+              .updateState(
+                (state) => state.copyWith.tun(congestionController: value),
               );
           await _handleNetworkConfigChange(ref);
         },
@@ -374,44 +375,46 @@ class MtuItem extends ConsumerWidget {
                 child: Text(appLocalizations.confirm),
               ),
             ],
-            child: TextField(
-              autofocus: true,
-              keyboardType: TextInputType.number,
-              controller: controller,
-              decoration: InputDecoration(
-                labelText: 'MTU',
-                errorText: errorText,
-                hintText: '1280-65535',
-              ),
-              onChanged: (value) {
-                inputValue = value;
-                // Real-time validation
-                if (value.isEmpty) {
-                  setState(() {
-                    errorText = appLocalizations.emptyTip('MTU');
-                  });
-                } else {
-                  final intValue = int.tryParse(value);
-                  if (intValue == null) {
+            child: IdleFocusBuilder(
+              builder: (_, focusNode) => TextField(
+                focusNode: focusNode,
+                keyboardType: TextInputType.number,
+                controller: controller,
+                decoration: InputDecoration(
+                  labelText: 'MTU',
+                  errorText: errorText,
+                  hintText: '1280-65535',
+                ),
+                onChanged: (value) {
+                  inputValue = value;
+                  // Real-time validation
+                  if (value.isEmpty) {
                     setState(() {
-                      errorText = appLocalizations.numberTip('MTU');
-                    });
-                  } else if (intValue < 1280 || intValue > 65535) {
-                    setState(() {
-                      errorText = 'MTU Must be 1280-65535';
+                      errorText = appLocalizations.emptyTip('MTU');
                     });
                   } else {
-                    setState(() {
-                      errorText = null;
-                    });
+                    final intValue = int.tryParse(value);
+                    if (intValue == null) {
+                      setState(() {
+                        errorText = appLocalizations.numberTip('MTU');
+                      });
+                    } else if (intValue < 1280 || intValue > 65535) {
+                      setState(() {
+                        errorText = 'MTU Must be 1280-65535';
+                      });
+                    } else {
+                      setState(() {
+                        errorText = null;
+                      });
+                    }
                   }
-                }
-              },
-              onSubmitted: (value) {
-                if (errorText == null && value.isNotEmpty) {
-                  Navigator.of(context).pop(true);
-                }
-              },
+                },
+                onSubmitted: (value) {
+                  if (errorText == null && value.isNotEmpty) {
+                    Navigator.of(context).pop(true);
+                  }
+                },
+              ),
             ),
           );
         },
@@ -657,8 +660,9 @@ class NetworkListView extends ConsumerWidget {
         system.isAndroid &&
         ref.watch(vpnSettingProvider.select((state) => state.systemProxy));
     final isMipsStack = ref.watch(
-      patchClashConfigProvider
-          .select((state) => state.tun.stack == TunStack.mips),
+      patchClashConfigProvider.select(
+        (state) => state.tun.stack == TunStack.mips,
+      ),
     );
     final networkItems = [
       if (system.isAndroid) ...generateSection(items: const [VPNItem()]),

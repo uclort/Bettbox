@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:bett_box/state.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 bool dismissTvInputFocus() {
   if (!globalState.isAndroidTV) return false;
@@ -61,20 +61,30 @@ class SystemBackBlock extends StatefulWidget {
 }
 
 class _SystemBackBlockState extends State<SystemBackBlock> {
+  static int _count = 0;
+
+  static void _sync() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_count > 0) {
+        globalState.appController.backBlock();
+        return;
+      }
+      globalState.appController.unBackBlock();
+    });
+  }
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      globalState.appController.backBlock();
-    });
+    _count++;
+    _sync();
   }
 
   @override
   void dispose() {
     super.dispose();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      globalState.appController.unBackBlock();
-    });
+    _count--;
+    _sync();
   }
 
   @override

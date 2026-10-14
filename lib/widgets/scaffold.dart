@@ -6,7 +6,9 @@ import 'package:bett_box/models/models.dart';
 import 'package:bett_box/providers/app.dart';
 import 'package:bett_box/widgets/fade_box.dart';
 import 'package:bett_box/widgets/pop_scope.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -23,6 +25,7 @@ class CommonScaffold extends StatefulWidget {
   final Widget body;
   final Color? backgroundColor;
   final String? title;
+  final Widget? titleWidget;
   final Widget? leading;
   final List<Widget>? actions;
   final bool? centerTitle;
@@ -30,6 +33,7 @@ class CommonScaffold extends StatefulWidget {
   final AppBarEditState? editState;
   final AppBarSearchState? searchState;
   final OnKeywordsUpdateCallback? onKeywordsUpdate;
+  final bool scrollEdgeFade;
 
   const CommonScaffold({
     super.key,
@@ -38,12 +42,14 @@ class CommonScaffold extends StatefulWidget {
     this.backgroundColor,
     this.leading,
     this.title,
+    this.titleWidget,
     this.actions,
     this.centerTitle,
     this.editState,
     this.searchState,
     this.floatingActionButton,
     this.onKeywordsUpdate,
+    this.scrollEdgeFade = true,
   });
 
   @override
@@ -95,10 +101,10 @@ class CommonScaffoldState extends State<CommonScaffold> {
     return Theme(
       data: theme.copyWith(
         appBarTheme: theme.appBarTheme.copyWith(
-          backgroundColor: colorScheme.brightness == Brightness.dark
-              ? Colors.grey[900]
-              : Colors.white,
-          iconTheme: theme.primaryIconTheme.copyWith(color: Colors.grey),
+          backgroundColor: Colors.transparent,
+          iconTheme: theme.primaryIconTheme.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
           titleTextStyle: theme.textTheme.titleLarge,
           toolbarTextStyle: theme.textTheme.bodyMedium,
         ),
@@ -208,6 +214,8 @@ class CommonScaffoldState extends State<CommonScaffold> {
             },
             decoration: InputDecoration(hintText: appLocalizations.search),
           )
+        : !_isEdit && widget.titleWidget != null
+        ? widget.titleWidget!
         : EmojiText(
             !_isEdit
                 ? widget.title!
@@ -232,12 +240,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
         IconButton(
           onPressed: () {
             _updateSearchState((state) => state?.copyWith(query: ''));
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              Future.delayed(const Duration(milliseconds: 150), () {
-                if (!mounted || !_isSearch) return;
-                _searchFocusNode.requestFocus();
-              });
-            });
+            unawaited(_searchFocusNode.requestFocusWhenIdle());
           },
           icon: const Icon(Icons.search),
           tooltip: appLocalizations.search,
@@ -290,10 +293,6 @@ class CommonScaffoldState extends State<CommonScaffold> {
                 builder: (_, state, _) {
                   return _buildAppBarWrap(
                     AppBar(
-                      backgroundColor: Colors.transparent,
-                      elevation: 0,
-                      scrolledUnderElevation: 0,
-                      surfaceTintColor: Colors.transparent,
                       centerTitle: widget.centerTitle ?? false,
                       leading: _buildLeading(),
                       title: _buildTitle(state.searchState),
@@ -315,7 +314,11 @@ class CommonScaffoldState extends State<CommonScaffold> {
 
   @override
   Widget build(BuildContext context) {
-    assert(widget.appBar != null || widget.title != null);
+    assert(
+      widget.appBar != null ||
+          widget.title != null ||
+          widget.titleWidget != null,
+    );
     final body = SafeArea(
       top: false,
       bottom: false,
@@ -356,7 +359,12 @@ class CommonScaffoldState extends State<CommonScaffold> {
             },
           ),
           Expanded(
-            child: widget.body,
+            child: widget.scrollEdgeFade
+                ? _ScrollEdgeFade(
+                    backgroundColor: widget.backgroundColor,
+                    child: widget.body,
+                  )
+                : widget.body,
           ),
         ],
       ),
@@ -390,6 +398,278 @@ class CommonScaffoldState extends State<CommonScaffold> {
         },
       ),
     );
+  }
+}
+
+class _ScrollEdgeFade extends ConsumerStatefulWidget {
+  final Color? backgroundColor;
+  final Widget child;
+
+  const _ScrollEdgeFade({required this.backgroundColor, required this.child});
+
+  @override
+  ConsumerState<_ScrollEdgeFade> createState() => _ScrollEdgeFadeState();
+}
+
+class _ScrollEdgeFadeState extends ConsumerState<_ScrollEdgeFade> {
+  static const _extent = 24.0;
+  static final _stops = [for (var i = 0; i <= 8; i++) i / 8];
+  static final _alphas = [
+    for (final stop in _stops) (1 - stop) * (1 - stop) * (1 + stop),
+  ];
+  bool _scrolledUnder = false;
+  double _rise = 0;
+
+  double? get _bodyHeight {
+    final box = context.findRenderObject();
+    return box is RenderBox ? box.constraints.maxHeight : null;
+  }
+
+  bool _handleScroll(ScrollMetrics metrics, int depth, BuildContext? source) {
+    if (depth != 0 || metrics.axis != Axis.vertical) return false;
+    final viewport = source?.findRenderObject();
+    final box = context.findRenderObject();
+    if (viewport is! RenderBox || box is! RenderBox) return false;
+    final top = viewport.localToGlobal(Offset.zero, ancestor: box).dy;
+    final rise = (top + ScrollEdgeRise.extent).abs() < 1
+        ? ScrollEdgeRise.extent
+        : 0.0;
+    final scrolledUnder = (top + rise).abs() < 1 && metrics.extentBefore > 0;
+    if (scrolledUnder == _scrolledUnder && (!scrolledUnder || rise == _rise)) {
+      return false;
+    }
+    void apply() {
+      if (!mounted) return;
+      setState(() {
+        _scrolledUnder = scrolledUnder;
+        if (scrolledUnder) _rise = rise;
+      });
+    }
+
+    if (SchedulerBinding.instance.schedulerPhase ==
+        SchedulerPhase.persistentCallbacks) {
+      SchedulerBinding.instance.addPostFrameCallback((_) => apply());
+    } else {
+      apply();
+    }
+    return false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color =
+        widget.backgroundColor ??
+        (ref.watch(isMobileViewProvider)
+            ? context.colorScheme.surfaceContainer
+            : null);
+    final opaque = color != null && color.a == 1;
+    return NotificationListener<ScrollMetricsNotification>(
+      onNotification: (notification) => _handleScroll(
+        notification.metrics,
+        notification.depth,
+        notification.context,
+      ),
+      child: NotificationListener<ScrollUpdateNotification>(
+        onNotification: (notification) => _handleScroll(
+          notification.metrics,
+          notification.depth,
+          notification.context,
+        ),
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(end: _scrolledUnder ? 1 : 0),
+          duration: const Duration(milliseconds: 200),
+          child: _ScrollEdgeScope(state: this, child: widget.child),
+          builder: (_, value, child) {
+            return Stack(
+              fit: StackFit.passthrough,
+              clipBehavior: Clip.none,
+              children: [
+                _EdgeMask(
+                  extent: _extent,
+                  rise: _rise,
+                  strength: opaque ? 0 : value,
+                  stops: _stops,
+                  alphas: _alphas,
+                  child: child,
+                ),
+                if (opaque && value > 0)
+                  Positioned(
+                    top: -_rise,
+                    left: 0,
+                    right: 0,
+                    height: _extent,
+                    child: IgnorePointer(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            stops: _stops,
+                            colors: [
+                              for (final alpha in _alphas)
+                                color.withValues(alpha: alpha * value),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _ScrollEdgeScope extends InheritedWidget {
+  final _ScrollEdgeFadeState state;
+
+  const _ScrollEdgeScope({required this.state, required super.child});
+
+  @override
+  bool updateShouldNotify(_ScrollEdgeScope oldWidget) => false;
+}
+
+class ScrollEdgeRise extends StatefulWidget {
+  static const extent = 8.0;
+
+  final Widget Function(BuildContext context, double rise) builder;
+
+  const ScrollEdgeRise({super.key, required this.builder});
+
+  @override
+  State<ScrollEdgeRise> createState() => _ScrollEdgeRiseState();
+}
+
+class _ScrollEdgeRiseState extends State<ScrollEdgeRise> {
+  Widget? _child;
+  double? _rise;
+
+  @override
+  void didUpdateWidget(ScrollEdgeRise oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _child = null;
+  }
+
+  Widget _childOf(double rise) {
+    final child = _child;
+    if (child != null && rise == _rise) return child;
+    _rise = rise;
+    return _child = Builder(
+      builder: (context) => widget.builder(context, rise),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context
+        .dependOnInheritedWidgetOfExactType<_ScrollEdgeScope>()
+        ?.state;
+    if (state == null) return widget.builder(context, 0);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final height = constraints.maxHeight;
+        final bodyHeight = state._bodyHeight;
+        final risen =
+            height.isFinite && bodyHeight != null && height >= bodyHeight;
+        const extent = ScrollEdgeRise.extent;
+        return OverflowBox(
+          alignment: Alignment.bottomCenter,
+          minHeight: risen ? height + extent : null,
+          maxHeight: risen ? height + extent : null,
+          fit: risen ? OverflowBoxFit.max : OverflowBoxFit.deferToChild,
+          child: _childOf(risen ? extent : 0),
+        );
+      },
+    );
+  }
+}
+
+class _EdgeMask extends SingleChildRenderObjectWidget {
+  final double extent;
+  final double rise;
+  final double strength;
+  final List<double> stops;
+  final List<double> alphas;
+
+  const _EdgeMask({
+    required this.extent,
+    required this.rise,
+    required this.strength,
+    required this.stops,
+    required this.alphas,
+    super.child,
+  });
+
+  @override
+  RenderObject createRenderObject(BuildContext context) {
+    return _RenderEdgeMask(extent, rise, strength, stops, alphas);
+  }
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderEdgeMask renderObject) {
+    renderObject
+      ..rise = rise
+      ..strength = strength;
+  }
+}
+
+class _RenderEdgeMask extends RenderProxyBox {
+  final double extent;
+  final List<double> stops;
+  final List<double> alphas;
+  double _rise;
+  double _strength;
+
+  _RenderEdgeMask(
+    this.extent,
+    this._rise,
+    this._strength,
+    this.stops,
+    this.alphas,
+  );
+
+  set rise(double value) {
+    if (value == _rise) return;
+    _rise = value;
+    markNeedsPaint();
+  }
+
+  set strength(double value) {
+    if (value == _strength) return;
+    final needed = alwaysNeedsCompositing;
+    _strength = value;
+    if (needed != alwaysNeedsCompositing) markNeedsCompositingBitsUpdate();
+    markNeedsPaint();
+  }
+
+  @override
+  bool get alwaysNeedsCompositing => child != null && _strength > 0;
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    if (child == null || _strength == 0 || size.height < extent) {
+      layer = null;
+      super.paint(context, offset);
+      return;
+    }
+    final rect = Rect.fromLTRB(0, -_rise, size.width, size.height);
+    final mask = (layer as ShaderMaskLayer?) ?? ShaderMaskLayer();
+    layer = mask
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        stops: [for (final stop in stops) stop * extent / rect.height],
+        colors: [
+          for (final alpha in alphas)
+            Colors.black.withValues(alpha: 1 - alpha * _strength),
+        ],
+      ).createShader(Offset.zero & rect.size)
+      ..maskRect = rect.shift(offset)
+      ..blendMode = BlendMode.dstIn;
+    context.pushLayer(mask, super.paint, offset);
   }
 }
 

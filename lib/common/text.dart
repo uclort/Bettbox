@@ -1,5 +1,5 @@
 import 'package:bett_box/enum/enum.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'color.dart';
 
 extension TextStyleExtension on TextStyle {

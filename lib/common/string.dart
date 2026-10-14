@@ -72,7 +72,7 @@ extension StringExtension on String {
       RegExp(this);
       return true;
     } catch (e) {
-      commonPrint.log(e.toString());
+      commonPrint.debug(e.toString());
       return false;
     }
   }

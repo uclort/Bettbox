@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class KeepScope extends StatefulWidget {
   final Widget child;
@@ -20,4 +21,48 @@ class _KeepContainerState extends State<KeepScope>
 
   @override
   bool get wantKeepAlive => widget.keep;
+}
+
+class PageActivityScope extends InheritedWidget {
+  final bool isActive;
+
+  const PageActivityScope({
+    super.key,
+    required this.isActive,
+    required super.child,
+  });
+
+  static bool isActiveOf(BuildContext context) {
+    return context
+            .dependOnInheritedWidgetOfExactType<PageActivityScope>()
+            ?.isActive ??
+        true;
+  }
+
+  @override
+  bool updateShouldNotify(PageActivityScope oldWidget) {
+    return isActive != oldWidget.isActive;
+  }
+}
+
+class ActiveConsumer extends ConsumerStatefulWidget {
+  final Widget Function(BuildContext context, WidgetRef ref) builder;
+
+  const ActiveConsumer({super.key, required this.builder});
+
+  @override
+  ConsumerState<ActiveConsumer> createState() => _ActiveConsumerState();
+}
+
+class _ActiveConsumerState extends ConsumerState<ActiveConsumer> {
+  Widget? _child;
+
+  @override
+  Widget build(BuildContext context) {
+    final child = _child;
+    if (child != null && !PageActivityScope.isActiveOf(context)) {
+      return child;
+    }
+    return _child = widget.builder(context, ref);
+  }
 }

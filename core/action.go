@@ -148,6 +148,31 @@ func handleAction(action *Action, result ActionResult) {
 	case clearLogsMethod:
 		result.success(handleClearLogs())
 		return
+	case exportConfigMethod:
+		var params ExportConfigParams
+		if err := json.Unmarshal([]byte(action.Data.(string)), &params); err != nil {
+			result.error(err)
+			return
+		}
+		if err := handleExportConfig(&params); err != nil {
+			result.error(err)
+			return
+		}
+		result.success("")
+		return
+	case getRuntimeConfigMethod:
+		params := defaultSetupParams()
+		if err := UnmarshalJson([]byte(action.Data.(string)), params); err != nil {
+			result.error(err)
+			return
+		}
+		content, err := handleGetRuntimeConfig(params)
+		if err != nil {
+			result.error(err)
+			return
+		}
+		result.success(content)
+		return
 	case getConfigMethod:
 		paramsString := action.Data.(string)
 		var params GetConfigParams

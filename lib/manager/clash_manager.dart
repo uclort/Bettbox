@@ -8,7 +8,7 @@ import 'package:bett_box/providers/app.dart';
 import 'package:bett_box/providers/config.dart';
 import 'package:bett_box/providers/state.dart';
 import 'package:bett_box/state.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 @visibleForTesting
@@ -35,6 +35,9 @@ class ClashManager extends ConsumerStatefulWidget {
 
 class _ClashContainerState extends ConsumerState<ClashManager>
     with AppMessageListener {
+  final List<TrackerInfo> _pendingRequests = [];
+  static const _flushDuration = Duration(milliseconds: 300);
+
   @override
   Widget build(BuildContext context) {
     return widget.child;
@@ -47,21 +50,18 @@ class _ClashContainerState extends ConsumerState<ClashManager>
     ref.listenManual(needSetupProvider, (prev, next) {
       if (prev != next) {
         final profileChanged = prev?.a != next.a;
-        final shouldHardRestart =
-            shouldHardRestartDesktopCoreOnProfileChange(
-              isDesktop: system.isDesktop,
-              profileChanged: profileChanged,
-              isRunning: globalState.isStart,
-              systemProxy: ref.read(networkSettingProvider).systemProxy,
-              tunEnabled: ref.read(patchClashConfigProvider).tun.enable,
-            );
+        final shouldHardRestart = shouldHardRestartDesktopCoreOnProfileChange(
+          isDesktop: system.isDesktop,
+          profileChanged: profileChanged,
+          isRunning: globalState.isStart,
+          systemProxy: ref.read(networkSettingProvider).systemProxy,
+          tunEnabled: ref.read(patchClashConfigProvider).tun.enable,
+        );
         unawaited(
           globalState.appController
-              .handleChangeProfile(
-                hardRestart: shouldHardRestart,
-              )
+              .handleChangeProfile(hardRestart: shouldHardRestart)
               .catchError((Object error, StackTrace stackTrace) {
-                commonPrint.log('Profile change failed: $error');
+                commonPrint.error('Profile change failed: $error');
               }),
         );
       }
@@ -87,8 +87,16 @@ class _ClashContainerState extends ConsumerState<ClashManager>
     });
   }
 
+  void _flushRequests() {
+    if (!mounted || _pendingRequests.isEmpty) return;
+    final requests = List.of(_pendingRequests);
+    _pendingRequests.clear();
+    ref.read(requestsProvider.notifier).addRequests(requests);
+  }
+
   @override
   Future<void> dispose() async {
+    throttler.cancel(FunctionTag.requests);
     clashMessage.removeListener(this);
     super.dispose();
   }
@@ -105,7 +113,7 @@ class _ClashContainerState extends ConsumerState<ClashManager>
 
   @override
   void onLog(Log log) {
-    ref.read(logsProvider.notifier).addLog(log);
+    globalState.appController.addLog(log);
     if (log.logLevel == LogLevel.error) {
       globalState.showNotifier(log.payload);
     }
@@ -114,15 +122,20 @@ class _ClashContainerState extends ConsumerState<ClashManager>
 
   @override
   void onRequest(TrackerInfo trackerInfo) async {
-    ref.read(requestsProvider.notifier).addRequest(trackerInfo);
+    _pendingRequests.add(trackerInfo);
+    throttler.call(
+      FunctionTag.requests,
+      _flushRequests,
+      duration: _flushDuration,
+    );
     super.onRequest(trackerInfo);
   }
 
   @override
   Future<void> onLoaded(String providerName) async {
-    ref
-        .read(providersProvider.notifier)
-        .setProvider(await clashCore.getExternalProvider(providerName));
+    final provider = await clashCore.getExternalProvider(providerName);
+    if (!mounted) return;
+    ref.read(providersProvider.notifier).setProvider(provider);
     globalState.appController.updateGroupsDebounce();
     super.onLoaded(providerName);
   }

@@ -3,7 +3,7 @@ import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/models.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
@@ -248,7 +248,7 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
         _buildStatTile(
           icon: Icons.link_rounded,
           iconColor: context.colorScheme.tertiary,
-          label: appLocalizations.domain,
+          label: appLocalizations.organizationDomain,
           value: rawIpInfo.asDomain!,
         ),
     ];
@@ -284,7 +284,7 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: getWidgetHeight(1),
+      height: getWidgetHeight(context, 1),
       child: ValueListenableBuilder<NetworkDetectionState>(
         valueListenable: detectionState.state,
         builder: (_, state, _) {

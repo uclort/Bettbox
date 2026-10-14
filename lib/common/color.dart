@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 extension ColorExtension on Color {
   Color get opacity80 {
@@ -116,8 +116,18 @@ extension ColorSchemeExtension on ColorScheme {
   ColorScheme toPureBlack(bool isPrueBlack) => isPrueBlack
       ? copyWith(
           surface: Colors.black,
-          surfaceContainer: surfaceContainer.darken(5),
-          surfaceContainerLow: Colors.black,
+          surfaceContainerLowest: Colors.black,
+          surfaceContainer: Colors.black,
+          surfaceContainerLow: Color.lerp(
+            Colors.black,
+            surfaceContainerLow,
+            0.6,
+          )!,
+          surfaceContainerHigh: Color.lerp(
+            Colors.black,
+            surfaceContainerHigh,
+            0.8,
+          )!,
         )
       : this;
 }

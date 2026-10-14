@@ -121,13 +121,13 @@ _Log _$LogFromJson(Map<String, dynamic> json) => _Log(
       $enumDecodeNullable(_$LogLevelEnumMap, json['LogLevel']) ??
       LogLevel.error,
   payload: json['Payload'] as String? ?? '',
-  dateTime: _logDateTime(json['dateTime']),
+  time: _logTime(json['time']),
 );
 
 Map<String, dynamic> _$LogToJson(_Log instance) => <String, dynamic>{
   'LogLevel': _$LogLevelEnumMap[instance.logLevel]!,
   'Payload': instance.payload,
-  'dateTime': instance.dateTime,
+  'time': instance.time.toIso8601String(),
 };
 
 const _$LogLevelEnumMap = {
@@ -151,6 +151,25 @@ Map<String, dynamic> _$DAVToJson(_DAV instance) => <String, dynamic>{
   'password': instance.password,
   'fileName': instance.fileName,
 };
+
+_NetworkInfo _$NetworkInfoFromJson(Map<String, dynamic> json) => _NetworkInfo(
+  type: json['type'] as String? ?? '',
+  interfaceName: json['interface'] as String? ?? '',
+  ip: json['ip'] as String? ?? '',
+  gateway: json['gateway'] as String? ?? '',
+  dns:
+      (json['dns'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+      const [],
+);
+
+Map<String, dynamic> _$NetworkInfoToJson(_NetworkInfo instance) =>
+    <String, dynamic>{
+      'type': instance.type,
+      'interface': instance.interfaceName,
+      'ip': instance.ip,
+      'gateway': instance.gateway,
+      'dns': instance.dns,
+    };
 
 _VersionInfo _$VersionInfoFromJson(Map<String, dynamic> json) => _VersionInfo(
   clashName: json['clashName'] as String? ?? '',
@@ -264,11 +283,14 @@ Map<String, dynamic> _$TextPainterParamsToJson(_TextPainterParams instance) =>
 _Script _$ScriptFromJson(Map<String, dynamic> json) => _Script(
   id: json['id'] as String,
   label: json['label'] as String,
-  content: json['content'] as String,
+  content: json['content'] as String? ?? '',
   url: json['url'] as String?,
   customOptions: (json['custom-options'] as Map<String, dynamic>?)?.map(
     (k, e) => MapEntry(k, e as bool),
   ),
+  digest: json['digest'] as String?,
+  compatible: json['compatible'] as bool? ?? false,
+  volatile: json['volatile'] as bool?,
 );
 
 Map<String, dynamic> _$ScriptToJson(_Script instance) => <String, dynamic>{
@@ -277,4 +299,7 @@ Map<String, dynamic> _$ScriptToJson(_Script instance) => <String, dynamic>{
   'content': instance.content,
   'url': instance.url,
   'custom-options': instance.customOptions,
+  'digest': instance.digest,
+  'compatible': instance.compatible,
+  'volatile': instance.volatile,
 };

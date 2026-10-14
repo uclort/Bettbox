@@ -1,6 +1,6 @@
 name: code_forge
-description: "A sophisticated code editor package for flutter backed by rust backend."
-version: 10.9.0
+description: "The code editor of Bettbox, derived from code_forge 10.14.0."
+version: 10.14.0
 homepage: https://github.com/heckmon/code_forge
 
 environment:
@@ -10,19 +10,14 @@ environment:
 dependencies:
   flutter:
     sdk: flutter  
-  markdown_widget: ^2.3.2+8
   re_highlight: ^0.0.3
-  web_socket_channel: ^3.0.3
-  flutter_colorpicker: ^1.1.0
-  vector_math: ^2.2.0
-  flutter_rust_bridge: 2.12.0
+  flutter_rust_bridge: 2.13.0
+  material_ui: ^1.6.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-  integration_test:
-    sdk: flutter
 
 flutter:
   plugin:
@@ -37,28 +32,3 @@ flutter:
         ffiPlugin: true
       windows:
         ffiPlugin: true
-  fonts:
-    - family: Method
-      fonts:
-        - asset: assets/icons/method.ttf
-    - family: Variable
-      fonts:
-        - asset: assets/icons/variable.ttf
-    - family: Class
-      fonts:
-        - asset: assets/icons/class.ttf
-    - family: Struct
-      fonts:
-        - asset: assets/icons/struct.ttf
-    - family: Event
-      fonts:
-        - asset: assets/icons/event.ttf
-    - family: Operator
-      fonts:
-        - asset: assets/icons/operator.ttf
-    - family: Interface
-      fonts:
-        - asset: assets/icons/interface.ttf
-    - family: Field
-      fonts:
-        - asset: assets/icons/field.ttf

@@ -8,7 +8,7 @@ import 'package:bett_box/models/models.dart';
 import 'package:bett_box/plugins/service.dart';
 import 'package:bett_box/providers/providers.dart';
 import 'package:bett_box/state.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:synchronized/synchronized.dart';
 
@@ -54,6 +54,7 @@ class _SmartAutoStopManagerState extends ConsumerState<SmartAutoStopManager> {
     _nativeEventCallback = (String method, dynamic arguments) async {
       if (method == 'networkChanged') {
         _onNativeNetworkChanged();
+        _flushDnsOnNetworkChanged();
       } else if (method == 'quickResponse') {
         final vpnProps = ref.read(vpnSettingProvider);
         if (vpnProps.quickResponse) {
@@ -68,6 +69,16 @@ class _SmartAutoStopManagerState extends ConsumerState<SmartAutoStopManager> {
       }
     };
     service?.addNativeEventCallback(_nativeEventCallback);
+  }
+
+  void _flushDnsOnNetworkChanged() {
+    if (!ref.read(appSettingProvider).flushDnsOnNetworkChange) return;
+    final startTime = globalState.startTime;
+    if (startTime == null ||
+        DateTime.now().difference(startTime) < const Duration(seconds: 3)) {
+      return;
+    }
+    globalState.appController.flushDns();
   }
 
   void _onNativeNetworkChanged() async {
@@ -130,7 +141,7 @@ class _SmartAutoStopManagerState extends ConsumerState<SmartAutoStopManager> {
 
     Future.delayed(const Duration(milliseconds: 1000), () async {
       if (currentSequence != _checkSequence) {
-        commonPrint.log('Smart Auto Stop: Skipping outdated network check');
+        commonPrint.debug('Smart Auto Stop: Skipping outdated network check');
         return;
       }
       await _checkCurrentNetwork();
@@ -160,7 +171,7 @@ class _SmartAutoStopManagerState extends ConsumerState<SmartAutoStopManager> {
       }
 
       if (candidateIps.isEmpty && candidateGateways.isEmpty) {
-        commonPrint.log('Smart Auto Stop: No IP/Gateway found. Skipping.');
+        commonPrint.debug('Smart Auto Stop: No IP/Gateway found. Skipping.');
         return;
       }
 
@@ -171,7 +182,7 @@ class _SmartAutoStopManagerState extends ConsumerState<SmartAutoStopManager> {
             (gw) => NetworkMatcher.matchAnyGateway(gw, networks),
           );
 
-      commonPrint.log(
+      commonPrint.debug(
         'SmartAutoStop: IPs=${candidateIps.join(",")}, Gateways=${candidateGateways.join(",")}, RuleMatch=$shouldStop, SmartStopped=$isSmartStopped',
       );
 
@@ -202,7 +213,7 @@ class _SmartAutoStopManagerState extends ConsumerState<SmartAutoStopManager> {
         if (ips.isNotEmpty) return ips;
       }
     } catch (e) {
-      commonPrint.log('Smart Auto Stop: Native IP error: $e');
+      commonPrint.warn('Smart Auto Stop: Native IP error: $e');
     }
     // Fallback to Flutter layer
     final ip = await _getLocalIpAddress();
@@ -217,7 +228,7 @@ class _SmartAutoStopManagerState extends ConsumerState<SmartAutoStopManager> {
         if (gateways.isNotEmpty) return gateways;
       }
     } catch (e) {
-      commonPrint.log('Smart Auto Stop: Native gateway error: $e');
+      commonPrint.warn('Smart Auto Stop: Native gateway error: $e');
     }
     return [];
   }
@@ -226,7 +237,7 @@ class _SmartAutoStopManagerState extends ConsumerState<SmartAutoStopManager> {
     try {
       return await utils.getLocalGateways();
     } catch (e) {
-      commonPrint.log('Smart Auto Stop: Desktop gateway error: $e');
+      commonPrint.warn('Smart Auto Stop: Desktop gateway error: $e');
       return [];
     }
   }

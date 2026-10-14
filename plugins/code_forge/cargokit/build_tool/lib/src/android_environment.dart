@@ -150,7 +150,21 @@ class AndroidEnvironment {
     final toolTempDir =
         Platform.environment['CARGOKIT_TOOL_TEMP_DIR'] ?? targetTempDir;
 
+    final prebuiltPath = path.dirname(toolchainPath);
+    final libclangPath = ['lib', 'lib64', 'bin']
+        .map((e) => path.join(prebuiltPath, e))
+        .firstWhereOrNull((dir) =>
+            Directory(dir).existsSync() &&
+            Directory(dir).listSync().any(
+                (entity) => path.basename(entity.path).startsWith('libclang.')));
+    final sysrootPath =
+        path.join(prebuiltPath, 'sysroot').replaceAll('\\', '/');
+    final bindgenArgsKey =
+        'BINDGEN_EXTRA_CLANG_ARGS_${target.rust.replaceAll('-', '_')}';
+
     return {
+      if (libclangPath != null) 'LIBCLANG_PATH': libclangPath,
+      bindgenArgsKey: '"--sysroot=$sysrootPath" $targetArg',
       arKey: arValue,
       ccKey: ccValue,
       cfFlagsKey: cFlagsValue,

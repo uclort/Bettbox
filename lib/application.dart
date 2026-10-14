@@ -1,10 +1,11 @@
 import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:bett_box/clash/clash.dart';
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/common/external_control.dart';
+import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/l10n/l10n.dart';
 import 'package:bett_box/manager/hotkey_manager.dart';
 import 'package:bett_box/manager/manager.dart';
@@ -12,10 +13,8 @@ import 'package:bett_box/plugins/app.dart';
 import 'package:bett_box/providers/providers.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/macos_menu_bar.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_displaymode/flutter_displaymode.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'controller.dart';
@@ -118,6 +117,50 @@ class ApplicationState extends ConsumerState<Application>
     return ref.read(genColorSchemeProvider(brightness));
   }
 
+  SwitchThemeData _switchTheme(ColorScheme colorScheme) {
+    final isLight = colorScheme.brightness == Brightness.light;
+    return SwitchThemeData(
+      thumbIcon: const WidgetStatePropertyAll(Icon(null)),
+      trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
+      thumbColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.disabled)) return null;
+        if (states.contains(WidgetState.selected)) return colorScheme.onPrimary;
+        return isLight ? Colors.white : colorScheme.onSurfaceVariant;
+      }),
+      trackColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.disabled)) return null;
+        if (states.contains(WidgetState.selected)) return colorScheme.primary;
+        return isLight
+            ? colorScheme.surfaceContainerHighest
+            : colorScheme.surfaceContainerHighest.lighten(6);
+      }),
+    );
+  }
+
+  InputDecorationTheme _inputDecorationTheme(ColorScheme colorScheme) {
+    const border = UnderlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(16)),
+      borderSide: BorderSide.none,
+    );
+    return InputDecorationTheme(
+      filled: true,
+      fillColor: colorScheme.brightness == Brightness.light
+          ? Color.lerp(
+              colorScheme.surface,
+              colorScheme.surfaceContainerLowest,
+              0.5,
+            )
+          : colorScheme.surfaceContainerHighest,
+      border: border,
+      enabledBorder: border,
+      focusedBorder: border,
+      disabledBorder: border,
+      errorBorder: border,
+      focusedErrorBorder: border,
+      contentPadding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -151,7 +194,7 @@ class ApplicationState extends ConsumerState<Application>
       try {
         await ExternalControl.start();
       } catch (e) {
-        commonPrint.log('ExternalControl start failed: $e');
+        commonPrint.warn('ExternalControl start failed: $e');
       }
     }
     await globalState.appController.init();
@@ -171,14 +214,23 @@ class ApplicationState extends ConsumerState<Application>
   }
 
   @override
+  Future<bool> didPopRoute() async {
+    if (!system.isAndroid) return false;
+    final navigator = globalState.navigatorKey.currentState;
+    if (navigator == null) return false;
+    try {
+      if (!await navigator.maybePop()) {
+        await globalState.appController.handleBackOrExit();
+      }
+    } catch (e) {
+      commonPrint.warn('Back dispatch failed: $e');
+    }
+    return true;
+  }
+
+  @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _syncAutoUpdateTasks();
-    if (state == AppLifecycleState.resumed) {
-      if (system.isAndroid &&
-          globalState.config.appSetting.enableHighRefreshRate) {
-        _restoreHighRefreshRate();
-      }
-    }
   }
 
   void _syncAutoUpdateTasks() {
@@ -197,14 +249,6 @@ class ApplicationState extends ConsumerState<Application>
     }
     if (_autoUpdateProfilesTaskTimer == null) {
       _autoUpdateProfilesTask();
-    }
-  }
-
-  Future<void> _restoreHighRefreshRate() async {
-    try {
-      await FlutterDisplayMode.setHighRefreshRate();
-    } catch (e) {
-      commonPrint.log('Failed to restore high refresh rate: $e');
     }
   }
 
@@ -227,12 +271,12 @@ class ApplicationState extends ConsumerState<Application>
       if (!results.contains(ConnectivityResult.vpn)) {
         unawaited(clashCore.closeConnections());
       }
-      globalState.appController.updateLocalIp();
+      globalState.appController.updateLocalNetwork();
       globalState.appController.addCheckIpNumDebounce();
       return;
     }
 
-    unawaited(globalState.appController.updateLocalIp());
+    unawaited(globalState.appController.updateLocalNetwork());
     if (!_macOSNetworkRecoveryReady) return;
     _scheduleMacOSNetworkRecovery();
   }
@@ -311,7 +355,7 @@ class ApplicationState extends ConsumerState<Application>
       commonPrint.log('macOS TUN 与 DNS 恢复完成');
     }
 
-    unawaited(globalState.appController.updateLocalIp());
+    unawaited(globalState.appController.updateLocalNetwork());
     globalState.appController.addCheckIpNumDebounce();
   }
 
@@ -371,11 +415,10 @@ class ApplicationState extends ConsumerState<Application>
             return MaterialApp(
               debugShowCheckedModeBanner: false,
               navigatorKey: globalState.navigatorKey,
+              navigatorObservers: [routeIdleObserver],
               localizationsDelegates: const [
                 AppLocalizations.delegate,
-                GlobalMaterialLocalizations.delegate,
-                GlobalCupertinoLocalizations.delegate,
-                GlobalWidgetsLocalizations.delegate,
+                ...GlobalMaterialLocalizations.delegates,
               ],
               builder: (_, child) {
                 final content = Directionality(
@@ -418,12 +461,19 @@ class ApplicationState extends ConsumerState<Application>
                   elevation: 0,
                   scrolledUnderElevation: 0,
                   surfaceTintColor: Colors.transparent,
+                  systemOverlayStyle: SystemUiOverlayStyle(
+                    statusBarColor: Colors.transparent,
+                    statusBarIconBrightness: Brightness.dark,
+                    statusBarBrightness: Brightness.light,
+                    systemStatusBarContrastEnforced: false,
+                  ),
                 ),
                 colorScheme: _getAppColorScheme(
                   brightness: Brightness.light,
                   primaryColor: themeProps.primaryColor,
                 ),
                 fontFamily: fontFamily,
+                fontFamilyFallback: [FontFamily.twEmoji.value],
                 floatingActionButtonTheme: const FloatingActionButtonThemeData(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.all(Radius.circular(20)),
@@ -432,8 +482,21 @@ class ApplicationState extends ConsumerState<Application>
                   hoverElevation: 5,
                 ),
                 dialogTheme: DialogThemeData(
+                  backgroundColor: _getAppColorScheme(
+                    brightness: Brightness.light,
+                    primaryColor: themeProps.primaryColor,
+                  ).surfaceContainerLowest,
+                  surfaceTintColor: Colors.transparent,
+                  elevation: 10,
+                  shadowColor: Colors.black.withValues(alpha: 0.3),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(
+                      color: _getAppColorScheme(
+                        brightness: Brightness.light,
+                        primaryColor: themeProps.primaryColor,
+                      ).outlineVariant.withValues(alpha: 0.6),
+                    ),
                   ),
                 ),
                 bottomSheetTheme: const BottomSheetThemeData(
@@ -446,39 +509,27 @@ class ApplicationState extends ConsumerState<Application>
                 ),
                 popupMenuTheme: const PopupMenuThemeData(
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(20)),
+                    borderRadius: BorderRadius.all(Radius.circular(16)),
                   ),
                 ),
                 dividerTheme: DividerThemeData(
                   color: _getAppColorScheme(
                     brightness: Brightness.light,
                     primaryColor: themeProps.primaryColor,
-                  ).outlineVariant.withValues(alpha: 0.6),
+                  ).outlineVariant.withValues(alpha: 0.45),
                   thickness: 1,
                   space: 1,
                 ),
-                inputDecorationTheme: InputDecorationTheme(
-                  border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(18)),
+                inputDecorationTheme: _inputDecorationTheme(
+                  _getAppColorScheme(
+                    brightness: Brightness.light,
+                    primaryColor: themeProps.primaryColor,
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: const BorderRadius.all(Radius.circular(18)),
-                    borderSide: BorderSide(
-                      color: _getAppColorScheme(
-                        brightness: Brightness.light,
-                        primaryColor: themeProps.primaryColor,
-                      ).outlineVariant.withValues(alpha: 0.6),
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: const BorderRadius.all(Radius.circular(18)),
-                    borderSide: BorderSide(
-                      color: _getAppColorScheme(
-                        brightness: Brightness.light,
-                        primaryColor: themeProps.primaryColor,
-                      ).primary,
-                      width: 2,
-                    ),
+                ),
+                switchTheme: _switchTheme(
+                  _getAppColorScheme(
+                    brightness: Brightness.light,
+                    primaryColor: themeProps.primaryColor,
                   ),
                 ),
                 chipTheme: ChipThemeData(
@@ -492,12 +543,25 @@ class ApplicationState extends ConsumerState<Application>
                     ).outlineVariant.withValues(alpha: 0.6),
                   ),
                 ),
-                tooltipTheme: const TooltipThemeData(
+                tooltipTheme: TooltipThemeData(
                   decoration: BoxDecoration(
-                    color: Colors.black87,
-                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                    color: _getAppColorScheme(
+                      brightness: Brightness.light,
+                      primaryColor: themeProps.primaryColor,
+                    ).inverseSurface,
+                    borderRadius: const BorderRadius.all(Radius.circular(10)),
                   ),
-                  textStyle: TextStyle(color: Colors.white, fontSize: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 7,
+                  ),
+                  textStyle: TextStyle(
+                    color: _getAppColorScheme(
+                      brightness: Brightness.light,
+                      primaryColor: themeProps.primaryColor,
+                    ).onInverseSurface,
+                    fontSize: 13,
+                  ),
                 ),
               ),
               darkTheme: ThemeData(
@@ -512,12 +576,19 @@ class ApplicationState extends ConsumerState<Application>
                   elevation: 0,
                   scrolledUnderElevation: 0,
                   surfaceTintColor: Colors.transparent,
+                  systemOverlayStyle: SystemUiOverlayStyle(
+                    statusBarColor: Colors.transparent,
+                    statusBarIconBrightness: Brightness.light,
+                    statusBarBrightness: Brightness.dark,
+                    systemStatusBarContrastEnforced: false,
+                  ),
                 ),
                 colorScheme: _getAppColorScheme(
                   brightness: Brightness.dark,
                   primaryColor: themeProps.primaryColor,
                 ).toPureBlack(themeProps.pureBlack),
                 fontFamily: fontFamily,
+                fontFamilyFallback: [FontFamily.twEmoji.value],
                 floatingActionButtonTheme: const FloatingActionButtonThemeData(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.all(Radius.circular(20)),
@@ -526,8 +597,25 @@ class ApplicationState extends ConsumerState<Application>
                   hoverElevation: 5,
                 ),
                 dialogTheme: DialogThemeData(
+                  backgroundColor: _getAppColorScheme(
+                    brightness: Brightness.dark,
+                    primaryColor: themeProps.primaryColor,
+                  ).toPureBlack(themeProps.pureBlack).surfaceContainerHigh,
+                  surfaceTintColor: Colors.transparent,
+                  elevation: 10,
+                  shadowColor: Colors.black.withValues(alpha: 0.6),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(
+                      color:
+                          _getAppColorScheme(
+                                brightness: Brightness.dark,
+                                primaryColor: themeProps.primaryColor,
+                              )
+                              .toPureBlack(themeProps.pureBlack)
+                              .outlineVariant
+                              .withValues(alpha: 0.5),
+                    ),
                   ),
                 ),
                 bottomSheetTheme: const BottomSheetThemeData(
@@ -540,7 +628,7 @@ class ApplicationState extends ConsumerState<Application>
                 ),
                 popupMenuTheme: const PopupMenuThemeData(
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(20)),
+                    borderRadius: BorderRadius.all(Radius.circular(16)),
                   ),
                 ),
                 dividerTheme: DividerThemeData(
@@ -551,37 +639,21 @@ class ApplicationState extends ConsumerState<Application>
                           )
                           .toPureBlack(themeProps.pureBlack)
                           .outlineVariant
-                          .withValues(alpha: 0.45),
+                          .withValues(alpha: 0.25),
                   thickness: 1,
                   space: 1,
                 ),
-                inputDecorationTheme: InputDecorationTheme(
-                  border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(18)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: const BorderRadius.all(Radius.circular(18)),
-                    borderSide: BorderSide(
-                      color:
-                          _getAppColorScheme(
-                                brightness: Brightness.dark,
-                                primaryColor: themeProps.primaryColor,
-                              )
-                              .toPureBlack(themeProps.pureBlack)
-                              .outlineVariant
-                              .withValues(alpha: 0.45),
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: const BorderRadius.all(Radius.circular(18)),
-                    borderSide: BorderSide(
-                      color: _getAppColorScheme(
-                        brightness: Brightness.dark,
-                        primaryColor: themeProps.primaryColor,
-                      ).toPureBlack(themeProps.pureBlack).primary,
-                      width: 2,
-                    ),
-                  ),
+                inputDecorationTheme: _inputDecorationTheme(
+                  _getAppColorScheme(
+                    brightness: Brightness.dark,
+                    primaryColor: themeProps.primaryColor,
+                  ).toPureBlack(themeProps.pureBlack),
+                ),
+                switchTheme: _switchTheme(
+                  _getAppColorScheme(
+                    brightness: Brightness.dark,
+                    primaryColor: themeProps.primaryColor,
+                  ).toPureBlack(themeProps.pureBlack),
                 ),
                 chipTheme: ChipThemeData(
                   shape: const RoundedRectangleBorder(
@@ -595,15 +667,28 @@ class ApplicationState extends ConsumerState<Application>
                             )
                             .toPureBlack(themeProps.pureBlack)
                             .outlineVariant
-                            .withValues(alpha: 0.45),
+                            .withValues(alpha: 0.5),
                   ),
                 ),
-                tooltipTheme: const TooltipThemeData(
+                tooltipTheme: TooltipThemeData(
                   decoration: BoxDecoration(
-                    color: Colors.black87,
-                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                    color: _getAppColorScheme(
+                      brightness: Brightness.dark,
+                      primaryColor: themeProps.primaryColor,
+                    ).toPureBlack(themeProps.pureBlack).inverseSurface,
+                    borderRadius: const BorderRadius.all(Radius.circular(10)),
                   ),
-                  textStyle: TextStyle(color: Colors.white, fontSize: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 7,
+                  ),
+                  textStyle: TextStyle(
+                    color: _getAppColorScheme(
+                      brightness: Brightness.dark,
+                      primaryColor: themeProps.primaryColor,
+                    ).toPureBlack(themeProps.pureBlack).onInverseSurface,
+                    fontSize: 13,
+                  ),
                 ),
               ),
               home: child!,

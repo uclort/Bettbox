@@ -8,7 +8,7 @@ import 'package:bett_box/views/connection/item.dart';
 import 'package:bett_box/views/network_monitor_data.dart';
 import 'package:bett_box/views/tools.dart';
 import 'package:bett_box/l10n/l10n.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -133,13 +133,13 @@ void main() {
       ),
     );
     await tester.pump();
-    expect(find.byIcon(Icons.apps_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.terminal), findsOneWidget);
 
     await tester.pump(const Duration(milliseconds: 130));
     await tester.pumpAndSettle();
 
     expect(calls, 2);
-    expect(find.byIcon(Icons.apps_outlined), findsNothing);
+    expect(find.byIcon(Icons.terminal), findsNothing);
     expect(find.byType(Image), findsOneWidget);
   });
 
@@ -198,7 +198,7 @@ void main() {
     await tester.pump();
     expect(find.byKey(const ValueKey('Test\n$oldPath')), findsNothing);
     expect(find.byKey(const ValueKey('Test\n$newPath')), findsOneWidget);
-    expect(find.byIcon(Icons.apps_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.terminal), findsOneWidget);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 130));
     await tester.pump();
@@ -223,7 +223,7 @@ void main() {
     await AppLocalizations.load(const Locale('zh', 'CN'));
   });
 
-  test('桌面保留面板 tab，其他入口统一使用网络面板', () {
+  test('保留上游请求、连接和日志入口，并额外提供网络面板', () {
     final items = navigation.getItems(hasProxies: true);
     final labels = items.map((item) => item.label).toSet();
 
@@ -246,9 +246,18 @@ void main() {
       navigationItemLocalizedTitle(embeddedMonitor),
       isNot(PageLabel.networkMonitorView.name),
     );
-    expect(labels, isNot(contains(PageLabel.requests)));
-    expect(labels, isNot(contains(PageLabel.connections)));
-    expect(labels, isNot(contains(PageLabel.logs)));
+    for (final label in [
+      PageLabel.requests,
+      PageLabel.connections,
+      PageLabel.logs,
+    ]) {
+      expect(labels, contains(label));
+      final original = items.singleWhere((item) => item.label == label);
+      expect(original.modes, [
+        NavigationItemMode.desktop,
+        NavigationItemMode.more,
+      ]);
+    }
     expect(
       PageLabel.networkMonitor.localizedName,
       isNot(PageLabel.networkMonitorView.localizedName),

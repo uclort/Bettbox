@@ -1,8 +1,9 @@
 import 'dart:math';
 
+import 'package:bett_box/common/common.dart';
 import 'package:bett_box/providers/app.dart';
 import 'package:bett_box/widgets/pop_scope.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:bett_box/state.dart';
@@ -28,10 +29,41 @@ class CommonDialog extends ConsumerWidget {
     this.backgroundColor,
   });
 
+  List<Widget>? _buildActions(BuildContext context) {
+    final actions = this.actions;
+    if (actions == null || actions.isEmpty) {
+      return actions;
+    }
+    final colorScheme = context.colorScheme;
+    final backgroundColor = colorScheme.primary.opacity12;
+    return [
+      ...actions.take(actions.length - 1),
+      FilledButtonTheme(
+        data: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            backgroundColor: backgroundColor,
+            foregroundColor: colorScheme.primary,
+            elevation: 0,
+          ),
+        ),
+        child: TextButtonTheme(
+          data: TextButtonThemeData(
+            style: TextButton.styleFrom(
+              backgroundColor: backgroundColor,
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+            ),
+          ),
+          child: actions.last,
+        ),
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context, ref) {
     final size = ref.watch(viewSizeProvider);
     final isTv = globalState.isAndroidTV;
+    final theme = Theme.of(context);
     return PopScope(
       canPop: !isTv,
       onPopInvokedWithResult: !isTv
@@ -54,16 +86,36 @@ class CommonDialog extends ConsumerWidget {
                   titleTrailing!,
                 ],
               ),
-        actions: actions,
-        contentPadding: padding,
+        actions: _buildActions(context),
+        titleTextStyle: context.textTheme.titleLarge?.copyWith(
+          fontSize: 19,
+          fontWeight: FontWeight.w600,
+        ),
+        contentTextStyle: context.textTheme.bodyMedium?.copyWith(
+          color: context.colorScheme.onSurfaceVariant,
+        ),
+        titlePadding: const EdgeInsets.fromLTRB(22, 22, 22, 0),
+        contentPadding: padding ?? const EdgeInsets.fromLTRB(22, 14, 22, 18),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         backgroundColor: backgroundColor,
-        content: Container(
-          constraints: BoxConstraints(
-            maxHeight: min(size.height - 40, 500),
-            maxWidth: 300,
+        content: Theme(
+          data: theme.copyWith(
+            inputDecorationTheme: theme.inputDecorationTheme.copyWith(
+              fillColor: theme.brightness == Brightness.light
+                  ? theme.colorScheme.surfaceContainer
+                  : null,
+            ),
           ),
-          width: size.width - 40,
-          child: !overrideScroll ? SingleChildScrollView(child: child) : child,
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: min(size.height - 40, 500),
+              maxWidth: 300,
+            ),
+            width: size.width - 40,
+            child: !overrideScroll
+                ? SingleChildScrollView(child: child)
+                : child,
+          ),
         ),
       ),
     );

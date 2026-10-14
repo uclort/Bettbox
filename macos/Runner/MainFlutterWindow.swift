@@ -68,7 +68,6 @@ class MainFlutterWindow: NSWindow {
 
     override public func order(_ place: NSWindow.OrderingMode, relativeTo otherWin: Int) {
         super.order(place, relativeTo: otherWin)
-        hiddenWindowAtLaunch()
         if !isNetworkPanel {
           DispatchQueue.main.async {
             // BETTBOX-CUSTOM: 等窗口排序完成后，以最终状态同步 Dock。

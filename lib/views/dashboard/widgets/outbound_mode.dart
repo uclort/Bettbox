@@ -3,7 +3,7 @@ import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/providers/config.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -12,7 +12,7 @@ class OutboundMode extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final height = getWidgetHeight(2);
+    final height = getWidgetHeight(context, 2);
     return SizedBox(
       height: height,
       child: Consumer(
@@ -51,7 +51,7 @@ class OutboundMode extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(10),
                                     color: isFocused && globalState.isAndroidTV
                                         ? context.colorScheme.primary
-                                            .withValues(alpha: 0.15)
+                                              .withValues(alpha: 0.15)
                                         : Colors.transparent,
                                     border: isFocused && globalState.isAndroidTV
                                         ? Border.all(
@@ -73,7 +73,9 @@ class OutboundMode extends StatelessWidget {
                                         size: 21,
                                         color: item == mode
                                             ? context.colorScheme.primary
-                                            : context.colorScheme.onSurfaceVariant
+                                            : context
+                                                  .colorScheme
+                                                  .onSurfaceVariant
                                                   .withValues(alpha: 0.6),
                                       ),
                                       SizedBox(width: 12.ap),
@@ -117,7 +119,7 @@ class OutboundModeV2 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final height = getWidgetHeight(0.72);
+    final height = getWidgetHeight(context, 0.72);
     return SizedBox(
       height: height,
       child: CommonCard(
@@ -162,9 +164,9 @@ class OutboundModeV2 extends StatelessWidget {
                                       color: isSelected
                                           ? thumbColor
                                           : (isFocused
-                                              ? context.colorScheme.primary
-                                                  .withValues(alpha: 0.12)
-                                              : Colors.transparent),
+                                                ? context.colorScheme.primary
+                                                      .withValues(alpha: 0.12)
+                                                : Colors.transparent),
                                       borderRadius: BorderRadius.circular(12),
                                       border: isFocused
                                           ? Border.all(

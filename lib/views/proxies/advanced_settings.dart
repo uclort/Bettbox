@@ -3,7 +3,7 @@ import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/providers/providers.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ProxiesAdvancedSettings extends ConsumerWidget {
@@ -11,16 +11,18 @@ class ProxiesAdvancedSettings extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return ListView(
-      padding: const EdgeInsets.only(bottom: 20),
-      children: generateSection(
-        items: [
-          const _NodeExclusionWithInverseItem(),
-          const _ConcurrencyLimitItem(),
-          const _HealthCheckTimeoutItem(),
-          const _DelayAnimationItem(),
-          const _IconConfigItem(),
-        ],
+    return ScrollEdgeRise(
+      builder: (_, rise) => ListView(
+        padding: EdgeInsets.only(top: 8 + rise, bottom: 20),
+        children: generateSection(
+          items: [
+            const _NodeExclusionWithInverseItem(),
+            const _ConcurrencyLimitItem(),
+            const _HealthCheckTimeoutItem(),
+            const _DelayAnimationItem(),
+            const _IconConfigItem(),
+          ],
+        ),
       ),
     );
   }
@@ -69,13 +71,11 @@ class _NodeExclusionDialog extends ConsumerStatefulWidget {
   final String currentValue;
   final String? Function(String?)? validator;
 
-  const _NodeExclusionDialog({
-    required this.currentValue,
-    this.validator,
-  });
+  const _NodeExclusionDialog({required this.currentValue, this.validator});
 
   @override
-  ConsumerState<_NodeExclusionDialog> createState() => _NodeExclusionDialogState();
+  ConsumerState<_NodeExclusionDialog> createState() =>
+      _NodeExclusionDialogState();
 }
 
 class _NodeExclusionDialogState extends ConsumerState<_NodeExclusionDialog> {
@@ -166,7 +166,9 @@ class _ConcurrencyLimitItem extends ConsumerWidget {
         textBuilder: (value) => _getDisplayText(value, context),
         onChanged: (value) {
           if (value != null) {
-            ref.read(proxiesStyleSettingProvider.notifier).updateState(
+            ref
+                .read(proxiesStyleSettingProvider.notifier)
+                .updateState(
                   (state) => state.copyWith(concurrencyLimit: value),
                 );
           }
@@ -216,8 +218,10 @@ class _DelayAnimationItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final delayAnimation = ref.watch(
-      proxiesStyleSettingProvider.select((state) => state.delayAnimation),
+    final (delayAnimation, syncDelayAnimation) = ref.watch(
+      proxiesStyleSettingProvider.select(
+        (state) => (state.delayAnimation, state.syncDelayAnimation),
+      ),
     );
 
     return ListItem(
@@ -225,17 +229,23 @@ class _DelayAnimationItem extends ConsumerWidget {
       title: Text(appLocalizations.delayAnimation),
       subtitle: Text(appLocalizations.delayAnimationDesc),
       onTap: () async {
-        final value = await globalState.showCommonDialog<DelayAnimationType>(
-          child: DelayAnimationPickerDialog(
-            title: appLocalizations.delayAnimation,
-            initialValue: delayAnimation,
-          ),
-        );
-        if (value != null) {
-          ref.read(proxiesStyleSettingProvider.notifier).updateState(
-                (state) => state.copyWith(delayAnimation: value),
-              );
-        }
+        final value = await globalState
+            .showCommonDialog<(DelayAnimationType, bool)>(
+              child: DelayAnimationPickerDialog(
+                title: appLocalizations.delayAnimation,
+                initialValue: delayAnimation,
+                initialSync: syncDelayAnimation,
+              ),
+            );
+        if (value == null) return;
+        ref
+            .read(proxiesStyleSettingProvider.notifier)
+            .updateState(
+              (state) => state.copyWith(
+                delayAnimation: value.$1,
+                syncDelayAnimation: value.$2,
+              ),
+            );
       },
     );
   }
@@ -243,6 +253,18 @@ class _DelayAnimationItem extends ConsumerWidget {
 
 class _IconConfigItem extends StatelessWidget {
   const _IconConfigItem();
+
+  Future<void> _handleResetIconCache() async {
+    final res = await globalState.showMessage(
+      title: appLocalizations.resetIconCache,
+      message: TextSpan(text: appLocalizations.resetIconCacheDesc),
+    );
+    if (res != true) return;
+    await globalState.appController.safeRun(() async {
+      await CommonTargetIcon.clearCache();
+      globalState.showNotifier(appLocalizations.success);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -258,6 +280,13 @@ class _IconConfigItem extends StatelessWidget {
               type: type,
               body: const _IconConfigView(),
               title: appLocalizations.iconConfiguration,
+              actions: [
+                IconButton(
+                  onPressed: _handleResetIconCache,
+                  tooltip: appLocalizations.resetIconCache,
+                  icon: const Icon(Icons.cleaning_services_outlined),
+                ),
+              ],
             );
           },
         );

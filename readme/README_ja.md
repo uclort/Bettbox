@@ -46,9 +46,19 @@ Bettbox：Better Experience, Out of the box - 優れた体験を、すぐに使�
 * **プライバシーリスクゼロ**：オープンソース、広告なし。完全な透明性を持つ CI/CD プロセスは全方位の監査を受け、いかなるバックグラウンドのデータ収集も排除。
 * **コミュニティ重視**：フィードバックを真摯に評価し、質の高い Issue を優先対応。ユーザーの声を大切にします。
 
----
 </div>
 
+###   🛩️ おすすめサービス
+#### 中継・専用線  〢  [百変小桜](https://www.bbxy01.com/v2/register?code=c09R)  〢  [白月光](https://www.sibker.com/register?invite_code=YZq6L5zd)  〢  [MESL](https://panel.meslcloud.com/#/register?code=7vy22Bv2)  〢  [Ytoo](https://y-too.net/aff.php?aff=10354)
+--------------------------------
+#### 低価格・直通  〢  [良心雲](https://xn--9kqz23b19z.com/#/register?code=VTnrQYAj)  〢  [吹雪雲](https://xn--9kqs1lo79d.com/#/register?code=skKMTab7)  〢  [一分](https://xn--4gqx1hgtfdmt.com/#/register?code=AuCiXprV)  〢  [賠銭機場](https://xn--mes358aby2apfg.com/register?code=z7TUZLmM&cover=sfw)
+--------------------------------
+####   百変小桜限定 32%OFF クーポンコード：bettbox68
+--------------------------------
+
+**簡単なレビュー** : ❚ ❚  上記のリンクは主に個人利用またはTGグループでの議論/推奨に基づくもので、アフィリエイト（AFF）としてのみ掲載しています（注：リンク経由での購入により開発者に少額の手数料が還元されます）。サービスの品質を保証・約束するものではありません。諸般の事情をご理解の上、各自で判断・選択してください。
+
+---
 ## 🛠️ インストールとダウンロード
 
 ご利用のプラットフォームおよびシステムに適した最新のインストールパッケージを **[[Releases]](https://github.com/appshubcc/Bettbox/releases)** ページからダウンロードしてください。
@@ -57,7 +67,7 @@ Bettbox：Better Experience, Out of the box - 優れた体験を、すぐに使�
 * **全デスクトッププラットフォーム**: 
 **Windows 8.1+:** (x64/arm64)
 **Linux Kernel 5.4+:** (x64/arm64)
-**macOS 10.15+:** (Intel/Apple Silicon)
+**macOS 12.0+:** (Intel/Apple Silicon)
 * **Android 8.0+ 端末**: Android (ARMv8 / ARMv7 / x86_64 / Universal)
 * **Android TV**: 完全対応、低メモリ端末向けに ARMv7 32ビット版も選択可能
 * **HarmonyOS NEXT**: [[卓易通]](https://harmonyos.cool/android-app) と組み合わせて安定して利用可能
@@ -99,7 +109,7 @@ Bettbox：Better Experience, Out of the box - 優れた体験を、すぐに使�
 Windows の例：
 
 * Windows PC が必要です（OS ≥ Windows 10）
-* 必要環境：Git, Visual Studio, Flutter 3.44.x, Golang, Inno Setup, Rust
+* 必要環境：Git, Visual Studio, Flutter 3.47.x, Golang, Inno Setup, Rust
 ```bash
 * flutter pub get
 * dart .\setup.dart windows --arch amd64 --out core (コアのみビルド)

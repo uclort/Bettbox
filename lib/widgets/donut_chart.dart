@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:bett_box/common/common.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 @immutable
 class DonutChartData {

@@ -38,7 +38,7 @@ env:
     codex/support-inline-provider-content
     codex/custom-in-app-updater
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  FLUTTER_VERSION: 3.44.6
+  FLUTTER_VERSION: 3.47.7
   GO_VERSION: 1.25.x
   GRADLE_OPTS: -Dorg.gradle.vfs.watch=false -Dorg.gradle.daemon=false -Dorg.gradle.caching=false
   SENTRY_BACKEND: none

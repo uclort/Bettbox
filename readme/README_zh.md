@@ -51,16 +51,14 @@ Bettbox意为: Better Experience, Out of the box - 更好的体验，亦开箱�
 </div>
 
 ###   🛩️ 推荐服务
-### IEPL 专线  〢  [百变小樱](https://www.bbxy01.com/v2/register?code=c09R)
-
-### 专享68折优惠码：bettbox68
-
-**简评** : ❚ ❚  老牌小众专线，海外团队运营多年，大厂BGP入口+广港&沪日线路，折后约17元/月或127元/年，解锁流媒体与AI，延迟与口碑优秀，适合对稳定性要求较高的用户，小技巧：别忘了使用68折优惠码，以及后台个人中心签到每日可再额外领取5-10GB流量
-
+#### 中转 专线  〢  [百变小樱](https://www.bbxy01.com/v2/register?code=c09R)  〢  [白月光](https://www.sibker.com/register?invite_code=YZq6L5zd)  〢  [MESL](https://panel.meslcloud.com/#/register?code=7vy22Bv2)  〢  [Ytoo](https://y-too.net/aff.php?aff=10354)
 --------------------------------
-### 性价比直连  〢  [良心云](https://xn--9kqz23b19z.com/#/register?code=VTnrQYAj)  〢  [吹雪云](https://xn--9kqs1lo79d.com/#/register?code=skKMTab7)  〢  [一分](https://xn--4gqx1hgtfdmt.com/#/register?code=AuCiXprV)
+#### 低价 直连  〢  [良心云](https://xn--9kqz23b19z.com/#/register?code=VTnrQYAj)  〢  [吹雪云](https://xn--9kqs1lo79d.com/#/register?code=skKMTab7)  〢  [一分](https://xn--4gqx1hgtfdmt.com/#/register?code=AuCiXprV)  〢  [赔钱机场](https://xn--mes358aby2apfg.com/register?code=z7TUZLmM&cover=sfw)
+--------------------------------
+####   百变小樱专享68折优惠码：bettbox68
+--------------------------------
 
-**简评** : ❚  大流量或资源机为主，运营相对稳定，起步价格较低，888G / 1000G不限时套餐通常更有性价比，量大管饱，价格低廉，适合要求不高的用户或备用流量及大流量下载选择
+**简评** : ❚ ❚  以上链接基本为自用或TG群组群友讨论/推荐，此处仅做AFF展示(注：通过链接购买第三方服务，开发者可以获得少量的佣金支持)，这并不代表我们对其服务作出承诺或保证，鉴于一些众所周知的原因，您应该清楚明白这意味着什么，请自行甄别并合理选择。
 
 ---
 ## 🛠️ 安装与下载
@@ -71,7 +69,7 @@ Bettbox意为: Better Experience, Out of the box - 更好的体验，亦开箱�
 * **全平台桌面端**: 
 **Windows 8.1+:** (x64/arm64)
 **Linux Kernel 5.4+:** (x64/arm64)
-**macOS 10.15+:** (Intel/Apple Silicon)
+**macOS 12.0+:** (Intel/Apple Silicon)
 * **Android 8.0+:** Android (ARMv8/ ARMv7/ x86_64/ Universal) 
 * **Android TV:** 已完整适配，低内存设备可选 ARMv7 32位
 * **鸿蒙 NEXT:** 可配合 [[卓易通]](https://harmonyos.cool/android-app) 稳定使用
@@ -113,7 +111,7 @@ Bettbox意为: Better Experience, Out of the box - 更好的体验，亦开箱�
 以 Windows 平台构建为例：
 
 * 你需要一台 Windows 设备（系统 ≥ Windows 10）
-* 其他必要环境：Git，Visual Studio，Flutter 3.44.x，Golang，Inno Setup，Rust
+* 其他必要环境：Git，Visual Studio，Flutter 3.47.x，Golang，Inno Setup，Rust
 ```bash
 * flutter pub get (获取相关依赖)
 * dart .\setup.dart windows --arch amd64 --out core (仅构建Core核心)

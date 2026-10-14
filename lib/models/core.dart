@@ -29,10 +29,32 @@ abstract class SetupParams with _$SetupParams {
     @JsonKey(name: 'selected-map') required Map<String, String> selectedMap,
     @JsonKey(name: 'test-url') required String testUrl,
     @JsonKey(name: 'override-test-url') @Default(true) bool overrideTestUrl,
+    @JsonKey(name: 'profile-path') @Default('') String profilePath,
+    @JsonKey(name: 'age-secret-key') @Default('') String ageSecretKey,
+    @JsonKey(name: 'scripted-config') @Default('') String scriptedConfig,
+    Map<String, dynamic>? patch,
   }) = _SetupParams;
 
   factory SetupParams.fromJson(Map<String, dynamic> json) =>
       _$SetupParamsFromJson(json);
+}
+
+@freezed
+abstract class SetupResult with _$SetupResult {
+  const factory SetupResult({
+    @Default('') String message,
+    @Default('') String global,
+  }) = _SetupResult;
+
+  factory SetupResult.fromJson(Map<String, dynamic> json) =>
+      _$SetupResultFromJson(json);
+
+  factory SetupResult.fromData(dynamic data) {
+    if (data is Map) {
+      return SetupResult.fromJson(Map<String, dynamic>.from(data));
+    }
+    return SetupResult(message: data?.toString() ?? '');
+  }
 }
 
 @freezed

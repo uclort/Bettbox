@@ -49,7 +49,7 @@ class DAVClient {
       commonPrint.log('WebDAV ping successful');
       return true;
     } catch (e) {
-      commonPrint.log('WebDAV ping failed: $e');
+      commonPrint.warn('WebDAV ping failed: $e');
       return false;
     }
   }
@@ -136,7 +136,7 @@ class DAVClient {
           try {
             await client.remove('$root/$name');
           } catch (e) {
-            commonPrint.log('Prune backup failed: $e');
+            commonPrint.warn('Prune backup failed: $e');
           }
         }
       }
@@ -148,7 +148,7 @@ class DAVClient {
       try {
         await client.mkdir(root);
       } catch (e) {
-        commonPrint.log('WebDAV mkdir warning (may already exist): $e');
+        commonPrint.warn('WebDAV mkdir warning (may already exist): $e');
       }
 
       final targetName = await getNextBackupFileName();
@@ -177,7 +177,7 @@ class DAVClient {
       try {
         await client.mkdir(root);
       } catch (e) {
-        commonPrint.log('WebDAV mkdir warning: $e');
+        commonPrint.warn('WebDAV mkdir warning: $e');
       }
 
       final data = await client.read(targetPath);
@@ -209,13 +209,13 @@ class DAVClient {
         final isLastAttempt = attempt >= maxAttempts;
 
         if (isLastAttempt) {
-          commonPrint.log(
+          commonPrint.error(
             'WebDAV $operationName failed after $maxAttempts attempts: $e',
           );
           throw 'WebDAV $operationName failed: ${_formatError(e)}';
         }
 
-        commonPrint.log(
+        commonPrint.warn(
           'WebDAV $operationName attempt $attempt failed: $e, retrying in ${delay.inSeconds}s...',
         );
         await Future.delayed(delay);

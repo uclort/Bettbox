@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class EffectGestureDetector extends StatefulWidget {
   final Widget child;
@@ -63,8 +63,13 @@ class _EffectGestureDetectorState extends State<EffectGestureDetector>
 
 class CommonExpandIcon extends StatefulWidget {
   final bool expand;
+  final Duration duration;
 
-  const CommonExpandIcon({super.key, this.expand = false});
+  const CommonExpandIcon({
+    super.key,
+    this.expand = false,
+    this.duration = const Duration(milliseconds: 250),
+  });
 
   @override
   State<CommonExpandIcon> createState() => _CommonExpandIconState();
@@ -84,7 +89,7 @@ class _CommonExpandIconState extends State<CommonExpandIcon>
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 200),
+      duration: widget.duration,
       vsync: this,
     );
     _iconTurns = _animationController.drive(_iconTurnTween);
@@ -113,12 +118,11 @@ class _CommonExpandIconState extends State<CommonExpandIcon>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animationController.view,
-      builder: (_, child) {
-        return RotationTransition(turns: _iconTurns, child: child!);
-      },
-      child: const Icon(Icons.expand_more),
+    return RepaintBoundary(
+      child: RotationTransition(
+        turns: _iconTurns,
+        child: const Icon(Icons.expand_more),
+      ),
     );
   }
 }

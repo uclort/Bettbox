@@ -1,16 +1,17 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:bett_box/common/common.dart';
-import 'package:flutter_qjs/flutter_qjs.dart';
+import 'package:bett_box/models/models.dart';
+import 'package:code_forge/script.dart' as rust;
 import 'package:synchronized/synchronized.dart';
 
 class _ScriptOptionsCache {
   static final _entries = <String, Map<String, dynamic>>{};
   static const _maxEntries = 16;
 
-  static Map<String, dynamic>? get(String content) {
-    final key = _key(content);
+  static Map<String, dynamic>? get(String key) {
     final v = _entries[key];
     if (v != null) {
       // Move to end (most recently used)
@@ -20,168 +21,98 @@ class _ScriptOptionsCache {
     return v;
   }
 
-  static void put(String content, Map<String, dynamic> value) {
-    final key = _key(content);
+  static void put(String key, Map<String, dynamic> value) {
     _entries[key] = value;
     while (_entries.length > _maxEntries) {
       _entries.remove(_entries.keys.first);
     }
   }
-
-  static void remove(String content) {
-    _entries.remove(_key(content));
-  }
-
-  static String _key(String content) {
-    final bytes = utf8.encode(content);
-    return '${bytes.length}_${bytes.fold<int>(0, (p, b) => (p * 31 + b) & 0x7fffffff)}';
-  }
 }
 
 class JavaScriptRuntimeManager {
-  static Future<Map<String, dynamic>> evaluateScript(
-    String scriptContent,
-    Map<String, dynamic> config, {
+  static final Lock _engineLock = Lock();
+  static final Random _random = Random();
+
+  static Future<void> evaluateScriptFile({
+    required String scriptContent,
+    required String inputPath,
+    required String outputPath,
     Map<String, bool>? customOptions,
   }) async {
-    final result = await _evaluateWithRetry(
-      scriptContent,
-      config,
-      customOptions: customOptions,
-    );
-    if (result is Map) {
-      return _deepCastMap(result);
+    if (!await ensureRustLib()) {
+      throw 'JS Script Error: script engine is unavailable';
     }
-    return config;
+    try {
+      final output = await rust.evaluateScriptFile(
+        script: scriptContent,
+        inputPath: inputPath,
+        outputPath: outputPath,
+        customOptions: customOptions != null && customOptions.isNotEmpty
+            ? json.encode(customOptions)
+            : null,
+        token: _random.nextInt(1 << 31),
+      );
+      _printScriptLogs(output.logs);
+    } on rust.ScriptError catch (e) {
+      _printScriptLogs(e.logs);
+      final stack = e.stack;
+      throw 'JS Script Error: ${e.message}${stack == null ? '' : '\n$stack'}';
+    }
   }
 
-  static final Lock _engineLock = Lock();
+  static void _printScriptLogs(List<rust.ScriptLog> logs) {
+    for (final log in logs) {
+      commonPrint.log('[Script] ${log.level}: ${log.text}');
+    }
+  }
+
+  static Future<Map<String, dynamic>> _extractScriptOptions(
+    Script script,
+  ) async {
+    final result = <String, dynamic>{};
+    if (!await ensureRustLib()) {
+      return result;
+    }
+    try {
+      final decoded = json.decode(
+        await rust.extractScriptOptions(script: await script.readContent()),
+      );
+      if (decoded is Map) {
+        result.addAll(_deepCastMap(decoded));
+      }
+    } on rust.ScriptError catch (e) {
+      commonPrint.warn('extractScriptOptions error: ${e.message}');
+      return <String, dynamic>{};
+    } catch (e) {
+      commonPrint.warn('extractScriptOptions error: $e');
+      return <String, dynamic>{};
+    }
+    _ScriptOptionsCache.put(_cacheKey(script), result);
+    return result;
+  }
+
+  static String _cacheKey(Script script) => script.digest ?? script.id;
 
   static Future<Map<String, dynamic>> extractScriptOptions(
-    String scriptContent,
+    Script script,
   ) async {
-    final cached = _ScriptOptionsCache.get(scriptContent);
+    final cached = _ScriptOptionsCache.get(_cacheKey(script));
     if (cached != null) return cached;
 
     return _engineLock.synchronized(() async {
       // Double-check after acquiring lock
-      final recached = _ScriptOptionsCache.get(scriptContent);
+      final recached = _ScriptOptionsCache.get(_cacheKey(script));
       if (recached != null) return recached;
-
-      final engine = IsolateQjs();
-      try {
-        final res = await engine.evaluate('''
-          var console = {
-            log: function() {},
-            warn: function() {},
-            error: function() {},
-            info: function() {},
-            debug: function() {}
-          };
-          (function() {
-            $scriptContent
-            var options = typeof ruleOptionsEnable !== 'undefined' && ruleOptionsEnable && typeof ruleOptionsEnable === 'object' ? ruleOptionsEnable : {};
-            var icons = {};
-            if (typeof serviceConfigs !== 'undefined' && Array.isArray(serviceConfigs)) {
-              for (var i = 0; i < serviceConfigs.length; i++) {
-                var svc = serviceConfigs[i];
-                if (svc && svc.name && typeof svc.icon === 'string') {
-                  icons[svc.name] = svc.icon;
-                }
-              }
-            }
-            var policyGroupOptions = [];
-            if (typeof Compatible_With_Bettbox !== 'undefined' && Compatible_With_Bettbox && Array.isArray(Compatible_With_Bettbox.policyGroupOptions)) {
-              var declaredGroups = Compatible_With_Bettbox.policyGroupOptions;
-              for (var gi = 0; gi < declaredGroups.length; gi++) {
-                if (typeof declaredGroups[gi] === 'string') {
-                  policyGroupOptions.push(declaredGroups[gi]);
-                }
-              }
-            }
-            return JSON.stringify({ options: options, icons: icons, policyGroupOptions: policyGroupOptions });
-          })();
-        ''');
-
-        final result = <String, dynamic>{};
-        if (res is String) {
-          final decoded = json.decode(res);
-          if (decoded is Map) {
-            result.addAll(_deepCastMap(decoded));
-          }
-        }
-        _ScriptOptionsCache.put(scriptContent, result);
-        return result;
-      } catch (e) {
-        commonPrint.log('extractScriptOptions error: $e');
-        return <String, dynamic>{};
-      } finally {
-        try {
-          await engine.close();
-        } catch (e) {
-          commonPrint.log('engine.close error: $e');
-        }
-      }
+      return _extractScriptOptions(script);
     });
   }
 
-  static void invalidateCachedOptions(String scriptContent) {
-    _ScriptOptionsCache.remove(scriptContent);
+  static bool hasCachedOptions(Script script) {
+    return _ScriptOptionsCache.get(_cacheKey(script)) != null;
   }
 
-  static bool hasCachedOptions(String scriptContent) {
-    return _ScriptOptionsCache.get(scriptContent) != null;
-  }
-
-  static Map<String, dynamic>? getCachedOptions(String scriptContent) {
-    return _ScriptOptionsCache.get(scriptContent);
-  }
-
-  static Future<dynamic> _evaluateWithRetry(
-    String scriptContent,
-    Map<String, dynamic> config, {
-    Map<String, bool>? customOptions,
-    int maxRetries = 1,
-  }) async {
-    var attempt = 0;
-    while (true) {
-      final engine = IsolateQjs();
-      try {
-        final configJs = json.encode(config);
-        final customJs = customOptions != null && customOptions.isNotEmpty
-            ? json.encode(customOptions)
-            : null;
-        final overrideSnippet = customJs != null
-            ? 'if (typeof ruleOptionsEnable !== "undefined") { Object.assign(ruleOptionsEnable, $customJs); }'
-            : '';
-
-        return await engine.evaluate('''
-          var console = {
-            log: function(...args) { if (typeof print !== 'undefined') print(...args); },
-            warn: function(...args) { if (typeof print !== 'undefined') print('WARN:', ...args); },
-            error: function(...args) { if (typeof print !== 'undefined') print('ERROR:', ...args); },
-            info: function(...args) { if (typeof print !== 'undefined') print('INFO:', ...args); },
-            debug: function(...args) { if (typeof print !== 'undefined') print('DEBUG:', ...args); }
-          };
-          (function() {
-            $scriptContent
-            $overrideSnippet
-            return main($configJs);
-          })();
-        ''');
-      } catch (e) {
-        if (attempt >= maxRetries) {
-          throw 'JS Script Error: $e';
-        }
-        attempt++;
-      } finally {
-        try {
-          await engine.close();
-        } catch (e) {
-          commonPrint.log('engine.close error: $e');
-        }
-      }
-    }
+  static Map<String, dynamic>? getCachedOptions(Script script) {
+    return _ScriptOptionsCache.get(_cacheKey(script));
   }
 
   static Map<String, dynamic> _deepCastMap(Map dynamicMap) {

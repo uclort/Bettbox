@@ -170,18 +170,19 @@ class BettboxVpnService : VpnService(), BaseServiceInterface {
                     updateNotificationSpeed(profileName, speedInfo)
                 }
             }
-        } else if (intent?.action == "RESTORE_NOTIFICATION") {
-            isSpeedNotificationEnabled = false
-            pendingSpeedProfile = null
-            pendingSpeedInfo = null
-            if (hasStartedForeground) {
-                CoroutineScope(Dispatchers.Main).launch {
-                    startForeground()
-                }
-            }
         }
         return START_STICKY
     }
+
+    internal suspend fun restoreNotification() {
+        isSpeedNotificationEnabled = false
+        pendingSpeedProfile = null
+        pendingSpeedInfo = null
+        if (hasStartedForeground) {
+            startForeground()
+        }
+    }
+
     override fun stop() {
         if (isStopped) return
         isStopped = true

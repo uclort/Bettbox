@@ -57,18 +57,21 @@ class ClashLib extends ClashHandlerInterface with AndroidClashInterface {
   }
 
   Future<void> _waitForIpc() async {
-    for (var attempt = 0; attempt < 3; attempt++) {
+    for (var attempt = 1; ; attempt++) {
       if (sendPort != null && _canSendCompleter.isCompleted) return;
-      final connected = await _canSendCompleter.future
-          .timeout(const Duration(seconds: 2), onTimeout: () => false);
+      final connected = await _canSendCompleter.future.timeout(
+        const Duration(seconds: 2),
+        onTimeout: () => false,
+      );
       if (connected && sendPort != null) return;
-      commonPrint.log('ClashLib: IPC attempt ${attempt + 1}/3 failed, retrying...');
+      if (attempt <= 3) {
+        commonPrint.warn('ClashLib: IPC attempt $attempt failed, retrying...');
+      }
       if (_canSendCompleter.isCompleted) {
         _canSendCompleter = Completer();
       }
       await service?.reconnectIpc();
     }
-    commonPrint.log('ClashLib: IPC failed after 3 attempts');
   }
 
   void _registerMainPort(SendPort sendPort) {
@@ -106,19 +109,20 @@ class ClashLib extends ClashHandlerInterface with AndroidClashInterface {
       onTimeout: () => false,
     );
     if (!canSend || sendPort == null) {
-      commonPrint.log('ClashLib: IPC not ready after 5s');
+      commonPrint.error('ClashLib: IPC not ready after 5s');
       throw TimeoutException('Android IPC SendPort unavailable');
     }
     try {
       sendPort?.send(message);
     } catch (e) {
-      commonPrint.log('ClashLib: sendMessage failed: $e, reconnecting IPC');
+      commonPrint.warn('ClashLib: sendMessage failed: $e, reconnecting IPC');
       sendPort = null;
       _canSendCompleter = Completer();
       await service?.reconnectIpc();
       await _waitForIpc();
       sendPort?.send(message);
     }
+    return null;
   }
 
   // @override
@@ -184,6 +188,28 @@ class ClashLibHandler {
     clashFFI.invokeAction(actionParamsChar, receiver.sendPort.nativePort);
     malloc.free(actionParamsChar);
     return completer.future;
+  }
+
+  Future<void> exportConfig(
+    String id,
+    String output, {
+    String? ageSecretKey,
+  }) async {
+    final action = Action(
+      id: '${ActionMethod.exportConfig.name}#${utils.id}',
+      method: ActionMethod.exportConfig,
+      data: json.encode({
+        'path': await appPath.getProfilePath(id),
+        'age-secret-key': ageSecretKey ?? '',
+        'output': output,
+      }),
+    );
+    final result = ActionResult.fromJson(
+      json.decode(await invokeAction(json.encode(action))),
+    ).toResult;
+    if (result.isError) {
+      throw result.message;
+    }
   }
 
   void attachMessagePort(int messagePort) {
@@ -252,14 +278,17 @@ class ClashLibHandler {
     return DateTime.fromMillisecondsSinceEpoch(int.parse(runTimeString));
   }
 
-  Future<Map<String, dynamic>> getConfig(String id, {String? ageSecretKey}) async {
+  Future<Map<String, dynamic>> getConfig(
+    String id, {
+    String? ageSecretKey,
+  }) async {
     final path = await appPath.getProfilePath(id);
-    final params = {
-      'path': path,
-      'age-secret-key': ageSecretKey ?? '',
-    };
+    final params = {'path': path, 'age-secret-key': ageSecretKey ?? ''};
     return using((arena) {
-      final pathChar = json.encode(params).toNativeUtf8(allocator: arena).cast<Char>();
+      final pathChar = json
+          .encode(params)
+          .toNativeUtf8(allocator: arena)
+          .cast<Char>();
       final configRaw = clashFFI.getConfig(pathChar);
       if (configRaw == nullptr) return <String, dynamic>{};
       try {
@@ -274,16 +303,20 @@ class ClashLibHandler {
     });
   }
 
-  Future<String> quickStart(
+  Future<SetupResult> quickStart(
     InitParams initParams,
     SetupParams setupParams,
     CoreState state,
   ) {
-    final completer = Completer<String>();
+    final completer = Completer<SetupResult>();
     final receiver = ReceivePort();
     receiver.listen((message) {
       if (!completer.isCompleted) {
-        completer.complete(message);
+        dynamic data = message;
+        try {
+          data = json.decode(message);
+        } catch (_) {}
+        completer.complete(SetupResult.fromData(data));
         receiver.close();
       }
     });

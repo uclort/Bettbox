@@ -2,7 +2,7 @@
 
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/enum/enum.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'models.dart';
@@ -113,6 +113,29 @@ List<DashboardWidget> desktopDashboardWidgetsSafeFromJson(
   }
 }
 
+const List<SidebarFlyoutEntry> defaultSidebarFlyoutEntries = [
+  SidebarFlyoutEntry.resources,
+  SidebarFlyoutEntry.script,
+  SidebarFlyoutEntry.theme,
+  SidebarFlyoutEntry.basicConfig,
+  SidebarFlyoutEntry.otherSettings,
+  SidebarFlyoutEntry.application,
+  SidebarFlyoutEntry.about,
+];
+
+List<SidebarFlyoutEntry> sidebarFlyoutEntriesSafeFromJson(
+  List<dynamic>? sidebarFlyoutEntries,
+) {
+  try {
+    return sidebarFlyoutEntries
+            ?.map((e) => $enumDecode(_$SidebarFlyoutEntryEnumMap, e))
+            .toList() ??
+        defaultSidebarFlyoutEntries;
+  } catch (_) {
+    return defaultSidebarFlyoutEntries;
+  }
+}
+
 const List<MediaPlatform> defaultPinnedMediaPlatforms = [
   MediaPlatform.reddit,
   MediaPlatform.gemini,
@@ -180,8 +203,13 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(false) bool autoRun,
     @Default(true) bool openLogs,
     @Default(true) bool closeConnections,
+    @Default(true) bool logAiSearch,
+    @Default(false) bool flushDnsOnNetworkChange,
     @Default(defaultTestUrl) String testUrl,
-    @Default(false) bool showStartSwitch,
+    @Default(true) bool showStartSwitch,
+    @Default(StartSwitchStyle.outlined) StartSwitchStyle startSwitchStyle,
+    String? startSwitchOnLabel,
+    String? startSwitchOffLabel,
     @Default(true) bool enableNavBarHapticFeedback,
     @Default(true) bool autoCheckUpdate,
     @Default(false) bool showLabel,
@@ -189,9 +217,16 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(true) bool minimizeOnExit,
     @Default(false) bool hidden,
     @Default(false) bool developerMode,
-    @Default(false) bool enableHighRefreshRate,
     @Default(RecoveryStrategy.compatible) RecoveryStrategy recoveryStrategy,
     @Default(false) bool enableHighPriority,
+    @Default(false) bool sidebarCollapsed,
+    @Default(true) bool sidebarFlyout,
+    @Default(false) bool sidebarFlyoutOutsideTools,
+    @Default(SidebarFlyoutDelay.standard) SidebarFlyoutDelay sidebarFlyoutDelay,
+    @Default(defaultSidebarFlyoutEntries)
+    @JsonKey(fromJson: sidebarFlyoutEntriesSafeFromJson)
+    List<SidebarFlyoutEntry> sidebarFlyoutEntries,
+    String? dashboardTitle,
   }) = _AppSettingProps;
 
   factory AppSettingProps.fromJson(Map<String, Object?> json) =>
@@ -276,7 +311,7 @@ abstract class VpnProps with _$VpnProps {
     @Default('') String smartAutoStopNetworks,
     @Default(false) bool storeFix,
     @Default(false) bool networkFix,
-    @Default(true) bool loopbackProtection,
+    @Default(false) bool loopbackProtection,
     @Default(false) bool disableQuic,
     @Default(false) bool highPriorityNotification,
     @Default(false) bool networkSpeedNotification,
@@ -346,6 +381,7 @@ abstract class ProxiesStyle with _$ProxiesStyle {
     @Default(ProxiesIconStyle.none) ProxiesIconStyle iconStyle,
     @Default(ProxyCardType.shrink) ProxyCardType cardType,
     @Default(DelayAnimationType.none) DelayAnimationType delayAnimation,
+    @Default(true) bool syncDelayAnimation,
     @Default({}) Map<String, String> iconMap,
     @Default(250) int concurrencyLimit,
     @Default(true) bool autoStickyHeader,
@@ -423,6 +459,24 @@ extension ScriptPropsExt on ScriptProps {
       return scripts[index];
     }
     return null;
+  }
+
+  Future<ScriptProps> externalize() async {
+    if (scripts.every((script) => script.content.isEmpty)) return this;
+    final next = <Script>[];
+    for (final script in scripts) {
+      if (script.content.isEmpty) {
+        next.add(script);
+        continue;
+      }
+      try {
+        next.add(await script.writeContent(script.content));
+      } catch (e) {
+        commonPrint.error('Failed to store script ${script.label}: $e');
+        next.add(script);
+      }
+    }
+    return copyWith(scripts: next);
   }
 }
 
@@ -508,6 +562,18 @@ abstract class Config with _$Config {
               profile['id'] = id.toString();
             }
           }
+        }
+      }
+    } catch (_) {}
+
+    try {
+      final themeProps = json['themeProps'];
+      if (themeProps is Map &&
+          themeProps['primaryColor'] != legacyPrimaryColors.last) {
+        final colors = themeProps['primaryColors'];
+        if (colors is List &&
+            intListEquality.equals(colors.cast<int>(), legacyPrimaryColors)) {
+          themeProps.remove('primaryColors');
         }
       }
     } catch (_) {}

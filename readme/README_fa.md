@@ -47,9 +47,19 @@ Bettbox یعنی: Better Experience, Out of the box - تجربه برتر، آم
 * **حریم خصوصی کامل**: متن‌باز، بدون تبلیغات، فرآیند کاملاً شفاف CI/CD همراه با ممیزی کامل برای جلوگیری از هرگونه جمع‌آوری داده در پس‌زمینه.
 * **جامعه‌محور**: ارزیابی دقیق بازخوردها و اولویت‌دهی به گزارش‌های باکیفیت. صدای شما شنیده می‌شود.
 
----
 </div>
 
+###   🛩️ سرویس‌های پیشنهادی
+#### خطوط واسط و اختصاصی  〢  [BBXY](https://www.bbxy01.com/v2/register?code=c09R)  〢  [BaiYueGuang](https://www.sibker.com/register?invite_code=YZq6L5zd)  〢  [MESL](https://panel.meslcloud.com/#/register?code=7vy22Bv2)  〢  [Ytoo](https://y-too.net/aff.php?aff=10354)
+--------------------------------
+#### خطوط مستقیم اقتصادی  〢  [Liangxin Cloud](https://xn--9kqz23b19z.com/#/register?code=VTnrQYAj)  〢  [Chuixue Cloud](https://xn--9kqs1lo79d.com/#/register?code=skKMTab7)  〢  [YiFen](https://xn--4gqx1hgtfdmt.com/#/register?code=AuCiXprV)  〢  [Peiqian](https://xn--mes358aby2apfg.com/register?code=z7TUZLmM&cover=sfw)
+--------------------------------
+####   کد تخفیف اختصاصی ۳۲٪ برای BBXY: bettbox68
+--------------------------------
+
+**بررسی کوتاه** : ❚ ❚  لینک‌های فوق عمدتاً بر اساس استفاده شخصی یا بحث و پیشنهادهای اعضای گروه‌های تلگرام بوده و صرفاً به عنوان پیوندهای معرف (AFF) نمایش داده می‌شوند (نکته: خرید از طریق این لینک‌ها کمیسیون اندکی جهت حمایت از توسعه‌دهنده به همراه دارد). این به معنای هیچ‌گونه تضمین یا تعهدی نسبت به این خدمات نیست؛ با توجه به دلایل آشکار، لطفاً خودتان بررسی و با آگاهی انتخاب کنید.
+
+---
 ## 🛠️ نصب و دانلود
 
 لطفاً برای دانلود آخرین فایل نصب مناسب سیستم خود به صفحه **[[انتشارها (Releases)]](https://github.com/appshubcc/Bettbox/releases)** مراجعه کنید.
@@ -58,7 +68,7 @@ Bettbox یعنی: Better Experience, Out of the box - تجربه برتر، آم
 * **پلتفرم‌های دسکتاپ**: 
 **Windows 8.1+:** (x64/arm64)
 **Linux Kernel 5.4+:** (x64/arm64)
-**macOS 10.15+:** (Intel/Apple Silicon)
+**macOS 12.0+:** (Intel/Apple Silicon)
 * **اندروید 8.0+**: Android (ARMv8 / ARMv7 / x86_64 / Universal)
 * **تلویزیون اندروید (Android TV)**: پشتیبانی کامل، نسخه اختیاری ARMv7 32-bit برای دستگاه‌های با حافظه کم
 * **سیستم‌عامل HarmonyOS NEXT**: قابل استفاده پایدار همراه با برنامه [[ZhuoYiTong]](https://harmonyos.cool/android-app)
@@ -100,7 +110,7 @@ Bettbox یعنی: Better Experience, Out of the box - تجربه برتر، آم
 نمونه در ویندوز:
 
 * نیاز به سیستم ویندوز (OS ≥ Windows 10)
-* ابزارها: Git, Visual Studio, Flutter 3.44.x, Golang, Inno Setup, Rust
+* ابزارها: Git, Visual Studio, Flutter 3.47.x, Golang, Inno Setup, Rust
 ```bash
 * flutter pub get
 * dart .\setup.dart windows --arch amd64 --out core (فقط هسته اصلی)

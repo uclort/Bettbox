@@ -1,10 +1,11 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/providers/config.dart';
 import 'package:bett_box/state.dart';
-import 'package:bett_box/widgets/list.dart';
-import 'package:flutter/material.dart';
+import 'package:bett_box/widgets/widgets.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 @immutable
@@ -29,51 +30,48 @@ class AboutView extends StatelessWidget {
   }
 
   List<Widget> _buildMoreSection(BuildContext context) {
+    final links = [
+      _LinkTile(
+        title: 'Github Releases',
+        icon: Icons.star,
+        onTap: () =>
+            globalState.openUrl('https://github.com/$updateRepository/releases'),
+      ),
+      _LinkTile(
+        title: appLocalizations.checkUpdate,
+        icon: Icons.refresh,
+        external: false,
+        onTap: () => _checkUpdate(context),
+      ),
+      _LinkTile(
+        title: 'Telegram Group',
+        icon: Icons.forum_outlined,
+        onTap: () => globalState.openUrl('https://telegram.me/appshub_chat'),
+      ),
+      _LinkTile(
+        title: 'Channel',
+        icon: Icons.campaign_outlined,
+        onTap: () => globalState.openUrl('https://telegram.me/appshub_channel'),
+      ),
+      _LinkTile(
+        prefix: 'Forked from',
+        title: 'FlClash',
+        icon: Icons.code,
+        onTap: () =>
+            globalState.openUrl('https://github.com/chen08209/FlClash'),
+      ),
+      _LinkTile(
+        prefix: 'Powered by',
+        title: 'Mihomo',
+        icon: Icons.memory,
+        onTap: () => globalState.openUrl('https://github.com/MetaCubeX/mihomo'),
+      ),
+    ];
     return generateSection(
       title: appLocalizations.more,
       items: [
-        _LinkGridRow(
-          left: _LinkGridTile(
-            title: 'Github Releases',
-            icon: Icons.star,
-            onTap: () => globalState.openUrl(
-              'https://github.com/$updateRepository/releases',
-            ),
-          ),
-          right: _LinkGridTile(
-            title: appLocalizations.checkUpdate,
-            icon: Icons.refresh,
-            onTap: () => _checkUpdate(context),
-          ),
-        ),
-        _LinkGridRow(
-          left: _LinkGridTile(
-            title: 'Telegram Group',
-            icon: Icons.launch,
-            onTap: () =>
-                globalState.openUrl('https://telegram.me/appshub_chat'),
-          ),
-          right: _LinkGridTile(
-            title: 'Channel',
-            icon: Icons.launch,
-            onTap: () =>
-                globalState.openUrl('https://telegram.me/appshub_channel'),
-          ),
-        ),
-        _LinkGridRow(
-          left: _LinkGridTile(
-            title: 'FlClash',
-            icon: Icons.launch,
-            onTap: () =>
-                globalState.openUrl('https://github.com/chen08209/FlClash'),
-          ),
-          right: _LinkGridTile(
-            title: 'Mihomo',
-            icon: Icons.launch,
-            onTap: () =>
-                globalState.openUrl('https://github.com/MetaCubeX/mihomo'),
-          ),
-        ),
+        for (var i = 0; i < links.length; i += 2)
+          _LinkGridRow(left: links[i], right: links[i + 1]),
       ],
     );
   }
@@ -146,20 +144,7 @@ class AboutView extends StatelessWidget {
     return generateSection(
       separated: false,
       title: appLocalizations.otherContributors,
-      items: [
-        ListItem(
-          title: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Wrap(
-              spacing: 24,
-              children: [
-                for (final contributor in contributors)
-                  Avatar(contributor: contributor),
-              ],
-            ),
-          ),
-        ),
-      ],
+      items: [ListItem(title: _ContributorsRow(contributors: contributors))],
     );
   }
 
@@ -296,17 +281,88 @@ class _DeveloperModeDetectorState extends State<_DeveloperModeDetector> {
   }
 }
 
+class _ContributorsRow extends StatefulWidget {
+  final List<Contributor> contributors;
+
+  const _ContributorsRow({required this.contributors});
+
+  @override
+  State<_ContributorsRow> createState() => _ContributorsRowState();
+}
+
+class _ContributorsRowState extends State<_ContributorsRow> {
+  final _controller = ScrollController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Shader _createEdgeShader(Rect rect) {
+    final position = _controller.hasClients ? _controller.position : null;
+    final hasBefore = position != null && position.extentBefore > 0;
+    final hasAfter = position == null || position.extentAfter > 0;
+    return LinearGradient(
+      colors: [
+        hasBefore ? Colors.transparent : Colors.white,
+        Colors.white,
+        Colors.white,
+        hasAfter ? Colors.transparent : Colors.white,
+      ],
+      stops: const [0, 0.1, 0.9, 1],
+    ).createShader(rect);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScrollConfiguration(
+      behavior: ScrollConfiguration.of(context).copyWith(
+        scrollbars: false,
+        dragDevices: PointerDeviceKind.values.toSet(),
+      ),
+      child: MediaQuery.removePadding(
+        context: context,
+        removeLeft: true,
+        removeTop: true,
+        removeRight: true,
+        removeBottom: true,
+        child: Scrollbar(
+          controller: _controller,
+          thumbVisibility: true,
+          thickness: 4,
+          radius: const Radius.circular(2),
+          child: ShaderMask(
+            shaderCallback: _createEdgeShader,
+            blendMode: BlendMode.dstIn,
+            child: SingleChildScrollView(
+              controller: _controller,
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Wrap(
+                spacing: 24,
+                children: [
+                  for (final contributor in widget.contributors)
+                    Avatar(contributor: contributor),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _LinkGridRow extends StatelessWidget {
-  final _LinkGridTile left;
-  final _LinkGridTile right;
+  final _LinkTile left;
+  final _LinkTile right;
 
   const _LinkGridRow({required this.left, required this.right});
 
   @override
   Widget build(BuildContext context) {
-    final dividerColor = context.colorScheme.outlineVariant.withValues(
-      alpha: context.colorScheme.brightness == Brightness.light ? 0.6 : 0.45,
-    );
+    final colorScheme = context.colorScheme;
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -315,9 +371,11 @@ class _LinkGridRow extends StatelessWidget {
           VerticalDivider(
             width: 1,
             thickness: 1,
-            indent: 8,
-            endIndent: 8,
-            color: dividerColor,
+            indent: 10,
+            endIndent: 10,
+            color: colorScheme.outlineVariant.withValues(
+              alpha: colorScheme.brightness == Brightness.light ? 0.6 : 0.45,
+            ),
           ),
           Expanded(child: right),
         ],
@@ -326,37 +384,71 @@ class _LinkGridRow extends StatelessWidget {
   }
 }
 
-class _LinkGridTile extends StatelessWidget {
+class _LinkTile extends StatelessWidget {
+  final String? prefix;
   final String title;
-  final IconData? icon;
+  final IconData icon;
+  final bool external;
   final VoidCallback onTap;
 
-  const _LinkGridTile({required this.title, this.icon, required this.onTap});
+  const _LinkTile({
+    this.prefix,
+    required this.title,
+    required this.icon,
+    this.external = true,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    final prefix = this.prefix;
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Text(
-                title,
-                style: Theme.of(context).textTheme.bodyMedium,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+            Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary.opacity12,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, size: 19, color: colorScheme.primary),
+                ),
+                const Spacer(),
+                Icon(
+                  external ? Icons.arrow_outward : Icons.arrow_forward,
+                  size: 16,
+                  color: colorScheme.onSurfaceVariant.opacity50,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text.rich(
+              TextSpan(
+                children: [
+                  if (prefix != null)
+                    TextSpan(
+                      text: '$prefix ',
+                      style: context.textTheme.labelSmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant.opacity80,
+                      ),
+                    ),
+                  TextSpan(text: title),
+                ],
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w500,
               ),
             ),
-            if (icon != null) ...[
-              const SizedBox(width: 4),
-              Icon(
-                icon,
-                size: 16,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ],
           ],
         ),
       ),

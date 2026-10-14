@@ -4,11 +4,8 @@ import 'package:bett_box/state.dart';
 
 class BettboxHttpOverrides extends HttpOverrides {
   static bool _isLoopback(String host) {
-    if (host.isEmpty) return true;
-    final normalized = host.toLowerCase();
-    if (normalized == 'localhost') return true;
-    final ip = InternetAddress.tryParse(normalized);
-    return ip != null && ip.isLoopback;
+    if (host.isEmpty || host.toLowerCase() == 'localhost') return true;
+    return InternetAddress.tryParse(host)?.isLoopback ?? false;
   }
 
   static String handleFindProxy(Uri url) {

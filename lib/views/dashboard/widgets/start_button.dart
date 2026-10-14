@@ -2,7 +2,7 @@ import 'package:bett_box/common/common.dart';
 import 'package:bett_box/providers/providers.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class RunTime extends ConsumerWidget {
@@ -12,7 +12,7 @@ class RunTime extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final runTime = ref.watch(runTimeProvider);
     return SizedBox(
-      height: getWidgetHeight(1),
+      height: getWidgetHeight(context, 1),
       child: CommonCard(
         info: Info(label: appLocalizations.runTime, iconData: Icons.timer),
         child: Container(

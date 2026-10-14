@@ -57,13 +57,6 @@ abstract class AppBuilder {
       }
     }
 
-    buildArguments.addAll([
-      '--dart-define',
-      'FLUTTER_BUILD_NAME=$appBuildName',
-      '--dart-define',
-      'FLUTTER_BUILD_NUMBER=$appBuildNumber',
-    ]);
-
     ProcessResult processResult = await flutter.withEnv(environment).build(
       [buildSubcommand, ...buildArguments],
     );

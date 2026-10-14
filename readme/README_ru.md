@@ -47,9 +47,19 @@
 * **Конфиденциальность 100%**: Открытый исходный код, без рекламы, полностью прозрачный процесс CI/CD, прошедший всесторонний аудит, исключающий любой сбор данных в фоновом режиме.
 * **Внимание к сообществу**: Мы ценим обратную связь и оперативно реагируем на качественные Issue — ваш голос важен.
 
----
 </div>
 
+###   🛩️ Рекомендуемые сервисы
+#### Транзитные и выделенные линии  〢  [BBXY](https://www.bbxy01.com/v2/register?code=c09R)  〢  [BaiYueGuang](https://www.sibker.com/register?invite_code=YZq6L5zd)  〢  [MESL](https://panel.meslcloud.com/#/register?code=7vy22Bv2)  〢  [Ytoo](https://y-too.net/aff.php?aff=10354)
+--------------------------------
+#### Бюджетные прямые линии  〢  [Liangxin Cloud](https://xn--9kqz23b19z.com/#/register?code=VTnrQYAj)  〢  [Chuixue Cloud](https://xn--9kqs1lo79d.com/#/register?code=skKMTab7)  〢  [YiFen](https://xn--4gqx1hgtfdmt.com/#/register?code=AuCiXprV)  〢  [Peiqian](https://xn--mes358aby2apfg.com/register?code=z7TUZLmM&cover=sfw)
+--------------------------------
+####   Эксклюзивный промокод на скидку 32% для BBXY: bettbox68
+--------------------------------
+
+**Краткий обзор** : ❚ ❚  Приведенные ссылки основаны на личном использовании или обсуждениях/рекомендациях участников групп TG и представлены исключительно в качестве партнерских (AFF) ссылок (Примечание: при покупке по ссылкам разработчик получает небольшую комиссию в поддержку проекта). Это не является гарантией качества услуг. Пожалуйста, оценивайте риски и выбирайте осознанно.
+
+---
 ## 🛠️ Установка и загрузка
 
 Перейдите на страницу **[[Releases]](https://github.com/appshubcc/Bettbox/releases)**, чтобы скачать актуальный установочный пакет для вашей платформы и системы.
@@ -58,7 +68,7 @@
 * **Все ПК платформы**: 
 **Windows 8.1+:** (x64/arm64)
 **Linux Kernel 5.4+:** (x64/arm64)
-**macOS 10.15+:** (Intel/Apple Silicon)
+**macOS 12.0+:** (Intel/Apple Silicon)
 * **Устройства Android 8.0+:** Android (ARMv8 / ARMv7 / x86_64 / Universal)
 * **Android TV:** Полностью адаптирован, для устройств с малым объемом памяти доступна 32-битная версия ARMv7
 * **HarmonyOS NEXT:** Стабильно работает при использовании с [[ZhuoYiTong]](https://harmonyos.cool/android-app)
@@ -100,7 +110,7 @@
 Пример для Windows:
 
 * Требуется ПК с Windows (ОС ≥ Windows 10)
-* Окружение: Git, Visual Studio, Flutter 3.44.x, Golang, Inno Setup, Rust
+* Окружение: Git, Visual Studio, Flutter 3.47.x, Golang, Inno Setup, Rust
 ```bash
 * flutter pub get
 * dart .\setup.dart windows --arch amd64 --out core (Только ядро)

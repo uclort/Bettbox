@@ -10,14 +10,26 @@ class SliverStickyHeader extends MultiChildRenderObjectWidget {
     required Widget sliver,
     this.spacing = 0.0,
     this.pinned = true,
+    this.pinnedInset = 0.0,
+    this.pinnedShadow,
+    this.headerRadius = 0.0,
   }) : super(children: [header, sliver]);
 
   final double spacing;
   final bool pinned;
+  final double pinnedInset;
+  final BoxShadow? pinnedShadow;
+  final double headerRadius;
 
   @override
   RenderSliverStickyHeader createRenderObject(BuildContext context) {
-    return RenderSliverStickyHeader(spacing: spacing, pinned: pinned);
+    return RenderSliverStickyHeader(
+      spacing: spacing,
+      pinned: pinned,
+      pinnedInset: pinnedInset,
+      pinnedShadow: pinnedShadow,
+      headerRadius: headerRadius,
+    );
   }
 
   @override
@@ -27,7 +39,10 @@ class SliverStickyHeader extends MultiChildRenderObjectWidget {
   ) {
     renderObject
       ..spacing = spacing
-      ..pinned = pinned;
+      ..pinned = pinned
+      ..pinnedInset = pinnedInset
+      ..pinnedShadow = pinnedShadow
+      ..headerRadius = headerRadius;
   }
 }
 
@@ -40,9 +55,17 @@ class RenderSliverStickyHeader extends RenderSliver
     with
         ContainerRenderObjectMixin<RenderObject, SliverStickyHeaderParentData>,
         RenderSliverHelpers {
-  RenderSliverStickyHeader({double spacing = 0.0, bool pinned = true})
-    : _spacing = spacing,
-      _pinned = pinned;
+  RenderSliverStickyHeader({
+    double spacing = 0.0,
+    bool pinned = true,
+    double pinnedInset = 0.0,
+    BoxShadow? pinnedShadow,
+    double headerRadius = 0.0,
+  }) : _spacing = spacing,
+       _pinned = pinned,
+       _pinnedInset = pinnedInset,
+       _pinnedShadow = pinnedShadow,
+       _headerRadius = headerRadius;
 
   double _spacing;
   double get spacing => _spacing;
@@ -58,6 +81,30 @@ class RenderSliverStickyHeader extends RenderSliver
     if (_pinned == value) return;
     _pinned = value;
     markNeedsLayout();
+  }
+
+  double _pinnedInset;
+  double get pinnedInset => _pinnedInset;
+  set pinnedInset(double value) {
+    if (_pinnedInset == value) return;
+    _pinnedInset = value;
+    markNeedsLayout();
+  }
+
+  BoxShadow? _pinnedShadow;
+  BoxShadow? get pinnedShadow => _pinnedShadow;
+  set pinnedShadow(BoxShadow? value) {
+    if (_pinnedShadow == value) return;
+    _pinnedShadow = value;
+    markNeedsPaint();
+  }
+
+  double _headerRadius;
+  double get headerRadius => _headerRadius;
+  set headerRadius(double value) {
+    if (_headerRadius == value) return;
+    _headerRadius = value;
+    markNeedsPaint();
   }
 
   RenderBox get header => firstChild! as RenderBox;
@@ -142,10 +189,13 @@ class RenderSliverStickyHeader extends RenderSliver
       hasVisualOverflow: true,
     );
 
+    final top = constraints.scrollOffset > 0.0
+        ? -constraints.scrollOffset
+        : constraints.viewportMainAxisExtent - constraints.remainingPaintExtent;
     _headerOffset = !_pinned
         ? 0.0
         : math.min(
-            math.max(constraints.scrollOffset, 0.0),
+            math.max(_pinnedInset - top, 0.0),
             math.max(0.0, scrollExtent - _headerExtent - _spacing),
           );
 
@@ -187,24 +237,27 @@ class RenderSliverStickyHeader extends RenderSliver
     if (content.geometry!.visible) {
       final contentParentData =
           content.parentData! as SliverStickyHeaderParentData;
-      context.pushClipRect(
-        needsCompositing,
-        offset,
-        Rect.fromLTRB(
-          0.0,
-          _headerPaintOffset + _headerExtent,
-          constraints.crossAxisExtent,
-          geometry!.paintExtent,
-        ),
-        (context, offset) {
-          context.paintChild(
-            content,
-            offset + contentParentData.paintOffset,
-          );
-        },
+      context.paintChild(content, offset + contentParentData.paintOffset);
+    }
+    final headerOffset = offset + Offset(0.0, _headerPaintOffset);
+    final shadow = _pinnedShadow;
+    final strength = _pinnedInset > 0.0
+        ? (_headerOffset / _pinnedInset).clamp(0.0, 1.0)
+        : (_headerOffset > 0.0 ? 1.0 : 0.0);
+    if (shadow != null && strength > 0.0) {
+      context.canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          (headerOffset + shadow.offset) & header.size,
+          Radius.circular(_headerRadius),
+        ).inflate(shadow.spreadRadius),
+        shadow
+            .copyWith(
+              color: shadow.color.withValues(alpha: shadow.color.a * strength),
+            )
+            .toPaint(),
       );
     }
-    context.paintChild(header, offset + Offset(0.0, _headerPaintOffset));
+    context.paintChild(header, headerOffset);
   }
 
   @override

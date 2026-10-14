@@ -6,7 +6,7 @@ import 'package:bett_box/common/common.dart';
 import 'package:bett_box/models/models.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class TvQrImportDialog extends StatefulWidget {
   const TvQrImportDialog({super.key});
@@ -238,7 +238,12 @@ class _TvQrImportDialogState extends State<TvQrImportDialog> {
           child: _isLoading
               ? const SizedBox(
                   height: 280,
-                  child: Center(child: CircularProgressIndicator()),
+                  child: Center(
+                    child: SyncedLoading(
+                      size: 40,
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
                 )
               : !hasNetwork
               ? _buildNoNetworkView()
@@ -353,9 +358,12 @@ class _TvQrImportDialogState extends State<TvQrImportDialog> {
                 SizedBox(
                   width: 14,
                   height: 14,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: context.colorScheme.primary,
+                  child: SyncedLoading(
+                    size: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: context.colorScheme.primary,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),

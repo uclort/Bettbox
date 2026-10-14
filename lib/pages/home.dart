@@ -4,8 +4,7 @@ import 'package:bett_box/models/models.dart';
 import 'package:bett_box/providers/providers.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:flutter/foundation.dart' show listEquals;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -332,9 +331,12 @@ class _NavigationPage extends StatelessWidget {
         final isActive = ref.watch(
           currentPageLabelProvider.select((label) => label == item.label),
         );
-        return TickerMode(
-          enabled: isActive,
-          child: ExcludeFocus(excluding: !isActive, child: child!),
+        return PageActivityScope(
+          isActive: isActive,
+          child: TickerMode(
+            enabled: isActive,
+            child: ExcludeFocus(excluding: !isActive, child: child!),
+          ),
         );
       },
       child: keptView,
@@ -355,41 +357,16 @@ class _HomePageView extends ConsumerStatefulWidget {
   ConsumerState createState() => _HomePageViewState();
 }
 
-class _HomePageViewState extends ConsumerState<_HomePageView>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _animation;
+class _HomePageViewState extends ConsumerState<_HomePageView> {
+  late PageController _pageController;
   late final ProviderSubscription<PageLabel> _pageLabelSubscription;
-  late int _currentIndex;
-  int _previousIndex = 0;
-  bool _animating = false;
-  bool _preparing = false;
-  final Set<int> _mountedPages = {};
-  int _warmUpCursor = 0;
-  final Map<int, Widget> _pageCache = {};
-  bool? _cacheIsMobile;
-  List<PageLabel> _cacheLabels = const [];
+  int _currentPageIndex = 0;
 
   @override
-  void initState() {
+  initState() {
     super.initState();
-    _currentIndex = _pageIndex;
-    _previousIndex = _currentIndex;
-    _mountedPages.add(_currentIndex);
-    _controller =
-        AnimationController(
-          vsync: this,
-          duration: const Duration(milliseconds: 250),
-          value: 1.0,
-        )..addStatusListener((status) {
-          if (status == AnimationStatus.completed && _animating) {
-            setState(() {
-              _animating = false;
-              _prunePages();
-            });
-          }
-        });
-    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+    _currentPageIndex = _pageIndex;
+    _pageController = PageController(initialPage: _currentPageIndex);
     _pageLabelSubscription = ref.listenManual(currentPageLabelProvider, (
       prev,
       next,
@@ -402,165 +379,88 @@ class _HomePageViewState extends ConsumerState<_HomePageView>
         }
       }
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) => _warmUpStep());
-  }
-
-  void _warmUpStep() {
-    if (!mounted) return;
-    if (_animating || _preparing) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _warmUpStep());
-      return;
-    }
-    if (!ref.read(isMobileViewProvider)) return;
-    final items = widget.navigationItems;
-    while (_warmUpCursor < items.length &&
-        (_mountedPages.contains(_warmUpCursor) || !items[_warmUpCursor].keep)) {
-      _warmUpCursor++;
-    }
-    if (_warmUpCursor >= items.length) return;
-    setState(() => _mountedPages.add(_warmUpCursor));
-    _warmUpCursor++;
-    WidgetsBinding.instance.addPostFrameCallback((_) => _warmUpStep());
   }
 
   @override
   void didUpdateWidget(covariant _HomePageView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final oldLabels = [
-      for (final item in oldWidget.navigationItems) item.label,
-    ];
-    final newLabels = [for (final item in widget.navigationItems) item.label];
-    if (!listEquals(oldLabels, newLabels)) {
-      _animating = false;
-      _preparing = false;
-      _controller.value = 1.0;
-      _currentIndex = _pageIndex;
-      _previousIndex = _currentIndex;
-      _mountedPages
-        ..clear()
-        ..add(_currentIndex);
-      _pageCache.clear();
-      _warmUpCursor = 0;
-      WidgetsBinding.instance.addPostFrameCallback((_) => _warmUpStep());
+    if (oldWidget.navigationItems.length != widget.navigationItems.length) {
+      _updatePageController();
     }
   }
 
   int get _pageIndex {
-    final pageLabel = ref.read(currentPageLabelProvider);
-    final index = widget.navigationItems.indexWhere(
-      (item) => item.label == pageLabel,
+    return widget.navigationItems.indexWhere(
+      (item) => item.label == globalState.appState.pageLabel,
     );
-    return index < 0 ? 0 : index;
   }
 
-  void _toPage(PageLabel pageLabel, [bool ignoreAnimateTo = false]) {
-    if (!mounted) return;
+  Future<void> _toPage(
+    PageLabel pageLabel, [
+    bool ignoreAnimateTo = false,
+  ]) async {
+    if (!mounted) {
+      return;
+    }
     final index = widget.navigationItems.indexWhere(
       (item) => item.label == pageLabel,
     );
-    if (index == -1 || index == _currentIndex) return;
+    if (index == -1) {
+      return;
+    }
 
     if (!globalState.isAndroidTV) {
       FocusManager.instance.primaryFocus?.unfocus();
     }
 
-    final isMobile = ref.read(isMobileViewProvider);
-    final animate = isMobile && !ignoreAnimateTo;
-    setState(() {
-      _previousIndex = _currentIndex;
-      _currentIndex = index;
-      _mountedPages.add(index);
-      _animating = false;
-      _preparing = animate;
-    });
-    if (!animate) {
-      _controller.value = 1.0;
-      _prunePages();
+    if (ref.read(isMobileViewProvider)) {
+      if (_currentPageIndex != index) {
+        setState(() {
+          _currentPageIndex = index;
+        });
+      }
       return;
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_preparing) return;
-      setState(() {
-        _preparing = false;
-        _animating = true;
-      });
-      _controller.forward(from: 0);
-    });
+
+    _pageController.jumpToPage(index);
   }
 
-  void _prunePages() {
-    _mountedPages.removeWhere((index) {
-      if (index == _currentIndex) return false;
-      final prune =
-          index >= widget.navigationItems.length ||
-          !widget.navigationItems[index].keep;
-      if (prune) _pageCache.remove(index);
-      return prune;
-    });
+  void _updatePageController() {
+    final pageLabel = ref.read(currentPageLabelProvider);
+    _toPage(pageLabel, true);
   }
 
   @override
   void dispose() {
     _pageLabelSubscription.close();
-    _controller.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final items = widget.navigationItems;
-    final direction = (_currentIndex - _previousIndex).sign.toDouble();
-    final isMobile = ref.read(isMobileViewProvider);
-    final labels = [for (final item in items) item.label];
-    if (_cacheIsMobile != isMobile || !listEquals(_cacheLabels, labels)) {
-      _pageCache.clear();
-      _cacheIsMobile = isMobile;
-      _cacheLabels = labels;
+    if (ref.watch(isMobileViewProvider)) {
+      final index = _pageIndex < 0 ? 0 : _pageIndex;
+      return AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (child, animation) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        child: KeyedSubtree(
+          key: ValueKey(widget.navigationItems[index].label),
+          child: widget.pageBuilder(context, index),
+        ),
+      );
     }
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        for (final index in _mountedPages)
-          if (index < items.length)
-            IgnorePointer(
-              key: ValueKey(items[index].label),
-              ignoring: index != _currentIndex,
-              child: AnimatedBuilder(
-                animation: _animation,
-                child: _pageCache.putIfAbsent(
-                  index,
-                  () => RepaintBoundary(
-                    child: widget.pageBuilder(context, index),
-                  ),
-                ),
-                builder: (context, child) {
-                  final progress = _animating
-                      ? _animation.value
-                      : (_preparing ? 0.0 : 1.0);
-                  final bool visible;
-                  final double dx;
-                  if (index == _currentIndex) {
-                    visible = true;
-                    dx = direction * (1 - progress);
-                  } else if ((_animating || _preparing) &&
-                      index == _previousIndex) {
-                    visible = true;
-                    dx = -direction * progress;
-                  } else {
-                    visible = false;
-                    dx = 0;
-                  }
-                  return Offstage(
-                    offstage: !visible,
-                    child: FractionalTranslation(
-                      translation: Offset(dx, 0),
-                      child: child,
-                    ),
-                  );
-                },
-              ),
-            ),
-      ],
+    return PageView.builder(
+      controller: _pageController,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: widget.navigationItems.length,
+      itemBuilder: (context, index) {
+        return widget.pageBuilder(context, index);
+      },
     );
   }
 }
@@ -592,8 +492,11 @@ class HomeBackScope extends ConsumerWidget {
         canPop: false,
         onPopInvokedWithResult: (didPop, _) async {
           if (didPop || backBlock) return;
+          if (!routeIdleObserver.isSettled) {
+            commonPrint.log('Back ignored: route transition not settled');
+            return;
+          }
           final navigatorState = globalState.navigatorKey.currentState;
-          if (navigatorState?.userGestureInProgress == true) return;
 
           if (globalState.isAndroidTV) {
             final tvBack = onTvBack;

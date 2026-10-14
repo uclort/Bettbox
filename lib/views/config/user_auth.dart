@@ -3,7 +3,7 @@ import 'package:bett_box/models/clash_config.dart';
 import 'package:bett_box/providers/config.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class _UserAuthEntry {
@@ -11,12 +11,10 @@ class _UserAuthEntry {
   final TextEditingController passwordController;
   bool obscurePassword;
 
-  _UserAuthEntry({
-    required String username,
-    required String password,
-  })  : obscurePassword = true,
-        usernameController = TextEditingController(text: username),
-        passwordController = TextEditingController(text: password);
+  _UserAuthEntry({required String username, required String password})
+    : obscurePassword = true,
+      usernameController = TextEditingController(text: username),
+      passwordController = TextEditingController(text: password);
 
   void dispose() {
     usernameController.dispose();
@@ -93,7 +91,9 @@ class _UserAuthDialogState extends ConsumerState<UserAuthDialog> {
 
     final nextPrefixes = _skipLocalAuth ? defaultSkipAuthPrefixes : <String>[];
 
-    ref.read(patchClashConfigProvider.notifier).updateState(
+    ref
+        .read(patchClashConfigProvider.notifier)
+        .updateState(
           (state) => state.copyWith(
             authentication: validUsers,
             skipAuthPrefixes: nextPrefixes,
@@ -112,10 +112,7 @@ class _UserAuthDialogState extends ConsumerState<UserAuthDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: Text(appLocalizations.cancel),
         ),
-        TextButton(
-          onPressed: _handleSave,
-          child: Text(appLocalizations.save),
-        ),
+        TextButton(onPressed: _handleSave, child: Text(appLocalizations.save)),
       ],
       child: Form(
         key: _formKey,
@@ -168,19 +165,23 @@ class _UserAuthDialogState extends ConsumerState<UserAuthDialog> {
                   validator: (value) {
                     final trimmed = value?.trim() ?? '';
                     if (trimmed.isEmpty) {
-                      return appLocalizations.emptyTip(appLocalizations.username);
+                      return appLocalizations.emptyTip(
+                        appLocalizations.username,
+                      );
                     }
                     if (trimmed.contains(':')) {
                       return appLocalizations.usernameCannotContainColon;
                     }
                     final hasDuplicate = _entries.asMap().entries.any(
-                          (e) =>
-                              e.key != i &&
-                              e.value.usernameController.text.trim() == trimmed &&
-                              trimmed.isNotEmpty,
-                        );
+                      (e) =>
+                          e.key != i &&
+                          e.value.usernameController.text.trim() == trimmed &&
+                          trimmed.isNotEmpty,
+                    );
                     if (hasDuplicate) {
-                      return appLocalizations.existsTip(appLocalizations.username);
+                      return appLocalizations.existsTip(
+                        appLocalizations.username,
+                      );
                     }
                     return null;
                   },
@@ -209,7 +210,9 @@ class _UserAuthDialogState extends ConsumerState<UserAuthDialog> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return appLocalizations.emptyTip(appLocalizations.password);
+                      return appLocalizations.emptyTip(
+                        appLocalizations.password,
+                      );
                     }
                     return null;
                   },

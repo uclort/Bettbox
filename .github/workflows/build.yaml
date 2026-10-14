@@ -53,10 +53,6 @@ jobs:
           - platform: macos
             os: macos-15
             arch: amd64
-          - platform: macos
-            os: macos-15
-            arch: amd64
-            compatible: true
           - platform: linux
             os: ubuntu-22.04
             arch: amd64
@@ -150,8 +146,12 @@ jobs:
       - name: Setup Golang
         uses: actions/setup-go@v6
         with:
-          go-version: ${{ matrix.compatible == true && '1.20.x' || '1.25.x' }}
+          go-version: ${{ matrix.compatible == true && '1.24.x' || '1.26.x' }}
           cache-dependency-path: core/go.sum
+
+      - name: Select Xcode (macOS)
+        if: matrix.platform == 'macos'
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_26*.app | sort -V | tail -1)"
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -159,7 +159,7 @@ jobs:
           channel: ${{ contains(matrix.os, 'arm') && 'master' || 'stable' }}
           cache: true
           cache-key: flutter-${{ matrix.platform }}-${{ matrix.arch }}-${{ hashFiles('**/pubspec.lock') }}
-          flutter-version: ${{ contains(matrix.os, 'arm') && '' || '3.44.9' }}
+          flutter-version: ${{ contains(matrix.os, 'arm') && '' || '3.47.7' }}
 
       - name: Clear Pub Cache Credentials
         shell: bash
@@ -204,7 +204,7 @@ jobs:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
           flutter pub get
-          dart run build_runner build -d
+          dart run build_runner build
           dart setup.dart ${{ matrix.platform }} --arch ${{ matrix.arch }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }} ${{ matrix.compatible == true && '--compatible' || '' }}
 
       - name: Install SignPath (Windows)
@@ -234,7 +234,7 @@ jobs:
         shell: bash
         run: |
           flutter pub get
-          dart run build_runner build -d
+          dart run build_runner build
           dart setup.dart windows --arch ${{ matrix.arch }} --out core-only ${{ matrix.compatible == true && '--compatible' || '' }}
 
       - name: Upload Unsigned Core
@@ -246,6 +246,13 @@ jobs:
           path: libclash/windows/BettboxCore.exe
           if-no-files-found: error
           retention-days: 1
+
+      - name: Wait for Unsigned Core
+        if: matrix.platform == 'windows' && env.SIGNPATH_API_TOKEN != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash .github/scripts/wait-artifact.sh '${{ steps.upload-core.outputs.artifact-id }}'
 
       - name: Sign Core (Windows)
         if: matrix.platform == 'windows' && env.SIGNPATH_API_TOKEN != ''
@@ -277,6 +284,13 @@ jobs:
           path: libclash/windows/BettboxHelperService.exe
           if-no-files-found: error
           retention-days: 1
+
+      - name: Wait for Unsigned HelperService
+        if: matrix.platform == 'windows' && env.SIGNPATH_API_TOKEN != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash .github/scripts/wait-artifact.sh '${{ steps.upload-helper.outputs.artifact-id }}'
 
       - name: Sign HelperService (Windows)
         if: matrix.platform == 'windows' && env.SIGNPATH_API_TOKEN != ''
@@ -328,6 +342,13 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+      - name: Wait for Unsigned Bettbox
+        if: matrix.platform == 'windows' && env.SIGNPATH_API_TOKEN != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash .github/scripts/wait-artifact.sh '${{ steps.upload-bettbox.outputs.artifact-id }}'
+
       - name: Sign Bettbox (Windows)
         if: matrix.platform == 'windows' && env.SIGNPATH_API_TOKEN != ''
         uses: signpath/github-action-submit-signing-request@v2
@@ -365,6 +386,13 @@ jobs:
           path: ${{ env.INSTALLER_PATH }}
           if-no-files-found: error
           retention-days: 1
+
+      - name: Wait for Unsigned Installer
+        if: matrix.platform == 'windows' && env.SIGNPATH_API_TOKEN != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash .github/scripts/wait-artifact.sh '${{ steps.upload-installer.outputs.artifact-id }}'
 
       - name: Sign Installer (Windows)
         if: matrix.platform == 'windows' && env.SIGNPATH_API_TOKEN != ''

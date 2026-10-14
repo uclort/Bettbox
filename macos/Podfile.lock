@@ -1,26 +1,18 @@
 PODS:
-  - auto_updater_macos (0.0.1):
-    - FlutterMacOS
-    - Sparkle
   - code_forge (10.12.0):
-    - FlutterMacOS
-  - flutter_qjs (0.0.1):
     - FlutterMacOS
   - FlutterMacOS (1.0.0)
   - HotKey (0.2.0)
   - hotkey_manager_macos (0.0.1):
     - FlutterMacOS
     - HotKey
-  - Sparkle (2.9.5)
   - tray_manager (0.0.1):
     - FlutterMacOS
   - window_ext (0.0.1):
     - FlutterMacOS
 
 DEPENDENCIES:
-  - auto_updater_macos (from `Flutter/ephemeral/.symlinks/plugins/auto_updater_macos/macos`)
   - code_forge (from `Flutter/ephemeral/.symlinks/plugins/code_forge/macos`)
-  - flutter_qjs (from `Flutter/ephemeral/.symlinks/plugins/flutter_qjs/macos`)
   - FlutterMacOS (from `Flutter/ephemeral`)
   - hotkey_manager_macos (from `Flutter/ephemeral/.symlinks/plugins/hotkey_manager_macos/macos`)
   - tray_manager (from `Flutter/ephemeral/.symlinks/plugins/tray_manager/macos`)
@@ -29,15 +21,10 @@ DEPENDENCIES:
 SPEC REPOS:
   trunk:
     - HotKey
-    - Sparkle
 
 EXTERNAL SOURCES:
-  auto_updater_macos:
-    :path: Flutter/ephemeral/.symlinks/plugins/auto_updater_macos/macos
   code_forge:
     :path: Flutter/ephemeral/.symlinks/plugins/code_forge/macos
-  flutter_qjs:
-    :path: Flutter/ephemeral/.symlinks/plugins/flutter_qjs/macos
   FlutterMacOS:
     :path: Flutter/ephemeral
   hotkey_manager_macos:
@@ -48,16 +35,13 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/window_ext/macos
 
 SPEC CHECKSUMS:
-  auto_updater_macos: 3e3462c418fe4e731917eacd8d28eef7af84086d
-  code_forge: b5a5ab0b01a8de485a359a47ba30d6e40ec09fa8
-  flutter_qjs: 1a3a4a23a9bb18d0583b5ee44d09ed9383a36e9f
-  FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
+  code_forge: af53ecf524f9cd221e7070eca8087cac1f893f16
+  FlutterMacOS: c232990155153907050900a2e175c7773903ba4e
   HotKey: e96d8a2ddbf4591131e2bb3f54e69554d90cdca6
-  hotkey_manager_macos: 1e2edb0c7ae4fe67108af44a9d3445de41404160
-  Sparkle: 3ed3ee66c8526fcba244d06edef5f009d3bbc6ba
-  tray_manager: 9064e219c56d75c476e46b9a21182087930baf90
-  window_ext: cbf41f054296dcfb15a1cb53610ef3eab6311f13
+  hotkey_manager_macos: a4317849af96d2430fa89944d3c58977ca089fbe
+  tray_manager: a104b5c81b578d83f3c3d0f40a997c8b10810166
+  window_ext: 4afef727fe428b30c68ce800ba92e890fd329f63
 
-PODFILE CHECKSUM: cb04bef9b5a5eabe8912b4c6d52829ed8db90348
+PODFILE CHECKSUM: fae85271f022752367eca5bd24ba9a9f53bb5c7f
 
-COCOAPODS: 1.16.2
+COCOAPODS: 1.17.0

@@ -351,9 +351,9 @@ class ClashService extends ClashHandlerInterface {
   }
 
   @override
-  sendMessage(String message) async {
+  Future<Object?> sendMessage(String message) async {
     if (_isDestroying || globalState.isExiting) {
-      return;
+      return null;
     }
     if (_restartCompleter != null) {
       await _restartCompleter!.future;
@@ -367,13 +367,14 @@ class ClashService extends ClashHandlerInterface {
     try {
       final frame = FrameCodec.encode(message);
       socket.add(frame);
+      return socket;
     } on SocketException catch (e) {
       _handleSocketClosed(socket);
       if (_isDestroying || globalState.isExiting || isStarting) {
         commonPrint.log(
           'Ignored message send on closed socket during transition: $e',
         );
-        return;
+        return null;
       }
       rethrow;
     } on StateError catch (e) {
@@ -382,7 +383,7 @@ class ClashService extends ClashHandlerInterface {
         commonPrint.log(
           'Ignored message send on closed socket during transition: $e',
         );
-        return;
+        return null;
       }
       rethrow;
     }
@@ -401,10 +402,12 @@ class ClashService extends ClashHandlerInterface {
     final socket = _activeSocket;
     _activeSocket = null;
     if (socketCompleter.isCompleted) socketCompleter = Completer();
+    if (socket != null) abortRequests(socket);
     await socket?.close();
   }
 
   void _handleSocketClosed(Socket socket, {String? details}) {
+    abortRequests(socket);
     if (!identical(_activeSocket, socket)) return;
     _activeSocket = null;
     if (socketCompleter.isCompleted) socketCompleter = Completer();

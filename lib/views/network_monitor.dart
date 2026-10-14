@@ -1,9 +1,10 @@
 import 'dart:async';
+import 'package:yaml/yaml.dart';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:bett_box/clash/clash.dart';
-import 'package:bett_box/common/common.dart';
+import 'package:bett_box/common/common.dart' hide ProcessIcon;
 import 'package:bett_box/common/external_control.dart';
 import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/models.dart';
@@ -11,7 +12,7 @@ import 'package:bett_box/providers/providers.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/views/connection/item.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:window_manager/window_manager.dart';
@@ -254,7 +255,7 @@ Future<void> openNetworkMonitorWindow() => networkMonitorProcess.open();
 Future<List<Map<String, Object?>>> _readMonitorDnsSnapshot(
   WidgetRef ref,
 ) async {
-  final rawConfig = await globalState.patchRawConfig(
+  final runtimeConfig = await globalState.getRuntimeConfigContent(
     patchConfig: ref.read(patchClashConfigProvider),
   );
   var systemHosts = '';
@@ -263,7 +264,7 @@ Future<List<Map<String, Object?>>> _readMonitorDnsSnapshot(
     if (await file.exists()) systemHosts = await file.readAsString();
   }
   return monitorConfiguredDnsEntries(
-    rawConfig,
+    Map<String, dynamic>.from(loadYaml(runtimeConfig) as Map),
     systemHosts,
   ).map((item) => item.toJson()).toList();
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -9,7 +10,7 @@ import 'package:bett_box/pages/editor.dart';
 import 'package:bett_box/providers/providers.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 class EditProfileView extends StatefulWidget {
@@ -56,14 +57,8 @@ class EditProfileViewState extends State<EditProfileView> {
       text: widget.profile.ageSecretKey,
     );
     if (widget.isNew) {
-      urlFocusNode = FocusNode();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) {
-            urlFocusNode?.requestFocus();
-          }
-        });
-      });
+      final focusNode = urlFocusNode = FocusNode();
+      unawaited(focusNode.requestFocusWhenIdle());
     }
     appPath.getProfilePath(widget.profile.id).then((path) async {
       fileInfoNotifier.value = await _getFileInfo(path);
@@ -257,8 +252,10 @@ class EditProfileViewState extends State<EditProfileView> {
     final platformFile = await globalState.appController.safeRun(
       picker.pickerFile,
     );
-    if (platformFile?.bytes == null) return;
-    fileData = platformFile?.bytes;
+    if (platformFile == null) return;
+    final bytes = await platformFile.readAsBytes();
+    if (bytes.isEmpty) return;
+    fileData = bytes;
     fileInfoNotifier.value = fileInfoNotifier.value?.copyWith(
       size: fileData?.length ?? 0,
       lastModified: DateTime.now(),
@@ -286,14 +283,12 @@ class EditProfileViewState extends State<EditProfileView> {
   @override
   Widget build(BuildContext context) {
     final items = [
-      ListItem(
-        title: TextFormField(
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: TextFormField(
           textInputAction: TextInputAction.next,
           controller: labelController,
-          decoration: InputDecoration(
-            border: const OutlineInputBorder(),
-            labelText: appLocalizations.name,
-          ),
+          decoration: InputDecoration(labelText: appLocalizations.name),
           validator: (String? value) {
             if (!widget.isNew && (value == null || value.isEmpty)) {
               return appLocalizations.profileNameNullValidationDesc;
@@ -303,18 +298,16 @@ class EditProfileViewState extends State<EditProfileView> {
         ),
       ),
       if (widget.profile.type == ProfileType.url || widget.isNew) ...[
-        ListItem(
-          title: TextFormField(
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: TextFormField(
             focusNode: urlFocusNode,
             textInputAction: TextInputAction.next,
             keyboardType: TextInputType.url,
             controller: urlController,
             maxLines: 5,
             minLines: 1,
-            decoration: InputDecoration(
-              border: const OutlineInputBorder(),
-              labelText: appLocalizations.url,
-            ),
+            decoration: InputDecoration(labelText: appLocalizations.url),
             onEditingComplete: widget.isNew
                 ? () => FocusManager.instance.primaryFocus?.unfocus()
                 : null,
@@ -329,15 +322,15 @@ class EditProfileViewState extends State<EditProfileView> {
             },
           ),
         ),
-        ListItem(
-          title: TextFormField(
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: TextFormField(
             textInputAction: TextInputAction.next,
             controller: ageSecretKeyController,
             obscureText: _obscureAgeSecretKey,
             maxLines: 1,
             minLines: 1,
             decoration: InputDecoration(
-              border: const OutlineInputBorder(),
               labelText: appLocalizations.ageSecretKeyOptional,
               hintText: 'AGE-SECRET-KEY-...',
               suffixIcon: IconButton(
@@ -363,20 +356,27 @@ class EditProfileViewState extends State<EditProfileView> {
             },
           ),
         ),
-        ListItem.switchItem(
-          title: Text(appLocalizations.autoUpdate),
-          delegate: SwitchDelegate<bool>(
-            value: autoUpdate,
-            onChanged: _setAutoUpdate,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: CommonCard(
+            type: CommonCardType.filled,
+            radius: 16,
+            child: ListItem.switchItem(
+              title: Text(appLocalizations.autoUpdate),
+              delegate: SwitchDelegate<bool>(
+                value: autoUpdate,
+                onChanged: _setAutoUpdate,
+              ),
+            ),
           ),
         ),
         if (autoUpdate)
-          ListItem(
-            title: TextFormField(
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: TextFormField(
               textInputAction: TextInputAction.next,
               controller: autoUpdateDurationController,
               decoration: InputDecoration(
-                border: const OutlineInputBorder(),
                 labelText: appLocalizations.autoUpdateInterval,
               ),
               validator: (String? value) {
@@ -402,31 +402,38 @@ class EditProfileViewState extends State<EditProfileView> {
             return FadeThroughBox(
               child: fileInfo == null
                   ? Container()
-                  : ListItem(
-                      title: Text(appLocalizations.profile),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 4),
-                          Text(fileInfo.desc),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            runSpacing: 6,
-                            spacing: 12,
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: CommonCard(
+                        type: CommonCardType.filled,
+                        radius: 16,
+                        child: ListItem(
+                          title: Text(appLocalizations.profile),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              CommonChip(
-                                avatar: const Icon(Icons.edit),
-                                label: appLocalizations.edit,
-                                onPressed: _editProfileFile,
-                              ),
-                              CommonChip(
-                                avatar: const Icon(Icons.upload),
-                                label: appLocalizations.upload,
-                                onPressed: _uploadProfileFile,
+                              const SizedBox(height: 4),
+                              Text(fileInfo.desc),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                runSpacing: 6,
+                                spacing: 12,
+                                children: [
+                                  CommonChip(
+                                    avatar: const Icon(Icons.edit),
+                                    label: appLocalizations.edit,
+                                    onPressed: _editProfileFile,
+                                  ),
+                                  CommonChip(
+                                    avatar: const Icon(Icons.upload),
+                                    label: appLocalizations.upload,
+                                    onPressed: _uploadProfileFile,
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
             );
@@ -465,7 +472,7 @@ class EditProfileViewState extends State<EditProfileView> {
                 return items[index];
               },
               separatorBuilder: (_, _) {
-                return const SizedBox(height: 24);
+                return const SizedBox(height: 14);
               },
               itemCount: items.length,
             ),
@@ -607,7 +614,6 @@ class _AgeKeyGeneratorDialogState extends State<_AgeKeyGeneratorDialog> {
           TextField(
             controller: _privateKeyController,
             decoration: InputDecoration(
-              border: const OutlineInputBorder(),
               floatingLabelBehavior: FloatingLabelBehavior.always,
               labelText: appLocalizations.agePrivateKeyLabel,
               suffixIcon: IconButton(
@@ -628,7 +634,6 @@ class _AgeKeyGeneratorDialogState extends State<_AgeKeyGeneratorDialog> {
             controller: _publicKeyController,
             readOnly: true,
             decoration: InputDecoration(
-              border: const OutlineInputBorder(),
               floatingLabelBehavior: FloatingLabelBehavior.always,
               labelText: appLocalizations.agePublicKeyLabel,
               helperText: _helperText,

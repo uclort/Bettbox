@@ -14,7 +14,7 @@ class ClashMessage {
       for (final AppMessageListener listener in _listeners) {
         switch (m.type) {
           case AppMessageType.log:
-            listener.onLog(Log.fromJson(m.data));
+            listener.onLog(Log.core(m.data));
           case AppMessageType.delay:
             listener.onDelay(Delay.fromJson(m.data));
           case AppMessageType.request:

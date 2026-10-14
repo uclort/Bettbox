@@ -2,8 +2,6 @@ import 'dart:io';
 
 import 'package:bett_box/common/common.dart';
 
-
-
 class SingleInstanceLock {
   static SingleInstanceLock? _instance;
   RandomAccessFile? _accessFile;
@@ -28,7 +26,7 @@ class SingleInstanceLock {
         await _accessFile?.lock();
         return true;
       } catch (e) {
-        commonPrint.log(
+        commonPrint.warn(
           'SingleInstanceLock acquire attempt ${i + 1} failed: $e',
         );
         if (i < 14) {

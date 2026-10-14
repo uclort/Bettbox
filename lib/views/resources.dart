@@ -3,15 +3,19 @@ import 'dart:io';
 import 'package:bett_box/clash/clash.dart';
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/models/models.dart';
+import 'package:bett_box/providers/app.dart';
 import 'package:bett_box/providers/config.dart';
+import 'package:bett_box/views/proxies/providers.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:path/path.dart' hide context;
 
-final geoUpdatingKeysProvider =
-    StateProvider.autoDispose<Set<String>>((ref) => {});
+final geoUpdatingKeysProvider = StateProvider.autoDispose<Set<String>>(
+  (ref) => {},
+);
 
 @immutable
 class GeoItem {
@@ -26,8 +30,15 @@ class GeoItem {
   });
 }
 
-class ResourcesView extends ConsumerWidget {
+class ResourcesView extends ConsumerStatefulWidget {
   const ResourcesView({super.key});
+
+  @override
+  ConsumerState<ResourcesView> createState() => _ResourcesViewState();
+}
+
+class _ResourcesViewState extends ConsumerState<ResourcesView> {
+  bool? _showProviders;
 
   static const geoItems = <GeoItem>[
     GeoItem(label: 'GeoSite', fileName: geoSiteFileName, key: 'geosite'),
@@ -36,37 +47,39 @@ class ResourcesView extends ConsumerWidget {
     GeoItem(label: 'MRS', fileName: bundleMRSFileName, key: 'mrs'),
   ];
 
-  Future<void> _handleSyncAll(WidgetRef ref) async {
+  Future<void> _handleSyncAll() async {
     final updatingKeysNotifier = ref.read(geoUpdatingKeysProvider.notifier);
     if (updatingKeysNotifier.state.isNotEmpty) return;
 
-    final syncItems =
-        geoItems.where((geoItem) => geoItem.key != 'mrs').toList();
+    final syncItems = geoItems
+        .where((geoItem) => geoItem.key != 'mrs')
+        .toList();
     updatingKeysNotifier.state = syncItems.map((e) => e.key).toSet();
 
     final errors = <String>[];
     try {
       await Future.wait(
-        syncItems.map(
-          (geoItem) async {
-            try {
-              final message = await clashCore.updateGeoData(
-                UpdateGeoDataParams(
-                  geoName: geoItem.fileName,
-                  geoType: geoItem.label,
-                ),
-              );
-              if (message.isNotEmpty) {
-                errors.add('${geoItem.label}: $message');
-              }
-            } catch (e) {
-              errors.add('${geoItem.label}: $e');
-            } finally {
-              updatingKeysNotifier
-                  .update((s) => Set.of(s)..remove(geoItem.key));
+        syncItems.map((geoItem) async {
+          try {
+            final message = await clashCore.updateGeoData(
+              UpdateGeoDataParams(
+                geoName: geoItem.fileName,
+                geoType: geoItem.label,
+              ),
+            );
+            if (message.isNotEmpty) {
+              errors.add('${geoItem.label}: $message');
             }
-          },
-        ),
+          } catch (e) {
+            errors.add('${geoItem.label}: $e');
+          } finally {
+            if (mounted) {
+              updatingKeysNotifier.update(
+                (s) => Set.of(s)..remove(geoItem.key),
+              );
+            }
+          }
+        }),
       );
       if (errors.isNotEmpty) {
         globalState.showMessage(
@@ -76,11 +89,13 @@ class ResourcesView extends ConsumerWidget {
         );
       }
     } finally {
-      updatingKeysNotifier.state = {};
+      if (mounted) {
+        updatingKeysNotifier.state = {};
+      }
     }
   }
 
-  Future<void> _handleResetAll(WidgetRef ref) async {
+  Future<void> _handleResetAll() async {
     final res = await globalState.showMessage(
       title: appLocalizations.reset,
       message: TextSpan(text: appLocalizations.resetTip),
@@ -94,43 +109,163 @@ class ResourcesView extends ConsumerWidget {
     await globalState.appController.setupClashConfig();
   }
 
+  Widget _buildTitleItem(String label, bool showProviders) {
+    final isCurrent = _showProviders == showProviders;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: isCurrent
+          ? null
+          : () {
+              setState(() {
+                _showProviders = showProviders;
+              });
+            },
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: isCurrent
+            ? null
+            : TextStyle(
+                color: context.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.5,
+                ),
+              ),
+      ),
+    );
+  }
+
+  Widget _buildTitle() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(child: _buildTitleItem(appLocalizations.providers, true)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          child: Text(
+            '|',
+            style: TextStyle(
+              color: context.colorScheme.onSurfaceVariant.withValues(
+                alpha: 0.5,
+              ),
+            ),
+          ),
+        ),
+        Flexible(child: _buildTitleItem(appLocalizations.resources, false)),
+      ],
+    );
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final isUpdating = ref.watch(
       geoUpdatingKeysProvider.select((keys) => keys.isNotEmpty),
     );
+    final hasProviders = ref.watch(
+      providersProvider.select((state) => state.isNotEmpty),
+    );
+    final showProviders = hasProviders && (_showProviders ??= true);
 
-    return CommonScaffold(
-      title: appLocalizations.resources,
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.replay),
-          onPressed: () => _handleResetAll(ref),
-          tooltip: appLocalizations.reset,
-        ),
-        IconButton(
-          icon: isUpdating
-              ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.sync),
-          onPressed: isUpdating ? null : () => _handleSyncAll(ref),
-          tooltip: appLocalizations.syncAll,
-        ),
-      ],
-      body: ListView(
-        padding: EdgeInsets.only(
-          bottom: (globalState.isAndroidTV ? 48.0 : 16.0) +
-              MediaQuery.of(context).padding.bottom,
-          top: 8,
-        ),
-        children: [
-          ...generateSection(
-            items: geoItems.map((geoItem) => GeoDataListItem(geoItem: geoItem)),
+    if (showProviders) {
+      return CommonScaffold(
+        titleWidget: _buildTitle(),
+        actions: [
+          IconButton(
+            onPressed: () => updateExternalProviders(ref, context),
+            tooltip: appLocalizations.update,
+            icon: const Icon(Icons.sync),
           ),
         ],
+        body: const ProvidersBody(),
+      );
+    }
+
+    return CommonScaffold(
+      title: hasProviders ? null : appLocalizations.resources,
+      titleWidget: hasProviders ? _buildTitle() : null,
+      actions: hasProviders
+          ? [
+              CommonPopupBox(
+                targetBuilder: (open) {
+                  return IconButton(
+                    onPressed: () {
+                      open(offset: const Offset(0, 20));
+                    },
+                    tooltip: appLocalizations.more,
+                    icon: isUpdating
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: SyncedLoading(
+                              size: 24,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : const Icon(Icons.more_vert),
+                  );
+                },
+                popup: CommonPopupMenu(
+                  items: [
+                    PopupMenuItemData(
+                      icon: Icons.sync,
+                      label: appLocalizations.syncAll,
+                      onPressed: isUpdating ? null : _handleSyncAll,
+                    ),
+                    PopupMenuItemData(
+                      icon: Icons.replay,
+                      label: appLocalizations.reset,
+                      onPressed: _handleResetAll,
+                    ),
+                  ],
+                ),
+              ),
+            ]
+          : [
+              IconButton(
+                icon: const Icon(Icons.replay),
+                onPressed: _handleResetAll,
+                tooltip: appLocalizations.reset,
+              ),
+              IconButton(
+                icon: isUpdating
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: SyncedLoading(
+                          size: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
+                    : const Icon(Icons.sync),
+                onPressed: isUpdating ? null : _handleSyncAll,
+                tooltip: appLocalizations.syncAll,
+              ),
+            ],
+      body: ScrollEdgeRise(
+        builder: (context, rise) => ListView(
+          padding: EdgeInsets.only(
+            bottom:
+                (globalState.isAndroidTV ? 48.0 : 16.0) +
+                MediaQuery.of(context).padding.bottom,
+            top: 8 + rise,
+          ),
+          children: [
+            ListHeader(
+              title: appLocalizations.geoBuiltInResources,
+              padding: const EdgeInsets.only(
+                left: 16,
+                right: 8,
+                top: 4,
+                bottom: 8,
+              ),
+            ),
+            ...generateSection(
+              items: geoItems.map(
+                (geoItem) => GeoDataListItem(geoItem: geoItem),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -202,7 +337,9 @@ class _GeoDataListItemState extends ConsumerState<GeoDataListItem> {
           );
           if (message.isNotEmpty) throw message;
         } finally {
-          updatingKeysNotifier.update((s) => Set.of(s)..remove(geoItem.key));
+          if (mounted) {
+            updatingKeysNotifier.update((s) => Set.of(s)..remove(geoItem.key));
+          }
         }
       },
       silence: false,
@@ -212,14 +349,14 @@ class _GeoDataListItemState extends ConsumerState<GeoDataListItem> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(
-      geoUpdatingKeysProvider.select((s) => s.contains(geoItem.key)),
-      (prev, next) {
-        if (prev == true && next == false && mounted) {
-          setState(() {});
-        }
-      },
-    );
+    ref.listen(geoUpdatingKeysProvider.select((s) => s.contains(geoItem.key)), (
+      prev,
+      next,
+    ) {
+      if (prev == true && next == false && mounted) {
+        setState(() {});
+      }
+    });
 
     final url = ref.watch(
       patchClashConfigProvider.select(
@@ -285,7 +422,10 @@ class _GeoDataListItemState extends ConsumerState<GeoDataListItem> {
                                   width: 30,
                                   child: Padding(
                                     padding: EdgeInsets.all(2),
-                                    child: CircularProgressIndicator(),
+                                    child: SyncedLoading(
+                                      size: 26,
+                                      child: CircularProgressIndicator(),
+                                    ),
                                   ),
                                 )
                               : CommonChip(

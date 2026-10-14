@@ -596,40 +596,6 @@ class BuildCommand extends Command {
     await Build.exec(Build.getExecutable('npm install -g appdmg'));
   }
 
-  Future<void> _setMacOSImpeller(bool enable) async {
-    final infoPlistPath = 'macos/Runner/Info.plist';
-    final file = File(infoPlistPath);
-
-    if (!await file.exists()) {
-      print('Warning: Info.plist not found at $infoPlistPath');
-      return;
-    }
-
-    var content = await file.readAsString();
-
-    content = content.replaceAll(
-      RegExp(r'\s*<key>FLTDisableImpeller</key>\s*<(?:true|false)/>'),
-      '',
-    );
-    content = content.replaceAll(
-      RegExp(r'\s*<key>FLTEnableImpeller</key>\s*<(?:true|false)/>'),
-      '',
-    );
-
-    if (!enable) {
-      const impellerEntry = '\t<key>FLTEnableImpeller</key>\n\t<false/>\n';
-      content = content.replaceFirst(
-        '</dict>\n</plist>',
-        '$impellerEntry</dict>\n</plist>',
-      );
-    }
-
-    await file.writeAsString(content);
-    print(
-      'macOS ${enable ? "default" : "compatible"} build: Impeller ${enable ? "enabled" : "disabled"}',
-    );
-  }
-
   Future<void> _buildDistributor({
     required Target target,
     required String targets,
@@ -799,6 +765,9 @@ class BuildCommand extends Command {
     bool compatible = false,
     String? coreHash,
   }) async {
+    if (compatible && target != Target.windows && target != Target.linux) {
+      throw '--compatible is only supported for windows and linux';
+    }
     final mode = target == Target.android ? Mode.lib : Mode.core;
     final String actualOut = out ?? (target.same ? 'app' : 'core');
     Build.isDev = dev;
@@ -954,7 +923,6 @@ class BuildCommand extends Command {
         return;
       case Target.macos:
         await _getMacosDependencies();
-        await _setMacOSImpeller(!compatible);
         await Build.exec(
           Build.getExecutable('rm -rf Pods Podfile.lock'),
           workingDirectory: 'macos',

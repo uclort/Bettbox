@@ -6,29 +6,43 @@ import 'package:bett_box/state.dart';
 import 'package:bett_box/views/proxies/common.dart';
 import 'package:bett_box/widgets/widgets.dart';
 import 'package:emoji_regex/emoji_regex.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final proxyIconProvider = Provider.family<String, String>((ref, proxyName) {
+final _proxyIconMatchersProvider = Provider.autoDispose<List<(RegExp, String)>>(
+  (ref) {
+    final iconMap = ref.watch(
+      proxiesStyleSettingProvider.select((s) => s.iconMap),
+    );
+    final matchers = <(RegExp, String)>[];
+    for (final entry in iconMap.entries) {
+      try {
+        matchers.add((RegExp(entry.key), entry.value));
+      } catch (_) {}
+    }
+    return matchers;
+  },
+);
+
+final proxyIconProvider = Provider.autoDispose.family<String, String>((
+  ref,
+  proxyName,
+) {
   if (proxyName.isEmpty) return '';
   final style = ref.watch(
     proxiesStyleSettingProvider.select((s) => s.iconStyle),
   );
   if (style == ProxiesIconStyle.none) return '';
 
-  final iconMap = ref.watch(
-    proxiesStyleSettingProvider.select((s) => s.iconMap),
-  );
-  for (final entry in iconMap.entries) {
-    try {
-      if (RegExp(entry.key).hasMatch(proxyName)) {
-        return entry.value;
-      }
-    } catch (_) {}
+  for (final (pattern, icon) in ref.watch(_proxyIconMatchersProvider)) {
+    if (pattern.hasMatch(proxyName)) {
+      return icon;
+    }
   }
 
-  final groups = ref.watch(groupsProvider);
-  return groups.getGroup(proxyName)?.icon ?? '';
+  return ref.watch(
+    groupsProvider.select((groups) => groups.getGroup(proxyName)?.icon ?? ''),
+  );
 });
 
 class ProxyCard extends StatelessWidget {
@@ -36,10 +50,7 @@ class ProxyCard extends StatelessWidget {
   static final Map<String, bool> _emojiMatchCache = {};
 
   static bool _hasEmoji(String name) {
-    return _emojiMatchCache.putIfAbsent(
-      name,
-      () => _emojiRegex.hasMatch(name),
-    );
+    return _emojiMatchCache.putIfAbsent(name, () => _emojiRegex.hasMatch(name));
   }
 
   final String groupName;
@@ -104,12 +115,14 @@ class ProxyCard extends StatelessWidget {
             return SizedBox(
               height: measure.labelSmallHeight,
               width: measure.labelSmallHeight,
-              child: IconButton(
-                icon: const Icon(Icons.bolt),
-                iconSize: measure.labelSmallHeight,
-                padding: EdgeInsets.zero,
-                tooltip: appLocalizations.startTest,
-                onPressed: _handleTestCurrentDelay,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _handleTestCurrentDelay,
+                child: Icon(
+                  Icons.bolt,
+                  size: measure.labelSmallHeight,
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
               ),
             );
           }
@@ -138,10 +151,7 @@ class ProxyCard extends StatelessWidget {
 
     Widget wrapPadding(Widget child) {
       if (showComputedMark) {
-        return Padding(
-          padding: const EdgeInsets.only(right: 28),
-          child: child,
-        );
+        return Padding(padding: const EdgeInsets.only(right: 28), child: child);
       }
       return child;
     }
@@ -169,17 +179,15 @@ class ProxyCard extends StatelessWidget {
 
   bool _isSelectedProxy(WidgetRef ref) {
     return ref.watch(
-      getSelectedProxyNameProvider(groupName).select(
-        (name) => name == proxy.name,
-      ),
+      getSelectedProxyNameProvider(
+        groupName,
+      ).select((name) => name == proxy.name),
     );
   }
 
   bool _isComputedMatch(WidgetRef ref) {
     return ref.watch(
-      getProxyNameProvider(groupName).select(
-        (name) => name == proxy.name,
-      ),
+      getProxyNameProvider(groupName).select((name) => name == proxy.name),
     );
   }
 
@@ -230,8 +238,8 @@ class ProxyCard extends StatelessWidget {
     return Consumer(
       builder: (_, ref, child) {
         final isSelected = _isSelectedProxy(ref);
-        final isComputedMatch = groupType.isComputedSelected &&
-            _isComputedMatch(ref);
+        final isComputedMatch =
+            groupType.isComputedSelected && _isComputedMatch(ref);
         final proxyNameWidget = _buildProxyNameWithIcon(
           context,
           ref,
@@ -297,15 +305,14 @@ class ProxyCard extends StatelessWidget {
                               child: TooltipText(
                                 text: Text(
                                   proxy.type,
-                                  style: context.textTheme.bodySmall
-                                      ?.copyWith(
-                                        overflow: TextOverflow.ellipsis,
-                                        color: context
-                                            .textTheme
-                                            .bodySmall
-                                            ?.color
-                                            ?.opacity80,
-                                      ),
+                                  style: context.textTheme.bodySmall?.copyWith(
+                                    overflow: TextOverflow.ellipsis,
+                                    color: context
+                                        .textTheme
+                                        .bodySmall
+                                        ?.color
+                                        ?.opacity80,
+                                  ),
                                 ),
                               ),
                             ),

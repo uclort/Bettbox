@@ -1,14 +1,14 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:bett_box/common/common.dart';
+import 'package:bett_box/common/common.dart' hide ProcessIcon;
 import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/models.dart';
 import 'package:bett_box/plugins/app.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
 import 'package:collection/collection.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:bett_box/providers/providers.dart';
 
@@ -44,6 +44,7 @@ class TrackerInfoItem extends ConsumerWidget {
   final int index;
   final int count;
   final bool reversed;
+  final bool showSpeed;
 
   const TrackerInfoItem({
     super.key,
@@ -54,26 +55,34 @@ class TrackerInfoItem extends ConsumerWidget {
     required this.index,
     required this.count,
     this.reversed = false,
+    this.showSpeed = false,
   });
 
   static double get subTitleHeight {
-    return globalState.measure.bodySmallHeight + 20;
+    return globalState.measure.bodySmallHeight + 12;
   }
 
   static double get height {
     final measure = globalState.measure;
     return measure.bodyMediumHeight +
-        8 +
+        4 +
         8 +
         measure.bodyLargeHeight +
         subTitleHeight +
-        16 * 2;
+        12 * 2;
   }
 
   String _getSourceText(TrackerInfo trackerInfo) {
     final progress = trackerInfo.progressText.isNotEmpty
         ? '${trackerInfo.progressText} · '
         : '';
+    if (showSpeed) {
+      final upSpeed = TrafficValue(value: trackerInfo.uploadSpeed).toString();
+      final downSpeed = TrafficValue(
+        value: trackerInfo.downloadSpeed,
+      ).toString();
+      return '$progress$upSpeed/s↑ $downSpeed/s↓';
+    }
     final up = TrafficValue(value: trackerInfo.upload).toString();
     final down = TrafficValue(value: trackerInfo.download).toString();
     return '$progress$up↑ $down↓';
@@ -83,8 +92,7 @@ class TrackerInfoItem extends ConsumerWidget {
   Widget build(BuildContext context, ref) {
     final value = ref.watch(
       patchClashConfigProvider.select(
-        (state) =>
-            state.findProcessMode == FindProcessMode.always && system.isAndroid,
+        (state) => state.findProcessMode == FindProcessMode.always,
       ),
     );
     final title = Column(
@@ -100,7 +108,10 @@ class TrackerInfoItem extends ConsumerWidget {
                 trackerInfo.desc,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: context.textTheme.bodyLarge,
+                style: context.textTheme.bodyLarge?.copyWith(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
             Text(
@@ -111,13 +122,14 @@ class TrackerInfoItem extends ConsumerWidget {
             ),
           ],
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Text(
           _getSourceText(trackerInfo),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: context.textTheme.bodyMedium?.copyWith(
-            color: context.colorScheme.onSurfaceVariant,
+            fontSize: 12.5,
+            color: context.colorScheme.onSurfaceVariant.opacity80,
           ),
         ),
       ],
@@ -137,19 +149,33 @@ class TrackerInfoItem extends ConsumerWidget {
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               physics: const ClampingScrollPhysics(),
-              child: Row(
-                spacing: 6,
-                children: [
-                  for (final chain in chains)
-                    CommonChip(
-                      label: chain,
-                      labelStyle: labelStyle,
-                      onPressed: () {
-                        if (onClickKeyword == null) return;
-                        onClickKeyword!(chain);
-                      },
+              child: Theme(
+                data: Theme.of(context).copyWith(
+                  visualDensity: VisualDensity.compact,
+                  canvasColor: context.colorScheme.onSurfaceVariant.withValues(
+                    alpha: 0.08,
+                  ),
+                  chipTheme: ChipTheme.of(context).copyWith(
+                    side: BorderSide.none,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(8)),
                     ),
-                ],
+                  ),
+                ),
+                child: Row(
+                  spacing: 6,
+                  children: [
+                    for (final chain in chains)
+                      CommonChip(
+                        label: chain,
+                        labelStyle: labelStyle,
+                        onPressed: () {
+                          if (onClickKeyword == null) return;
+                          onClickKeyword!(chain);
+                        },
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -164,8 +190,8 @@ class TrackerInfoItem extends ConsumerWidget {
             onClick: onClickKeyword,
           )
         : null;
-    final listItem = ListItem(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+    final listItem = InkWell(
+      focusColor: context.colorScheme.primary.withValues(alpha: 0.18),
       onTap: () {
         showExtend(
           context,
@@ -181,31 +207,32 @@ class TrackerInfoItem extends ConsumerWidget {
           },
         );
       },
-      title: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            spacing: 12,
-            children: [
-              ?icon,
-              Flexible(child: title),
-            ],
-          ),
-          const SizedBox(height: 8),
-          subTitle,
-        ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              spacing: 12,
+              children: [
+                ?icon,
+                Flexible(child: title),
+              ],
+            ),
+            const SizedBox(height: 8),
+            subTitle,
+          ],
+        ),
       ),
     );
-    return RepaintBoundary(
-      child: ContinuousListItem(
-        index: index,
-        count: count,
-        reversed: reversed,
-        child: listItem,
-      ),
+    return ContinuousListItem(
+      index: index,
+      count: count,
+      reversed: reversed,
+      child: listItem,
     );
   }
 }
@@ -220,7 +247,9 @@ Future<Uint8List?> _getPackageIcon(String process, String processPath) {
   }
   return _iconLoads[cacheKey] ??=
       () async {
-        var icon = await app.getPackageIcon(process, processPath: processPath);
+        var icon = system.isDesktop && !system.isMacOS
+            ? await processIcon.get(processPath)
+            : await app.getPackageIcon(process, processPath: processPath);
         if (icon == null && system.isMacOS) {
           await Future<void>.delayed(const Duration(milliseconds: 120));
           icon = await app.getPackageIcon(
@@ -312,6 +341,9 @@ class _ProcessIconState extends State<ProcessIcon> {
             builder: (context, snapshot) {
               final iconBytes = snapshot.data;
               if (iconBytes == null) {
+                if (system.isDesktop) {
+                  return Icon(Icons.terminal, size: widget.size);
+                }
                 return Icon(Icons.apps_outlined, size: widget.size);
               }
               return Image(

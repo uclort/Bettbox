@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:bett_box/models/models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,7 +14,8 @@ class Preferences {
   static Preferences? _instance;
   Completer<SharedPreferences?> sharedPreferencesCompleter = Completer();
 
-  Future<bool> get isInit async => await sharedPreferencesCompleter.future != null;
+  Future<bool> get isInit async =>
+      await sharedPreferencesCompleter.future != null;
 
   Preferences._internal() {
     SharedPreferences.getInstance()
@@ -34,7 +36,9 @@ class Preferences {
       final clashConfigMap = json.decode(clashConfigString);
       return ClashConfig.fromJson(clashConfigMap);
     } catch (e, stackTrace) {
-      commonPrint.log('Failed to parse clash config from preferences: $e\n$stackTrace');
+      commonPrint.error(
+        'Failed to parse clash config from preferences: $e\n$stackTrace',
+      );
       return null;
     }
   }
@@ -54,18 +58,22 @@ class Preferences {
         }
       }
     } catch (e, stackTrace) {
-      commonPrint.log('Failed to parse config from file: $e\n$stackTrace');
+      commonPrint.error('Failed to parse config from file: $e\n$stackTrace');
     }
 
     Config? prefsConfig;
-    try {
-      final configString = preferences?.getString(configKey);
-      if (configString != null && configString.isNotEmpty) {
-        final configMap = json.decode(configString);
-        prefsConfig = Config.compatibleFromJson(configMap);
+    if (fileConfig == null || fileConfig.profiles.isEmpty) {
+      try {
+        final configString = preferences?.getString(configKey);
+        if (configString != null && configString.isNotEmpty) {
+          final configMap = json.decode(configString);
+          prefsConfig = Config.compatibleFromJson(configMap);
+        }
+      } catch (e, stackTrace) {
+        commonPrint.error(
+          'Failed to parse config from preferences: $e\n$stackTrace',
+        );
       }
-    } catch (e, stackTrace) {
-      commonPrint.log('Failed to parse config from preferences: $e\n$stackTrace');
     }
 
     Config? selectedConfig;
@@ -84,8 +92,12 @@ class Preferences {
     }
 
     if (selectedConfig != null &&
-        preferences?.getBool('autoLaunch') != selectedConfig.appSetting.autoLaunch) {
-      await preferences?.setBool('autoLaunch', selectedConfig.appSetting.autoLaunch);
+        preferences?.getBool('autoLaunch') !=
+            selectedConfig.appSetting.autoLaunch) {
+      await preferences?.setBool(
+        'autoLaunch',
+        selectedConfig.appSetting.autoLaunch,
+      );
     }
 
     if (Platform.isMacOS &&
@@ -100,17 +112,19 @@ class Preferences {
     final preferences = await sharedPreferencesCompleter.future;
     await preferences?.setBool('autoLaunch', config.appSetting.autoLaunch);
 
-    final jsonStr = json.encode(config);
+    final jsonStr = await Isolate.run(() => json.encode(config));
 
     try {
       await preferences?.setString(configKey, jsonStr);
     } catch (e) {
-      commonPrint.log('Failed to mirror config to preferences: $e');
+      commonPrint.warn('Failed to mirror config to preferences: $e');
     }
 
     try {
       final configFilePath = await appPath.appConfigPath;
-      final tempFile = File('$configFilePath.${DateTime.now().microsecondsSinceEpoch}.tmp');
+      final tempFile = File(
+        '$configFilePath.${DateTime.now().microsecondsSinceEpoch}.tmp',
+      );
       await tempFile.parent.create(recursive: true);
       await tempFile.writeAsString(jsonStr, flush: true);
       try {
@@ -123,7 +137,7 @@ class Preferences {
       }
       return true;
     } catch (e, stackTrace) {
-      commonPrint.log('Failed to save config to file: $e\n$stackTrace');
+      commonPrint.error('Failed to save config to file: $e\n$stackTrace');
       return false;
     }
   }

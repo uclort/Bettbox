@@ -1,6 +1,6 @@
 import 'package:emoji_regex/emoji_regex.dart';
 import 'package:bett_box/enum/enum.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../state.dart';
 
@@ -53,6 +53,8 @@ class EmojiText extends StatelessWidget {
   final TextOverflow? overflow;
   final TextAlign? textAlign;
 
+  static final _emojiRegex = emojiRegex();
+
   const EmojiText(
     this.text, {
     super.key,
@@ -62,13 +64,9 @@ class EmojiText extends StatelessWidget {
     this.textAlign,
   });
 
-  List<TextSpan> _buildTextSpans(
-    String text,
-    TextStyle defaultStyle,
-  ) {
+  static List<TextSpan> buildSpans(String text, TextStyle style) {
     final List<TextSpan> spans = [];
-    final matches = emojiRegex().allMatches(text);
-    final effectiveStyle = defaultStyle.merge(style);
+    final matches = _emojiRegex.allMatches(text);
 
     int lastMatchEnd = 0;
     for (final match in matches) {
@@ -76,14 +74,14 @@ class EmojiText extends StatelessWidget {
         spans.add(
           TextSpan(
             text: text.substring(lastMatchEnd, match.start),
-            style: effectiveStyle,
+            style: style,
           ),
         );
       }
       spans.add(
         TextSpan(
           text: match.group(0),
-          style: effectiveStyle.merge(
+          style: style.merge(
             TextStyle(
               fontFamily: FontFamily.twEmoji.value,
               fontFamilyFallback: [FontFamily.twEmoji.value],
@@ -94,9 +92,7 @@ class EmojiText extends StatelessWidget {
       lastMatchEnd = match.end;
     }
     if (lastMatchEnd < text.length) {
-      spans.add(
-        TextSpan(text: text.substring(lastMatchEnd), style: effectiveStyle),
-      );
+      spans.add(TextSpan(text: text.substring(lastMatchEnd), style: style));
     }
 
     return spans;
@@ -107,9 +103,7 @@ class EmojiText extends StatelessWidget {
     final defaultStyle = DefaultTextStyle.of(context).style;
 
     return Text.rich(
-      TextSpan(
-        children: _buildTextSpans(text, defaultStyle),
-      ),
+      TextSpan(children: buildSpans(text, defaultStyle.merge(style))),
       textAlign: textAlign ?? TextAlign.start,
       maxLines: maxLines,
       overflow: overflow ?? TextOverflow.clip,

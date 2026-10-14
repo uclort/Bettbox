@@ -50,6 +50,52 @@ public class WindowExtPlugin: NSObject, FlutterPlugin {
     }
 
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-        result(FlutterMethodNotImplemented)
+        switch call.method {
+        case "getFileIcon":
+            guard let arguments = call.arguments as? [String: Any],
+                  let path = arguments["path"] as? String,
+                  let size = arguments["size"] as? Int,
+                  size > 0,
+                  FileManager.default.fileExists(atPath: path) else {
+                result(nil)
+                return
+            }
+            DispatchQueue.main.async {
+                let data = self.getFileIcon(path, size)
+                result(data.map { FlutterStandardTypedData(bytes: $0) })
+            }
+        default:
+            result(FlutterMethodNotImplemented)
+        }
     }
+
+    private func getFileIcon(_ path: String, _ size: Int) -> Data? {
+        let icon = NSWorkspace.shared.icon(forFile: path)
+        guard let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: size,
+            pixelsHigh: size,
+            bitsPerSample: 8,
+            samplesPerPixel: 4,
+            hasAlpha: true,
+            isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: 0,
+            bitsPerPixel: 0
+        ) else {
+            return nil
+        }
+        rep.size = NSSize(width: size, height: size)
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+        icon.draw(
+            in: NSRect(x: 0, y: 0, width: size, height: size),
+            from: .zero,
+            operation: .copy,
+            fraction: 1
+        )
+        NSGraphicsContext.restoreGraphicsState()
+        return rep.representation(using: .png, properties: [:])
+    }
+
 }

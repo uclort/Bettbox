@@ -7,7 +7,7 @@ import 'package:bett_box/plugins/app.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/dialog.dart';
 import 'package:ffi/ffi.dart' as pkg_ffi;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:win32/win32.dart' as win32;
 
 class AndroidAppUpdateState {
@@ -91,7 +91,8 @@ class CustomAppUpdater with UpdaterListener {
 
   /// WinSparkle 使用纯构建号比较更新，同时在界面展示完整 ProductVersion。
   void _configureWindowsAppVersion() {
-    final filePath = pkg_ffi.calloc<ffi.Uint16>(win32.MAX_PATH)
+    final filePath = pkg_ffi
+        .calloc<ffi.Uint16>(win32.MAX_PATH)
         .cast<pkg_ffi.Utf16>();
     final unused = pkg_ffi.calloc<ffi.Uint32>();
     final translations = pkg_ffi.calloc<ffi.Pointer>();
@@ -101,31 +102,31 @@ class CustomAppUpdater with UpdaterListener {
     ffi.Pointer<ffi.Uint8>? versionData;
     try {
       final pathLength = win32.GetModuleFileName(
-        0,
-        filePath,
+        null,
+        win32.PWSTR(filePath),
         win32.MAX_PATH,
-      );
+      ).value;
       if (pathLength == 0) return;
 
-      final dataSize = win32.GetFileVersionInfoSize(filePath, unused);
+      final dataSize = win32.GetFileVersionInfoSize(
+        win32.PCWSTR(filePath),
+        unused,
+      ).value;
       if (dataSize == 0) return;
       versionData = pkg_ffi.calloc<ffi.Uint8>(dataSize);
-      if (win32.GetFileVersionInfo(
-            filePath,
-            0,
-            dataSize,
-            versionData,
-          ) ==
-          0) {
+      if (!win32.GetFileVersionInfo(
+        win32.PCWSTR(filePath),
+        dataSize,
+        versionData,
+      ).value) {
         return;
       }
-      if (win32.VerQueryValue(
+      if (!win32.VerQueryValue(
             versionData,
-            '\\VarFileInfo\\Translation'.toNativeUtf16(),
+            win32.PCWSTR('\\VarFileInfo\\Translation'.toNativeUtf16()),
             translations,
             translationLength,
-          ) ==
-          0 ||
+          ) ||
           translationLength.value < 4) {
         return;
       }
@@ -139,13 +140,12 @@ class CustomAppUpdater with UpdaterListener {
         ..write(language.toRadixString(16).padLeft(4, '0'))
         ..write(codePage.toRadixString(16).padLeft(4, '0'))
         ..write('\\ProductVersion');
-      if (win32.VerQueryValue(
+      if (!win32.VerQueryValue(
             versionData,
-            productVersionKey.toString().toNativeUtf16(),
+            win32.PCWSTR(productVersionKey.toString().toNativeUtf16()),
             versionPointer,
             versionLength,
-          ) ==
-          0 ||
+          ) ||
           versionLength.value == 0) {
         return;
       }
@@ -169,33 +169,29 @@ class CustomAppUpdater with UpdaterListener {
     }
   }
 
-  void _configureWinSparkleVersion(
-    String productVersion,
-    String buildNumber,
-  ) {
+  void _configureWinSparkleVersion(String productVersion, String buildNumber) {
     final libraryName = 'WinSparkle.dll'.toNativeUtf16();
-    final detailsProcedureName =
-        'win_sparkle_set_app_details'.toNativeUtf8();
-    final buildProcedureName =
-        'win_sparkle_set_app_build_version'.toNativeUtf8();
+    final detailsProcedureName = 'win_sparkle_set_app_details'.toNativeUtf8();
+    final buildProcedureName = 'win_sparkle_set_app_build_version'
+        .toNativeUtf8();
     final company = 'com.appshub'.toNativeUtf16();
     final appName = 'Bettbox'.toNativeUtf16();
     final version = productVersion.toNativeUtf16();
     final build = buildNumber.toNativeUtf16();
-    final library = win32.LoadLibrary(libraryName);
+    final library = win32.LoadLibrary(win32.PCWSTR(libraryName)).value;
     try {
-      if (library == 0) {
+      if (!library.isValid) {
         commonPrint.log('无法加载 WinSparkle.dll，跳过版本配置');
         return;
       }
       final detailsProcedure = win32.GetProcAddress(
         library,
-        detailsProcedureName,
-      );
+        win32.PCSTR(detailsProcedureName),
+      ).value;
       final buildProcedure = win32.GetProcAddress(
         library,
-        buildProcedureName,
-      );
+        win32.PCSTR(buildProcedureName),
+      ).value;
       if (detailsProcedure == ffi.Pointer.fromAddress(0) ||
           buildProcedure == ffi.Pointer.fromAddress(0)) {
         commonPrint.log('WinSparkle 版本配置函数不可用');
@@ -220,9 +216,7 @@ class CustomAppUpdater with UpdaterListener {
           >();
       final setBuildVersion = buildProcedure
           .cast<
-            ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<pkg_ffi.Utf16>)
-            >
+            ffi.NativeFunction<ffi.Void Function(ffi.Pointer<pkg_ffi.Utf16>)>
           >()
           .asFunction<void Function(ffi.Pointer<pkg_ffi.Utf16>)>();
       setAppDetails(company, appName, version);
@@ -230,7 +224,7 @@ class CustomAppUpdater with UpdaterListener {
     } catch (e) {
       commonPrint.log('配置 WinSparkle 版本失败：$e');
     } finally {
-      if (library != 0) win32.FreeLibrary(library);
+      if (library.isValid) win32.FreeLibrary(library);
       pkg_ffi.calloc.free(libraryName);
       pkg_ffi.calloc.free(detailsProcedureName);
       pkg_ffi.calloc.free(buildProcedureName);

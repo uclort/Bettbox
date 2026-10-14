@@ -3,7 +3,7 @@ import 'package:bett_box/models/models.dart';
 import 'package:bett_box/providers/app.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class NetworkSpeed extends ConsumerWidget {
@@ -41,7 +41,7 @@ class NetworkSpeed extends ConsumerWidget {
     final color = context.colorScheme.onSurfaceVariant.opacity80;
     final primaryColor = Theme.of(context).colorScheme.primary;
     return SizedBox(
-      height: getWidgetHeight(2),
+      height: getWidgetHeight(context, 2),
       child: CommonCard(
         onPressed: () {
           globalState.openUrl('https://ptclspeed.speedtestcustom.com');

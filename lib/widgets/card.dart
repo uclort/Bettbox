@@ -1,7 +1,7 @@
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/widgets/fade_box.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'text.dart';
 
@@ -77,6 +77,40 @@ class InfoHeader extends StatelessWidget {
   }
 }
 
+class SmoothRoundedRectangleBorder extends RoundedRectangleBorder {
+  const SmoothRoundedRectangleBorder({
+    super.side,
+    super.borderRadius = BorderRadius.zero,
+  });
+
+  @override
+  void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {
+    if (side.style == BorderStyle.none) return;
+    final borderRect = borderRadius.resolve(textDirection).toRRect(rect);
+    if (side.width <= 0.0) {
+      canvas.drawRRect(borderRect, side.toPaint());
+      return;
+    }
+    canvas.drawRRect(
+      borderRect.deflate(side.width / 2.0),
+      side.toPaint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = side.width,
+    );
+  }
+
+  @override
+  SmoothRoundedRectangleBorder copyWith({
+    BorderSide? side,
+    BorderRadiusGeometry? borderRadius,
+  }) {
+    return SmoothRoundedRectangleBorder(
+      side: side ?? this.side,
+      borderRadius: borderRadius ?? this.borderRadius,
+    );
+  }
+}
+
 class CommonCard extends StatelessWidget {
   const CommonCard({
     super.key,
@@ -125,9 +159,7 @@ class CommonCard extends StatelessWidget {
     return BorderSide(
       color: isSelected
           ? colorScheme.primary
-          : colorScheme.outlineVariant.withValues(
-              alpha: isLight ? 0.45 : 0.25,
-            ),
+          : colorScheme.outlineVariant.withValues(alpha: isLight ? 0.45 : 0.25),
       strokeAlign: BorderSide.strokeAlignInside,
     );
   }
@@ -174,15 +206,6 @@ class CommonCard extends StatelessWidget {
       childWidget = Stack(children: children);
     }
 
-    Widget contentWidget = childWidget;
-    if (clipBehavior != Clip.none) {
-      contentWidget = ClipRRect(
-        borderRadius: BorderRadius.circular(actualRadius),
-        clipBehavior: clipBehavior,
-        child: childWidget,
-      );
-    }
-
     final isInteractive = onPressed != null || onLongPress != null;
     final card = OutlinedButton(
       onLongPress: onLongPress,
@@ -190,7 +213,7 @@ class CommonCard extends StatelessWidget {
       style: ButtonStyle(
         padding: const WidgetStatePropertyAll(EdgeInsets.zero),
         shape: WidgetStatePropertyAll(
-          RoundedRectangleBorder(
+          SmoothRoundedRectangleBorder(
             borderRadius: BorderRadius.circular(actualRadius),
           ),
         ),
@@ -206,7 +229,7 @@ class CommonCard extends StatelessWidget {
         tapTargetSize: isInteractive ? null : MaterialTapTargetSize.shrinkWrap,
       ),
       onPressed: onPressed,
-      child: contentWidget,
+      child: childWidget,
     );
 
     return switch (enterAnimated) {

@@ -5,7 +5,7 @@ import 'package:bett_box/providers/providers.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_svg/svg.dart';
@@ -21,6 +21,7 @@ class _MediaUnlockState extends ConsumerState<MediaUnlock> {
   MediaUnlockState? _lastState;
   List<MediaPlatform>? _lastDisplayedPlatforms;
   bool? _lastColorfulIcons;
+  ThemeData? _lastTheme;
   Widget? _cachedCard;
 
   bool _shouldRebuildCard({
@@ -92,8 +93,9 @@ class _MediaUnlockState extends ConsumerState<MediaUnlock> {
           child: SizedBox(
             height: 6.ap,
             child: LinearProgressIndicator(
-              backgroundColor:
-                  context.colorScheme.primary.withValues(alpha: 0.12),
+              backgroundColor: context.colorScheme.primary.withValues(
+                alpha: 0.12,
+              ),
               valueColor: AlwaysStoppedAnimation<Color>(
                 context.colorScheme.primary.withValues(alpha: 0.6),
               ),
@@ -140,12 +142,16 @@ class _MediaUnlockState extends ConsumerState<MediaUnlock> {
     bool isItemTesting = false,
     required bool colorfulIcons,
   }) {
-    final isTesting = isItemTesting ||
+    final isTesting =
+        isItemTesting ||
         (isLoading &&
             (result == null || result.status == MediaUnlockStatus.testing));
     final status = isTesting
         ? MediaUnlockStatus.testing
-        : (result?.status ?? (isLoading ? MediaUnlockStatus.testing : MediaUnlockStatus.unknown));
+        : (result?.status ??
+              (isLoading
+                  ? MediaUnlockStatus.testing
+                  : MediaUnlockStatus.unknown));
     final color = status.statusColor(context.colorScheme);
     final latency = result?.latency;
     final String statusDisplay;
@@ -162,7 +168,8 @@ class _MediaUnlockState extends ConsumerState<MediaUnlock> {
       statusDisplay = _getStatusText(status, platform);
     }
 
-    final isError = status == MediaUnlockStatus.blocked ||
+    final isError =
+        status == MediaUnlockStatus.blocked ||
         status == MediaUnlockStatus.failed;
 
     final iconSize = platform.iconSize;
@@ -230,17 +237,12 @@ class _MediaUnlockState extends ConsumerState<MediaUnlock> {
               child: Container(
                 width: 6.ap,
                 height: 6.ap,
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                ),
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
               ),
             ),
           ),
           SizedBox(width: 10.ap),
-          Expanded(
-            child: _buildLatencyBar(status, latency, context),
-          ),
+          Expanded(child: _buildLatencyBar(status, latency, context)),
           SizedBox(width: 10.ap),
           SizedBox(
             width: 52.ap,
@@ -274,28 +276,33 @@ class _MediaUnlockState extends ConsumerState<MediaUnlock> {
     );
     final displayedPlatforms =
         (pinned.isNotEmpty ? pinned : defaultPinnedMediaPlatforms)
-            .take(4)
+            .take(3)
             .toList();
 
     return SizedBox(
-      height: getWidgetHeight(2),
+      height: getWidgetHeight(context, 2),
       child: ValueListenableBuilder<MediaUnlockState>(
         valueListenable: mediaUnlockState.state,
         builder: (context, state, _) {
-          final shouldRebuild = _shouldRebuildCard(
-            newState: state,
-            displayedPlatforms: displayedPlatforms,
-            colorfulIcons: colorfulIcons,
-          );
+          final theme = Theme.of(context);
+          final shouldRebuild =
+              !identical(_lastTheme, theme) ||
+              _shouldRebuildCard(
+                newState: state,
+                displayedPlatforms: displayedPlatforms,
+                colorfulIcons: colorfulIcons,
+              );
           if (!shouldRebuild) {
             return _cachedCard!;
           }
+          _lastTheme = theme;
           _lastState = state;
           _lastDisplayedPlatforms = displayedPlatforms;
           _lastColorfulIcons = colorfulIcons;
 
-          final isWidgetLoading =
-              displayedPlatforms.any(state.testingPlatforms.contains);
+          final isWidgetLoading = displayedPlatforms.any(
+            state.testingPlatforms.contains,
+          );
           final card = CommonCard(
             onPressed: () {
               showExtend(
@@ -333,18 +340,21 @@ class _MediaUnlockState extends ConsumerState<MediaUnlock> {
                           onPressed: isWidgetLoading
                               ? null
                               : () => mediaUnlockState.checkPlatforms(
-                                    displayedPlatforms,
-                                    force: true,
-                                  ),
+                                  displayedPlatforms,
+                                  force: true,
+                                ),
                           icon: isWidgetLoading
                               ? RepaintBoundary(
                                   child: SizedBox(
                                     width: 13.ap,
                                     height: 13.ap,
-                                    child: SpinKitRing(
-                                      color: context.colorScheme.primary,
-                                      lineWidth: 1.5,
+                                    child: SyncedLoading(
                                       size: 13.ap,
+                                      child: SpinKitRing(
+                                        color: context.colorScheme.primary,
+                                        lineWidth: 1.5,
+                                        size: 13.ap,
+                                      ),
                                     ),
                                   ),
                                 )
@@ -380,8 +390,7 @@ class _MediaUnlockState extends ConsumerState<MediaUnlock> {
                             state.results[p],
                             state.isLoading,
                             context,
-                            isItemTesting:
-                                state.testingPlatforms.contains(p),
+                            isItemTesting: state.testingPlatforms.contains(p),
                             colorfulIcons: colorfulIcons,
                           ),
                       ],

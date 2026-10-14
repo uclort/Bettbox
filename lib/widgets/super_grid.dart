@@ -8,7 +8,7 @@ import 'package:bett_box/widgets/activate_box.dart';
 import 'package:bett_box/widgets/card.dart';
 import 'package:bett_box/widgets/grid.dart';
 import 'package:defer_pointer/defer_pointer.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/physics.dart';
 
 typedef VoidCallback = void Function();

@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:bett_box/common/color.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
 
 const Duration _bottomSheetEnterDuration = Duration(milliseconds: 300);
@@ -78,8 +78,7 @@ class _SideSheetState extends State<SideSheet> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final Color color =
-        widget.backgroundColor ?? colorScheme.surfaceContainer;
+    final Color color = widget.backgroundColor ?? colorScheme.surfaceContainer;
     final Color surfaceTintColor = Colors.transparent;
     final Color shadowColor = widget.shadowColor ?? Colors.transparent;
     final double elevation = widget.elevation ?? 0;
@@ -523,8 +522,7 @@ class ModalSideSheetRoute<T> extends PopupRoute<T> {
           final colorScheme = Theme.of(context).colorScheme;
           return _ModalSideSheet<T>(
             route: this,
-            backgroundColor:
-                backgroundColor ?? colorScheme.surfaceContainer,
+            backgroundColor: backgroundColor ?? colorScheme.surfaceContainer,
             elevation: elevation ?? 0,
             shape: shape,
             clipBehavior: clipBehavior,

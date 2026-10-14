@@ -1,8 +1,9 @@
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/models/clash_config.dart';
 import 'package:bett_box/providers/config.dart';
+import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class TunnelListWidget extends ConsumerWidget {
@@ -58,9 +59,8 @@ class TunnelListWidget extends ConsumerWidget {
     TunnelEntry? tunnel,
     int? index,
   }) {
-    showDialog(
-      context: context,
-      builder: (context) => _TunnelDialog(
+    globalState.showCommonDialog(
+      child: _TunnelDialog(
         tunnel: tunnel,
         onSave: (newTunnel) {
           final newTunnels = List<TunnelEntry>.from(tunnels);
@@ -122,50 +122,10 @@ class _TunnelDialogState extends State<_TunnelDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        widget.tunnel == null
-            ? appLocalizations.addTunnel
-            : appLocalizations.editTunnel,
-      ),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _networkController,
-              decoration: InputDecoration(
-                labelText: appLocalizations.tunnelNetwork,
-                hintText: appLocalizations.tunnelNetworkHint,
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _addressController,
-              decoration: InputDecoration(
-                labelText: appLocalizations.tunnelAddress,
-                hintText: appLocalizations.tunnelAddressHint,
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _targetController,
-              decoration: InputDecoration(
-                labelText: appLocalizations.tunnelTarget,
-                hintText: appLocalizations.tunnelTargetHint,
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _proxyController,
-              decoration: InputDecoration(
-                labelText: appLocalizations.tunnelProxy,
-                hintText: appLocalizations.tunnelProxyHint,
-              ),
-            ),
-          ],
-        ),
-      ),
+    return CommonDialog(
+      title: widget.tunnel == null
+          ? appLocalizations.addTunnel
+          : appLocalizations.editTunnel,
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
@@ -205,6 +165,42 @@ class _TunnelDialogState extends State<_TunnelDialog> {
           child: Text(appLocalizations.save),
         ),
       ],
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _networkController,
+            decoration: InputDecoration(
+              labelText: appLocalizations.tunnelNetwork,
+              hintText: appLocalizations.tunnelNetworkHint,
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _addressController,
+            decoration: InputDecoration(
+              labelText: appLocalizations.tunnelAddress,
+              hintText: appLocalizations.tunnelAddressHint,
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _targetController,
+            decoration: InputDecoration(
+              labelText: appLocalizations.tunnelTarget,
+              hintText: appLocalizations.tunnelTargetHint,
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _proxyController,
+            decoration: InputDecoration(
+              labelText: appLocalizations.tunnelProxy,
+              hintText: appLocalizations.tunnelProxyHint,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -222,9 +218,11 @@ class TunnelListView extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       body: tunnels.isEmpty
           ? Center(child: NullStatus(label: appLocalizations.noData))
-          : ListView(
-              padding: const EdgeInsets.only(top: 16),
-              children: [const TunnelListWidget()],
+          : ScrollEdgeRise(
+              builder: (_, rise) => ListView(
+                padding: EdgeInsets.only(top: 16 + rise),
+                children: [const TunnelListWidget()],
+              ),
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showTunnelDialog(context, ref, tunnels),
@@ -238,9 +236,8 @@ class TunnelListView extends ConsumerWidget {
     WidgetRef ref,
     List<TunnelEntry> tunnels,
   ) {
-    showDialog(
-      context: context,
-      builder: (context) => _TunnelDialog(
+    globalState.showCommonDialog(
+      child: _TunnelDialog(
         tunnel: null,
         onSave: (newTunnel) {
           final newTunnels = List<TunnelEntry>.from(tunnels);

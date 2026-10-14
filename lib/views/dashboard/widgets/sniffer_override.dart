@@ -2,7 +2,7 @@ import 'package:bett_box/common/common.dart';
 import 'package:bett_box/providers/config.dart';
 import 'package:bett_box/widgets/widgets.dart';
 import 'package:bett_box/views/config/sniffer.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class SnifferOverride extends StatelessWidget {
@@ -11,7 +11,7 @@ class SnifferOverride extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: getWidgetHeight(1),
+      height: getWidgetHeight(context, 1),
       child: CommonCard(
         info: Info(label: 'Sniffer', iconData: Icons.radar),
         onPressed: () {

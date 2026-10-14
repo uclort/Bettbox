@@ -51,16 +51,14 @@ Bettbox stands for: Better Experience, Out of the box.
 </div>
 
 ###   🛩️ Recommended Services
-### IEPL Dedicated Line  〢  [BBXY](https://www.bbxy01.com/v2/register?code=c09R)
-
-### Exclusive Discount Code (32% OFF): bettbox68
-
-**Review** : ❚ ❚  Established premium line operated overseas for years, Tier-1 enterprise BGP ingress + GZ-HK & SH-JP dedicated lines, approx. ¥17/mo or ¥127/yr after discount, unlocking streaming media & AI, with excellent latency and reputation. Ideal for users prioritizing high stability. Pro tip: Don't forget to use the 32% OFF discount code, and check in daily in the dashboard to claim an extra 5-10GB bonus bandwidth.
-
+#### Relay & Dedicated Lines  〢  [BBXY](https://www.bbxy01.com/v2/register?code=c09R)  〢  [BaiYueGuang](https://www.sibker.com/register?invite_code=YZq6L5zd)  〢  [MESL](https://panel.meslcloud.com/#/register?code=7vy22Bv2)  〢  [Ytoo](https://y-too.net/aff.php?aff=10354)
 --------------------------------
-### Cost-Effective Direct  〢  [Liangxin Cloud](https://xn--9kqz23b19z.com/#/register?code=VTnrQYAj)  〢  [Chuixue Cloud](https://xn--9kqs1lo79d.com/#/register?code=skKMTab7)  〢  [YiFen](https://xn--4gqx1hgtfdmt.com/#/register?code=AuCiXprV)
+#### Budget Direct Lines  〢  [Liangxin Cloud](https://xn--9kqz23b19z.com/#/register?code=VTnrQYAj)  〢  [Chuixue Cloud](https://xn--9kqs1lo79d.com/#/register?code=skKMTab7)  〢  [YiFen](https://xn--4gqx1hgtfdmt.com/#/register?code=AuCiXprV)  〢  [Peiqian](https://xn--mes358aby2apfg.com/register?code=z7TUZLmM&cover=sfw)
+--------------------------------
+####   BBXY Exclusive 32% OFF Promo Code: bettbox68
+--------------------------------
 
-**Review** : ❚  Mainly high-bandwidth or resource servers with relatively stable operation and low starting prices. 888GB / 1000GB non-expiring packages offer great cost-performance. Large allowance at affordable prices, ideal for budget users, backup traffic, or heavy downloading.
+**Review** : ❚ ❚  The links above are primarily for personal use or recommended/discussed by TG group members. They are presented here solely as affiliate (AFF) links (Note: purchases made through these links provide small commissions that help support the developer). This does not constitute any guarantee or commitment regarding their services. Given well-known reasons, you should clearly understand what this entails; please evaluate and choose carefully.
 
 ---
 ## 🛠️ Installation & Downloads
@@ -71,7 +69,7 @@ Please visit the **[[Releases]](https://github.com/appshubcc/Bettbox/releases)**
 * **Cross-Platform Desktop**: 
 **Windows 8.1+:** (x64/arm64)
 **Linux Kernel 5.4+:** (x64/arm64)
-**macOS 10.15+:** (Intel/Apple Silicon)
+**macOS 12.0+:** (Intel/Apple Silicon)
 * **Android 8.0+:** Android (ARMv8/ ARMv7/ x86_64/ Universal) 
 * **Android TV:** Fully adapted, optional ARMv7 32-bit for low-memory devices
 * **HarmonyOS NEXT:** Can be stably used with [[ZhuoYiTong]](https://harmonyos.cool/android-app)
@@ -113,7 +111,7 @@ Please visit the **[[Releases]](https://github.com/appshubcc/Bettbox/releases)**
 Building on Windows:
 
 * Requires a Windows PC (OS ≥ Windows 10)
-* Dependencies: Git, Visual Studio, Flutter 3.44.x, Golang, Inno Setup, Rust
+* Dependencies: Git, Visual Studio, Flutter 3.47.x, Golang, Inno Setup, Rust
 ```bash
 * flutter pub get
 * dart .\setup.dart windows --arch amd64 --out core (Build Core only)

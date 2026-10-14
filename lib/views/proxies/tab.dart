@@ -6,7 +6,7 @@ import 'package:bett_box/models/config.dart';
 import 'package:bett_box/providers/providers.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -211,18 +211,15 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
   @override
   Widget build(BuildContext context) {
     ref.watch(themeSettingProvider.select((state) => state.textScale));
-    final groups =
-        ref.watch(proxiesTabStateProvider.select((state) => state.groups));
-    final columns =
-        ref.watch(proxiesTabStateProvider.select((state) => state.columns));
+    final groups = ref.watch(
+      proxiesTabStateProvider.select((state) => state.groups),
+    );
+    final columns = ref.watch(
+      proxiesTabStateProvider.select((state) => state.columns),
+    );
     final cardType = ref.watch(
       proxiesTabStateProvider.select((state) => state.proxyCardType),
     );
-    final sortType = ref.watch(
-      proxiesTabStateProvider.select((state) => state.proxiesSortType),
-    );
-    final sortNum =
-        ref.watch(proxiesTabStateProvider.select((state) => state.sortNum));
 
     if (groups.isEmpty) {
       return NullStatus(
@@ -250,8 +247,6 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
           group: group,
           columns: columns,
           cardType: cardType,
-          sortType: sortType,
-          sortNum: sortNum,
         ),
       );
     }).toList();
@@ -276,9 +271,7 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
                     controller: _tabController,
                     padding: EdgeInsets.only(
                       left: 16,
-                      right: globalState.isAndroidTV
-                          ? 48
-                          : (value ? 48 : 0),
+                      right: globalState.isAndroidTV ? 48 : (value ? 48 : 0),
                     ),
                     dividerColor: Colors.transparent,
                     isScrollable: true,
@@ -319,10 +312,7 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
                       right: 0,
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildDelayTestButton(),
-                          if (value) child!,
-                        ],
+                        children: [_buildDelayTestButton(), if (value) child!],
                       ),
                     )
                   else if (value)
@@ -358,16 +348,12 @@ class ProxyGroupView extends ConsumerStatefulWidget {
   final Group group;
   final int columns;
   final ProxyCardType cardType;
-  final ProxiesSortType sortType;
-  final num sortNum;
 
   const ProxyGroupView({
     super.key,
     required this.group,
     required this.columns,
     required this.cardType,
-    required this.sortType,
-    required this.sortNum,
   });
 
   @override
@@ -379,36 +365,6 @@ class _ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
 
   List<Proxy> proxies = [];
   String? testUrl;
-  List<Proxy>? _cachedSortedProxies;
-  ProxiesSortType? _lastSortType;
-  List<Proxy>? _lastProxies;
-  String? _lastTestUrl;
-  num? _lastSortNum;
-
-  List<Proxy> _getSortedProxies() {
-    final group = widget.group;
-    final sortType = widget.sortType;
-    final proxies = group.all;
-    final testUrl = group.testUrl;
-    final sortNum = widget.sortNum;
-    if (_cachedSortedProxies != null &&
-        _lastSortType == sortType &&
-        _lastTestUrl == testUrl &&
-        _lastProxies == proxies &&
-        _lastSortNum == sortNum) {
-      return _cachedSortedProxies!;
-    }
-    _lastSortType = sortType;
-    _lastTestUrl = testUrl;
-    _lastProxies = proxies;
-    _lastSortNum = sortNum;
-    _cachedSortedProxies = globalState.appController.getSortProxies(
-      proxies: proxies,
-      sortType: sortType,
-      testUrl: testUrl,
-    );
-    return _cachedSortedProxies!;
-  }
 
   @override
   void initState() {
@@ -454,7 +410,12 @@ class _ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
   Widget build(BuildContext context) {
     ref.watch(themeSettingProvider.select((state) => state.textScale));
     final isMobileView = ref.watch(isMobileViewProvider);
-    final sortedProxies = _getSortedProxies();
+    final sortedProxies = ref.watch(
+      sortedGroupProxiesProvider(ref.watch(queryProvider), widget.group.name),
+    );
+    if (sortedProxies == null) {
+      return const SizedBox.shrink();
+    }
     proxies = sortedProxies;
     testUrl = widget.group.testUrl;
     final baseBottom =

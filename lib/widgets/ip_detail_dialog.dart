@@ -3,7 +3,7 @@ import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/models.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 void showIpDetailDialog(BuildContext context, String rawIp) {
@@ -369,7 +369,7 @@ class _IpDetailDialogState extends State<_IpDetailDialog> {
           _buildStatTile(
             icon: Icons.link_rounded,
             iconColor: context.colorScheme.tertiary,
-            label: appLocalizations.domain,
+            label: appLocalizations.organizationDomain,
             value: domainText,
           ),
       ];

@@ -3,7 +3,7 @@ import 'package:bett_box/models/common.dart';
 import 'package:bett_box/providers/config.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class DeveloperView extends ConsumerWidget {
@@ -58,9 +58,7 @@ class DeveloperView extends ConsumerWidget {
             onTap: () async {
               final res = await globalState.showMessage(
                 title: appLocalizations.clearDataTipTitle,
-                message: TextSpan(
-                  text: appLocalizations.clearDataTipDesc,
-                ),
+                message: TextSpan(text: appLocalizations.clearDataTipDesc),
               );
               if (res != true) return;
               await globalState.appController.handleClear();

@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/enum/enum.dart' hide Mode;
@@ -8,22 +10,25 @@ import 'package:bett_box/providers/app.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
 import 'package:code_forge/code_forge.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:re_highlight/languages/javascript.dart';
-import 'package:re_highlight/languages/yaml.dart';
+import 'package:re_highlight/languages/plaintext.dart';
 import 'package:re_highlight/re_highlight.dart' show Mode;
 import 'package:re_highlight/styles/atom-one-dark.dart';
 import 'package:re_highlight/styles/atom-one-light.dart';
 
 typedef EditorWidgetBuilder = Widget Function();
 
-const int _kLargeEditableLineThresholdMobile = 5800;
-const int _kLargeEditableLineThresholdDesktop = 5800;
-const Duration _kFindFocusDelay = Duration(milliseconds: 500);
-const Duration _kMinBusyDuration = Duration(milliseconds: 600);
+const double _kMinEditorZoom = 0.7;
+const double _kMaxEditorZoom = 1.5;
+const double _kMaxLineNumberZoom = 1;
+const double _kToolbarGapAbove = 32;
+const double _kToolbarGapBelow = 16;
+
+final List<String> _emojiFontFallback = [FontFamily.twEmoji.value];
 
 class EditorPage extends ConsumerStatefulWidget {
   final String title;
@@ -67,23 +72,46 @@ class _EditorPageState extends ConsumerState<EditorPage> {
   late _EditorFindController _findController;
   late UndoRedoController _undoController;
   late TextEditingController _titleController;
-  final _focusNode = FocusNode();
   late final FocusNode _titleFocusNode;
   late final FocusNode _saveButtonFocusNode;
   VoidCallback? _removePasteHandler;
+  VoidCallback? _hideSelectionToolbar;
   bool _lineWrap = false;
-  late final int _lineCount;
   bool _isLoading = true;
-  bool _isBusy = false;
+  Brightness? _brightness;
+  Map<String, TextStyle> _editorTheme = const {};
+  SyntaxHighlighter? _magnifierHighlighter;
+  final _magnifierComments = BlockCommentStates();
+  int _magnifierCommentsVersion = -1;
+  static double _zoom = 1;
+  double _baseFontSize = 14;
+  CodeSelectionStyle? _selectionStyle;
+  TextStyle? _textStyle;
+  TextStyle? _lineNumberStyle;
 
-  bool get _disableSyntaxHighlight =>
-      widget.simple || _lineCount > _largeEditableLineThreshold;
+  bool get _disableSyntaxHighlight => widget.simple;
 
-  bool get _isLineWrapDisabled => _lineCount > _largeEditableLineThreshold;
+  bool get _editorHasFocus => _controller.focusNode?.hasFocus ?? false;
 
-  int get _largeEditableLineThreshold => system.isDesktop
-      ? _kLargeEditableLineThresholdDesktop
-      : _kLargeEditableLineThresholdMobile;
+  late final String _original = CodeForgeController.normalizeLineBreaks(
+    widget.content,
+  );
+  int _loadedLength = 0;
+  int _checkedVersion = -1;
+  bool _modified = false;
+
+  bool get _isModified {
+    if (_isLoading) return false;
+    final version = _controller.contentVersion;
+    if (version != _checkedVersion) {
+      _checkedVersion = version;
+      _modified =
+          _controller.isComposingActive ||
+          _controller.length != _loadedLength ||
+          _controller.text != _original;
+    }
+    return _modified;
+  }
 
   @override
   void initState() {
@@ -122,12 +150,21 @@ class _EditorPageState extends ConsumerState<EditorPage> {
         return KeyEventResult.ignored;
       },
     );
-    _lineCount = widget.content.split('\n').length;
-    _lineWrap = !widget.readOnly && !_isLineWrapDisabled;
+    _lineWrap = !widget.readOnly;
     _controller = CodeForgeController();
     _controller.useSpaceAsTab = true;
     _controller.tabSize = 2;
-    _controller.text = widget.content;
+    _controller.enableLocalSuggestions = !widget.readOnly && !widget.simple;
+    if (!widget.simple) {
+      final language = widget.languages.firstOrNull;
+      _controller
+        ..lineCommentPrefix = switch (language) {
+          Language.yaml => '# ',
+          Language.javaScript => '// ',
+          _ => null,
+        }
+        ..blockComments = language == Language.javaScript;
+    }
     _findController = _EditorFindController(_controller);
     _undoController = UndoRedoController();
     _titleController = TextEditingController(text: widget.title);
@@ -136,18 +173,17 @@ class _EditorPageState extends ConsumerState<EditorPage> {
       _removePasteHandler = clipboardExt.addHandler(_handleNativePaste);
     }
 
-    final loadingStopwatch = Stopwatch()..start();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final elapsed = loadingStopwatch.elapsedMilliseconds;
-      final remaining = _kMinBusyDuration.inMilliseconds - elapsed;
-      if (remaining > 0) {
-        await Future.delayed(Duration(milliseconds: remaining));
-      }
-      if (mounted) setState(() => _isLoading = false);
+      await _routeSettled();
+      if (!mounted) return;
+      _controller
+        ..text = widget.content
+        ..selection = const TextSelection.collapsed(offset: 0);
+      _loadedLength = _controller.length;
+      _checkedVersion = _controller.contentVersion;
+      setState(() => _isLoading = false);
       if (widget.delayedFocus) {
-        Future.delayed(_kFindFocusDelay, () {
-          if (mounted) _focusNode.requestFocus();
-        });
+        unawaited(_controller.focusNode?.requestFocusWhenIdle());
       }
     });
   }
@@ -156,13 +192,14 @@ class _EditorPageState extends ConsumerState<EditorPage> {
   /// editor holds focus. Returns false so other handlers can take over.
   Future<bool> _handleNativePaste() async {
     if (widget.readOnly || widget.simple) return false;
-    if (!_focusNode.hasFocus) return false;
+    if (!_editorHasFocus) return false;
     await _controller.paste();
     return true;
   }
 
   @override
   void dispose() {
+    _hideSelectionToolbar?.call();
     _removePasteHandler?.call();
     _controller.text = '';
     _findController.dispose();
@@ -170,7 +207,6 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     _controller.dispose();
     _titleController.dispose();
     _titleFocusNode.dispose();
-    _focusNode.dispose();
     _saveButtonFocusNode.dispose();
     super.dispose();
   }
@@ -186,13 +222,11 @@ class _EditorPageState extends ConsumerState<EditorPage> {
   }
 
   void _handleSearch() {
-    _findController.isReplaceMode = false;
-    _findController.isActive = true;
+    _findController.show();
   }
 
   void _handleReplace() {
-    _findController.isReplaceMode = true;
-    _findController.isActive = true;
+    _findController.show(replace: true);
   }
 
   void _handleSave(BuildContext context) {
@@ -200,41 +234,228 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     if (widget.readOnly || widget.simple) return;
     if (_isLoading) return;
     final isNewScript = widget.title.isEmpty;
-    if (!isNewScript &&
-        _controller.text == widget.content &&
-        _titleController.text == widget.title) {
+    if (!isNewScript && !_isModified && _titleController.text == widget.title) {
       return;
     }
     widget.onSave!(context, _titleController.text, _controller.text);
   }
 
-  void _setBusy(bool value) {
-    if (!mounted) return;
-    setState(() => _isBusy = value);
-  }
-
-  Future<void> _withBusy(Future<void> Function() task) async {
-    _setBusy(true);
-    await SchedulerBinding.instance.endOfFrame;
-    if (!mounted) return;
-    final stopwatch = Stopwatch()..start();
-    try {
-      await task();
-    } finally {
-      final remaining =
-          _kMinBusyDuration.inMilliseconds - stopwatch.elapsedMilliseconds;
-      if (remaining > 0) {
-        await Future.delayed(Duration(milliseconds: remaining));
-      }
-      if (mounted) _setBusy(false);
-    }
-  }
-
-  Future<void> _toggleLineWrap() async {
-    await _withBusy(() async {
-      setState(() => _lineWrap = !_lineWrap);
+  Future<void> _routeSettled() async {
+    final route = ModalRoute.of(context);
+    while (route != null && route.offstage && route.isActive) {
       await SchedulerBinding.instance.endOfFrame;
+    }
+    final animation = route?.animation;
+    if (animation == null || !animation.isAnimating) return;
+    final completer = Completer<void>();
+    void listener(AnimationStatus status) {
+      if (status.isAnimating) return;
+      animation.removeStatusListener(listener);
+      completer.complete();
+    }
+
+    animation.addStatusListener(listener);
+    return completer.future;
+  }
+
+  void _toggleLineWrap() {
+    setState(() => _lineWrap = !_lineWrap);
+  }
+
+  void _updateStyles(BuildContext context) {
+    _baseFontSize = context.textTheme.bodyLarge?.fontSize?.ap ?? 14;
+    final colorScheme = context.colorScheme;
+    if (colorScheme.brightness != _brightness) {
+      _brightness = colorScheme.brightness;
+      _editorTheme = colorScheme.brightness == Brightness.dark
+          ? atomOneDarkTheme
+          : atomOneLightTheme;
+      _magnifierHighlighter = null;
+    }
+    final selectionStyle = CodeSelectionStyle(
+      cursorColor: colorScheme.primary,
+      selectionColor: colorScheme.primary.withAlpha(77),
+      cursorBubbleColor: colorScheme.primary,
+    );
+    if (_selectionStyle?.cursorColor != selectionStyle.cursorColor) {
+      _selectionStyle = selectionStyle;
+    }
+    final textStyle = TextStyle(
+      fontFamily: FontFamily.jetBrainsMono.value,
+      fontFamilyFallback: _emojiFontFallback,
+      fontSize: _baseFontSize * _zoom,
+    );
+    if (textStyle != _textStyle) {
+      _textStyle = textStyle;
+      _magnifierHighlighter = null;
+    }
+    _lineNumberStyle = TextStyle(
+      fontFamily: FontFamily.jetBrainsMono.value,
+      fontSize: _baseFontSize * math.min(_zoom, _kMaxLineNumberZoom),
+    );
+  }
+
+  TextSpan? _magnifierLineSpan(int line, String text) {
+    final highlighter = _highlighterForMagnifier;
+    if (_controller.blockComments) {
+      final version = _controller.contentVersion;
+      if (version != _magnifierCommentsVersion) {
+        _magnifierCommentsVersion = version;
+        _magnifierComments.reset();
+      }
+      if (_magnifierComments.startsInside(_controller, line)) {
+        return highlighter.blockCommentSpan(text);
+      }
+    }
+    return highlighter.lineSpan(text);
+  }
+
+  SyntaxHighlighter get _highlighterForMagnifier =>
+      _magnifierHighlighter ??= SyntaxHighlighter(
+        language: _languageMode(),
+        editorTheme: _editorTheme,
+        baseTextStyle: _textStyle,
+      );
+
+  void _commitZoom(double zoom) {
+    final previous = _zoom;
+    final fontSize = (_baseFontSize * zoom * 2).round() / 2;
+    final next = (fontSize / _baseFontSize).clamp(
+      _kMinEditorZoom,
+      _kMaxEditorZoom,
+    );
+    if (next == previous) return;
+    setState(() => _zoom = next);
+  }
+
+  void _setZoom(double zoom) {
+    if (zoom == _zoom) return;
+    setState(() => _zoom = zoom);
+  }
+
+  void _showContextMenu(
+    BuildContext context,
+    CodeForgeContextMenuRequest request,
+  ) {
+    final items = [
+      if (request.hasSelection && !request.readOnly)
+        PopupMenuItemData(
+          icon: Icons.content_cut,
+          label: appLocalizations.cut,
+          onPressed: request.cut,
+        ),
+      if (request.hasSelection)
+        PopupMenuItemData(
+          icon: Icons.content_copy,
+          label: appLocalizations.copy,
+          onPressed: request.copy,
+        ),
+      if (!request.readOnly)
+        PopupMenuItemData(
+          icon: Icons.content_paste,
+          label: appLocalizations.paste,
+          onPressed: request.paste,
+        ),
+      PopupMenuItemData(
+        icon: Icons.search,
+        label: appLocalizations.search,
+        onPressed: _handleSearch,
+      ),
+      if (!request.readOnly && _controller.lineCommentPrefix != null)
+        PopupMenuItemData(
+          icon: Icons.code,
+          label: appLocalizations.blockComment,
+          onPressed: _controller.toggleLineComment,
+        ),
+      if (!request.isAllSelected)
+        PopupMenuItemData(
+          icon: Icons.select_all,
+          label: appLocalizations.selectAll,
+          onPressed: request.selectAll,
+        ),
+    ];
+    if (items.isEmpty) return;
+    if (!system.isDesktop) {
+      _showSelectionToolbar(context, request, items);
+      return;
+    }
+    final navigator = Navigator.of(context);
+    final navigatorBox = navigator.context.findRenderObject();
+    if (navigatorBox is! RenderBox) return;
+    final route = EditorMenuRoute(
+      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+      anchor: navigatorBox.globalToLocal(request.globalPosition),
+      builder: (_) => CommonPopupMenu(items: items),
+    );
+    final stopWatching = _closeOnceOutdated(() {
+      if (route.isCurrent) navigator.pop();
     });
+    navigator.push(route).whenComplete(stopWatching);
+  }
+
+  void _showSelectionToolbar(
+    BuildContext context,
+    CodeForgeContextMenuRequest request,
+    List<PopupMenuItemData> items,
+  ) {
+    _hideSelectionToolbar?.call();
+    final overlay = Overlay.of(context);
+    final overlayBox = overlay.context.findRenderObject();
+    if (overlayBox is! RenderBox) return;
+    final position = overlayBox.globalToLocal(request.globalPosition);
+    final selectionRect = request.selectionRect;
+    final root = _editorTheme['root'];
+    final background = HSLColor.fromColor(
+      root?.backgroundColor ?? context.colorScheme.surface,
+    );
+    final entry = OverlayEntry(
+      builder: (_) => EditorSelectionToolbar(
+        anchorAbove: selectionRect == null
+            ? position.translate(0, -_kToolbarGapAbove)
+            : overlayBox.globalToLocal(selectionRect.topCenter),
+        anchorBelow: selectionRect == null
+            ? position.translate(0, _kToolbarGapBelow)
+            : overlayBox.globalToLocal(selectionRect.bottomCenter),
+        items: items,
+        backgroundColor: background
+            .withLightness((background.lightness + 0.03).clamp(0.0, 1.0))
+            .toColor(),
+        foregroundColor: root?.color,
+        onDismiss: () => _hideSelectionToolbar?.call(),
+      ),
+    );
+    late final VoidCallback stopWatching;
+    _hideSelectionToolbar = () {
+      _hideSelectionToolbar = null;
+      stopWatching();
+      entry.remove();
+    };
+    stopWatching = _closeOnceOutdated(() => _hideSelectionToolbar?.call());
+    overlay.insert(entry);
+  }
+
+  VoidCallback _closeOnceOutdated(VoidCallback close) {
+    final controller = _controller;
+    final selection = controller.selection;
+    final version = controller.contentVersion;
+    final composition = controller.imeComposition;
+    final focusNode = controller.focusNode;
+    final hadFocus = focusNode?.hasFocus ?? false;
+    void closeOnceOutdated() {
+      final outdated =
+          controller.selection != selection ||
+          controller.contentVersion != version ||
+          controller.imeComposition != composition ||
+          hadFocus && !(focusNode?.hasFocus ?? false);
+      if (outdated) close();
+    }
+
+    controller.addListener(closeOnceOutdated);
+    focusNode?.addListener(closeOnceOutdated);
+    return () {
+      controller.removeListener(closeOnceOutdated);
+      focusNode?.removeListener(closeOnceOutdated);
+    };
   }
 
   Future<void> _handleImport() async {
@@ -249,12 +470,12 @@ class _EditorPageState extends ConsumerState<EditorPage> {
       if (file == null) {
         return;
       }
-      final bytes = file.bytes;
-      if (bytes == null) {
+      final bytes = await file.readAsBytes();
+      if (bytes.isEmpty) {
         return;
       }
       final res = utf8.decode(bytes);
-      _controller.text = res;
+      _controller.replaceText(res);
       return;
     }
     final url = await globalState.showCommonDialog(
@@ -277,31 +498,21 @@ class _EditorPageState extends ConsumerState<EditorPage> {
       return;
     }
     final res = await request.getTextResponseForUrl(url);
-    _controller.text = res.data;
+    _controller.replaceText(res.data);
     widget.onUrlImport?.call(url);
   }
 
-  Mode? _languageMode() {
-    if (_disableSyntaxHighlight) return null;
-    final language = widget.languages.firstOrNull;
-    switch (language) {
-      case Language.yaml:
-        return langYaml;
-      case Language.javaScript:
-        return langJavascript;
-      default:
-        return null;
-    }
+  Mode _languageMode() {
+    if (_disableSyntaxHighlight) return langPlaintext;
+    return switch (widget.languages.firstOrNull) {
+      Language.yaml => editorYamlMode,
+      Language.javaScript => langJavascript,
+      _ => langPlaintext,
+    };
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final isMobileView = ref.watch(isMobileViewProvider);
-    final brightness = Theme.of(context).brightness;
-    final readOnly = widget.readOnly || widget.simple;
-    final canReplace =
-        !readOnly && !_disableSyntaxHighlight && _languageMode() != null;
-    final menuItems = <PopupMenuItemData>[
+  List<PopupMenuItemData> _menuItems(bool canReplace) {
+    return [
       PopupMenuItemData(
         icon: Icons.search,
         label: appLocalizations.search,
@@ -330,18 +541,28 @@ class _EditorPageState extends ConsumerState<EditorPage> {
       PopupMenuItemData(
         icon: _lineWrap ? Icons.check : Icons.wrap_text,
         label: appLocalizations.lineWrap,
-        onPressed: _isLineWrapDisabled ? null : _toggleLineWrap,
+        onPressed: _toggleLineWrap,
       ),
     ];
+  }
 
+  @override
+  Widget build(BuildContext context) {
+    final isMobileView = ref.watch(isMobileViewProvider);
+    _updateStyles(context);
+    final readOnly = widget.readOnly || widget.simple;
+    final canReplace =
+        !readOnly &&
+        !_disableSyntaxHighlight &&
+        _languageMode() != langPlaintext;
     return CommonPopScope(
       onPop: () async {
         if (globalState.isAndroidTV &&
-            (_focusNode.hasFocus || _titleFocusNode.hasFocus)) {
+            (_editorHasFocus || _titleFocusNode.hasFocus)) {
           final isNewScript = widget.title.isEmpty;
           final hasChanges =
               isNewScript ||
-              _controller.text != widget.content ||
+              _isModified ||
               _titleController.text != widget.title;
           final canSave =
               hasChanges &&
@@ -359,7 +580,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
         final res = await widget.onPop!(
           context,
           _titleController.text,
-          _controller.text,
+          _isLoading ? widget.content : _controller.text,
         );
         if (res && context.mounted) {
           return true;
@@ -382,8 +603,9 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                     _handleSave(context),
               },
         child: AbsorbPointer(
-          absorbing: _isBusy || _isLoading,
+          absorbing: _isLoading,
           child: CommonScaffold(
+            scrollEdgeFade: false,
             appBar: AppBar(
               title: TextField(
                 focusNode: _titleFocusNode,
@@ -394,6 +616,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                   _saveButtonFocusNode.requestFocus();
                 },
                 decoration: InputDecoration(
+                  filled: false,
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
@@ -408,47 +631,43 @@ class _EditorPageState extends ConsumerState<EditorPage> {
               ),
               actions: genActions([
                 if (widget.onSave != null && !readOnly)
-                  _wrapTitleController(
-                    () {
-                      final isNewScript = widget.title.isEmpty;
-                      final canSave =
-                          !_isLoading &&
-                          (isNewScript ||
-                              _controller.text != widget.content ||
-                              _titleController.text != widget.title);
-                      return IconButton(
-                        focusNode: _saveButtonFocusNode,
-                        style: globalState.isAndroidTV
-                            ? ButtonStyle(
-                                backgroundColor:
-                                    WidgetStateProperty.resolveWith((states) {
-                                      if (states.contains(
-                                        WidgetState.focused,
-                                      )) {
-                                        return context.colorScheme.primary
-                                            .withValues(alpha: 0.2);
-                                      }
-                                      return null;
-                                    }),
-                                side: WidgetStateBorderSide.resolveWith((
-                                  states,
-                                ) {
-                                  if (states.contains(WidgetState.focused)) {
-                                    return BorderSide(
-                                      color: context.colorScheme.primary,
-                                      width: 2,
-                                    );
-                                  }
-                                  return null;
-                                }),
-                              )
-                            : null,
-                        onPressed: canSave ? () => _handleSave(context) : null,
-                        tooltip: appLocalizations.save,
-                        icon: const Icon(Icons.save_sharp),
-                      );
-                    },
-                  ),
+                  _wrapTitleController(() {
+                    final isNewScript = widget.title.isEmpty;
+                    final canSave =
+                        !_isLoading &&
+                        (isNewScript ||
+                            _isModified ||
+                            _titleController.text != widget.title);
+                    return IconButton(
+                      focusNode: _saveButtonFocusNode,
+                      style: globalState.isAndroidTV
+                          ? ButtonStyle(
+                              backgroundColor: WidgetStateProperty.resolveWith((
+                                states,
+                              ) {
+                                if (states.contains(WidgetState.focused)) {
+                                  return context.colorScheme.primary.withValues(
+                                    alpha: 0.2,
+                                  );
+                                }
+                                return null;
+                              }),
+                              side: WidgetStateBorderSide.resolveWith((states) {
+                                if (states.contains(WidgetState.focused)) {
+                                  return BorderSide(
+                                    color: context.colorScheme.primary,
+                                    width: 2,
+                                  );
+                                }
+                                return null;
+                              }),
+                            )
+                          : null,
+                      onPressed: canSave ? () => _handleSave(context) : null,
+                      tooltip: appLocalizations.save,
+                      icon: const Icon(Icons.save_sharp),
+                    );
+                  }),
                 if (widget.supportRemoteDownload && !readOnly)
                   IconButton(
                     onPressed: _isLoading ? null : _handleImport,
@@ -469,7 +688,15 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                         icon: const Icon(Icons.more_vert),
                       );
                     },
-                    popup: CommonPopupMenu(items: menuItems),
+                    popup: CommonPopupMenu(
+                      items: _menuItems(canReplace),
+                      footer: EditorZoomMenuItem(
+                        zoom: _zoom,
+                        minZoom: _kMinEditorZoom,
+                        maxZoom: _kMaxEditorZoom,
+                        onChanged: _setZoom,
+                      ),
+                    ),
                   ),
                 ),
               ]),
@@ -477,60 +704,78 @@ class _EditorPageState extends ConsumerState<EditorPage> {
             body: Stack(
               children: [
                 if (!_isLoading)
-                  RepaintBoundary(
-                    child: CodeForge(
-                      controller: _controller,
-                      focusNode: _focusNode,
-                      findController: _findController,
-                      undoController: _undoController,
+                  CodeForge(
+                    controller: _controller,
+                    findController: _findController,
+                    undoController: _undoController,
+                    readOnly: readOnly,
+                    lineWrap: _lineWrap,
+                    tabSize: 2,
+                    useSpaceAsTab: true,
+                    language: _languageMode(),
+                    editorTheme: _editorTheme,
+                    selectionStyle: _selectionStyle,
+                    textStyle: _textStyle,
+                    lineNumberStyle: _lineNumberStyle,
+                    innerPadding: const EdgeInsets.only(right: 16),
+                    zoom: _zoom,
+                    minZoom: _kMinEditorZoom,
+                    maxZoom: _kMaxEditorZoom,
+                    lineNumberMaxZoom: _kMaxLineNumberZoom,
+                    onZoomEnd: _commitZoom,
+                    onContextMenu: _showContextMenu,
+                    suggestionPopupBuilder: (_, details) =>
+                        CustomSingleChildLayout(
+                          delegate: CaretPopupLayout(
+                            caretRect: details.caretRect,
+                          ),
+                          child: EditorCompletionPopup(
+                            details: details,
+                            textStyle: _textStyle ?? const TextStyle(),
+                          ),
+                        ),
+                    gutterDividerColor:
+                        (_editorTheme['root']?.color ?? Colors.grey).withAlpha(
+                          50,
+                        ),
+                    magnifierBuilder: (context, _, magnifierInfo) =>
+                        EditorMagnifier(
+                          controller: _controller,
+                          magnifierInfo: magnifierInfo,
+                          lineSpan: _magnifierLineSpan,
+                          textStyle: _textStyle ?? const TextStyle(),
+                          backgroundColor:
+                              _editorTheme['root']?.backgroundColor ??
+                              context.colorScheme.surface,
+                          borderColor:
+                              _editorTheme['root']?.color ?? Colors.grey,
+                          caretColor: context.colorScheme.primary,
+                        ),
+                    scrollbarBuilder: (context, details, child) => RawScrollbar(
+                      controller: details.controller,
+                      thickness: 8,
+                      minThumbLength: 48,
+                      radius: const Radius.circular(4),
+                      interactive: true,
+                      thumbColor: context.colorScheme.onSurface.withAlpha(100),
+                      child: child,
+                    ),
+                    finderBuilder: (context, controller) => FindPanel(
+                      controller: controller,
                       readOnly: readOnly,
-                      lineWrap: _lineWrap,
-                      enableFolding: !widget.simple && !_disableSyntaxHighlight,
-                      enableGuideLines:
-                          !widget.simple && !_disableSyntaxHighlight,
-                      enableGutter: true,
-                      enableGutterDivider: false,
-                      enableLocalSuggestions: true,
-                      enableKeyboardSuggestions: true,
-                      enableMagnifier: true,
-                      tabSize: 2,
-                      useSpaceAsTab: true,
-                      language: _languageMode(),
-                      languageId: switch (widget.languages.firstOrNull) {
-                        Language.yaml => 'yaml',
-                        Language.javaScript => 'javascript',
-                        _ => null,
-                      },
-                      blockCommentLabel: appLocalizations.blockComment,
-                      editorTheme: brightness == Brightness.dark
-                          ? atomOneDarkTheme
-                          : atomOneLightTheme,
-                      textStyle: TextStyle(
-                        fontFamily: FontFamily.jetBrainsMono.value,
-                        fontSize: context.textTheme.bodyLarge?.fontSize?.ap,
-                      ),
-                      innerPadding: const EdgeInsets.only(right: 16),
-                      finderBuilder: (context, controller) => FindPanel(
-                        controller: controller,
-                        readOnly: readOnly,
-                        isMobileView: isMobileView,
-                      ),
-                      scrollbarDecoration: ScrollbarDecoration(
-                        showLineNumberIndicator: false,
-                        thumbVisibility: false,
-                        thickness: 6,
-                        minThumbLength: 48,
-                        thumbColor: context.colorScheme.primary.withAlpha(160),
-                      ),
+                      isMobileView: isMobileView,
                     ),
                   ),
-                if (_isBusy || _isLoading)
+                if (_isLoading)
                   Positioned.fill(
                     child: Container(
                       color: context.colorScheme.surface.withAlpha(200),
                       child: Center(
-                        child: CircularProgressIndicator(
-                          color: context.colorScheme.primary,
+                        child: SyncedLoading(
+                          size: 40,
+                          child: CircularProgressIndicator(
+                            color: context.colorScheme.primary,
+                          ),
                         ),
                       ),
                     ),
@@ -618,8 +863,6 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
     final showReplace = !readOnly && controller.isReplaceMode;
     final resultText = controller.matchCount == 0
         ? appLocalizations.none
-        : controller.hasMoreMatches
-        ? '${controller.currentMatchIndex + 1}/1000+'
         : '${controller.currentMatchIndex + 1}/${controller.matchCount}';
 
     final topBar = SizedBox(
@@ -965,7 +1208,6 @@ class _CodeForgeControllerListenable extends Listenable {
   void removeListener(VoidCallback listener) =>
       _controller.removeListener(listener);
 }
-
 
 class _ImportOptionsDialog extends StatefulWidget {
   const _ImportOptionsDialog();

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/models/models.dart';
 import 'package:bett_box/state.dart';
@@ -323,7 +325,7 @@ class ScriptState extends _$ScriptState with AutoDisposeNotifierMixin {
     final list = List<Script>.from(state.scripts);
     final index = list.indexWhere((item) => item.label == id);
     if (index != -1) {
-      list.removeAt(index);
+      unawaited(list.removeAt(index).deleteContent());
     }
     final nextId = id == state.currentId ? null : state.currentId;
     state = state.copyWith(scripts: list, currentId: nextId);
@@ -349,11 +351,7 @@ class ScriptState extends _$ScriptState with AutoDisposeNotifierMixin {
     final url = script.url;
     if (url == null || url.isEmpty) return;
     final res = await request.getTextResponseForUrl(url);
-    if (script.content != res.data) {
-      JavaScriptRuntimeManager.invalidateCachedOptions(script.content);
-    }
-    final updated = script.copyWith(content: res.data);
-    setScript(updated);
+    setScript(await script.writeContent(res.data));
   }
 }
 
@@ -414,4 +412,3 @@ class HealthCheckTimeout extends _$HealthCheckTimeout
     state = builder(state);
   }
 }
-

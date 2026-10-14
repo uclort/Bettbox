@@ -10,6 +10,10 @@ _SetupParams _$SetupParamsFromJson(Map<String, dynamic> json) => _SetupParams(
   selectedMap: Map<String, String>.from(json['selected-map'] as Map),
   testUrl: json['test-url'] as String,
   overrideTestUrl: json['override-test-url'] as bool? ?? true,
+  profilePath: json['profile-path'] as String? ?? '',
+  ageSecretKey: json['age-secret-key'] as String? ?? '',
+  scriptedConfig: json['scripted-config'] as String? ?? '',
+  patch: json['patch'] as Map<String, dynamic>?,
 );
 
 Map<String, dynamic> _$SetupParamsToJson(_SetupParams instance) =>
@@ -17,7 +21,19 @@ Map<String, dynamic> _$SetupParamsToJson(_SetupParams instance) =>
       'selected-map': instance.selectedMap,
       'test-url': instance.testUrl,
       'override-test-url': instance.overrideTestUrl,
+      'profile-path': instance.profilePath,
+      'age-secret-key': instance.ageSecretKey,
+      'scripted-config': instance.scriptedConfig,
+      'patch': instance.patch,
     };
+
+_SetupResult _$SetupResultFromJson(Map<String, dynamic> json) => _SetupResult(
+  message: json['message'] as String? ?? '',
+  global: json['global'] as String? ?? '',
+);
+
+Map<String, dynamic> _$SetupResultToJson(_SetupResult instance) =>
+    <String, dynamic>{'message': instance.message, 'global': instance.global};
 
 _UpdateParams _$UpdateParamsFromJson(Map<String, dynamic> json) =>
     _UpdateParams(
@@ -299,6 +315,8 @@ const _$ActionMethodEnumMap = {
   ActionMethod.validateConfig: 'validateConfig',
   ActionMethod.updateConfig: 'updateConfig',
   ActionMethod.getConfig: 'getConfig',
+  ActionMethod.getRuntimeConfig: 'getRuntimeConfig',
+  ActionMethod.exportConfig: 'exportConfig',
   ActionMethod.getProxies: 'getProxies',
   ActionMethod.changeProxy: 'changeProxy',
   ActionMethod.getTraffic: 'getTraffic',

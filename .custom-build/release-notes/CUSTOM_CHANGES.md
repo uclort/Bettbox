@@ -10,11 +10,12 @@
 
 ### 当前上游融合基线
 
-- 2026-10-12 同步 Bettbox `main@afcc5cf0b3e1`（`1.19.5+2026100101`）与 Mihomo `v1.19.32`，保留原有全部 `BETTBOX-CUSTOM` 标记。
-- 接入上游无边框主题、可折叠侧边栏、列表和编辑器优化、GeoData 在线下载、回环流量保护及 Windows Helper 子进程管理；侧边栏继续通过 `_selectPage` 打开独立网络面板，Android 首页继续保留单一悬浮总开关。
+- 2026-10-14 同步 Bettbox 正式 `v1.19.5` 及后续 `main@111c5d91e5a3`（源码版本 `1.19.5+2026101301`）与 Mihomo `v1.19.32`，保留原有全部 `BETTBOX-CUSTOM` 标记；Flutter 构建工具链升级至 `3.47.7`。
+- 接入上游 Material UI、Riverpod 3、Rust 脚本引擎与新版编辑器、批量日志/请求通知及仪表盘；侧边栏继续通过 `_selectPage` 打开独立网络面板，Android 首页继续保留单一悬浮总开关。请求、连接和日志保留上游桌面/更多入口，自定义网络面板只作为额外入口。
 - 核心启动兼容上游 Linux AppImage 内核同步与控制通道重建重试；首次控制连接失败后清理旧进程和 socket 再重试一次，两次失败仍抛错并执行原有代理/TUN 回滚。Windows Helper 继续按需授权启动，macOS 网络恢复继续等待 `resetConnections` 的真实结果。
 - Windows 系统代理吸收上游 `::1` 绕过兼容处理，同时保留 WinINet/RAS 和注册表双通道启停；模型保留首次安装关闭系统代理的默认值，并接入上游历史绕过域名清洗。
-- 融合落点为 `lib/clash/service.dart`、`lib/manager/app_manager.dart`、`lib/widgets/google_bottom_nav_bar.dart`、`lib/views/dashboard/dashboard.dart`、`lib/models/config.dart`、`plugins/proxy/windows/proxy_plugin.cpp` 与 `macos/Runner/MainFlutterWindow.swift`；同步重新生成模型和七种语言资源。
+- 核心配置接入上游 `SetupParams / SetupResult`，保留 60 秒配置超时和完整失败回滚；socket 断开立即中止该连接待处理 IPC 请求。请求批量写入仍按 ID 原位更新，保留连接终态；日志延迟写入前检查页面是否仍挂载。
+- 融合落点为 `lib/clash/service.dart`、`lib/clash/interface.dart`、`lib/controller.dart`、`lib/manager/app_manager.dart`、`lib/common/navigation.dart`、`lib/widgets/google_bottom_nav_bar.dart`、`lib/views/dashboard/dashboard.dart`、`lib/models/config.dart`、`plugins/proxy/windows/proxy_plugin.cpp` 与 `macos/Runner/MainFlutterWindow.swift`；同步重新生成模型和七种语言资源。
 - 验证方式：`flutter analyze --no-pub`、`flutter test --no-pub`、核心包装层 `go test ./...`、下文内核指定目录的 Go 回归，以及 Release 正文和 WinSparkle 补丁回归；五平台原生构建与安装包校验由自定义发布工作流执行。
 
 ### WebDAV 配置同步边界
@@ -22,7 +23,8 @@
 - WebDAV 使用现有 ZIP 备份格式的 `shared-config` 范围，只同步订阅配置、配置 YAML 与 `ScriptProps.scripts`。
 - 当前配置、当前脚本、节点选择、策略组展开状态和 Provider 派生缓存保持本机状态；App、DAV 凭据、主题、窗口、托盘、热键、代理、TUN、访问控制、界面样式、测速过滤和超时等设置不跨设备覆盖。
 - 本地导入导出继续使用完整备份语义；历史完整 WebDAV 包恢复时同样只应用共享配置字段。
-- 代码位于 `lib/controller.dart`、`lib/models/config.dart` 与 `lib/views/backup_and_recovery.dart`；回归测试为 `test/models/webdav_shared_config_test.dart`。
+- 兼容上游脚本内容外部文件存储：备份先读取完整脚本内容，再按共享范围裁剪；恢复先将脚本写回外部文件，再应用共享字段，保留本机当前脚本选择。
+- 代码位于 `lib/controller.dart`、`lib/models/config.dart` 与 `lib/views/backup_and_recovery.dart`；回归测试为 `test/models/webdav_shared_config_test.dart` 与 `test/models/script_test.dart`。
 
 ### 私有覆写脚本
 
@@ -55,6 +57,7 @@
 - macOS Sparkle 更新框固定使用内置简体中文字符串；`macos/Podfile` 在每次依赖安装后调用 `.custom-build/scripts/localize-sparkle.rb`，覆盖所有 Sparkle 字符串本地化分支，不修改系统语言偏好。本地 `plugins/auto_updater_macos` 通过 `SUVersionDisplay` 同时展示最新与本机的 `短版本+构建号`，内部构建号比较保持不变；Swift 回归位于插件 `macos/Tests/main.swift`，自定义构建校验格式化结果与最终包中文资源。
 - 发布后读取 `uclort/Bettbox` Release 的完整 `body`，通过 `.custom-build/scripts/render-release-notes.py` 转为独立 HTML 正文并内联到桌面 appcast `description`，不再将 GitHub 整页设为 `releaseNotesLink`；GitHub Markdown 转换失败时保留完整转义正文。保留完整发布页入口并限制脚本加载，HTML/CDATA/失败兜底回归为 `.custom-build/scripts/test-release-notes.py`。
 - Android 静态更新 JSON 保存完整 Release Markdown，`lib/widgets/app_update_dialog.dart` 配合 `lib/controller.dart` 展示可滚动的完整说明、当前与最新完整版本及发布页入口；正文支持标题、列表和链接，链接仅允许 HTTP/HTTPS。回归为 `test/widgets/app_update_dialog_test.dart`。
+- 更新说明 Markdown 关闭插件内部的旧 Material 选择层，改用当前 Material UI 的 `SelectionArea` 保留文本选择；Windows 更新器适配 Win32 6 的指针、句柄和调用结果类型。
 - “关于本机 → 查找更新”检查 `uclort/Bettbox` 已发布的最新自定义 Release；“Github Releases”直接打开该仓库的 Releases 页面。
 - macOS 使用 Sparkle、Windows 使用 WinSparkle；安装前继续执行内核、代理和系统 DNS 退出清理。
 - Windows 自定义安装包使用单文件启动器内嵌原 Inno Setup 安装器；启动器优先在 `%LOCALAPPDATA%\Bettbox\InstallerTemp` 创建独立临时目录并覆盖子进程的 `TEMP/TMP`，避免系统 `%TEMP%` 权限损坏或安全策略导致“错误 5：拒绝访问”。载荷释放缓冲使用堆内存，避免 1 MB 栈缓冲触发 `STATUS_STACK_OVERFLOW`。静默卸载跳过用户数据确认框并默认保留用户数据，交互卸载保留确认；Helper 服务按需启动，主程序退出时主动停止，首次 TUN 管理员授权后最多等待 30 秒直至 Helper 可用，已有服务启动失败时立即进入提权重配，只有实际启动成功才执行短健康等待，避免重复等待 30 秒；安装器升级时仅更新已有服务路径并保留鉴权环境，不创建或启动 Helper，残留 Helper/Core 由安装器静默清理。Windows 主窗口使用稳定原生标记识别已有实例，重复启动会恢复并聚焦现有窗口；首次启动窗口展示位于核心、TUN 授权和 Helper 初始化之前，不被网络启动链路阻塞。WinSparkle 初始化时从 `ProductVersion` 提取构建号，完整版本通过 `win_sparkle_set_app_details` 展示，纯构建号通过 `win_sparkle_set_app_build_version` 与 appcast 的 `sparkle:version` 比较；appcast 的 `title` 和 `sparkle:shortVersionString` 也发布最终安装版本 `1.19.3+构建号`，更新弹窗两侧均可直接对比版本差异；代码位于 `lib/common/app_updater.dart`、`lib/common/system.dart`、`lib/controller.dart`、`windows/runner`、`windows/packaging/exe/launcher`、`windows/packaging/exe/package_windows.dart`、`windows/packaging/exe/inno_setup.iss` 与 `.github/workflows/custom-build.yml`，自定义构建通过无效 `TEMP/TMP` 下的静默安装回归验证；回归安装和卸载均有 5 分钟超时、进程诊断和强制清理，并校验 Windows `ProductVersion` 包含本次构建号、appcast `echo` 生成字段包含完整版本、窗口展示顺序、Helper 启动失败快速回退以及安装后 Helper 进程与服务未运行。
@@ -109,7 +112,7 @@
 ### 网络面板
 
 - macOS、Windows 和 Linux 导航保留一个“面板”tab，点击以同一可执行文件的 `--network-panel` 参数启动独立进程；Windows Runner 为面板使用独立原生窗口标题并跳过主窗口单实例激活，确保第二进程能进入 Dart 面板入口；面板使用专属 Dock/任务栏图标，关闭面板不影响主窗口，主进程退出或管道断开时自动关闭面板。
-- Android 不再把网络功能顺序平铺到“更多”；“更多 → 查看”分组只提供一个“网络面板”二级页，并显示“查看网络请求、连接和流量信息”副标题，进入后在面板内部切换最近请求、活动连接、DNS、日志和 Sub-Store 五个 tab；桌面端主导航的大 tab 保持简洁的“面板”，同一网络监控功能的其他入口统一使用“网络面板”，首页“在线面板”属于另一项功能并保持不变。
+- 桌面导航与 Android“更多”保留上游请求、连接和日志入口，只额外增加自定义面板；Android“更多 → 查看”新增“网络面板”二级页，并显示“查看网络请求、连接和流量信息”副标题，进入后在面板内部切换最近请求、活动连接、DNS、日志和 Sub-Store 五个 tab。桌面自定义 tab 使用“面板”，其他自定义入口使用“网络面板”，首页上游“在线面板”继续保留。
 - 独立面板进程不初始化 Mihomo、单例锁或托盘，通过 `ExternalControl` 本地 UDS/TCP 通道读取请求、连接和日志并执行清理/断连；请求与日志变更使用持久订阅主动通知，事件刷新限制为 250 ms。
 - 主程序在 Core 初始化前启动 `ExternalControl`，即使 Core 启动失败也能让独立面板连接并展示明确的“主程序未运行或尚未完成启动”状态，不再直接暴露英文 `Bettbox is not running`。
 - 请求与连接按 Mihomo `TrackerInfo` 的进程、来源、目标、协议、规则、出站链和状态动态分类，支持全文搜索、移动端筛选、右键生成规则、当前配置追加/覆盖规则和独立详情；状态按活动快照、真实出站 socket、`REJECT` 和链路终态区分。
@@ -117,6 +120,7 @@
 - 不再提供信息价值有限的设备与流量统计子页面；请求和连接列表仍保留单条记录的实时速率、累计上传下载和连接详情。
 - 日志页按实际级别分类；Sub-Store 页支持凭据历史、固定规则读取/新增/修改/删除/拖动排序，保存前重新读取远端脚本并仅替换 `BETTBOX_CUSTOM_RULES`。
 - 选中请求或连接后展开可拖动详情，区分客户端、目标、Fake-IP、实际出站本地/远端地址、GeoIP/ASN 和完整策略链；macOS 通过 `NSWorkspace` 读取进程图标，并发请求合并且复用历史 `.app` 路径。
+- 上游请求/连接列表接入桌面进程图标；macOS 继续支持按进程名查找、并发合并和 120 ms 后补取，其他桌面平台接入上游文件图标服务，桌面占位使用终端图标。相关回归为 `test/views/connection/process_icon_test.dart` 与 `test/views/network_monitor_test.dart`。
 - custom-mihomo 为每条连接保存 DNS 逐服务器尝试、规则匹配、策略链和真实 socket 建立事件，`TrackerInfo` 返回 `trace / outboundLocalAddress / outboundRemoteAddress`；连接加入与离开均发送同 ID 通知，请求记录按 ID 原位更新。
 - 代码位于 `lib/views/network_monitor*.dart`、`lib/common/window.dart`、`lib/common/external_control.dart`、`lib/common/navigation.dart`、`lib/views/network_monitor_navigation.dart`、`lib/enum/enum.dart`、`lib/widgets/google_bottom_nav_bar.dart` 和 `lib/common/tray.dart`；回归测试为 `test/views/network_monitor_test.dart`、`core/Clash.Meta/tunnel/statistic/manager_notify_test.go` 及私有内核 `constant / dns / tunnel / tunnel/statistic` 测试。
 

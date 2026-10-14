@@ -110,6 +110,8 @@ class TrayManager {
 
   bool get isOptionKeyPressed => _isOptionKeyPressed;
 
+  bool get isOptionPressed => _isOptionKeyPressed;
+
   Map<String, dynamic> _menuToJson(Menu menu) {
     return {
       'items': menu.items?.map(_menuItemToJson).toList(),
@@ -144,6 +146,9 @@ class TrayManager {
         final pending = _pendingWindowsMenu!;
         _pendingWindowsMenu = null;
         await setContextMenu(pending.menu, brightness: pending.brightness);
+      }
+      for (final TrayListener listener in _listeners) {
+        listener.onTrayMenuClose();
       }
       return;
     }

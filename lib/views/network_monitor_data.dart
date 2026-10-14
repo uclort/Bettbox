@@ -5,13 +5,7 @@ import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/models.dart';
 import 'package:flutter/foundation.dart';
 
-enum MonitorPage {
-  requests,
-  connections,
-  dns,
-  logs,
-  subStore,
-}
+enum MonitorPage { requests, connections, dns, logs, subStore }
 
 enum MonitorRuleSource { domain, ip, process, transport }
 

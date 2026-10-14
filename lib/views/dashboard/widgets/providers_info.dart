@@ -1,7 +1,7 @@
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/views/proxies/providers.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class ProvidersInfo extends StatelessWidget {
   const ProvidersInfo({super.key});
@@ -9,7 +9,7 @@ class ProvidersInfo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: getWidgetHeight(1),
+      height: getWidgetHeight(context, 1),
       child: CommonCard(
         info: const Info(iconData: Icons.poll_outlined, label: 'INFO'),
         onPressed: () {

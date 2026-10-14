@@ -6,7 +6,6 @@ import 'package:bett_box/common/system.dart';
 import 'package:bett_box/common/app_localizations.dart';
 import 'package:bett_box/views/dashboard/widgets/widgets.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
@@ -93,16 +92,10 @@ enum ViewMode { mobile, laptop, desktop }
 enum LogLevel { debug, info, warning, error, silent }
 
 extension LogLevelExt on LogLevel {
-  Color? get color {
-    return switch (this) {
-      LogLevel.silent => Colors.grey.shade700,
-      LogLevel.debug => Colors.grey.shade400,
-      LogLevel.info => null,
-      LogLevel.warning => const Color.fromARGB(230, 255, 166, 0),
-      LogLevel.error => Colors.redAccent,
-    };
-  }
+  String get label => '${name[0].toUpperCase()}${name.substring(1)}';
 }
+
+enum LogSource { core, app }
 
 enum TransportProtocol { udp, tcp }
 
@@ -235,6 +228,8 @@ enum ActionMethod {
   validateConfig,
   updateConfig,
   getConfig,
+  getRuntimeConfig,
+  exportConfig,
   getProxies,
   changeProxy,
   getTraffic,
@@ -467,6 +462,47 @@ enum OverrideRuleType { override, added }
 enum RuleTarget { DIRECT, REJECT }
 
 enum RecoveryStrategy { compatible, override }
+
+enum StartSwitchStyle { tonal, outlined }
+
+enum SidebarFlyoutEntry {
+  resources,
+  script,
+  theme,
+  backupAndRecovery,
+  hotkeyManagement,
+  loopback,
+  basicConfig,
+  otherSettings,
+  application,
+  about;
+
+  static List<SidebarFlyoutEntry> get supportedValues =>
+      values.where((entry) => entry != loopback || system.isWindows).toList();
+
+  String get localizedName => switch (this) {
+    SidebarFlyoutEntry.resources => appLocalizations.resources,
+    SidebarFlyoutEntry.script => appLocalizations.script,
+    SidebarFlyoutEntry.theme => appLocalizations.theme,
+    SidebarFlyoutEntry.backupAndRecovery => appLocalizations.backupAndRecovery,
+    SidebarFlyoutEntry.hotkeyManagement => appLocalizations.hotkeyManagement,
+    SidebarFlyoutEntry.loopback => appLocalizations.loopback,
+    SidebarFlyoutEntry.basicConfig => appLocalizations.basicConfig,
+    SidebarFlyoutEntry.otherSettings => appLocalizations.otherSettings,
+    SidebarFlyoutEntry.application => appLocalizations.application,
+    SidebarFlyoutEntry.about => appLocalizations.about,
+  };
+}
+
+enum SidebarFlyoutDelay {
+  fast(Duration(milliseconds: 50)),
+  standard(Duration(milliseconds: 150)),
+  slow(Duration(milliseconds: 400));
+
+  final Duration duration;
+
+  const SidebarFlyoutDelay(this.duration);
+}
 
 enum CacheTag { logs, rules, requests, proxiesList }
 

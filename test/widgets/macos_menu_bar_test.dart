@@ -1,8 +1,7 @@
 import 'package:bett_box/l10n/l10n.dart';
 import 'package:bett_box/widgets/macos_menu_bar.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -29,9 +28,7 @@ void main() {
         supportedLocales: AppLocalizations.delegate.supportedLocales,
         localizationsDelegates: const [
           AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
         ],
         builder: (_, child) {
           // 对应 Application.builder：响应式结构只能在菜单组件内部切换。
@@ -94,9 +91,7 @@ void main() {
           supportedLocales: AppLocalizations.delegate.supportedLocales,
           localizationsDelegates: const [
             AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
           ],
           builder: (_, child) => MacOSMenuBar(child: child!),
           home: const Scaffold(body: TextField()),

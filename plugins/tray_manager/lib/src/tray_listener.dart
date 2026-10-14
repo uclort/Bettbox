@@ -12,4 +12,6 @@ abstract mixin class TrayListener {
   void onTrayIconRightMouseUp() {}
 
   void onTrayMenuItemClick(MenuItem menuItem) {}
+
+  void onTrayMenuClose() {}
 }

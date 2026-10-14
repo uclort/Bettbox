@@ -3,7 +3,7 @@ import 'package:bett_box/models/models.dart';
 import 'package:bett_box/providers/providers.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_svg/svg.dart';
@@ -11,10 +11,7 @@ import 'package:flutter_svg/svg.dart';
 class MediaUnlockPage extends ConsumerStatefulWidget {
   final SheetType type;
 
-  const MediaUnlockPage({
-    super.key,
-    this.type = SheetType.page,
-  });
+  const MediaUnlockPage({super.key, this.type = SheetType.page});
 
   @override
   ConsumerState<MediaUnlockPage> createState() => _MediaUnlockPageState();
@@ -122,12 +119,14 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
     final iconWidth = iconSize.width * scale;
     final iconHeight = iconSize.height * scale;
 
-    final isUnlocked = status == null ||
+    final isUnlocked =
+        status == null ||
         status == MediaUnlockStatus.unlocked ||
         status == MediaUnlockStatus.limited ||
         status == MediaUnlockStatus.flagged;
     final isTestingOrUnknown =
-        status == MediaUnlockStatus.unknown || status == MediaUnlockStatus.testing;
+        status == MediaUnlockStatus.unknown ||
+        status == MediaUnlockStatus.testing;
 
     final Widget icon;
     if (platform.isMonochrome) {
@@ -140,8 +139,8 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
           isUnlocked
               ? context.colorScheme.onSurface
               : (isTestingOrUnknown
-                  ? context.colorScheme.onSurfaceVariant
-                  : status.statusColor(context.colorScheme)),
+                    ? context.colorScheme.onSurfaceVariant
+                    : status.statusColor(context.colorScheme)),
           BlendMode.srcIn,
         ),
       );
@@ -172,148 +171,30 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
   }
 
   void _showPinnedSettingsDialog() {
-    final appSetting = ref.read(appSettingProvider);
-    final currentPinned = List<MediaPlatform>.from(appSetting.pinnedMediaPlatforms);
     final isChinese = Localizations.localeOf(context).languageCode == 'zh';
-    final availableCategories = isChinese
+    final categories = isChinese
         ? MediaCategory.values
         : MediaCategory.values.where((c) => c != MediaCategory.china).toList();
-
-    globalState.showCommonDialog<void>(
-      child: StatefulBuilder(
-        builder: (context, setDialogState) {
-          return CommonDialog(
-            title: appLocalizations.mediaUnlockDisplaySettings,
-            titleTrailing: IconButton(
-              icon: Icon(
-                Icons.settings_outlined,
-                size: 20.ap,
-                color: context.colorScheme.onSurfaceVariant,
-              ),
+    showExtend(
+      context,
+      builder: (_, type) {
+        return AdaptiveSheetScaffold(
+          type: type,
+          title: appLocalizations.mediaUnlockDisplaySettings,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.settings_outlined),
               tooltip: appLocalizations.mediaUnlockMiscSettings,
-              visualDensity: VisualDensity.compact,
-              padding: EdgeInsets.all(2.ap),
-              constraints: const BoxConstraints(),
               onPressed: _showMiscSettingsDialog,
             ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context, rootNavigator: true).pop();
-                },
-                child: Text(appLocalizations.cancel),
-              ),
-              TextButton(
-                onPressed: () {
-                  ref.read(appSettingProvider.notifier).value = ref
-                      .read(appSettingProvider)
-                      .copyWith(pinnedMediaPlatforms: currentPinned);
-                  globalState.appController.savePreferencesDebounce();
-                  Navigator.of(context, rootNavigator: true).pop();
-                },
-                child: Text(appLocalizations.confirm),
-              ),
-            ],
-            child: SizedBox(
-              width: 320.ap,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Text(
-                      appLocalizations.mediaUnlockPinnedSettingsDesc,
-                      style: context.textTheme.bodySmall?.copyWith(
-                        color: context.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                  Flexible(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(maxHeight: 400.ap),
-                      child: SingleChildScrollView(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            for (final category in availableCategories) ...[
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                  top: 10,
-                                  bottom: 4,
-                                ),
-                                child: Text(
-                                  _getCategoryLabel(category),
-                                  style:
-                                      context.textTheme.labelMedium?.copyWith(
-                                    color: context.colorScheme.primary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              for (final platform in MediaPlatform.values.where(
-                                  (p) =>
-                                      p.category == category &&
-                                      (ref.read(appSettingProvider).mediaUnlockMoreStreamingPlatforms ||
-                                          !moreStreamingPlatforms.contains(p))))
-                                CheckboxListTile(
-                                  dense: true,
-                                  contentPadding: EdgeInsets.zero,
-                                  secondary: Container(
-                                    width: 32,
-                                    height: 32,
-                                    clipBehavior: Clip.antiAlias,
-                                    alignment: Alignment.center,
-                                    decoration: BoxDecoration(
-                                      color: context
-                                          .colorScheme.surfaceContainerHigh,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: _buildPlatformIcon(
-                                      platform,
-                                      size: 18,
-                                    ),
-                                  ),
-                                  title: Text(
-                                    platform.defaultName,
-                                    style: context.textTheme.bodyMedium,
-                                  ),
-                                  value: currentPinned.contains(platform),
-                                  onChanged: (bool? checked) {
-                                    if (checked == true) {
-                                      if (currentPinned.length >= 4) {
-                                        globalState.showNotifier(
-                                          appLocalizations
-                                              .mediaUnlockSelectLimit,
-                                        );
-                                        return;
-                                      }
-                                      setDialogState(() {
-                                        currentPinned.add(platform);
-                                      });
-                                    } else {
-                                      if (currentPinned.length <= 1) {
-                                        return;
-                                      }
-                                      setDialogState(() {
-                                        currentPinned.remove(platform);
-                                      });
-                                    }
-                                  },
-                                ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+          ],
+          body: _PinnedSettingsView(
+            categories: categories,
+            labelBuilder: _getCategoryLabel,
+            iconBuilder: (platform) => _buildPlatformIcon(platform, size: 18),
+          ),
+        );
+      },
     );
   }
 
@@ -334,7 +215,9 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
           child: Consumer(
             builder: (context, ref, _) {
               final setting = ref.watch(appSettingProvider);
-              void updateSetting(AppSettingProps Function(AppSettingProps) updater) {
+              void updateSetting(
+                AppSettingProps Function(AppSettingProps) updater,
+              ) {
                 final latest = ref.read(appSettingProvider);
                 ref.read(appSettingProvider.notifier).value = updater(latest);
                 globalState.appController.savePreferencesDebounce();
@@ -356,12 +239,16 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   ListItem.switchItem(
-                    title: Text(appLocalizations.mediaUnlockMoreStreamingPlatforms),
+                    title: Text(
+                      appLocalizations.mediaUnlockMoreStreamingPlatforms,
+                    ),
                     delegate: SwitchDelegate(
                       value: setting.mediaUnlockMoreStreamingPlatforms,
                       onChanged: (value) {
                         updateSetting(
-                          (s) => s.copyWith(mediaUnlockMoreStreamingPlatforms: value),
+                          (s) => s.copyWith(
+                            mediaUnlockMoreStreamingPlatforms: value,
+                          ),
                         );
                       },
                     ),
@@ -380,12 +267,15 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
                   ),
                   divider,
                   ListItem.switchItem(
-                    title: Text(appLocalizations.mediaUnlockRefreshOnNodeChange),
+                    title: Text(
+                      appLocalizations.mediaUnlockRefreshOnNodeChange,
+                    ),
                     delegate: SwitchDelegate(
                       value: setting.mediaUnlockRefreshOnNodeChange,
                       onChanged: (value) {
                         updateSetting(
-                          (s) => s.copyWith(mediaUnlockRefreshOnNodeChange: value),
+                          (s) =>
+                              s.copyWith(mediaUnlockRefreshOnNodeChange: value),
                         );
                       },
                     ),
@@ -409,7 +299,8 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
                       value: setting.mediaUnlockRefreshByCategory,
                       onChanged: (value) {
                         updateSetting(
-                          (s) => s.copyWith(mediaUnlockRefreshByCategory: value),
+                          (s) =>
+                              s.copyWith(mediaUnlockRefreshByCategory: value),
                         );
                       },
                     ),
@@ -429,14 +320,19 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
     int other, {
     bool isStreaming = false,
   }) {
+    final isLight = context.colorScheme.brightness == Brightness.light;
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: context.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
+        color: isLight
+            ? context.colorScheme.surfaceContainerLowest
+            : context.colorScheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: context.colorScheme.outlineVariant.withValues(alpha: 0.3),
+          color: context.colorScheme.outlineVariant.withValues(
+            alpha: isLight ? 0.45 : 0.25,
+          ),
         ),
       ),
       child: Row(
@@ -447,12 +343,14 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
                 ? appLocalizations.mediaUnlocked
                 : appLocalizations.unlocked,
             '$unlocked',
-            const Color(0xFF4CAF50),
+            mediaUnlockGreen,
           ),
           Container(
             height: 24,
             width: 1,
-            color: context.colorScheme.outlineVariant.withValues(alpha: 0.3),
+            color: context.colorScheme.outlineVariant.withValues(
+              alpha: isLight ? 0.45 : 0.25,
+            ),
           ),
           _buildSummaryItem(
             appLocalizations.notUnlocked,
@@ -462,12 +360,14 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
           Container(
             height: 24,
             width: 1,
-            color: context.colorScheme.outlineVariant.withValues(alpha: 0.3),
+            color: context.colorScheme.outlineVariant.withValues(
+              alpha: isLight ? 0.45 : 0.25,
+            ),
           ),
           _buildSummaryItem(
             appLocalizations.other,
             '$other',
-            Colors.orange,
+            mediaUnlockOrange,
           ),
         ],
       ),
@@ -503,9 +403,11 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
     bool isItemTesting = false,
     required bool showExtraDetails,
   }) {
+    final isLight = context.colorScheme.brightness == Brightness.light;
     final isTesting =
         isItemTesting || result?.status == MediaUnlockStatus.testing;
-    final status = result?.status ??
+    final status =
+        result?.status ??
         (isTesting ? MediaUnlockStatus.testing : MediaUnlockStatus.unknown);
     final color = isTesting
         ? context.colorScheme.primary
@@ -519,11 +421,12 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
         : null;
     final regionDisplay = region != null && region.isNotEmpty
         ? (region.length == 2
-            ? '${utils.countryCodeToEmoji(region)} $region'
-            : region)
+              ? '${utils.countryCodeToEmoji(region)} $region'
+              : region)
         : null;
     final latencyText = result?.latency != null ? '${result!.latency}ms' : null;
-    final isBrandColor = status == MediaUnlockStatus.unknown ||
+    final isBrandColor =
+        status == MediaUnlockStatus.unknown ||
         status == MediaUnlockStatus.testing ||
         status == MediaUnlockStatus.unlocked ||
         status == MediaUnlockStatus.limited ||
@@ -532,15 +435,15 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
     final ip = result?.ip;
     final isWarp = result?.isWarp == true;
     final isChinaCategory = platform.category == MediaCategory.china;
-    final showColo = !isChinaCategory &&
+    final showColo =
+        !isChinaCategory &&
             (showExtraDetails || platform.pinColoBadge) &&
             colo != null &&
             colo.isNotEmpty
         ? colo
         : null;
     final showWarp = !isChinaCategory && showExtraDetails && isWarp;
-    final showIp =
-        showExtraDetails && ip != null && ip.isNotEmpty ? ip : null;
+    final showIp = showExtraDetails && ip != null && ip.isNotEmpty ? ip : null;
 
     return RepaintBoundary(
       key: ValueKey(platform),
@@ -548,186 +451,187 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-        color: context.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            clipBehavior: Clip.antiAlias,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: isBrandColor
-                  ? context.colorScheme.surfaceContainerHigh
-                  : color.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
+          color: isLight
+              ? context.colorScheme.surfaceContainerLowest
+              : context.colorScheme.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              clipBehavior: Clip.antiAlias,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: isBrandColor
+                    ? (isLight
+                          ? context.colorScheme.surfaceContainer
+                          : context.colorScheme.surfaceContainerHighest)
+                    : color.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: _buildPlatformIcon(platform, status: status, size: 25),
             ),
-            child: _buildPlatformIcon(
-              platform,
-              status: status,
-              size: 25,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  platform.defaultName,
-                  style: context.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                if (regionDisplay != null ||
-                    latencyText != null ||
-                    showColo != null ||
-                    showWarp ||
-                    showIp != null) ...[
-                  const SizedBox(height: 2),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 2,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      if (regionDisplay != null)
-                        EmojiText(
-                          regionDisplay,
-                          style: context.textTheme.bodySmall?.copyWith(
-                            color: context.colorScheme.onSurfaceVariant,
-                            fontSize: 11,
-                          ),
-                        ),
-                      if (showColo != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 1,
-                          ),
-                          decoration: BoxDecoration(
-                            color: context.colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            showColo,
-                            style: context.textTheme.labelSmall?.copyWith(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: context.colorScheme.primary,
-                            ),
-                          ),
-                        ),
-                      if (showWarp)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 1,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            'WARP',
-                            style: context.textTheme.labelSmall?.copyWith(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.orange,
-                            ),
-                          ),
-                        ),
-                      if (showIp != null)
-                        Text(
-                          showIp,
-                          style: context.textTheme.bodySmall?.copyWith(
-                            color: context.colorScheme.onSurfaceVariant
-                                .withValues(alpha: 0.8),
-                            fontSize: 11,
-                          ),
-                        ),
-                      if (latencyText != null)
-                        Text(
-                          latencyText,
-                          style: context.textTheme.bodySmall?.copyWith(
-                            color: context.colorScheme.onSurfaceVariant,
-                            fontSize: 11,
-                          ),
-                        ),
-                    ],
-                  ),
-                ],
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (isTesting) ...[
-                  RepaintBoundary(
-                    child: SizedBox(
-                      width: 10,
-                      height: 10,
-                      child: SpinKitRing(
-                        color: color,
-                        lineWidth: 1.2,
-                        size: 10,
-                      ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    platform.defaultName,
+                    style: context.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(width: 4),
-                ] else ...[
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
+                  if (regionDisplay != null ||
+                      latencyText != null ||
+                      showColo != null ||
+                      showWarp ||
+                      showIp != null) ...[
+                    const SizedBox(height: 2),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 2,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        if (regionDisplay != null)
+                          EmojiText(
+                            regionDisplay,
+                            style: context.textTheme.bodySmall?.copyWith(
+                              color: context.colorScheme.onSurfaceVariant,
+                              fontSize: 11,
+                            ),
+                          ),
+                        if (showColo != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 1,
+                            ),
+                            decoration: BoxDecoration(
+                              color:
+                                  context.colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              showColo,
+                              style: context.textTheme.labelSmall?.copyWith(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: context.colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                        if (showWarp)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 1,
+                            ),
+                            decoration: BoxDecoration(
+                              color: mediaUnlockOrange.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'WARP',
+                              style: context.textTheme.labelSmall?.copyWith(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: mediaUnlockOrange,
+                              ),
+                            ),
+                          ),
+                        if (showIp != null)
+                          Text(
+                            showIp,
+                            style: context.textTheme.bodySmall?.copyWith(
+                              color: context.colorScheme.onSurfaceVariant
+                                  .withValues(alpha: 0.8),
+                              fontSize: 11,
+                            ),
+                          ),
+                        if (latencyText != null)
+                          Text(
+                            latencyText,
+                            style: context.textTheme.bodySmall?.copyWith(
+                              color: context.colorScheme.onSurfaceVariant,
+                              fontSize: 11,
+                            ),
+                          ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 4),
+                  ],
                 ],
-                Text(
-                  statusText,
-                  style: context.textTheme.labelSmall?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 32,
-            height: 32,
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              onPressed: isTesting
-                  ? null
-                  : () {
-                      mediaUnlockState.checkSingle(platform);
-                    },
-              icon: Icon(
-                Icons.refresh_rounded,
-                size: 18,
-                color: context.colorScheme.onSurfaceVariant,
               ),
             ),
-          ),
-        ],
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (isTesting) ...[
+                    RepaintBoundary(
+                      child: SizedBox(
+                        width: 10,
+                        height: 10,
+                        child: SpinKitRing(
+                          color: color,
+                          lineWidth: 1.2,
+                          size: 10,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                  ] else ...[
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                  ],
+                  Text(
+                    statusText,
+                    style: context.textTheme.labelSmall?.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            SizedBox(
+              width: 32,
+              height: 32,
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                onPressed: isTesting
+                    ? null
+                    : () {
+                        mediaUnlockState.checkSingle(platform);
+                      },
+                icon: Icon(
+                  Icons.refresh_rounded,
+                  size: 18,
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   List<Widget> _buildStatusSectionSlivers({
     required String title,
@@ -744,11 +648,7 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
           padding: const EdgeInsets.fromLTRB(20, 14, 16, 6),
           child: Row(
             children: [
-              Icon(
-                icon,
-                size: 16,
-                color: color,
-              ),
+              Icon(icon, size: 16, color: color),
               const SizedBox(width: 8),
               Text(
                 '$title (${platforms.length})',
@@ -796,24 +696,28 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
         final blockedList = <MediaPlatform>[];
         final otherList = <MediaPlatform>[];
 
-        final basePlatforms = (isChinese
-                ? MediaPlatform.values
-                : MediaPlatform.values
-                    .where((p) => p.category != MediaCategory.china))
-            .where(
-                (p) => showMoreStreaming || !moreStreamingPlatforms.contains(p))
-            .toList();
+        final basePlatforms =
+            (isChinese
+                    ? MediaPlatform.values
+                    : MediaPlatform.values.where(
+                        (p) => p.category != MediaCategory.china,
+                      ))
+                .where(
+                  (p) =>
+                      showMoreStreaming || !moreStreamingPlatforms.contains(p),
+                )
+                .toList();
 
         final effectiveCategory =
             (!isChinese && _selectedCategory == MediaCategory.china)
-                ? null
-                : _selectedCategory;
+            ? null
+            : _selectedCategory;
 
         final displayedPlatforms = effectiveCategory == null
             ? basePlatforms
             : basePlatforms
-                .where((p) => p.category == effectiveCategory)
-                .toList();
+                  .where((p) => p.category == effectiveCategory)
+                  .toList();
 
         final isCategoryLoading = refreshByCategory
             ? mediaUnlockState.isBatchChecking(displayedPlatforms)
@@ -846,8 +750,9 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
                   : () {
                       mediaUnlockState.checkAll(
                         force: true,
-                        platforms:
-                            refreshByCategory ? displayedPlatforms : null,
+                        platforms: refreshByCategory
+                            ? displayedPlatforms
+                            : null,
                       );
                     },
               tooltip: appLocalizations.retry,
@@ -856,60 +761,174 @@ class _MediaUnlockPageState extends ConsumerState<MediaUnlockPage> {
                       child: SizedBox(
                         width: 16,
                         height: 16,
-                        child: SpinKitRing(
-                          color: context.colorScheme.primary,
-                          lineWidth: 1.5,
+                        child: SyncedLoading(
                           size: 16,
+                          child: SpinKitRing(
+                            color: context.colorScheme.primary,
+                            lineWidth: 1.5,
+                            size: 16,
+                          ),
                         ),
                       ),
                     )
                   : const Icon(Icons.sync),
             ),
           ],
-          body: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: _buildSummaryCard(
-                  unlockedList.length,
-                  blockedList.length,
-                  otherList.length,
-                  isStreaming: effectiveCategory == MediaCategory.streaming,
+          body: ScrollEdgeRise(
+            builder: (_, rise) => CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(child: SizedBox(height: rise)),
+                SliverToBoxAdapter(
+                  child: _buildSummaryCard(
+                    unlockedList.length,
+                    blockedList.length,
+                    otherList.length,
+                    isStreaming: effectiveCategory == MediaCategory.streaming,
+                  ),
                 ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 4)),
-              SliverToBoxAdapter(child: _buildCategoryTabs(isChinese)),
-              const SliverToBoxAdapter(child: SizedBox(height: 8)),
-              ..._buildStatusSectionSlivers(
-                title: _selectedCategory == MediaCategory.streaming
-                    ? appLocalizations.mediaUnlocked
-                    : appLocalizations.unlocked,
-                icon: Icons.check_circle_outline_rounded,
-                color: mediaUnlockGreen,
-                platforms: unlockedList,
-                state: state,
-                showExtraDetails: showExtraDetails,
-              ),
-              ..._buildStatusSectionSlivers(
-                title: appLocalizations.notUnlocked,
-                icon: Icons.cancel_outlined,
-                color: context.colorScheme.error,
-                platforms: blockedList,
-                state: state,
-                showExtraDetails: showExtraDetails,
-              ),
-              ..._buildStatusSectionSlivers(
-                title: appLocalizations.other,
-                icon: Icons.help_outline_rounded,
-                color: mediaUnlockOrange,
-                platforms: otherList,
-                state: state,
-                showExtraDetails: showExtraDetails,
-              ),
-              SliverToBoxAdapter(
-                child: SizedBox(height: globalState.isAndroidTV ? 48.0 : 24.0),
-              ),
-            ],
+                const SliverToBoxAdapter(child: SizedBox(height: 4)),
+                SliverToBoxAdapter(child: _buildCategoryTabs(isChinese)),
+                const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                ..._buildStatusSectionSlivers(
+                  title: _selectedCategory == MediaCategory.streaming
+                      ? appLocalizations.mediaUnlocked
+                      : appLocalizations.unlocked,
+                  icon: Icons.check_circle_outline_rounded,
+                  color: mediaUnlockGreen,
+                  platforms: unlockedList,
+                  state: state,
+                  showExtraDetails: showExtraDetails,
+                ),
+                ..._buildStatusSectionSlivers(
+                  title: appLocalizations.notUnlocked,
+                  icon: Icons.cancel_outlined,
+                  color: context.colorScheme.error,
+                  platforms: blockedList,
+                  state: state,
+                  showExtraDetails: showExtraDetails,
+                ),
+                ..._buildStatusSectionSlivers(
+                  title: appLocalizations.other,
+                  icon: Icons.help_outline_rounded,
+                  color: mediaUnlockOrange,
+                  platforms: otherList,
+                  state: state,
+                  showExtraDetails: showExtraDetails,
+                ),
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: globalState.isAndroidTV ? 48.0 : 24.0,
+                  ),
+                ),
+              ],
+            ),
           ),
+        );
+      },
+    );
+  }
+}
+
+class _PinnedSettingsView extends ConsumerWidget {
+  final List<MediaCategory> categories;
+  final String Function(MediaCategory category) labelBuilder;
+  final Widget Function(MediaPlatform platform) iconBuilder;
+
+  const _PinnedSettingsView({
+    required this.categories,
+    required this.labelBuilder,
+    required this.iconBuilder,
+  });
+
+  void _handleChanged(WidgetRef ref, MediaPlatform platform, bool checked) {
+    final setting = ref.read(appSettingProvider);
+    final pinned = List<MediaPlatform>.from(setting.pinnedMediaPlatforms);
+    if (checked) {
+      if (pinned.length >= 3) {
+        globalState.showNotifier(appLocalizations.mediaUnlockSelectLimit);
+        return;
+      }
+      pinned.add(platform);
+    } else {
+      if (pinned.length <= 1) return;
+      pinned.remove(platform);
+    }
+    ref.read(appSettingProvider.notifier).value = setting.copyWith(
+      pinnedMediaPlatforms: pinned,
+    );
+    globalState.appController.savePreferencesDebounce();
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final (pinned, showMore) = ref.watch(
+      appSettingProvider.select(
+        (state) => (
+          state.pinnedMediaPlatforms,
+          state.mediaUnlockMoreStreamingPlatforms,
+        ),
+      ),
+    );
+    final items = <Object>[
+      for (final category in categories) ...[
+        category,
+        ...MediaPlatform.values.where(
+          (p) =>
+              p.category == category &&
+              (showMore || !moreStreamingPlatforms.contains(p)),
+        ),
+      ],
+    ];
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+      itemCount: items.length + 1,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(
+              appLocalizations.mediaUnlockPinnedSettingsDesc,
+              style: context.textTheme.bodySmall?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          );
+        }
+        final item = items[index - 1];
+        if (item is MediaCategory) {
+          return Padding(
+            padding: const EdgeInsets.only(top: 10, bottom: 4),
+            child: Text(
+              labelBuilder(item),
+              style: context.textTheme.labelMedium?.copyWith(
+                color: context.colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          );
+        }
+        final platform = item as MediaPlatform;
+        return CheckboxListTile(
+          dense: true,
+          contentPadding: EdgeInsets.zero,
+          secondary: Container(
+            width: 32,
+            height: 32,
+            clipBehavior: Clip.antiAlias,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: context.colorScheme.surfaceContainerHigh,
+              shape: BoxShape.circle,
+            ),
+            child: iconBuilder(platform),
+          ),
+          title: Text(
+            platform.defaultName,
+            style: context.textTheme.bodyMedium,
+          ),
+          value: pinned.contains(platform),
+          onChanged: (checked) =>
+              _handleChanged(ref, platform, checked == true),
         );
       },
     );

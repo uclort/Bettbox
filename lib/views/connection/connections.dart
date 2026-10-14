@@ -7,7 +7,8 @@ import 'package:bett_box/models/models.dart';
 import 'package:bett_box/providers/providers.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -27,6 +28,8 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
   late final ScrollController _scrollController;
   Timer? _timer;
   ProviderSubscription? _pageLabelSubscription;
+  var _isScrolling = false;
+  List<TrackerInfo>? _pendingConnections;
 
   bool get _isForeground {
     final lifecycleState = WidgetsBinding.instance.lifecycleState;
@@ -52,7 +55,8 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
       }
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(_syncUpdateTimer());
+      if (!mounted) return;
+      context.afterRouteTransition(() => unawaited(_syncUpdateTimer()));
     });
   }
 
@@ -108,6 +112,13 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
     });
   }
 
+  void _applyPendingConnections() {
+    if (_pendingConnections != null) {
+      ref.read(connectionsProvider.notifier).state = _pendingConnections!;
+      _pendingConnections = null;
+    }
+  }
+
   Future<void> _updateConnections() async {
     if (!mounted || !await _shouldRunTimer()) {
       _timer?.cancel();
@@ -139,7 +150,11 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
       return item.copyWith(uploadSpeed: 0, downloadSpeed: 0);
     }).toList();
     if (hasChanges) {
-      ref.read(connectionsProvider.notifier).state = newConnections;
+      if (_isScrolling) {
+        _pendingConnections = newConnections;
+      } else {
+        ref.read(connectionsProvider.notifier).state = newConnections;
+      }
     }
   }
 
@@ -164,6 +179,8 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
 
   Future<void> _handleBlockConnection(String id) async {
     clashCore.closeConnection(id);
+    _isScrolling = false;
+    _pendingConnections = null;
     await _updateConnections();
   }
 
@@ -171,9 +188,12 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
     unawaited(
       clashCore.closeConnections().then<void>(
         (_) {},
-        onError: (Object e) => commonPrint.log('closeConnections ignored: $e'),
+        onError: (Object e) =>
+            commonPrint.debug('closeConnections ignored: $e'),
       ),
     );
+    _isScrolling = false;
+    _pendingConnections = null;
     await _updateConnections();
   }
 
@@ -182,7 +202,9 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
   }
 
   void _onKeywordsUpdate(List<String> keywords) {
-    ref.read(connectionsKeywordsProvider.notifier).state = keywords;
+    final notifier = ref.read(connectionsKeywordsProvider.notifier);
+    if (listEquals(notifier.state, keywords)) return;
+    notifier.state = keywords;
   }
 
   @override
@@ -238,6 +260,11 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
       body: Consumer(
         builder: (_, ref, _) {
           final connections = ref.watch(filteredConnectionsProvider);
+          final indexById = {
+            for (var i = 0; i < connections.length; i++) connections[i].id: i,
+          };
+          final sortType = ref.watch(connectionsSortProvider);
+          final showSpeed = sortType != ConnectionsSortType.totalTraffic;
           final hasConnections = connections.isNotEmpty;
 
           if (!hasConnections) {
@@ -246,36 +273,69 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
             );
           }
 
-          return CommonScrollBar(
-            controller: _scrollController,
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.only(bottom: 16, top: 8),
-              itemBuilder: (context, index) {
-                final trackerInfo = connections[index];
-                return TrackerInfoItem(
-                  key: ValueKey(trackerInfo.id),
-                  index: index,
-                  count: connections.length,
-                  trackerInfo: trackerInfo,
-                  onClickKeyword: (value) {
-                    context.commonScaffoldState?.addKeyword(value);
-                  },
-                  trailing: IconButton(
-                    padding: EdgeInsets.zero,
-                    visualDensity: VisualDensity.compact,
-                    style: const ButtonStyle(
-                      minimumSize: WidgetStatePropertyAll(Size.zero),
+          return ScrollEdgeRise(
+            builder: (_, rise) {
+              final slivers = [
+                SliverPadding(
+                  padding: EdgeInsets.only(top: 8 + rise, bottom: 16),
+                  sliver: SliverFixedExtentList(
+                    itemExtent: TrackerInfoItem.height + 1,
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final trackerInfo = connections[index];
+                        return TrackerInfoItem(
+                          key: ValueKey(trackerInfo.id),
+                          index: index,
+                          count: connections.length,
+                          showSpeed: showSpeed,
+                          trackerInfo: trackerInfo,
+                          onClickKeyword: (value) {
+                            context.commonScaffoldState?.addKeyword(value);
+                          },
+                          trailing: InkResponse(
+                            radius: 12,
+                            onTap: () => _handleBlockConnection(trackerInfo.id),
+                            child: SizedBox.square(
+                              dimension: 40,
+                              child: Icon(
+                                Icons.block,
+                                color: context.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                          detailTitle: appLocalizations.details,
+                        );
+                      },
+                      childCount: connections.length,
+                      findChildIndexCallback: (key) =>
+                          indexById[(key as ValueKey<String>).value],
                     ),
-                    icon: const Icon(Icons.block),
-                    onPressed: () => _handleBlockConnection(trackerInfo.id),
                   ),
-                  detailTitle: appLocalizations.details,
-                );
-              },
-              itemExtent: TrackerInfoItem.height + 1,
-              itemCount: connections.length,
-            ),
+                ),
+              ];
+              return CommonScrollBar(
+                controller: _scrollController,
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: (notification) {
+                    if (notification is ScrollStartNotification) {
+                      _isScrolling = true;
+                    } else if (notification is ScrollEndNotification) {
+                      _isScrolling = false;
+                      _applyPendingConnections();
+                    }
+                    return false;
+                  },
+                  child: RouteScrollCacheBuilder(
+                    builder: (_, cacheExtent) => CustomScrollView(
+                      controller: _scrollController,
+                      physics: const NextClampingScrollPhysics(),
+                      scrollCacheExtent: cacheExtent,
+                      slivers: slivers,
+                    ),
+                  ),
+                ),
+              );
+            },
           );
         },
       ),

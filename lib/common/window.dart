@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/state.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
@@ -19,9 +20,10 @@ class Window {
       protocol.register('bettbox');
     }
     await windowManager.ensureInitialized();
+    const minimumSize = Size(372, 492);
     WindowOptions windowOptions = WindowOptions(
-      size: Size(props.width, props.height),
-      minimumSize: const Size(380, 400),
+      size: Size(props.width, math.max(props.height, minimumSize.height)),
+      minimumSize: minimumSize,
     );
     await windowManager.setTitleBarStyle(TitleBarStyle.hidden);
     await windowManager.setAlwaysOnTop(props.isPinned);
@@ -57,10 +59,9 @@ class Window {
           });
         } catch (_) {}
         if (isPositionValid) {
-          await windowManager.setPosition(Offset(
-            physLeft / currentDpr,
-            physTop / currentDpr,
-          ));
+          await windowManager.setPosition(
+            Offset(physLeft / currentDpr, physTop / currentDpr),
+          );
         } else {
           await windowManager.setAlignment(Alignment.center);
         }
@@ -71,12 +72,14 @@ class Window {
     });
   }
 
-  void updateMacOSBrightness(Brightness brightness) {
-  }
+  void updateMacOSBrightness(Brightness brightness) {}
 
   Future<void> show() async {
     globalState.handleForeground();
     render?.resume();
+    if (await isMinimized) {
+      await windowManager.restore();
+    }
     await windowManager.show();
     await windowManager.focus();
     if (!system.isMacOS) {
@@ -99,7 +102,7 @@ class Window {
       await trayManager.destroy();
       commonPrint.log('The tray icon has been destroyed.');
     } catch (e) {
-      commonPrint.log('Failed to destroy the tray icon: $e');
+      commonPrint.warn('Failed to destroy the tray icon: $e');
     }
 
     exit(0);
@@ -143,11 +146,9 @@ class NetworkMonitorProcess {
       }
     }
 
-    final process = await Process.start(
-      Platform.resolvedExecutable,
-      const ['--network-panel'],
-      workingDirectory: File(Platform.resolvedExecutable).parent.path,
-    );
+    final process = await Process.start(Platform.resolvedExecutable, const [
+      '--network-panel',
+    ], workingDirectory: File(Platform.resolvedExecutable).parent.path);
     _process = process;
     unawaited(process.stdout.drain<void>());
     unawaited(

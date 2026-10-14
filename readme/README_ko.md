@@ -47,9 +47,19 @@ Bettbox: Better Experience, Out of the box - 뛰어난 경험, 설치 즉시 사
 * **개인정보 위험 Zero**: 오픈소스, 광고 없음, 전면적인 감사를 거친 투명한 CI/CD 프로세스로 어떠한 백그라운드 개인정보 수집도 원천 차단.
 * **커뮤니티 중심**: 피드백을 깊이 있게 검토하고 유용한 Issue를 우선 처리합니다. 사용자 의견을 귀담아듣습니다.
 
----
 </div>
 
+###   🛩️ 추천 서비스
+#### 중계 · 전용선  〢  [BBXY](https://www.bbxy01.com/v2/register?code=c09R)  〢  [BaiYueGuang](https://www.sibker.com/register?invite_code=YZq6L5zd)  〢  [MESL](https://panel.meslcloud.com/#/register?code=7vy22Bv2)  〢  [Ytoo](https://y-too.net/aff.php?aff=10354)
+--------------------------------
+#### 저가형 직결  〢  [Liangxin Cloud](https://xn--9kqz23b19z.com/#/register?code=VTnrQYAj)  〢  [Chuixue Cloud](https://xn--9kqs1lo79d.com/#/register?code=skKMTab7)  〢  [YiFen](https://xn--4gqx1hgtfdmt.com/#/register?code=AuCiXprV)  〢  [Peiqian](https://xn--mes358aby2apfg.com/register?code=z7TUZLmM&cover=sfw)
+--------------------------------
+####   BBXY 전용 32% 할인 쿠폰 코드: bettbox68
+--------------------------------
+
+**간단 리뷰** : ❚ ❚  위 링크는 개발자 본인 사용 또는 TG 그룹 논의/추천을 기반으로 하며 제휴(AFF) 형태로 제공됩니다(참고: 링크를 통해 구매 시 개발자에게 소액의 수수료가 지원됩니다). 이는 해당 서비스에 대한 보증이나 약속을 의미하지 않으며, 알려진 여러 사정을 감안하여 현명하게 판단하고 선택하시기 바랍니다.
+
+---
 ## 🛠️ 설치 및 다운로드
 
 플랫폼과 시스템에 맞는 최신 설치 패키지를 **[[Releases]](https://github.com/appshubcc/Bettbox/releases)** 페이지에서 다운로드하십시오.
@@ -58,7 +68,7 @@ Bettbox: Better Experience, Out of the box - 뛰어난 경험, 설치 즉시 사
 * **모든 데스크톱 플랫폼**: 
 **Windows 8.1+:** (x64/arm64)
 **Linux Kernel 5.4+:** (x64/arm64)
-**macOS 10.15+:** (Intel/Apple Silicon)
+**macOS 12.0+:** (Intel/Apple Silicon)
 * **Android 8.0+ 기기**: Android (ARMv8 / ARMv7 / x86_64 / Universal)
 * **Android TV**: 완전 지원, 저용량 메모리 기기용 ARMv7 32비트 버전 선택 가능
 * **HarmonyOS NEXT**: [[卓易通]](https://harmonyos.cool/android-app) 프로그램과 함께 안정적으로 사용 가능
@@ -100,7 +110,7 @@ Bettbox: Better Experience, Out of the box - 뛰어난 경험, 설치 즉시 사
 Windows 환경을 예로 들면:
 
 * Windows PC가 필요합니다 (OS ≥ Windows 10)
-* 필요 환경: Git, Visual Studio, Flutter 3.44.x, Golang, Inno Setup, Rust
+* 필요 환경: Git, Visual Studio, Flutter 3.47.x, Golang, Inno Setup, Rust
 ```bash
 * flutter pub get
 * dart .\setup.dart windows --arch amd64 --out core (코어만 빌드)

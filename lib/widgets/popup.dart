@@ -1,6 +1,6 @@
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/models/common.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class CommonPopupRoute<T> extends PopupRoute<T> {
   final WidgetBuilder builder;
@@ -37,17 +37,12 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    final align = Alignment.topRight;
-    final animationValue = CurvedAnimation(
-      parent: animation,
-      curve: Curves.easeIn,
-    ).value;
     return SafeArea(
       child: ValueListenableBuilder(
         valueListenable: offsetNotifier,
         builder: (_, value, child) {
           return Align(
-            alignment: align,
+            alignment: Alignment.topRight,
             child: CustomSingleChildLayout(
               delegate: OverflowAwareLayoutDelegate(
                 offset: value.translate(48, -8),
@@ -56,22 +51,10 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
             ),
           );
         },
-        child: AnimatedBuilder(
+        child: _PopupTransition(
           animation: animation,
-          builder: (_, Widget? child) {
-            return Opacity(
-              opacity: 0.1 + 0.9 * animationValue,
-              child: Transform.scale(
-                alignment: align,
-                scale: 0.7 + 0.3 * animationValue,
-                child: Transform.translate(
-                  offset: Offset(0, -10) * (1 - animationValue),
-                  child: child!,
-                ),
-              ),
-            );
-          },
-          child: builder(context),
+          duration: transitionDuration,
+          child: child,
         ),
       ),
     );
@@ -79,6 +62,76 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
 
   @override
   Duration get transitionDuration => const Duration(milliseconds: 150);
+}
+
+class _PopupTransition extends StatefulWidget {
+  final Animation<double> animation;
+  final Duration duration;
+  final Widget child;
+
+  const _PopupTransition({
+    required this.animation,
+    required this.duration,
+    required this.child,
+  });
+
+  @override
+  State<_PopupTransition> createState() => _PopupTransitionState();
+}
+
+class _PopupTransitionState extends State<_PopupTransition>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _enter = AnimationController(
+    vsync: this,
+    duration: widget.duration,
+  );
+  late final CurvedAnimation _curve = CurvedAnimation(
+    parent: AnimationMin(widget.animation, _enter),
+    curve: Curves.easeIn,
+  );
+  late final Animation<double> _opacity = Tween<double>(
+    begin: 0.1,
+    end: 1,
+  ).animate(_curve);
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _enter.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _curve.dispose();
+    _enter.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacity,
+      child: AnimatedBuilder(
+        animation: _curve,
+        builder: (_, child) {
+          final value = _curve.value;
+          return Transform.scale(
+            alignment: Alignment.topRight,
+            scale: 0.7 + 0.3 * value,
+            child: Transform.translate(
+              offset: Offset(0, -10 * (1 - value)),
+              child: child,
+            ),
+          );
+        },
+        child: widget.child,
+      ),
+    );
+  }
 }
 
 class PopupController extends ValueNotifier<bool> {
@@ -193,6 +246,7 @@ class OverflowAwareLayoutDelegate extends SingleChildLayoutDelegate {
 
 class CommonPopupMenu extends StatelessWidget {
   final List<PopupMenuItemData> items;
+  final Widget? footer;
   final double minWidth;
   final double minItemVerticalPadding;
   final double fontSize;
@@ -200,7 +254,8 @@ class CommonPopupMenu extends StatelessWidget {
   const CommonPopupMenu({
     super.key,
     required this.items,
-    this.minWidth = 200,
+    this.footer,
+    this.minWidth = 148,
     this.minItemVerticalPadding = 16,
     this.fontSize = 15,
   });
@@ -218,15 +273,20 @@ class CommonPopupMenu extends StatelessWidget {
     return InkWell(
       onTap: onPressed != null
           ? () {
+              final route = ModalRoute.of(context);
               Navigator.of(context).pop();
-              onPressed();
+              if (route == null) {
+                onPressed();
+                return;
+              }
+              route.completed.then((_) => onPressed());
             }
           : null,
       child: Container(
         constraints: BoxConstraints(minWidth: minWidth),
         padding: EdgeInsets.only(
           left: 16,
-          right: 64,
+          right: 24,
           top: minItemVerticalPadding,
           bottom: minItemVerticalPadding,
         ),
@@ -254,14 +314,22 @@ class CommonPopupMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isLight = context.colorScheme.brightness == Brightness.light;
     return IntrinsicHeight(
       child: IntrinsicWidth(
         child: Card(
-          elevation: 12,
-          color: context.colorScheme.surfaceContainer,
+          elevation: 8,
+          color: isLight
+              ? context.colorScheme.surfaceContainerLowest
+              : context.colorScheme.surfaceContainerHighest,
           clipBehavior: Clip.antiAlias,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: context.colorScheme.outlineVariant.withValues(
+                alpha: isLight ? 0.45 : 0.25,
+              ),
+            ),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -270,6 +338,10 @@ class CommonPopupMenu extends StatelessWidget {
               for (final item in items.asMap().entries) ...[
                 _popupMenuItem(context, item: item.value, index: item.key),
                 if (item.value != items.last) Divider(height: 0),
+              ],
+              if (footer case final footer?) ...[
+                const Divider(height: 0),
+                footer,
               ],
             ],
           ),

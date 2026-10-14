@@ -171,6 +171,7 @@ pub mod core {
     }
 
     static WATCHER_STARTED: AtomicBool = AtomicBool::new(false);
+    const DEV_EXIT_GRACE: Duration = Duration::from_secs(5);
 
     fn start_dev_core_exit_watcher() {
         if !should_exit_service_when_core_exits() {
@@ -194,6 +195,14 @@ pub mod core {
                     log_message(format!("Core process exited: {}", status));
                     *process = None;
                     drop(process);
+                    thread::sleep(DEV_EXIT_GRACE);
+                    if PROCESS
+                        .lock()
+                        .unwrap_or_else(|e| e.into_inner())
+                        .is_some()
+                    {
+                        continue;
+                    }
                     log_message("Dev helper service exiting after core exit".to_string());
                     std::process::exit(0);
                 }

@@ -28,6 +28,8 @@ public class TrayIcon: NSView {
     public var onTrayIconRightMouseDown:((Bool) -> Void)?
     public var onTrayIconRightMouseUp:((Bool) -> Void)?
     
+    public private(set) var isOptionPressed = false
+
     var statusItem: NSStatusItem?
     private var sourceImage: NSImage?
     private var isActive = true

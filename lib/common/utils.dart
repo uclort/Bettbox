@@ -6,18 +6,22 @@ import 'dart:ui';
 
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/enum/enum.dart';
+import 'package:bett_box/models/models.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:bett_box/l10n/l10n.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:lpinyin/lpinyin.dart';
 
-enum IpCategory {
-  tun,
-  lan,
-  public,
-}
+enum IpCategory { tun, lan, public }
+
+typedef _DefaultRoute = ({String gateway, String interfaceName});
+
+final _virtualInterfaceRegExp = RegExp(
+  'tun|tap|vpn|ppp|meta|clash',
+  caseSensitive: false,
+);
 
 class Utils {
   Color? getDelayColor(int? delay) {
@@ -706,22 +710,24 @@ class Utils {
   Locale getSystemLocale() {
     final platformLocale = WidgetsBinding.instance.platformDispatcher.locale;
     final supportedLocales = AppLocalizations.delegate.supportedLocales;
-    
+
     if (platformLocale.languageCode.toLowerCase() == 'zh') {
-      final isTraditional = 
-        (platformLocale.countryCode?.toUpperCase() == 'TW') ||
-        (platformLocale.countryCode?.toUpperCase() == 'HK') ||
-        (platformLocale.countryCode?.toUpperCase() == 'MO') ||
-        (platformLocale.scriptCode?.toLowerCase() == 'hant');
-      return isTraditional ? const Locale('zh', 'TC') : const Locale('zh', 'CN');
+      final isTraditional =
+          (platformLocale.countryCode?.toUpperCase() == 'TW') ||
+          (platformLocale.countryCode?.toUpperCase() == 'HK') ||
+          (platformLocale.countryCode?.toUpperCase() == 'MO') ||
+          (platformLocale.scriptCode?.toLowerCase() == 'hant');
+      return isTraditional
+          ? const Locale('zh', 'TC')
+          : const Locale('zh', 'CN');
     }
-    
+
     for (final locale in supportedLocales) {
       if (locale.languageCode == platformLocale.languageCode) {
         return locale;
       }
     }
-    
+
     return const Locale('zh', 'CN');
   }
 
@@ -745,23 +751,15 @@ class Utils {
   }
 
   int sortByChar(String a, String b) {
-    if (a.isEmpty && b.isEmpty) {
-      return 0;
+    final length = min(a.length, b.length);
+    for (var i = 0; i < length; i++) {
+      final charA = a[i];
+      final charB = b[i];
+      if (charA != charB) {
+        return charA.compareToLower(charB);
+      }
     }
-    if (a.isEmpty) {
-      return -1;
-    }
-    if (b.isEmpty) {
-      return 1;
-    }
-    final charA = a[0];
-    final charB = b[0];
-
-    if (charA == charB) {
-      return sortByChar(a.substring(1), b.substring(1));
-    } else {
-      return charA.compareToLower(charB);
-    }
+    return a.length.compareTo(b.length);
   }
 
   String getOverwriteLabel(String label) {
@@ -819,10 +817,14 @@ class Utils {
     return build1.compareTo(build2);
   }
 
+  final Map<String, String> _pinyinCache = {};
+
   String getPinyin(String value) {
-    return value.isNotEmpty
-        ? PinyinHelper.getFirstWordPinyin(value.substring(0, 1))
-        : '';
+    if (value.isEmpty) return '';
+    return _pinyinCache.putIfAbsent(
+      value.substring(0, 1),
+      () => PinyinHelper.getFirstWordPinyin(value.substring(0, 1)),
+    );
   }
 
   String? getFileNameForDisposition(String? disposition) {
@@ -858,12 +860,14 @@ class Utils {
     return regex
         .allMatches(body)
         .map((match) => match.group(1)?.trim() ?? '')
-        .where((item) =>
-            item.isNotEmpty &&
-            !item.startsWith('---') &&
-            !item.startsWith(':') &&
-            !item.startsWith('|') &&
-            !item.startsWith('['))
+        .where(
+          (item) =>
+              item.isNotEmpty &&
+              !item.startsWith('---') &&
+              !item.startsWith(':') &&
+              !item.startsWith('|') &&
+              !item.startsWith('['),
+        )
         .toList();
   }
 
@@ -974,99 +978,76 @@ class Utils {
   Future<List<String>> getLocalGateways() async {
     if (system.isAndroid) {
       try {
-        final gateways = await const MethodChannel('service')
-            .invokeListMethod<String>('getLocalGateways');
+        final gateways = await const MethodChannel(
+          'service',
+        ).invokeListMethod<String>('getLocalGateways');
         if (gateways != null && gateways.isNotEmpty) {
           return gateways;
         }
       } catch (_) {
         try {
-          final gateways = await const MethodChannel('vpn')
-              .invokeListMethod<String>('getLocalGateways');
+          final gateways = await const MethodChannel(
+            'vpn',
+          ).invokeListMethod<String>('getLocalGateways');
           if (gateways != null && gateways.isNotEmpty) {
             return gateways;
           }
         } catch (_) {}
       }
     }
-    if (Platform.isLinux) {
-      return _getLinuxGateways();
-    }
-    if (Platform.isMacOS) {
-      return _getMacOSGateways();
-    }
-    if (Platform.isWindows) {
-      return _getWindowsGateways();
-    }
-    return [];
+    final routes = await _getDefaultRoutes();
+    return routes.map((route) => route.gateway).toList();
   }
 
-  Future<String> getNetworkType() async {
+  Future<NetworkInfo> getNetworkInfo() async {
     try {
-      final connectivityList = await Connectivity().checkConnectivity();
-      String type = '';
-      if (connectivityList.contains(ConnectivityResult.wifi)) {
-        type = 'Wi-Fi';
-      } else if (connectivityList.contains(ConnectivityResult.ethernet)) {
-        type = 'Ethernet';
-      } else if (connectivityList.contains(ConnectivityResult.mobile)) {
-        type = 'Cellular';
+      if (system.isAndroid) {
+        final info = await const MethodChannel(
+          'service',
+        ).invokeMapMethod<String, Object?>('getNetworkInfo');
+        return info == null ? const NetworkInfo() : NetworkInfo.fromJson(info);
       }
+      final routes = await _getDefaultRoutes();
+      final route = routes
+          .where(
+            (route) =>
+                route.gateway != '0.0.0.0' &&
+                !_virtualInterfaceRegExp.hasMatch(route.interfaceName),
+          )
+          .firstOrNull;
+      final interfaces = await NetworkInterface.list(includeLoopback: false);
+      final matchedInterface = interfaces
+          .where((interface) => interface.name == route?.interfaceName)
+          .firstOrNull;
+      final Iterable<InternetAddress> addresses =
+          matchedInterface?.addresses.where((address) => !address.isLinkLocal) ??
+          const <InternetAddress>[];
+      final address =
+          addresses.where((address) => address.isIPv4).firstOrNull ??
+          addresses.firstOrNull;
+      return NetworkInfo(
+        type: await _getConnectivityType(),
+        interfaceName: route?.interfaceName ?? '',
+        ip: address?.address ?? await getLocalIpAddress() ?? '',
+        gateway: route?.gateway ?? '',
+        dns: await _getSystemDns(),
+      );
+    } catch (_) {
+      return const NetworkInfo();
+    }
+  }
 
-      final interfaces = await NetworkInterface.list(includeLoopback: false)
-        ..sort((a, b) {
-          if (a.isWifi && !b.isWifi) return -1;
-          if (!a.isWifi && b.isWifi) return 1;
-          if (a.includesIPv4 && !b.includesIPv4) return -1;
-          if (!a.includesIPv4 && b.includesIPv4) return 1;
-          return 0;
-        });
-
-      String ifaceName = '';
-      for (final iface in interfaces) {
-        final nameLower = iface.name.toLowerCase();
-        if (nameLower.contains('tun') ||
-            nameLower.contains('vpn') ||
-            nameLower.contains('tap') ||
-            nameLower.contains('ppp') ||
-            nameLower.contains('wintun')) {
-          continue;
-        }
-        ifaceName = iface.name;
-        break;
-      }
-
-      if (type.isNotEmpty && ifaceName.isNotEmpty) {
-        if (type.toLowerCase() == ifaceName.toLowerCase()) {
-          return type;
-        }
-        return '$type ($ifaceName)';
-      }
-      if (type.isNotEmpty) return type;
-      if (ifaceName.isNotEmpty) return ifaceName;
+  Future<String> _getConnectivityType() async {
+    try {
+      final results = await Connectivity().checkConnectivity();
+      if (results.contains(ConnectivityResult.wifi)) return 'Wi-Fi';
+      if (results.contains(ConnectivityResult.ethernet)) return 'Ethernet';
+      if (results.contains(ConnectivityResult.mobile)) return 'Cellular';
     } catch (_) {}
     return '';
   }
 
-  Future<List<String>> getSystemDns() async {
-    if (system.isAndroid) {
-      try {
-        final dnsStr = await const MethodChannel('service')
-            .invokeMethod<String>('getCurrentDns');
-        if (dnsStr != null && dnsStr.isNotEmpty) {
-          return _parseDnsString(dnsStr);
-        }
-      } catch (_) {
-        try {
-          final dnsStr = await const MethodChannel('vpn')
-              .invokeMethod<String>('getCurrentDns');
-          if (dnsStr != null && dnsStr.isNotEmpty) {
-            return _parseDnsString(dnsStr);
-          }
-        } catch (_) {}
-      }
-      return [];
-    }
+  Future<List<String>> _getSystemDns() async {
     if (Platform.isMacOS) {
       return await MacOS().systemDns ?? [];
     }
@@ -1079,25 +1060,13 @@ class Utils {
     return [];
   }
 
-  List<String> _parseDnsString(String dnsStr) {
-    return dnsStr
-        .split(',')
-        .map((e) => e.trim().replaceFirst(RegExp(r':53$'), ''))
-        .where((e) => e.isNotEmpty && !e.startsWith('198.18.') && e != '127.0.0.1')
-        .toSet()
-        .toList();
-  }
-
   Future<List<String>> _getWindowsDns() async {
     try {
-      final result = await Process.run(
-        'powershell',
-        [
-          '-NoProfile',
-          '-Command',
-          r'$route = Get-NetRoute -DestinationPrefix "0.0.0.0/0" | Where-Object { $_.InterfaceAlias -notmatch "(?i)(tun|tap|wintun|meta|clash|vpn)" -and $_.NextHop -ne "0.0.0.0" } | Sort-Object RouteMetric | Select-Object -First 1; if ($route) { (Get-DnsClientServerAddress -InterfaceIndex $route.InterfaceIndex -AddressFamily IPv4).ServerAddresses } else { (Get-DnsClientServerAddress -AddressFamily IPv4).ServerAddresses }',
-        ],
-      );
+      final result = await Process.run('powershell', [
+        '-NoProfile',
+        '-Command',
+        r'$route = Get-NetRoute -DestinationPrefix "0.0.0.0/0" | Where-Object { $_.InterfaceAlias -notmatch "(?i)(tun|tap|wintun|meta|clash|vpn)" -and $_.NextHop -ne "0.0.0.0" } | Sort-Object RouteMetric | Select-Object -First 1; if ($route) { (Get-DnsClientServerAddress -InterfaceIndex $route.InterfaceIndex -AddressFamily IPv4).ServerAddresses } else { (Get-DnsClientServerAddress -AddressFamily IPv4).ServerAddresses }',
+      ]);
       if (result.exitCode != 0) return [];
       final lines = result.stdout.toString().split('\n');
       final servers = <String>[];
@@ -1124,7 +1093,9 @@ class Utils {
         final trimmed = line.trim();
         if (trimmed.startsWith('nameserver ')) {
           final server = trimmed.substring('nameserver '.length).trim();
-          if (server.isNotEmpty && !server.startsWith('198.18.') && server != '127.0.0.1') {
+          if (server.isNotEmpty &&
+              !server.startsWith('198.18.') &&
+              server != '127.0.0.1') {
             servers.add(server);
           }
         }
@@ -1135,14 +1106,26 @@ class Utils {
     }
   }
 
+  Future<List<_DefaultRoute>> _getDefaultRoutes() async {
+    if (Platform.isLinux) {
+      return _getLinuxDefaultRoutes();
+    }
+    if (Platform.isMacOS) {
+      return _getMacOSDefaultRoutes();
+    }
+    if (Platform.isWindows) {
+      return _getWindowsDefaultRoutes();
+    }
+    return [];
+  }
 
-  Future<List<String>> _getLinuxGateways() async {
+  Future<List<_DefaultRoute>> _getLinuxDefaultRoutes() async {
     try {
       final routeFile = File('/proc/net/route');
       if (!await routeFile.exists()) return [];
 
       final lines = await routeFile.readAsLines();
-      final gateways = <String>[];
+      final routes = <({_DefaultRoute route, int metric})>[];
       // Header: Iface Destination Gateway Flags RefCnt Use Metric Mask ...
       for (final line in lines.skip(1)) {
         final parts = line.trim().split(RegExp(r'\s+'));
@@ -1157,60 +1140,65 @@ class Utils {
           int.parse(gwHex.substring(2, 4), radix: 16),
           int.parse(gwHex.substring(0, 2), radix: 16),
         ];
-        gateways.add(bytes.join('.'));
+        routes.add((
+          route: (gateway: bytes.join('.'), interfaceName: parts[0]),
+          metric: int.tryParse(parts.elementAtOrNull(6) ?? '') ?? 0,
+        ));
       }
-      return gateways;
+      routes.sort((a, b) => a.metric.compareTo(b.metric));
+      return routes.map((e) => e.route).toList();
     } catch (e) {
-      commonPrint.log('Smart Auto Stop: Linux gateway error: $e');
+      commonPrint.warn('Smart Auto Stop: Linux gateway error: $e');
       return [];
     }
   }
 
-  Future<List<String>> _getMacOSGateways() async {
+  Future<List<_DefaultRoute>> _getMacOSDefaultRoutes() async {
     try {
       final result = await Process.run('route', ['-n', 'get', 'default']);
       if (result.exitCode != 0) return [];
 
-      final stdout = result.stdout.toString();
-      for (final line in stdout.split('\n')) {
+      var gateway = '';
+      var interfaceName = '';
+      for (final line in result.stdout.toString().split('\n')) {
         final trimmed = line.trim();
-        if (!trimmed.startsWith('gateway:')) continue;
-        final gateway = trimmed.substring('gateway:'.length).trim();
-        // Exclude IPv6/link-local gateways
-        if (gateway.isNotEmpty && !gateway.contains(':')) {
-          return [gateway];
+        if (trimmed.startsWith('gateway:')) {
+          gateway = trimmed.substring('gateway:'.length).trim();
+        } else if (trimmed.startsWith('interface:')) {
+          interfaceName = trimmed.substring('interface:'.length).trim();
         }
       }
-      return [];
+      // Exclude IPv6/link-local gateways
+      if (gateway.isEmpty || gateway.contains(':')) return [];
+      return [(gateway: gateway, interfaceName: interfaceName)];
     } catch (e) {
-      commonPrint.log('Smart Auto Stop: macOS gateway error: $e');
+      commonPrint.warn('Smart Auto Stop: macOS gateway error: $e');
       return [];
     }
   }
 
-  Future<List<String>> _getWindowsGateways() async {
+  Future<List<_DefaultRoute>> _getWindowsDefaultRoutes() async {
     try {
-      final result = await Process.run(
-        'powershell',
-        [
-          '-NoProfile',
-          '-Command',
-          'Get-NetRoute -DestinationPrefix \'0.0.0.0/0\' '
-              '| Select-Object -ExpandProperty NextHop',
-        ],
-      );
+      final result = await Process.run('powershell', [
+        '-NoProfile',
+        '-Command',
+        r"Get-NetRoute -DestinationPrefix '0.0.0.0/0' "
+            r'| Sort-Object RouteMetric '
+            r'| ForEach-Object { "$($_.NextHop)|$($_.InterfaceAlias)" }',
+      ]);
       if (result.exitCode != 0) return [];
 
-      final gateways = <String>[];
+      final routes = <_DefaultRoute>[];
       for (final line in result.stdout.toString().split('\n')) {
-        final gateway = line.trim();
+        final parts = line.trim().split('|');
+        final gateway = parts.first;
         if (gateway.isEmpty) continue;
         if (!RegExp(r'^\d{1,3}(\.\d{1,3}){3}$').hasMatch(gateway)) continue;
-        gateways.add(gateway);
+        routes.add((gateway: gateway, interfaceName: parts.skip(1).join('|')));
       }
-      return gateways;
+      return routes;
     } catch (e) {
-      commonPrint.log('Smart Auto Stop: Windows gateway error: $e');
+      commonPrint.warn('Smart Auto Stop: Windows gateway error: $e');
       return [];
     }
   }
@@ -1220,13 +1208,12 @@ class Utils {
     return SingleActivator(trigger, control: control, meta: !control);
   }
 
-
   FutureOr<T> handleWatch<T>(Function function) async {
     if (kDebugMode) {
       final stopwatch = Stopwatch()..start();
       final res = await function();
       stopwatch.stop();
-      commonPrint.log('Time：${stopwatch.elapsedMilliseconds} ms');
+      commonPrint.debug('Time：${stopwatch.elapsedMilliseconds} ms');
       return res;
     }
     return await function();
@@ -1240,17 +1227,11 @@ class Utils {
   }
 
   String patchYamlConfig(String content) {
-    final sanitized = content.replaceAllMapped(
-      RegExp(r'^[ \t]+', multiLine: true),
+    if (!content.contains('\t')) return content;
+    return content.replaceAllMapped(
+      RegExp(r'^[ \t]*\t[ \t]*', multiLine: true),
       (match) => match.group(0)!.replaceAll('\t', '  '),
     );
-    final shortIdExp = RegExp(
-      r'(?<=\bshort-id\s*:\s*)(?!["\x27{\[\s])([0-9a-fA-F]+)(?=\s*(?:$|[,\s#\}]))',
-      multiLine: true,
-    );
-    return sanitized.replaceAllMapped(shortIdExp, (match) {
-      return '"${match.group(1)}"';
-    });
   }
 
   String patchValidateConfig(String content) {

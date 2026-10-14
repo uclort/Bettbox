@@ -1,5 +1,5 @@
 import 'package:bett_box/common/common.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'card.dart';
 import 'text.dart';
@@ -59,6 +59,40 @@ class SettingTextCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: EmojiText(text, style: context.textTheme.bodyMedium),
+      ),
+    );
+  }
+}
+
+class TitleSettingButton extends StatelessWidget {
+  final String tooltip;
+  final VoidCallback onTap;
+
+  const TitleSettingButton({
+    super.key,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        child: InkResponse(
+          radius: 16,
+          highlightShape: BoxShape.circle,
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(7),
+            child: Icon(
+              Icons.settings_outlined,
+              size: 18,
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
       ),
     );
   }

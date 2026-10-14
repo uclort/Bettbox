@@ -6,9 +6,6 @@ void main() {
   final source = File(
     'plugins/tray_manager/windows/tray_manager_plugin.cpp',
   ).readAsStringSync();
-  final trayManagerSource = File(
-    'lib/manager/tray_manager.dart',
-  ).readAsStringSync();
   final menuHostSource = File(
     'plugins/tray_manager/windows/tray_menu_host.h',
   ).readAsStringSync();

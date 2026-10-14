@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:bett_box/common/common.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:xml/xml.dart';
 import 'package:crypto/crypto.dart';
@@ -98,6 +98,26 @@ class CommonTargetIcon extends StatefulWidget {
 
   const CommonTargetIcon({super.key, required this.src, required this.size});
 
+  static final ValueNotifier<int> _cacheVersion = ValueNotifier(0);
+
+  static Future<void> clearCache() async {
+    final tempDir = await appPath.tempPath;
+    for (final name in ['icon_raw_cache', 'resized_icons']) {
+      final dir = Directory(path.join(tempDir, name));
+      if (await dir.exists()) {
+        await dir.delete(recursive: true);
+      }
+    }
+    _CommonTargetIconState._moduleFileCache.clear();
+    _CommonTargetIconState._moduleSvgValidCache.clear();
+    _CommonTargetIconState._moduleFailureCache.clear();
+    final imageCache = PaintingBinding.instance.imageCache;
+    imageCache.clear();
+    imageCache.clearLiveImages();
+    svg.cache.clear();
+    _cacheVersion.value++;
+  }
+
   @override
   State<CommonTargetIcon> createState() => _CommonTargetIconState();
 }
@@ -137,6 +157,28 @@ class _CommonTargetIconState extends State<CommonTargetIcon> {
     }
     _moduleFailureCache.remove(mKey);
     return true;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    CommonTargetIcon._cacheVersion.addListener(_handleCacheReset);
+  }
+
+  @override
+  void dispose() {
+    CommonTargetIcon._cacheVersion.removeListener(_handleCacheReset);
+    super.dispose();
+  }
+
+  void _handleCacheReset() {
+    if (!mounted) return;
+    setState(() {
+      _file = null;
+      _cachedSrc = null;
+      _cachedSize = null;
+    });
+    _syncCheckAndInit();
   }
 
   void _syncCheckAndInit() {
@@ -236,12 +278,16 @@ class _CommonTargetIconState extends State<CommonTargetIcon> {
       final int targetHeight;
       if (origWidth >= origHeight) {
         targetWidth = targetSize;
-        targetHeight =
-            (origHeight * targetSize / origWidth).round().clamp(1, targetSize);
+        targetHeight = (origHeight * targetSize / origWidth).round().clamp(
+          1,
+          targetSize,
+        );
       } else {
         targetHeight = targetSize;
-        targetWidth =
-            (origWidth * targetSize / origHeight).round().clamp(1, targetSize);
+        targetWidth = (origWidth * targetSize / origHeight).round().clamp(
+          1,
+          targetSize,
+        );
       }
 
       final codec = await ui.instantiateImageCodec(
@@ -286,7 +332,7 @@ class _CommonTargetIconState extends State<CommonTargetIcon> {
       if (!trimmed.startsWith('<svg') &&
           !trimmed.startsWith('<?xml') &&
           !trimmed.startsWith('<!DOCTYPE svg')) {
-        commonPrint.log('Invalid SVG: not starting with svg tag');
+        commonPrint.warn('Invalid SVG: not starting with svg tag');
         return false;
       }
 
@@ -295,7 +341,7 @@ class _CommonTargetIconState extends State<CommonTargetIcon> {
           trimmed.contains('<html>') ||
           trimmed.contains('<head>') ||
           trimmed.contains('<body>')) {
-        commonPrint.log('Invalid SVG: HTML content detected');
+        commonPrint.warn('Invalid SVG: HTML content detected');
         return false;
       }
 
@@ -303,7 +349,7 @@ class _CommonTargetIconState extends State<CommonTargetIcon> {
       try {
         XmlDocument.parse(content);
       } catch (e) {
-        commonPrint.log('Invalid SVG: XML parse error - $e');
+        commonPrint.warn('Invalid SVG: XML parse error - $e');
         return false;
       }
 
@@ -317,7 +363,7 @@ class _CommonTargetIconState extends State<CommonTargetIcon> {
       }
       return true;
     } catch (e) {
-      commonPrint.log('SVG validation failed: $e');
+      commonPrint.warn('SVG validation failed: $e');
       return false;
     }
   }
@@ -452,7 +498,7 @@ class _CommonTargetIconState extends State<CommonTargetIcon> {
               placeholderBuilder: (_) => _defaultIcon(),
             );
           } catch (e) {
-            commonPrint.log('Failed to load SVG: $e');
+            commonPrint.warn('Failed to load SVG: $e');
             _moduleFileCache.remove(mKey);
             _moduleSvgValidCache.remove(widget.src);
             _moduleFailureCache.remove(mKey);
@@ -466,7 +512,7 @@ class _CommonTargetIconState extends State<CommonTargetIcon> {
               return _defaultIcon();
             }
             if (snapshot.hasError || snapshot.data == false) {
-              commonPrint.log(
+              commonPrint.warn(
                 'SVG validation failed in build: ${snapshot.error}',
               );
               _IconFileManager.removeFile(widget.src);
@@ -487,7 +533,7 @@ class _CommonTargetIconState extends State<CommonTargetIcon> {
                 placeholderBuilder: (_) => _defaultIcon(),
               );
             } catch (e) {
-              commonPrint.log('Failed to load SVG: $e');
+              commonPrint.warn('Failed to load SVG: $e');
               _IconFileManager.removeFile(widget.src);
               _moduleFileCache.remove(_moduleCacheKey(cacheSize));
               _moduleSvgValidCache.remove(widget.src);

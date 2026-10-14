@@ -9,7 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/models/models.dart';
 import 'package:bett_box/state.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:cupertino_ui/cupertino_ui.dart';
 
 class Request {
   late final Dio _dio;
@@ -95,8 +95,9 @@ class Request {
     ResponseType responseType,
   ) async {
     final uri = Uri.parse(url);
-    final segments =
-        uri.pathSegments.where((segment) => segment.isNotEmpty).toList();
+    final segments = uri.pathSegments
+        .where((segment) => segment.isNotEmpty)
+        .toList();
     if (segments.isEmpty && uri.host.isEmpty) {
       throw Exception('Empty file path in file url: $url');
     }
@@ -143,7 +144,9 @@ class Request {
         : 'attachment; filename*=UTF-8\'\'${Uri.encodeComponent(fileName)}';
     final headers = disposition == null
         ? null
-        : Headers.fromMap({'content-disposition': [disposition]});
+        : Headers.fromMap({
+            'content-disposition': [disposition],
+          });
     if (responseType == ResponseType.plain) {
       return Response(
         requestOptions: requestOptions,
@@ -289,7 +292,7 @@ class Request {
         }
       }
     } catch (e) {
-      commonPrint.log('Check update failed: ${e.formatErrorLog}');
+      commonPrint.warn('Check update failed: ${e.formatErrorLog}');
     }
     return null;
   }
@@ -580,9 +583,14 @@ class Request {
     return file;
   }
 
-  Future<void> _writeIpCacheFile(File file, Map<String, dynamic> entries) async {
+  Future<void> _writeIpCacheFile(
+    File file,
+    Map<String, dynamic> entries,
+  ) async {
     try {
-      final tempFile = File('${file.path}.${DateTime.now().microsecondsSinceEpoch}.tmp');
+      final tempFile = File(
+        '${file.path}.${DateTime.now().microsecondsSinceEpoch}.tmp',
+      );
       await tempFile.parent.create(recursive: true);
       await tempFile.writeAsString(json.encode(entries), flush: true);
       try {

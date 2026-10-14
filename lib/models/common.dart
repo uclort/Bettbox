@@ -1,10 +1,11 @@
 // ignore_for_file: invalid_annotation_target
 
+import 'dart:io';
 import 'dart:math';
 
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/enum/enum.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'generated/common.freezed.dart';
@@ -15,7 +16,7 @@ abstract class NavigationItem with _$NavigationItem {
   const factory NavigationItem({
     required Icon icon,
     required PageLabel label,
-    final String? description,
+    String? description,
     required WidgetBuilder builder,
     @Default(true) bool keep,
     String? path,
@@ -109,33 +110,107 @@ extension TrackerInfoExt on TrackerInfo {
   }
 }
 
-String _logDateTime(dynamic _) {
-  return DateTime.now().showFull;
+DateTime _logTime(Object? value) {
+  if (value is num) {
+    return DateTime.fromMillisecondsSinceEpoch(value.toInt());
+  }
+  return DateTime.now();
 }
 
-// String _logId(_) {
-//   return utils.id;
-// }
+final _logModuleRegExp = RegExp(
+  r'^\[([A-Za-z][A-Za-z0-9_-]{0,15}(?: [A-Za-z0-9_-]{1,15})?)\]\s*',
+);
 
 @freezed
 abstract class Log with _$Log {
   const factory Log({
-    // @JsonKey(fromJson: _logId) required String id,
     @JsonKey(name: 'LogLevel') @Default(LogLevel.error) LogLevel logLevel,
     @JsonKey(name: 'Payload') @Default('') String payload,
-    @JsonKey(fromJson: _logDateTime) required String dateTime,
+    @JsonKey(fromJson: _logTime) required DateTime time,
+    @JsonKey(includeFromJson: false, includeToJson: false)
+    @Default(LogSource.core)
+    LogSource source,
+    @JsonKey(includeFromJson: false, includeToJson: false) String? module,
   }) = _Log;
 
-  factory Log.app(String payload) {
+  factory Log.core(Map<String, Object?> json) {
+    final raw = Log.fromJson(json);
+    final log = raw.copyWith(payload: raw.payload.trimRight());
+    final match = _logModuleRegExp.firstMatch(log.payload);
+    if (match == null) return log;
+    final module = match.group(1);
+    final payload = log.payload.substring(match.end);
+    if (module == 'APP') {
+      return log.copyWith(payload: payload, source: LogSource.app);
+    }
+    return log.copyWith(payload: payload, module: module);
+  }
+
+  factory Log.app(String payload, {LogLevel level = LogLevel.info}) {
     return Log(
-      logLevel: LogLevel.info,
-      payload: payload,
-      dateTime: _logDateTime(null),
-      // id: _logId(null),
+      logLevel: level,
+      payload: payload.trimRight(),
+      time: DateTime.now(),
+      source: LogSource.app,
     );
   }
 
   factory Log.fromJson(Map<String, Object?> json) => _$LogFromJson(json);
+}
+
+extension LogExt on Log {
+  String get dateTime => time.showFullMillis;
+
+  String get tag => module ?? (source == LogSource.app ? 'APP' : 'Core');
+
+  String get raw {
+    final module = this.module;
+    return module == null ? payload : '[$module] $payload';
+  }
+
+  String get line {
+    final module = this.module;
+    final origin = module == null ? source.name : '${source.name}/$module';
+    return '${time.showFullMillis} [${logLevel.name}] [$origin] $payload';
+  }
+}
+
+typedef FilteredLogs = ({List<Log> logs, int errors, int warnings});
+
+@freezed
+abstract class LogsFilterState with _$LogsFilterState {
+  const factory LogsFilterState({
+    LogSource? source,
+    @Default({}) Set<LogLevel> levels,
+    String? module,
+    @Default('') String query,
+  }) = _LogsFilterState;
+}
+
+extension LogsFilterStateExt on LogsFilterState {
+  bool get hasFacet => source != null || levels.isNotEmpty || module != null;
+
+  FilteredLogs apply(List<Log> logs) {
+    final lowQuery = query.toLowerCase();
+    final result = <Log>[];
+    var errors = 0;
+    var warnings = 0;
+    for (final log in logs) {
+      if (source != null && log.source != source) continue;
+      if (module != null && log.tag != module) continue;
+      if (lowQuery.isNotEmpty && !log.raw.toLowerCase().contains(lowQuery)) {
+        continue;
+      }
+      if (log.logLevel == LogLevel.error) {
+        errors++;
+      } else if (log.logLevel == LogLevel.warning) {
+        warnings++;
+      }
+      if (levels.isNotEmpty && !levels.contains(log.logLevel)) continue;
+      result.add(log);
+    }
+    return (logs: result, errors: errors, warnings: warnings);
+  }
 }
 
 @freezed
@@ -216,6 +291,20 @@ abstract class FileInfo with _$FileInfo {
 extension FileInfoExt on FileInfo {
   String get desc =>
       '${TrafficValue(value: size).show}  ·  ${lastModified.lastUpdateTimeDesc}';
+}
+
+@freezed
+abstract class NetworkInfo with _$NetworkInfo {
+  const factory NetworkInfo({
+    @Default('') String type,
+    @JsonKey(name: 'interface') @Default('') String interfaceName,
+    @Default('') String ip,
+    @Default('') String gateway,
+    @Default([]) List<String> dns,
+  }) = _NetworkInfo;
+
+  factory NetworkInfo.fromJson(Map<String, Object?> json) =>
+      _$NetworkInfoFromJson(json);
 }
 
 @freezed
@@ -301,11 +390,38 @@ abstract class Group with _$Group {
   factory Group.fromJson(Map<String, Object?> json) => _$GroupFromJson(json);
 }
 
-extension GroupsExt on List<Group> {
-  Group? getGroup(String groupName) {
-    final index = indexWhere((element) => element.name == groupName);
-    return index != -1 ? this[index] : null;
+class _GroupsIndex {
+  _GroupsIndex(this._groups) {
+    for (final group in _groups) {
+      byName.putIfAbsent(group.name, () => group);
+    }
   }
+
+  final List<Group> _groups;
+  final Map<String, Group> byName = {};
+
+  late final Map<String, Proxy> rematchProxies = () {
+    final result = <String, Proxy>{};
+    for (final group in _groups) {
+      for (final proxy in group.all) {
+        final type = proxy.type;
+        if (type.length == 7 && type.toUpperCase() == 'REMATCH') {
+          result.putIfAbsent(proxy.name, () => proxy);
+        }
+      }
+    }
+    return result;
+  }();
+}
+
+final _groupsIndexes = Expando<_GroupsIndex>();
+
+extension GroupsExt on List<Group> {
+  _GroupsIndex get _index => _groupsIndexes[this] ??= _GroupsIndex(this);
+
+  Group? getGroup(String groupName) => _index.byName[groupName];
+
+  Proxy? getRematchProxy(String proxyName) => _index.rematchProxies[proxyName];
 }
 
 extension GroupExt on Group {
@@ -464,10 +580,16 @@ class IpInfo {
       final loc = data['location'];
       if (loc is List && ip.isNotEmpty) {
         final locList = loc.map((e) => e?.toString() ?? '').toList();
-        final country = locList.isNotEmpty && locList[0].isNotEmpty ? locList[0] : null;
+        final country = locList.isNotEmpty && locList[0].isNotEmpty
+            ? locList[0]
+            : null;
         final countryCode = country == '中国' ? 'CN' : '';
-        final province = locList.length > 1 && locList[1].isNotEmpty ? locList[1] : null;
-        final city = locList.length > 2 && locList[2].isNotEmpty ? locList[2] : null;
+        final province = locList.length > 1 && locList[1].isNotEmpty
+            ? locList[1]
+            : null;
+        final city = locList.length > 2 && locList[2].isNotEmpty
+            ? locList[2]
+            : null;
         final last = locList.length > 4 && locList[4].isNotEmpty
             ? locList[4]
             : (locList.length > 3 && locList[3].isNotEmpty ? locList[3] : null);
@@ -516,16 +638,21 @@ class IpInfo {
       }
     }
 
-    if (json['query'] != null || json['countryCode'] != null || json['status'] != null) {
+    if (json['query'] != null ||
+        json['countryCode'] != null ||
+        json['status'] != null) {
       if (json['status'] != null && json['status'] != 'success') {
-        throw FormatException('ip-api.com status not success: ${json['message']}');
+        throw FormatException(
+          'ip-api.com status not success: ${json['message']}',
+        );
       }
       final ip = (json['query'] ?? json['ip'])?.toString() ?? '';
       final countryCode =
           (json['countryCode'] ?? json['country_code'])?.toString() ?? '';
       final country = json['country']?.toString();
       final province =
-          (json['regionName'] ?? json['region'] ?? json['province'])?.toString();
+          (json['regionName'] ?? json['region'] ?? json['province'])
+              ?.toString();
       final city = json['city']?.toString();
       final isp = json['isp']?.toString();
       final org = json['org']?.toString();
@@ -534,8 +661,10 @@ class IpInfo {
           : (json['as_name']?.toString());
 
       final rawAs = (json['as'] ?? json['asn'])?.toString() ?? '';
-      final asnMatch =
-          RegExp(r'^(AS\d+)', caseSensitive: false).firstMatch(rawAs.trim());
+      final asnMatch = RegExp(
+        r'^(AS\d+)',
+        caseSensitive: false,
+      ).firstMatch(rawAs.trim());
       final asn = asnMatch != null
           ? asnMatch.group(1)!.toUpperCase()
           : (rawAs.isNotEmpty ? rawAs.trim().split(' ').first : null);
@@ -556,13 +685,14 @@ class IpInfo {
 
     if (json['country_code'] != null && json['country_code3'] != null) {
       final ip = json['ip']?.toString() ?? '';
-      final org = json['organization_name']?.toString() ??
+      final org =
+          json['organization_name']?.toString() ??
           json['organization']?.toString();
       final rawAsn = json['asn']?.toString() ?? '';
       final asn = rawAsn.isNotEmpty
           ? (rawAsn.toUpperCase().startsWith('AS')
-              ? rawAsn.toUpperCase()
-              : 'AS$rawAsn')
+                ? rawAsn.toUpperCase()
+                : 'AS$rawAsn')
           : null;
       if (ip.isNotEmpty) {
         return IpInfo(
@@ -634,7 +764,8 @@ class IpInfo {
   }
 
   IpInfo merge(IpInfo other, {bool otherIsAuthoritative = false}) {
-    final isOtherPrimary = otherIsAuthoritative ||
+    final isOtherPrimary =
+        otherIsAuthoritative ||
         ((asn == null || asn!.isEmpty) &&
             (other.asn != null && other.asn!.isNotEmpty));
 
@@ -642,17 +773,17 @@ class IpInfo {
     final secondary = isOtherPrimary ? this : other;
 
     final mergedIp = primary.ip.isNotEmpty ? primary.ip : secondary.ip;
-    final bool isSameIp = primary.ip.isEmpty ||
+    final bool isSameIp =
+        primary.ip.isEmpty ||
         secondary.ip.isEmpty ||
         primary.ip == secondary.ip;
 
     final primaryCc = primary.countryCode.trim().toUpperCase();
     final secondaryCc = secondary.countryCode.trim().toUpperCase();
 
-    final bool isSameCountry = isSameIp &&
-        (primaryCc.isEmpty ||
-            secondaryCc.isEmpty ||
-            primaryCc == secondaryCc);
+    final bool isSameCountry =
+        isSameIp &&
+        (primaryCc.isEmpty || secondaryCc.isEmpty || primaryCc == secondaryCc);
 
     final mergedCountryCode = primaryCc.isNotEmpty ? primaryCc : secondaryCc;
 
@@ -677,15 +808,18 @@ class IpInfo {
         ? primary.city
         : (isSameCountry ? secondary.city : null);
 
-    final mergedAsn =
-        primary.asn?.isNotEmpty == true ? primary.asn : secondary.asn;
-    final mergedAsName =
-        primary.asName?.isNotEmpty == true ? primary.asName : secondary.asName;
+    final mergedAsn = primary.asn?.isNotEmpty == true
+        ? primary.asn
+        : secondary.asn;
+    final mergedAsName = primary.asName?.isNotEmpty == true
+        ? primary.asName
+        : secondary.asName;
     final mergedAsDomain = primary.asDomain?.isNotEmpty == true
         ? primary.asDomain
         : secondary.asDomain;
-    final mergedIsp =
-        primary.isp?.isNotEmpty == true ? primary.isp : secondary.isp;
+    final mergedIsp = primary.isp?.isNotEmpty == true
+        ? primary.isp
+        : secondary.isp;
     final mergedContinent = primary.continent?.isNotEmpty == true
         ? primary.continent
         : secondary.continent;
@@ -844,14 +978,17 @@ abstract class Script with _$Script {
   const factory Script({
     required String id,
     required String label,
-    required String content,
+    @Default('') String content,
     String? url,
     @JsonKey(name: 'custom-options') Map<String, bool>? customOptions,
+    String? digest,
+    @Default(false) bool compatible,
+    bool? volatile,
   }) = _Script;
 
   factory Script.create({
     required String label,
-    required String content,
+    String content = '',
     String? url,
   }) {
     return Script(id: utils.uuidV4, label: label, content: content, url: url);
@@ -860,9 +997,35 @@ abstract class Script with _$Script {
   factory Script.fromJson(Map<String, Object?> json) => _$ScriptFromJson(json);
 }
 
+final volatileScriptPattern = RegExp(r'\bDate\b|Math\s*\.\s*random');
+
 extension ScriptExt on Script {
-  bool get isCompatibleWithBettbox {
-    final head = content.length > 2000 ? content.substring(0, 2000) : content;
-    return head.contains('Compatible_With_Bettbox');
+  Future<String> readContent() async {
+    if (content.isNotEmpty) return content;
+    final file = File(await appPath.getScriptPath(id));
+    if (!await file.exists()) return '';
+    return file.readAsString();
+  }
+
+  Future<Script> writeContent(String value) async {
+    final path = await appPath.getScriptPath(id);
+    final temp = File('$path.${DateTime.now().microsecondsSinceEpoch}.tmp');
+    await temp.parent.create(recursive: true);
+    await temp.writeAsString(value, flush: true);
+    await temp.rename(path);
+    final head = value.length > 2000 ? value.substring(0, 2000) : value;
+    return copyWith(
+      content: '',
+      digest: value.toMd5(),
+      compatible: head.contains('Compatible_With_Bettbox'),
+      volatile: volatileScriptPattern.hasMatch(value),
+    );
+  }
+
+  Future<void> deleteContent() async {
+    final file = File(await appPath.getScriptPath(id));
+    if (await file.exists()) {
+      await file.delete();
+    }
   }
 }

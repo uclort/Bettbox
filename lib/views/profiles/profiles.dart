@@ -10,7 +10,7 @@ import 'package:bett_box/views/profiles/edit_profile.dart';
 import 'package:bett_box/views/profiles/override_profile.dart';
 import 'package:bett_box/views/profiles/scripts.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
@@ -140,8 +140,8 @@ class _ProfilesViewState extends ConsumerState<ProfilesView> {
       title: appLocalizations.profiles,
       floatingActionButton: _buildFAB(),
       actions: _buildActions(),
-      body: Consumer(
-        builder: (_, ref, _) {
+      body: ActiveConsumer(
+        builder: (_, ref) {
           final profilesSelectorState = ref.watch(
             profilesSelectorStateProvider,
           );
@@ -155,45 +155,48 @@ class _ProfilesViewState extends ConsumerState<ProfilesView> {
                     profilesSelectorState.columns
               ? profilesSelectorState.profiles.length
               : profilesSelectorState.columns;
-          return Align(
-            alignment: Alignment.topCenter,
-            child: SingleChildScrollView(
-              key: profilesStoreKey,
-              padding: EdgeInsets.only(
-                left: 16,
-                right: 16,
-                top: 16,
-                bottom:
-                    (profilesSelectorState.profiles.isNotEmpty &&
-                            profilesSelectorState.profiles.length % columns == 0
-                        ? 88
-                        : 16) +
-                    (isMobileView
-                        ? getFloatingBottomBarReserveHeight(context)
-                        : 0),
-              ),
-              child: Grid(
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                crossAxisCount: columns,
-                children: [
-                  for (
-                    int i = 0;
-                    i < profilesSelectorState.profiles.length;
-                    i++
-                  )
-                    GridItem(
-                      child: ProfileItem(
-                        key: Key(profilesSelectorState.profiles[i].id),
-                        profile: profilesSelectorState.profiles[i],
-                        groupValue: profilesSelectorState.currentProfileId,
-                        onChanged: (profileId) {
-                          ref.read(currentProfileIdProvider.notifier).value =
-                              profileId;
-                        },
+          return ScrollEdgeRise(
+            builder: (context, rise) => Align(
+              alignment: Alignment.topCenter,
+              child: SingleChildScrollView(
+                key: profilesStoreKey,
+                padding: EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  top: 16 + rise,
+                  bottom:
+                      (profilesSelectorState.profiles.isNotEmpty &&
+                              profilesSelectorState.profiles.length % columns ==
+                                  0
+                          ? 88
+                          : 16) +
+                      (isMobileView
+                          ? getFloatingBottomBarReserveHeight(context)
+                          : 0),
+                ),
+                child: Grid(
+                  mainAxisSpacing: 14,
+                  crossAxisSpacing: 14,
+                  crossAxisCount: columns,
+                  children: [
+                    for (
+                      int i = 0;
+                      i < profilesSelectorState.profiles.length;
+                      i++
+                    )
+                      GridItem(
+                        child: ProfileItem(
+                          key: Key(profilesSelectorState.profiles[i].id),
+                          profile: profilesSelectorState.profiles[i],
+                          groupValue: profilesSelectorState.currentProfileId,
+                          onChanged: (profileId) {
+                            ref.read(currentProfileIdProvider.notifier).value =
+                                profileId;
+                          },
+                        ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
           );
@@ -232,11 +235,10 @@ class ProfileItem extends StatelessWidget {
     await globalState.appController.safeRun(
       () async {
         final patchConfig = globalState.config.patchClashConfig;
-        final runtimeConfig = await globalState.patchRawConfig(
+        final content = await globalState.getRuntimeConfigContent(
           patchConfig: patchConfig,
           profile: profile,
         );
-        final content = await encodeYamlTask(runtimeConfig);
         if (!context.mounted) {
           return;
         }
@@ -247,11 +249,7 @@ class ProfileItem extends StatelessWidget {
           content: content,
           readOnly: true,
         );
-        BaseNavigator.push<String>(
-          context,
-          previewPage,
-          maintainState: false,
-        );
+        BaseNavigator.push<String>(context, previewPage, maintainState: false);
       },
       needLoading: true,
       title: appLocalizations.tip,
@@ -320,10 +318,7 @@ class ProfileItem extends StatelessWidget {
         ),
         if (subtitleText != null && subtitleText.isNotEmpty) ...[
           const SizedBox(width: 6),
-          Text(
-            '·',
-            style: context.textTheme.labelMedium?.toLight,
-          ),
+          Text('·', style: context.textTheme.labelMedium?.toLight),
           const SizedBox(width: 6),
           Text(
             subtitleText,
@@ -339,7 +334,8 @@ class ProfileItem extends StatelessWidget {
   Widget _buildContentInfo(BuildContext context) {
     final subscriptionInfo = profile.subscriptionInfo;
     final updateTimeText = profile.lastUpdateDate?.lastUpdateTimeDesc ?? '';
-    final hasUsageBar = subscriptionInfo != null &&
+    final hasUsageBar =
+        subscriptionInfo != null &&
         ((subscriptionInfo.upload + subscriptionInfo.download > 0) ||
             subscriptionInfo.total > 0);
 
@@ -370,15 +366,17 @@ class ProfileItem extends StatelessWidget {
                     child: Container(
                       height: 5,
                       alignment: Alignment.centerLeft,
-                      color:
-                          context.colorScheme.primary.withValues(alpha: 0.15),
+                      color: context.colorScheme.primary.withValues(
+                        alpha: 0.15,
+                      ),
                       child: FractionallySizedBox(
-                        widthFactor: (subscriptionInfo.total > 0
-                                ? (subscriptionInfo.upload +
-                                        subscriptionInfo.download) /
-                                    subscriptionInfo.total
-                                : 0.0)
-                            .clamp(0.0, 1.0),
+                        widthFactor:
+                            (subscriptionInfo.total > 0
+                                    ? (subscriptionInfo.upload +
+                                              subscriptionInfo.download) /
+                                          subscriptionInfo.total
+                                    : 0.0)
+                                .clamp(0.0, 1.0),
                         child: Container(
                           decoration: BoxDecoration(
                             color: context.colorScheme.primary,
@@ -547,9 +545,12 @@ class ProfileItem extends StatelessWidget {
         child: profile.isUpdating
             ? Padding(
                 padding: const EdgeInsets.all(6),
-                child: SpinKitFadingCircle(
-                  color: context.colorScheme.primary,
+                child: SyncedLoading(
                   size: 24,
+                  child: SpinKitFadingCircle(
+                    color: context.colorScheme.primary,
+                    size: 24,
+                  ),
                 ),
               )
             : CommonPopupBox(
@@ -599,10 +600,7 @@ class ProfileItem extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildTitleRow(context),
-                  _buildContentInfo(context),
-                ],
+                children: [_buildTitleRow(context), _buildContentInfo(context)],
               ),
             ),
           ),

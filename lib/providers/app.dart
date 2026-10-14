@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/models.dart';
 import 'package:bett_box/state.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'generated/app.g.dart';
@@ -28,18 +32,22 @@ class Logs extends _$Logs with AutoDisposeNotifierMixin {
     return globalState.appState.logs;
   }
 
-  void addLog(Log value) {
-    Future.microtask(() {
-      state = state.copyWith()..add(value);
-    });
+  void addLogs(List<Log> values) {
+    if (values.isEmpty) return;
+    final next = state.copyWith();
+    for (final value in values) {
+      next.add(value);
+    }
+    state = next;
   }
 
-  void setLogs(List<Log> items) {
-    final newList = FixedList<Log>(maxLogLength);
-    for (final item in items) {
-      newList.add(item);
-    }
-    state = newList;
+  void mergeHistory(List<Log> history) {
+    final next = <Log>{
+      ...state.list.where((log) => log.source == LogSource.app),
+      ...history,
+    }.toList();
+    mergeSort(next, compare: (a, b) => a.time.compareTo(b.time));
+    state = FixedList(maxLogLength, list: next);
   }
 
   @override
@@ -52,34 +60,47 @@ class Logs extends _$Logs with AutoDisposeNotifierMixin {
   }
 }
 
-// Search and filter providers for logs
-final logsSearchProvider = StateProvider<String>((ref) => '');
-final logsKeywordsProvider = StateProvider<List<String>>((ref) => []);
+@riverpod
+class LogsFilter extends _$LogsFilter {
+  @override
+  LogsFilterState build() {
+    return const LogsFilterState();
+  }
 
-final filteredLogsProvider = Provider<List<Log>>((ref) {
-  final logs = ref.watch(logsProvider.select((s) => s.list));
-  final query = ref.watch(logsSearchProvider).toLowerCase();
-  final keywords = ref.watch(logsKeywordsProvider);
+  void setQuery(String query) {
+    state = state.copyWith(query: query);
+  }
 
-  return logs.where((item) {
-    if (query.isNotEmpty) {
-      final matchesQuery =
-          item.payload.toLowerCase().contains(query) ||
-          item.logLevel.name.toLowerCase().contains(query) ||
-          item.dateTime.toLowerCase().contains(query);
-      if (!matchesQuery) return false;
+  void setSource(LogSource? source) {
+    state = state.copyWith(source: source);
+  }
+
+  void setModule(String? module) {
+    state = state.copyWith(module: module);
+  }
+
+  void setScope({LogSource? source, String? module}) {
+    state = state.copyWith(source: source, module: module);
+  }
+
+  void toggleLevel(LogLevel level) {
+    final levels = {...state.levels};
+    if (!levels.remove(level)) {
+      levels.add(level);
     }
-    if (keywords.isNotEmpty) {
-      final itemStr = '${item.payload} ${item.logLevel.name} ${item.dateTime}'
-          .toLowerCase();
-      final matchesKeywords = keywords.every(
-        (keyword) => itemStr.contains(keyword.toLowerCase()),
-      );
-      if (!matchesKeywords) return false;
-    }
-    return true;
-  }).toList();
-});
+    state = state.copyWith(levels: levels);
+  }
+
+  void clearFacets() {
+    state = LogsFilterState(query: state.query);
+  }
+}
+
+@riverpod
+FilteredLogs filteredLogs(Ref ref) {
+  final logs = ref.watch(logsProvider.select((state) => state.list));
+  return ref.watch(logsFilterProvider).apply(logs);
+}
 
 @riverpod
 class Requests extends _$Requests with AutoDisposeNotifierMixin {
@@ -93,11 +114,13 @@ class Requests extends _$Requests with AutoDisposeNotifierMixin {
     globalState.appState = globalState.appState.copyWith(requests: value);
   }
 
-  void addRequest(TrackerInfo value) {
-    Future.microtask(() {
-      state = state.copyWith()
-        ..addOrReplace(value, (item) => item.id == value.id);
-    });
+  void addRequests(List<TrackerInfo> values) {
+    if (values.isEmpty) return;
+    final next = state.copyWith();
+    for (final value in values) {
+      next.addOrReplace(value, (item) => item.id == value.id);
+    }
+    state = next;
   }
 
   void setRequests(List<TrackerInfo> items) {
@@ -233,21 +256,21 @@ class TotalTraffic extends _$TotalTraffic with AutoDisposeNotifierMixin {
 }
 
 @riverpod
-class LocalIp extends _$LocalIp with AutoDisposeNotifierMixin {
+class LocalNetwork extends _$LocalNetwork with AutoDisposeNotifierMixin {
   @override
-  String? build() {
-    return globalState.appState.localIp;
+  NetworkInfo? build() {
+    return globalState.appState.localNetwork;
   }
 
   @override
   onUpdate(value) {
-    globalState.appState = globalState.appState.copyWith(localIp: value);
+    globalState.appState = globalState.appState.copyWith(localNetwork: value);
   }
 
   @override
-  set state(String? value) {
+  set state(NetworkInfo? value) {
     super.state = value;
-    globalState.appState = globalState.appState.copyWith(localIp: state);
+    globalState.appState = globalState.appState.copyWith(localNetwork: state);
   }
 }
 
@@ -422,8 +445,21 @@ class Groups extends _$Groups with AutoDisposeNotifierMixin {
 
 @riverpod
 class DelayDataSource extends _$DelayDataSource with AutoDisposeNotifierMixin {
+  static const _flushDuration = Duration(milliseconds: 300);
+
+  final List<Delay> _pendingDelays = [];
+  Timer? _flushTimer;
+
   @override
   DelayMap build() {
+    ref.onDispose(() {
+      _flushTimer?.cancel();
+      _flushTimer = null;
+      final next = _merge(globalState.appState.delayMap);
+      if (next != null) {
+        globalState.appState = globalState.appState.copyWith(delayMap: next);
+      }
+    });
     return globalState.appState.delayMap;
   }
 
@@ -433,14 +469,39 @@ class DelayDataSource extends _$DelayDataSource with AutoDisposeNotifierMixin {
   }
 
   void setDelay(Delay delay) {
-    if (state[delay.url]?[delay.name] != delay.value) {
-      final DelayMap newDelayMap = Map.from(state);
-      if (newDelayMap[delay.url] == null) {
-        newDelayMap[delay.url] = {};
-      }
-      newDelayMap[delay.url]![delay.name] = delay.value;
-      state = newDelayMap;
+    _pendingDelays.add(delay);
+    if (delay.value == 0) {
+      _flushTimer?.cancel();
+      _flushTimer = Timer(Duration.zero, flush);
+      return;
     }
+    _flushTimer ??= Timer(_flushDuration, flush);
+  }
+
+  void flush() {
+    _flushTimer?.cancel();
+    _flushTimer = null;
+    final next = _merge(state);
+    if (next != null) {
+      state = next;
+    }
+  }
+
+  DelayMap? _merge(DelayMap current) {
+    if (_pendingDelays.isEmpty) return null;
+    final DelayMap next = Map.of(current);
+    final copiedUrls = <String>{};
+    for (final delay in _pendingDelays) {
+      final current = next[delay.url];
+      if (current?[delay.name] == delay.value) continue;
+      final urlDelays = copiedUrls.add(delay.url) || current == null
+          ? Map.of(current ?? <String, int?>{})
+          : current;
+      urlDelays[delay.name] = delay.value;
+      next[delay.url] = urlDelays;
+    }
+    _pendingDelays.clear();
+    return copiedUrls.isEmpty ? null : next;
   }
 }
 
@@ -479,7 +540,7 @@ final connectionsProvider = StateProvider<List<TrackerInfo>>((ref) => []);
 final connectionsSearchProvider = StateProvider<String>((ref) => '');
 final connectionsKeywordsProvider = StateProvider<List<String>>((ref) => []);
 final connectionsSortProvider = StateProvider<ConnectionsSortType>(
-  (ref) => ConnectionsSortType.creationTime,
+  (ref) => ConnectionsSortType.defaultSort,
 );
 
 final filteredConnectionsProvider = Provider<List<TrackerInfo>>((ref) {
@@ -527,10 +588,9 @@ final filteredConnectionsProvider = Provider<List<TrackerInfo>>((ref) {
         return bTraffic.compareTo(aTraffic);
       });
       break;
+    case ConnectionsSortType.defaultSort:
     case ConnectionsSortType.creationTime:
       filtered.sort((a, b) => b.start.compareTo(a.start));
-      break;
-    case ConnectionsSortType.defaultSort:
       break;
   }
   return filtered;
