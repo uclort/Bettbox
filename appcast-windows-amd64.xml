@@ -6,9 +6,9 @@
     <description>Bettbox 自定义版本更新源</description>
     <language>zh-CN</language>
     <item>
-      <title>Bettbox 1.19.5+2090000191</title>
-      <pubDate>Wed, 14 Oct 2026 03:05:12 +0000</pubDate>
-      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.5+2090000191-r20261014024306-5e6ae32df87e-a0216f00cef6</link>
+      <title>Bettbox 1.19.5+2090000193</title>
+      <pubDate>Wed, 14 Oct 2026 14:26:37 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.5+2090000193-r20261014140940-f08e0a35803b-a0216f00cef6</link>
       <description><![CDATA[<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https:;">
@@ -20,70 +20,16 @@ pre { white-space: pre-wrap; } code { font-size: .92em; }
 img,table { max-width: 100%; } table { border-collapse: collapse; } td,th { border: 1px solid #888; padding: 6px; }
 a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; padding-top: 12px; }
 </style></head><body><p dir="auto">基于上游 Bettbox <code class="notranslate">main@111c5d91e5a3</code> 构建的自定义版本。</p>
-<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.5+2090000191</code></strong></p>
+<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.5+2090000193</code></strong></p>
 <h2 dir="auto">本次变更（相较上一自定义 Release）</h2>
 <ul dir="auto">
-<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.5+2090000190-r20261012095023-908f72e06b73-4b63534f76cf"><code class="notranslate">custom-v1.19.5+2090000190-r20261012095023-908f72e06b73-4b63534f76cf</code></a> → <code class="notranslate">custom-v1.19.5+2090000191-r20261014024306-5e6ae32df87e-a0216f00cef6</code></li>
-<li>上游基线：<code class="notranslate">main@afcc5cf0b3e1</code> → <code class="notranslate">main@111c5d91e5a3</code></li>
+<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.5+2090000191-r20261014024306-5e6ae32df87e-a0216f00cef6"><code class="notranslate">custom-v1.19.5+2090000191-r20261014024306-5e6ae32df87e-a0216f00cef6</code></a> → <code class="notranslate">custom-v1.19.5+2090000193-r20261014140940-f08e0a35803b-a0216f00cef6</code></li>
 </ul>
-<h3 dir="auto">上游同步</h3>
+<h3 dir="auto">2026-10-14 修复 macOS Monterey / Intel Mac 闪屏与渲染异常</h3>
 <ul dir="auto">
-<li>Simplify Windows debug startup (<code class="notranslate">d3c37a5c</code>)</li>
-<li>Fail fast on core disconnect (<code class="notranslate">66d1cb47</code>)</li>
-<li>Move dashboard title into app settings (<code class="notranslate">93516f74</code>)</li>
-<li>Optimize code-forge details (<code class="notranslate">08fe9e23</code>)</li>
-<li>Replace flutter_qjs with rquickjs (<code class="notranslate">e2bcebd2</code>)</li>
-<li>Support Linux route set and log time (<code class="notranslate">8b81b198</code>)</li>
-<li>Optimize Android packages and network query (<code class="notranslate">bad843cf</code>)</li>
-<li>Improve local network detection (<code class="notranslate">fa08cbe3</code>)</li>
-<li>Add desktop process icon extraction (<code class="notranslate">5574d0ae</code>)</li>
-<li>Support tray Option key shortcut (<code class="notranslate">2ed9f11c</code>)</li>
-<li>Modernize macOS window and build settings (<code class="notranslate">fed527ad</code>)</li>
-<li>Overhaul logging system (<code class="notranslate">2b029a48</code>)</li>
-<li>Add sticky headers for proxy groups (<code class="notranslate">88857898</code>)</li>
-<li>Coordinate route idle transitions (<code class="notranslate">ea22b4a4</code>)</li>
-<li>Pause offstage views with activity scope (<code class="notranslate">7490c551</code>)</li>
-<li>Support synced delay test animation (<code class="notranslate">9cb198d1</code>)</li>
-<li>Add collapsible desktop sidebar (<code class="notranslate">227abf39</code>)</li>
-<li>Refactor borderless style theme (<code class="notranslate">32a8fe87</code>)</li>
-<li>Update localizations and state models (<code class="notranslate">2560f8eb</code>)</li>
-<li>Optimize outbound state checks (<code class="notranslate">4081ae97</code>)</li>
-<li>Add loopback traffic protection (<code class="notranslate">e38c155d</code>)</li>
-<li>Add DNS patch condition (<code class="notranslate">931484fd</code>)</li>
-<li>Bump version (<code class="notranslate">fb8107ec</code>)</li>
-<li>Preserve unicode supplementary in yaml (<code class="notranslate">5143838e</code>)</li>
-<li>Improve Android service lifecycle (<code class="notranslate">60c9862e</code>)</li>
-<li>Release completer on action reply (<code class="notranslate">2c6bbc96</code>)</li>
-<li>Externalize script content storage (<code class="notranslate">ff5c3578</code>)</li>
-<li>High-performance highlight engine with rust (<code class="notranslate">04e18b8c</code>)</li>
-<li>Optimize profile update and checks (<code class="notranslate">6f043c7e</code>)</li>
-<li>More details in borderless style (<code class="notranslate">0a6cd993</code>)</li>
-<li>Upgrade flutter 3.47.x (<code class="notranslate">5f270a8e</code>)</li>
-<li>Support desktop compatible build (<code class="notranslate">33dafc52</code>)</li>
-<li>Flush dns on network change (<code class="notranslate">9ff0aa35</code>)</li>
-<li>Add desktop sidebar flyout (<code class="notranslate">b9147634</code>)</li>
-<li>Enhance dashboard controls (<code class="notranslate">70d148b5</code>)</li>
-<li>Refine dialogs and widgets (<code class="notranslate">e7153237</code>)</li>
-<li>Redesign about page (<code class="notranslate">7451e6b1</code>)</li>
-<li>Update app settings and models (<code class="notranslate">2a1c140c</code>)</li>
-<li>Update localizations (<code class="notranslate">39f55e9c</code>)</li>
-<li>Update core (<code class="notranslate">98518907</code>)</li>
-<li>Update dependencies (<code class="notranslate">26ccd91c</code>)</li>
-<li>Add AI search toggle for logs (<code class="notranslate">a84ee531</code>)</li>
-<li>Release v1.19.5 (<code class="notranslate">d092a155</code>)</li>
-<li>Update readme (<code class="notranslate">a2100c0a</code>)</li>
-<li>Fix windows build (<code class="notranslate">138316c1</code>)</li>
-<li>Ensure media unlock rebuild on changes (<code class="notranslate">111c5d91</code>)</li>
-<li>自定义 Mihomo 源码：<code class="notranslate">2022f12cc37f</code> → <code class="notranslate">206b7e70c730</code></li>
-</ul>
-<h3 dir="auto">2026-10-14 同步 Bettbox v1.19.5 正式版，恢复原 App 页面入口</h3>
-<ul dir="auto">
-<li>同步上游正式 <code class="notranslate">v1.19.5</code> 及后续修复至 <code class="notranslate">main@111c5d91e5a3</code>，源码版本更新为 <code class="notranslate">1.19.5+2026101301</code>，Flutter 工具链升级至 <code class="notranslate">3.47.7</code>。</li>
-<li>恢复桌面导航与移动端“更多”中的原 App 请求、连接和日志入口；独立网络面板与移动端内嵌网络面板仅作为额外入口，不再替换原页面。</li>
-<li>融合上游 Material UI、Riverpod 3、Rust 脚本引擎与新版编辑器、日志/请求批量通知、仪表盘和桌面进程图标；保留自定义进程图标合并请求、补取和连接终态原位更新。</li>
-<li>WebDAV 共享同步适配新版脚本文件存储，完整携带脚本正文并保留本机设置与当前选择；更新说明弹窗适配新版 UI，继续支持 Markdown、文本选择和完整发布页。</li>
-<li>内核配置接入新版接口并保留 60 秒配置超时；IPC 断开立即结束待处理请求，继续保留核心退出回滚、按需 Windows Helper、macOS DNS/TUN 恢复、原生托盘与 Dock 生命周期。</li>
-<li>基于当前上游内核重新固定私有 Snell v6 构建，Mihomo 稳定版本仍为 <code class="notranslate">v1.19.32</code>；保留接口 DNS 跟随、回退和连接追踪。</li>
+<li>macOS 显式关闭新版 Flutter 默认启用的 Impeller，统一使用 Skia/Metal，针对 2016 Intel MacBook Pro、macOS <code class="notranslate">12.7.6</code> 上视频显示的条纹、文字拉伸和页面内容丢失进行兼容回退；主窗口和独立网络面板同时生效。</li>
+<li>Intel 与 Apple Silicon 安装包都增加最终 App 渲染配置校验，防止打包时丢失 <code class="notranslate">FLTEnableImpeller = false</code>。</li>
+<li>用户已在受影响的 2016 Intel MacBook Pro、macOS <code class="notranslate">12.7.6</code> 上确认同版本 Skia 兼容测试包正常；8 项相关 Flutter 回归及测试包配置、内容与签名校验通过。</li>
 </ul>
 <h2 dir="auto">本包改动（相较上游版本）</h2>
 <h3 dir="auto">上游融合必检</h3>
@@ -151,6 +97,14 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>默认 Release 同时发布 Windows x64 与 Windows ARM64；ARM64 使用原生 Runner 和 Flutter ARM 工具链，私有内核检出时以 UTF-8 无 BOM、LF 结尾写入 SSH 私钥并收紧 ACL，同时让 PowerShell 原生命令错误立即终止构建；ARM64 仅执行 <code class="notranslate">flutter pub get</code>，复用源码中已提交的 build_runner 生成文件，避免 Dart 生成器在原生镜像上长时间无输出。<code class="notranslate">vclibs 0.1.3</code> 发布包中的 ARM64 运行库实为 32 位 ARM，ARM64 构建会在依赖获取后用 <code class="notranslate">.custom-build/vendor/vclibs-arm64</code> 内的真正 ARM64 DLL 覆盖插件缓存。Helper 显式选择对应 Rust MSVC target，WinSparkle 按目标架构切换预编译库，并对安装包及最终目录内原生 EXE/DLL 执行 PE 架构校验。Windows ARM64 使用独立 <code class="notranslate">appcast-windows-arm64.xml</code> 更新源；补丁脚本位于 <code class="notranslate">windows/packaging/patch_auto_updater_windows.dart</code>。</li>
 <li>Android 使用 arm64-v8a 固定签名 APK，校验 SHA-256 后通过独立 <code class="notranslate">FileProvider</code> URI 调用系统安装器；安装器无法打开时显示失败提示，发布前校验 Provider 与 <code class="notranslate">app_updates</code> 路径配置。更新检查读取 <code class="notranslate">custom-update-feed</code> 分支静态 JSON，避免 GitHub Releases API 匿名限流。</li>
 <li>自动检查与手动检查使用同一发布源，草稿 Release 不会被识别为可用更新。</li>
+</ul>
+<h3 dir="auto">macOS 渲染兼容性</h3>
+<ul dir="auto">
+<li>macOS 在 <code class="notranslate">macos/Runner/Info.plist</code> 显式设置布尔值 <code class="notranslate">FLTEnableImpeller = false</code>，主窗口和独立网络面板统一使用 Skia/Metal；Intel 与 Apple Silicon 使用同一兼容配置。</li>
+<li>Flutter <code class="notranslate">3.47.7</code> 默认开启 macOS Impeller；macOS Monterey <code class="notranslate">12.7.6</code>、2016 Intel MacBook Pro / Intel HD Graphics 530 上出现条纹、文字拉伸和内容丢失。2026-10-14 用户已在受影响设备上确认切回 Skia 的同版本兼容测试包正常，正式构建沿用该兼容配置；Skia 仍使用 Metal，不是软件渲染。</li>
+<li>已核验原正式 Intel DMG <code class="notranslate">1.19.5+2090000191</code>（SHA-256 <code class="notranslate">e7e1ca2c970f28a8abac82d2a739af773bf6d0a38214ee159ecfd79999916e55</code>）最低系统为 <code class="notranslate">12.0</code>，没有设置 <code class="notranslate">FLTEnableImpeller</code>；同版本兼容测试仅将该键设为布尔 <code class="notranslate">false</code> 并重新进行 ad-hoc 签名。正式发布通过自定义工作流重新构建、递增构建号并更新应用内更新源。</li>
+<li><code class="notranslate">.github/workflows/custom-build.yml</code> 在两种 macOS 架构打包后读取最终 App 的 <code class="notranslate">Contents/Info.plist</code>，要求该键为布尔 <code class="notranslate">false</code>，避免后续构建覆盖兼容配置。</li>
+<li>验证方式：源 plist 语法与布尔类型校验，<code class="notranslate">flutter test --no-pub test/widgets/macos_menu_bar_test.dart test/views/proxies/list_rebuild_test.dart test/views/dashboard_pack_test.dart</code>（8 项已通过），最终安装包配置校验；用户已确认上述 Intel/macOS 12 设备使用兼容测试包正常。后续回归继续覆盖代理列表滚动、首页图表、设置页切换、窗口缩放、托盘隐藏/恢复及独立网络面板。</li>
 </ul>
 <h3 dir="auto">macOS TUN、DNS 与唤醒恢复</h3>
 <ul dir="auto">
@@ -237,16 +191,16 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <h2 dir="auto">构建信息</h2>
 <ul dir="auto">
 <li>上游 Bettbox main 基线：<code class="notranslate">main@111c5d91e5a3</code></li>
-<li>最终安装版本：<code class="notranslate">1.19.5+2090000191</code></li>
+<li>最终安装版本：<code class="notranslate">1.19.5+2090000193</code></li>
 <li>上游源码版本：<code class="notranslate">1.19.5+2026101301</code></li>
-<li>Bettbox custom-build commit：<code class="notranslate">5e6ae32df87ec4865b7e34a35c45b2cf5603aeaf</code></li>
+<li>Bettbox custom-build commit：<code class="notranslate">f08e0a35803b038bb5d4db4cd463ab476ddbbac8</code></li>
 </ul>
 <p dir="auto">Release 仅包含本次 Action 生成的安装包，不包含私有自定义 Mihomo 源码。</p>
 <p dir="auto">Windows 与 macOS 安装包未做商业代码签名；Android 安装包使用 Bettbox 自定义版固定 Release 签名。</p>
-<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.5%2B2090000191-r20261014024306-5e6ae32df87e-a0216f00cef6">查看完整发布页</a></footer></body></html>]]></description>
-      <sparkle:version>2090000191</sparkle:version>
-      <sparkle:shortVersionString>1.19.5+2090000191</sparkle:shortVersionString>
-      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.5+2090000191-r20261014024306-5e6ae32df87e-a0216f00cef6/Bettbox-1.19.5-windows-amd64-setup.exe" length="43977486" type="application/octet-stream" sparkle:os="windows" sparkle:dsaSignature="MDwCHCXABdRHoH58lv2eFRHWC1aFmjXHYVbQp94QtyQCHATknwN9eDAn/ozv4nacXs39V9mM9Z+C2Kw2ODY=" />
+<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.5%2B2090000193-r20261014140940-f08e0a35803b-a0216f00cef6">查看完整发布页</a></footer></body></html>]]></description>
+      <sparkle:version>2090000193</sparkle:version>
+      <sparkle:shortVersionString>1.19.5+2090000193</sparkle:shortVersionString>
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.5+2090000193-r20261014140940-f08e0a35803b-a0216f00cef6/Bettbox-1.19.5-windows-amd64-setup.exe" length="43979392" type="application/octet-stream" sparkle:os="windows" sparkle:dsaSignature="MDwCHAxUG1PZQQ7eDApFr7AqsO84cYI3/CBOfPWnOa4CHFX8fODK0/bU8R7hauY196fv0cm8kvQg9CJYUak=" />
     </item>
   </channel>
 </rss>
