@@ -66,6 +66,14 @@
 - Android 使用 arm64-v8a 固定签名 APK，校验 SHA-256 后通过独立 `FileProvider` URI 调用系统安装器；安装器无法打开时显示失败提示，发布前校验 Provider 与 `app_updates` 路径配置。更新检查读取 `custom-update-feed` 分支静态 JSON，避免 GitHub Releases API 匿名限流。
 - 自动检查与手动检查使用同一发布源，草稿 Release 不会被识别为可用更新。
 
+### macOS 渲染兼容性
+
+- macOS 在 `macos/Runner/Info.plist` 显式设置布尔值 `FLTEnableImpeller = false`，主窗口和独立网络面板统一使用 Skia/Metal；Intel 与 Apple Silicon 使用同一兼容配置。
+- Flutter `3.47.7` 默认开启 macOS Impeller；macOS Monterey `12.7.6`、2016 Intel MacBook Pro / Intel HD Graphics 530 上出现条纹、文字拉伸和内容丢失。2026-10-14 用户已在受影响设备上确认切回 Skia 的同版本兼容测试包正常，正式构建沿用该兼容配置；Skia 仍使用 Metal，不是软件渲染。
+- 已核验原正式 Intel DMG `1.19.5+2090000191`（SHA-256 `e7e1ca2c970f28a8abac82d2a739af773bf6d0a38214ee159ecfd79999916e55`）最低系统为 `12.0`，没有设置 `FLTEnableImpeller`；同版本兼容测试仅将该键设为布尔 `false` 并重新进行 ad-hoc 签名。正式发布通过自定义工作流重新构建、递增构建号并更新应用内更新源。
+- `.github/workflows/custom-build.yml` 在两种 macOS 架构打包后读取最终 App 的 `Contents/Info.plist`，要求该键为布尔 `false`，避免后续构建覆盖兼容配置。
+- 验证方式：源 plist 语法与布尔类型校验，`flutter test --no-pub test/widgets/macos_menu_bar_test.dart test/views/proxies/list_rebuild_test.dart test/views/dashboard_pack_test.dart`（8 项已通过），最终安装包配置校验；用户已确认上述 Intel/macOS 12 设备使用兼容测试包正常。后续回归继续覆盖代理列表滚动、首页图表、设置页切换、窗口缩放、托盘隐藏/恢复及独立网络面板。
+
 ### macOS TUN、DNS 与唤醒恢复
 
 - macOS 实际 TUN 配置将 `system` 栈映射为 `mixed`；显式 `mixed` 或 `gvisor` 保持原值。

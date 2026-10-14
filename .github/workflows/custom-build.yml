@@ -990,12 +990,22 @@ jobs:
         shell: bash
         run: dart setup.dart macos --arch ${{ matrix.arch }} --env stable
 
-      - name: 回归测试 macOS 更新版本与中文资源
+      - name: 校验 macOS 渲染兼容性并回归更新版本与中文资源
         if: matrix.platform == 'macos'
         shell: bash
         run: |
           set -euo pipefail
           app_path="$(find build/macos/Build/Products/Release -maxdepth 1 -name '*.app' -print -quit)"
+          # BETTBOX-CUSTOM: 校验最终产物，防止构建时重新启用 Impeller。
+          python3 - "${app_path}/Contents/Info.plist" <<'PY'
+          import plistlib
+          import sys
+          with open(sys.argv[1], 'rb') as source:
+              info = plistlib.load(source)
+          if info.get('FLTEnableImpeller') is not False:
+              raise SystemExit('macOS 正式包必须显式关闭 Impeller，使用 Skia/Metal。')
+          print('macOS 正式包 Skia/Metal 渲染配置校验通过。')
+          PY
           bash .custom-build/scripts/test-macos-updater.sh "${app_path}" "${{ matrix.arch }}"
 
       - name: 签署桌面更新包并生成更新元数据

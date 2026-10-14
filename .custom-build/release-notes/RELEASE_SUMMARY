@@ -1,1 +1,1 @@
-同步 Bettbox v1.19.5 正式版，恢复原 App 请求、连接和日志入口并额外保留自定义网络面板
+修复 macOS Monterey 与老款 Intel Mac 闪屏、文字拉伸和页面渲染异常
