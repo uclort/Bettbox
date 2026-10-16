@@ -527,7 +527,11 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
     if (widget.embedded) {
       clashCore.startTrackRequests(this);
       clashCore.startLog(this);
-      unawaited(_loadHistory());
+      unawaited(
+        _loadHistory().catchError((Object error) {
+          commonPrint.warn('网络面板历史读取失败：$error');
+        }),
+      );
       _requestsSubscription = ref.listenManual(
         requestsProvider.select((state) => state.list),
         (_, _) => _handleDataChanged(),
