@@ -990,21 +990,24 @@ jobs:
         shell: bash
         run: dart setup.dart macos --arch ${{ matrix.arch }} --env stable
 
-      - name: 校验 macOS 渲染兼容性并回归更新版本与中文资源
+      - name: 校验上游 macOS 渲染配置并回归更新版本与中文资源
         if: matrix.platform == 'macos'
         shell: bash
         run: |
           set -euo pipefail
           app_path="$(find build/macos/Build/Products/Release -maxdepth 1 -name '*.app' -print -quit)"
-          # BETTBOX-CUSTOM: 校验最终产物，防止构建时重新启用 Impeller。
-          python3 - "${app_path}/Contents/Info.plist" <<'PY'
+          # BETTBOX-CUSTOM: 校验最终产物遵循上游按架构选择的渲染配置。
+          python3 - "${app_path}/Contents/Info.plist" "${{ matrix.arch }}" <<'PY'
           import plistlib
           import sys
           with open(sys.argv[1], 'rb') as source:
               info = plistlib.load(source)
-          if info.get('FLTEnableImpeller') is not False:
-              raise SystemExit('macOS 正式包必须显式关闭 Impeller，使用 Skia/Metal。')
-          print('macOS 正式包 Skia/Metal 渲染配置校验通过。')
+          if sys.argv[2] == 'amd64':
+              if info.get('FLTEnableImpeller') is not False:
+                  raise SystemExit('Intel Mac 正式包必须沿用上游关闭 Impeller。')
+          elif 'FLTEnableImpeller' in info:
+              raise SystemExit('Apple Silicon 正式包必须沿用上游 Flutter 默认渲染配置。')
+          print('macOS 正式包上游渲染配置校验通过：' + sys.argv[2])
           PY
           bash .custom-build/scripts/test-macos-updater.sh "${app_path}" "${{ matrix.arch }}"
 

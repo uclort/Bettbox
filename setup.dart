@@ -922,14 +922,27 @@ class BuildCommand extends Command {
           Build.getExecutable('pod install --repo-update'),
           workingDirectory: 'macos',
         );
-        // BETTBOX-CUSTOM: 两种 Mac 均沿用已验证的 plist 配置，避免重复注入渲染键。
-        await _buildDistributor(
-          target: target,
-          targets: 'dmg',
-          args: ' --description $desc',
-          env: env,
-          suffix: appAssetSuffix,
-        );
+        final infoPlist = File('macos/Runner/Info.plist');
+        final infoPlistContent = await infoPlist.readAsString();
+        if (arch == Arch.amd64) {
+          await infoPlist.writeAsString(
+            infoPlistContent.replaceFirst(
+              '</dict>\n</plist>',
+              '\t<key>FLTEnableImpeller</key>\n\t<false/>\n</dict>\n</plist>',
+            ),
+          );
+        }
+        try {
+          await _buildDistributor(
+            target: target,
+            targets: 'dmg',
+            args: ' --description $desc',
+            env: env,
+            suffix: appAssetSuffix,
+          );
+        } finally {
+          await infoPlist.writeAsString(infoPlistContent);
+        }
         return;
     }
   }

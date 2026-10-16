@@ -36,9 +36,6 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
-	<!-- BETTBOX-CUSTOM: 显式使用 Skia/Metal，规避新版 Impeller 在旧 Intel Mac 上的渲染异常。 -->
-	<key>FLTEnableImpeller</key>
-	<false/>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>NSHumanReadableCopyright</key>

@@ -10,7 +10,7 @@
 
 ### 当前上游融合基线
 
-- 2026-10-16 同步 Bettbox 正式 `v1.19.6 / main@9582976d5371`（源码版本 `1.19.6+2026101601`）；Mihomo 保持 `v1.19.32`，内核源树及私有 Snell v6 固定提交未变，保留原有全部 `BETTBOX-CUSTOM` 标记，Flutter 构建工具链保持 `3.47.7`。
+- 2026-10-16 同步 Bettbox 正式 `v1.19.6 / main@9582976d5371`（源码版本 `1.19.6+2026101602`）；Mihomo 保持 `v1.19.32`，内核源树及私有 Snell v6 固定提交未变，Flutter 构建工具链保持 `3.47.7`。Impeller 配置按用户要求恢复上游按平台、架构选择的策略，删除对应的全架构关闭覆写标记，其余自定义逻辑保持不变。
 - 接入上游出站模式布局、导航动效与页面存活管理、超椭圆样式、编辑器缩放、运行配置保留原始 YAML 信息、禁用策略组引用清理、脚本与覆写规则协同，以及 Linux AppImage 授权/重启修复；桌面 TUN 继续使用自定义同步安全链和失败回滚，Windows Helper 仍按需授权启动。
 - 接入上游 Material UI、Riverpod 3、Rust 脚本引擎与新版编辑器、批量日志/请求通知及仪表盘；侧边栏继续通过 `_selectPage` 打开独立网络面板，Android 首页继续保留单一悬浮总开关。请求、连接和日志保留上游桌面/更多入口，自定义网络面板只作为额外入口。
 - 核心启动兼容上游 Linux AppImage 内核同步与控制通道重建重试；首次控制连接失败后清理旧进程和 socket 再重试一次，两次失败仍抛错并执行原有代理/TUN 回滚。Windows Helper 继续按需授权启动，macOS 网络恢复继续等待 `resetConnections` 的真实结果。
@@ -68,14 +68,15 @@
 - Android 使用 arm64-v8a 固定签名 APK，校验 SHA-256 后通过独立 `FileProvider` URI 调用系统安装器；安装器无法打开时显示失败提示，发布前校验 Provider 与 `app_updates` 路径配置。更新检查读取 `custom-update-feed` 分支静态 JSON，避免 GitHub Releases API 匿名限流。
 - 自动检查与手动检查使用同一发布源，草稿 Release 不会被识别为可用更新。
 
-### macOS 渲染兼容性
+### macOS 渲染配置
 
-- macOS 在 `macos/Runner/Info.plist` 显式设置布尔值 `FLTEnableImpeller = false`，主窗口和独立网络面板统一使用 Skia/Metal；Intel 与 Apple Silicon 使用同一兼容配置。
-- 上游 `3cac238a` 将 Windows/Linux 改为原生固定关闭 Impeller，macOS Intel 在 `setup.dart` 打包时临时关闭，并未增加应用内设置开关；自定义版沿用两种 Mac 均关闭的既有行为，删除 `setup.dart` 的重复 plist 注入以避免重复键，同时保留上游 macOS Intel 的 `GOAMD64=v1` 兼容设置。
+- 2026-10-16 按用户要求与上游 `3cac238a` 保持一致：Windows/Linux 原生关闭 Impeller，macOS Intel 由 `setup.dart` 打包时临时注入布尔值 `FLTEnableImpeller = false`，Apple Silicon 不写入该键，沿用 Flutter 默认配置；没有应用内切换开关。
+- 删除 `macos/Runner/Info.plist` 的全架构关闭覆写，恢复上游 `setup.dart` 注入与 `finally` 还原源码的完整逻辑，避免重复键；保留上游 macOS Intel 的 `GOAMD64=v1` 兼容设置。主窗口和独立网络面板使用各自架构的同一配置。
 - Flutter `3.47.7` 默认开启 macOS Impeller；macOS Monterey `12.7.6`、2016 Intel MacBook Pro / Intel HD Graphics 530 上出现条纹、文字拉伸和内容丢失。2026-10-14 用户已在受影响设备上确认切回 Skia 的同版本兼容测试包正常，正式构建沿用该兼容配置；Skia 仍使用 Metal，不是软件渲染。
 - 已核验原正式 Intel DMG `1.19.5+2090000191`（SHA-256 `e7e1ca2c970f28a8abac82d2a739af773bf6d0a38214ee159ecfd79999916e55`）最低系统为 `12.0`，没有设置 `FLTEnableImpeller`；同版本兼容测试仅将该键设为布尔 `false` 并重新进行 ad-hoc 签名。正式发布通过自定义工作流重新构建、递增构建号并更新应用内更新源。
-- `.github/workflows/custom-build.yml` 在两种 macOS 架构打包后读取最终 App 的 `Contents/Info.plist`，要求该键为布尔 `false`，避免后续构建覆盖兼容配置。
-- 验证方式：源 plist 语法与布尔类型校验，`flutter test --no-pub test/widgets/macos_menu_bar_test.dart test/views/proxies/list_rebuild_test.dart test/views/dashboard_pack_test.dart`（8 项已通过），最终安装包配置校验；用户已确认上述 Intel/macOS 12 设备使用兼容测试包正常。后续回归继续覆盖代理列表滚动、首页图表、设置页切换、窗口缩放、托盘隐藏/恢复及独立网络面板。
+- `.github/workflows/custom-build.yml` 打包后读取最终 App 的 `Contents/Info.plist`，Intel 必须为布尔 `false`，Apple Silicon 必须不存在该键，确保与上游策略一致。
+- 验证方式：源 plist 语法与无覆写校验、`setup.dart` 与上游注入/还原逻辑比对、两种架构正确/错误配置的产物校验回归，以及最终安装包配置校验；既有界面回归为 `flutter test --no-pub test/widgets/macos_menu_bar_test.dart test/views/proxies/list_rebuild_test.dart test/views/dashboard_pack_test.dart`。用户已确认上述 Intel/macOS 12 设备使用关闭 Impeller 的兼容测试包正常；新版与 Apple Silicon 默认渲染仍需实机验收。
+- 2026-10-16 恢复上游策略验证：打包配置段与上游逐字一致，两种架构的生成 plist 与 8 种正确/错误产物配置校验通过；Dart 静态检查、工作流 actionlint、8 项界面回归与 3 项发布说明回归通过。
 
 ### macOS TUN、DNS 与唤醒恢复
 
