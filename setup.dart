@@ -210,10 +210,10 @@ class Build {
       if (item.arch != null) {
         env['GOARCH'] = item.arch!.name;
       }
-      if (item.arch == Arch.amd64 &&
-          (item.target == Target.windows ||
-              item.target == Target.linux ||
-              item.target == Target.macos)) {
+      if (item.arch == Arch.amd64 && item.target == Target.macos) {
+        env['GOAMD64'] = 'v1';
+      } else if (item.arch == Arch.amd64 &&
+          (item.target == Target.windows || item.target == Target.linux)) {
         env['GOAMD64'] = compatible ? 'v1' : 'v3';
       }
       if (isLib) {
@@ -602,7 +602,6 @@ class BuildCommand extends Command {
     String args = '',
     required String env,
     required String suffix,
-    bool compatible = false,
   }) async {
     final sentryDsn = Platform.environment['SENTRY_DSN'] ?? '';
     final sentryArg = sentryDsn.isNotEmpty
@@ -630,18 +629,12 @@ class BuildCommand extends Command {
         customBuildArgs.add(' --build-dart-define=$name=$value');
       }
     }
-    final environment = Map<String, String>.from(Platform.environment);
-    if (compatible) {
-      environment['BETTBOX_COMPATIBLE_BUILD'] = '1';
-    }
-
     await Build.getDistributor();
     await Build.exec(
       name: name,
       Build.getExecutable(
         'flutter_distributor package --skip-clean --platform ${target.name} --targets $targets --flutter-build-args=verbose$args$sentryArg$suffixArg$ipinfoArg --build-dart-define=APP_ENV=$env$appDevArg${customBuildArgs.join()}',
       ),
-      environment: environment,
     );
   }
 
@@ -706,16 +699,16 @@ class BuildCommand extends Command {
   }
 
   DateTime _windowsSourcesLastModified() {
-    final sources = <FileSystemEntity>[
-      File(join(current, 'setup.dart')),
-    ];
+    final sources = <FileSystemEntity>[File(join(current, 'setup.dart'))];
 
     final helperDir = Directory(Build._servicesDir);
     if (helperDir.existsSync()) {
-      sources.addAll(helperDir.listSync(recursive: true).where((entity) {
-        return entity is File &&
-            !isWithin(join(Build._servicesDir, 'target'), entity.path);
-      }));
+      sources.addAll(
+        helperDir.listSync(recursive: true).where((entity) {
+          return entity is File &&
+              !isWithin(join(Build._servicesDir, 'target'), entity.path);
+        }),
+      );
     }
 
     final coreDir = Directory(Build._coreDir);
@@ -870,7 +863,6 @@ class BuildCommand extends Command {
           args: ' --description $desc --build-dart-define=CORE_SHA256=$token',
           env: env,
           suffix: appAssetSuffix,
-          compatible: compatible,
         );
         return;
       case Target.linux:
@@ -892,7 +884,6 @@ class BuildCommand extends Command {
             args: ' --description $desc --build-target-platform $defaultTarget',
             env: env,
             suffix: currentSuffix,
-            compatible: compatible,
           );
         }
         return;
@@ -918,7 +909,6 @@ class BuildCommand extends Command {
           args: buildArgs,
           env: env,
           suffix: appAssetSuffix,
-          compatible: compatible,
         );
         return;
       case Target.macos:
@@ -932,13 +922,13 @@ class BuildCommand extends Command {
           Build.getExecutable('pod install --repo-update'),
           workingDirectory: 'macos',
         );
-        _buildDistributor(
+        // BETTBOX-CUSTOM: 两种 Mac 均沿用已验证的 plist 配置，避免重复注入渲染键。
+        await _buildDistributor(
           target: target,
           targets: 'dmg',
           args: ' --description $desc',
           env: env,
           suffix: appAssetSuffix,
-          compatible: compatible,
         );
         return;
     }
@@ -949,7 +939,8 @@ class AutoBuildCommand extends Command {
   AutoBuildCommand() {
     argParser.addOption(
       'device-id',
-      help: 'Target Flutter device ID (e.g. from \${command:flutter.getSelectedDeviceId})',
+      help:
+          'Target Flutter device ID (e.g. from \${command:flutter.getSelectedDeviceId})',
     );
     argParser.addOption(
       'arch',
@@ -1008,7 +999,9 @@ class AutoBuildCommand extends Command {
     } else if (rawDeviceId == 'chrome' ||
         rawDeviceId == 'edge' ||
         rawDeviceId == 'web-server') {
-      print('Web device "$rawDeviceId" does not require core binary. Skipping.');
+      print(
+        'Web device "$rawDeviceId" does not require core binary. Skipping.',
+      );
       return;
     } else if (rawDeviceId.isEmpty) {
       if (Platform.isWindows) {
@@ -1022,26 +1015,25 @@ class AutoBuildCommand extends Command {
       }
       archName ??= 'auto';
     } else {
-      final res = await Process.run(
-        'flutter',
-        ['devices', '--machine'],
-        runInShell: true,
-      );
+      final res = await Process.run('flutter', [
+        'devices',
+        '--machine',
+      ], runInShell: true);
       if (res.exitCode != 0) {
         throw 'Failed to execute "flutter devices --machine": ${res.stderr}';
       }
       final jsonList = jsonDecode(res.stdout.toString()) as List<dynamic>;
       final device = jsonList.cast<Map<String, dynamic>?>().firstWhere(
-            (d) => d?['id'] == rawDeviceId,
-            orElse: () => null,
-          );
+        (d) => d?['id'] == rawDeviceId,
+        orElse: () => null,
+      );
 
       if (device == null) {
         throw 'Device "$rawDeviceId" not found in flutter devices list.';
       }
 
-      final targetPlatform =
-          (device['targetPlatform'] as String? ?? '').toLowerCase();
+      final targetPlatform = (device['targetPlatform'] as String? ?? '')
+          .toLowerCase();
       if (targetPlatform.startsWith('android')) {
         target = Target.android;
         if (archName == null) {

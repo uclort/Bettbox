@@ -6,6 +6,72 @@ import 'package:bett_box/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+void showTunSheet(BuildContext context) {
+  showSheet(
+    context: context,
+    builder: (_, type) {
+      return AdaptiveSheetScaffold(
+        type: type,
+        body: generateListView(
+          generateSection(
+            items: [
+              if (system.isDesktop) const TUNItem(),
+              if (!system.isAndroid) const StrictRouteItem(),
+              const IcmpForwardingItem(),
+              const TunStackItem(),
+            ],
+          ),
+        ),
+        title: appLocalizations.tun,
+      );
+    },
+  );
+}
+
+void showVpnSheet(BuildContext context) {
+  showSheet(
+    context: context,
+    builder: (_, type) {
+      return AdaptiveSheetScaffold(
+        type: type,
+        body: generateListView(
+          generateSection(
+            items: [
+              const VPNItem(),
+              if (!system.isAndroid) const StrictRouteItem(),
+              const IcmpForwardingItem(),
+              const TunStackItem(),
+            ],
+          ),
+        ),
+        title: 'VPN',
+      );
+    },
+  );
+}
+
+void showSystemProxySheet(BuildContext context) {
+  showSheet(
+    context: context,
+    builder: (_, type) {
+      return AdaptiveSheetScaffold(
+        type: type,
+        body: generateListView(
+          generateSection(
+            items: [
+              system.isAndroid
+                  ? const VpnSystemProxyItem()
+                  : const SystemProxyItem(),
+              const BypassDomainItem(),
+            ],
+          ),
+        ),
+        title: appLocalizations.systemProxy,
+      );
+    },
+  );
+}
+
 class TUNButton extends StatelessWidget {
   const TUNButton({super.key});
 
@@ -14,27 +80,7 @@ class TUNButton extends StatelessWidget {
     return SizedBox(
       height: getWidgetHeight(context, 1),
       child: CommonCard(
-        onPressed: () {
-          showSheet(
-            context: context,
-            builder: (_, type) {
-              return AdaptiveSheetScaffold(
-                type: type,
-                body: generateListView(
-                  generateSection(
-                    items: [
-                      if (system.isDesktop) const TUNItem(),
-                      if (!system.isAndroid) const StrictRouteItem(),
-                      const IcmpForwardingItem(),
-                      const TunStackItem(),
-                    ],
-                  ),
-                ),
-                title: appLocalizations.tun,
-              );
-            },
-          );
-        },
+        onPressed: () => showTunSheet(context),
         info: Info(
           label: appLocalizations.tun,
           iconData: Icons.stacked_line_chart,
@@ -90,22 +136,7 @@ class SystemProxyButton extends StatelessWidget {
     return SizedBox(
       height: getWidgetHeight(context, 1),
       child: CommonCard(
-        onPressed: () {
-          showSheet(
-            context: context,
-            builder: (_, type) {
-              return AdaptiveSheetScaffold(
-                type: type,
-                body: generateListView(
-                  generateSection(
-                    items: [SystemProxyItem(), BypassDomainItem()],
-                  ),
-                ),
-                title: appLocalizations.systemProxy,
-              );
-            },
-          );
-        },
+        onPressed: () => showSystemProxySheet(context),
         info: Info(
           label: appLocalizations.systemProxy,
           iconData: Icons.shuffle,
@@ -160,27 +191,7 @@ class VpnButton extends StatelessWidget {
     return SizedBox(
       height: getWidgetHeight(context, 1),
       child: CommonCard(
-        onPressed: () {
-          showSheet(
-            context: context,
-            builder: (_, type) {
-              return AdaptiveSheetScaffold(
-                type: type,
-                body: generateListView(
-                  generateSection(
-                    items: [
-                      const VPNItem(),
-                      if (!system.isAndroid) const StrictRouteItem(),
-                      const IcmpForwardingItem(),
-                      const TunStackItem(),
-                    ],
-                  ),
-                ),
-                title: 'VPN',
-              );
-            },
-          );
-        },
+        onPressed: () => showVpnSheet(context),
         info: Info(label: 'VPN', iconData: Icons.stacked_line_chart),
         child: Container(
           padding: baseInfoEdgeInsets.copyWith(top: 4, bottom: 8, right: 8),

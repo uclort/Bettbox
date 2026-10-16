@@ -303,7 +303,11 @@ class ClashService extends ClashHandlerInterface {
         commonPrint.log(details);
       }),
     );
-    return _waitForCoreReady(coreProcess);
+    final ready = await _waitForCoreReady(coreProcess);
+    if (ready && system.isLinux) {
+      unawaited(system.verifyCoreProcessPrivileges(coreProcess.pid));
+    }
+    return ready;
   }
 
   void _setWindowsCorePriority() {

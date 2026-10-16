@@ -24,6 +24,7 @@
   "totalTraffic": "Общий трафик",
   "restartApp": "Перезапустить",
   "outboundMode": "Маршрутизация",
+  "runningMode": "Режим работы",
   "networkDetection": "IP сети",
   "upload": "Отправка",
   "download": "Загрузка",
@@ -608,8 +609,8 @@
   "generalDesc": "Изменить глобальные настройки",
   "findProcessModeDesc": "Включить определение процессов",
   "ua": "User-Agent",
-  "navBarHapticFeedback": "Тактильная отдача",
-  "navBarHapticFeedbackDesc": "Вибрация при переключении нижней панели навигации",
+  "navBarHapticFeedback": "Анимация и отклик",
+  "navBarHapticFeedbackDesc": "Анимация и тактильная отдача нижней панели навигации",
   "saveTip": "Сохранить изменения?",
   "colorSchemes": "Цветовые схемы",
   "palette": "Палитра",
@@ -659,7 +660,6 @@
   "rename": "Переименовать",
   "unnamed": "Без имени",
   "pleaseEnterScriptName": "Введите название скрипта",
-  "overrideInvalidTip": "Не действует в режиме скрипта",
   "mixedPort": "Смешанный порт",
   "socksPort": "Порт Socks",
   "redirPort": "Порт перенаправления",
@@ -839,5 +839,10 @@
   "menuShowAll": "Показать все",
   "menuFullScreen": "Полный экран",
   "menuZoom": "Масштаб",
-  "menuBringAllToFront": "Все окна на передний план"
+  "menuBringAllToFront": "Все окна на передний план",
+  "setcapNotInstalledFallback": "setcap не установлен, выполнен откат на setuid",
+  "xattrUnsupportedFallback": "Файловая система не поддерживает file capabilities (xattr), выполнен откат на setuid",
+  "setcapFailedFallback": "Не удалось выдать file capabilities, выполнен откат на setuid",
+  "coreMountNosuid": "Ядро находится на файловой системе, смонтированной с nosuid, поэтому file capabilities и setuid не действуют",
+  "coreCapabilityNotEffective": "Авторизация ядра не применилась: у запущенного ядра нет CAP_NET_ADMIN, TUN может не работать"
 }

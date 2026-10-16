@@ -12,13 +12,24 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   testWidgets('首次加载的图标请求会完成并刷新当前行', (tester) async {
     const channel = MethodChannel('window_ext');
+    const appChannel = MethodChannel('app');
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
       channel,
+      (_) async => null,
+    );
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      appChannel,
       (_) async => null,
     );
     addTearDown(
       () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
         channel,
+        null,
+      ),
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        appChannel,
         null,
       ),
     );
@@ -74,5 +85,9 @@ void main() {
     await tester.pump();
 
     expect(find.byIcon(Icons.terminal), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 130));
+    await tester.pump();
+    expect(find.byIcon(Icons.terminal), findsNothing);
+    expect(find.byIcon(Icons.settings_suggest_outlined), findsOneWidget);
   }, skip: !system.isDesktop);
 }

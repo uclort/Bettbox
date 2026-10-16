@@ -10,13 +10,15 @@
 
 ### 当前上游融合基线
 
-- 2026-10-14 同步 Bettbox 正式 `v1.19.5` 及后续 `main@111c5d91e5a3`（源码版本 `1.19.5+2026101301`）与 Mihomo `v1.19.32`，保留原有全部 `BETTBOX-CUSTOM` 标记；Flutter 构建工具链升级至 `3.47.7`。
+- 2026-10-16 同步 Bettbox 正式 `v1.19.6 / main@9582976d5371`（源码版本 `1.19.6+2026101601`）；Mihomo 保持 `v1.19.32`，内核源树及私有 Snell v6 固定提交未变，保留原有全部 `BETTBOX-CUSTOM` 标记，Flutter 构建工具链保持 `3.47.7`。
+- 接入上游出站模式布局、导航动效与页面存活管理、超椭圆样式、编辑器缩放、运行配置保留原始 YAML 信息、禁用策略组引用清理、脚本与覆写规则协同，以及 Linux AppImage 授权/重启修复；桌面 TUN 继续使用自定义同步安全链和失败回滚，Windows Helper 仍按需授权启动。
 - 接入上游 Material UI、Riverpod 3、Rust 脚本引擎与新版编辑器、批量日志/请求通知及仪表盘；侧边栏继续通过 `_selectPage` 打开独立网络面板，Android 首页继续保留单一悬浮总开关。请求、连接和日志保留上游桌面/更多入口，自定义网络面板只作为额外入口。
 - 核心启动兼容上游 Linux AppImage 内核同步与控制通道重建重试；首次控制连接失败后清理旧进程和 socket 再重试一次，两次失败仍抛错并执行原有代理/TUN 回滚。Windows Helper 继续按需授权启动，macOS 网络恢复继续等待 `resetConnections` 的真实结果。
 - Windows 系统代理吸收上游 `::1` 绕过兼容处理，同时保留 WinINet/RAS 和注册表双通道启停；模型保留首次安装关闭系统代理的默认值，并接入上游历史绕过域名清洗。
 - 核心配置接入上游 `SetupParams / SetupResult`，保留 60 秒配置超时和完整失败回滚；socket 断开立即中止该连接待处理 IPC 请求。请求批量写入仍按 ID 原位更新，保留连接终态；日志延迟写入前检查页面是否仍挂载。
 - 融合落点为 `lib/clash/service.dart`、`lib/clash/interface.dart`、`lib/controller.dart`、`lib/manager/app_manager.dart`、`lib/common/navigation.dart`、`lib/widgets/google_bottom_nav_bar.dart`、`lib/views/dashboard/dashboard.dart`、`lib/models/config.dart`、`plugins/proxy/windows/proxy_plugin.cpp` 与 `macos/Runner/MainFlutterWindow.swift`；同步重新生成模型和七种语言资源。
 - 验证方式：`flutter analyze --no-pub`、`flutter test --no-pub`、核心包装层 `go test ./...`、下文内核指定目录的 Go 回归，以及 Release 正文和 WinSparkle 补丁回归；五平台原生构建与安装包校验由自定义发布工作流执行。
+- 2026-10-16 融合验证：静态检查无问题，583 项 Flutter 测试、核心包装层、私有内核指定目录、Release 说明与 WinSparkle 补丁回归通过；原有自定义标记无缺失。
 
 ### WebDAV 配置同步边界
 
@@ -69,6 +71,7 @@
 ### macOS 渲染兼容性
 
 - macOS 在 `macos/Runner/Info.plist` 显式设置布尔值 `FLTEnableImpeller = false`，主窗口和独立网络面板统一使用 Skia/Metal；Intel 与 Apple Silicon 使用同一兼容配置。
+- 上游 `3cac238a` 将 Windows/Linux 改为原生固定关闭 Impeller，macOS Intel 在 `setup.dart` 打包时临时关闭，并未增加应用内设置开关；自定义版沿用两种 Mac 均关闭的既有行为，删除 `setup.dart` 的重复 plist 注入以避免重复键，同时保留上游 macOS Intel 的 `GOAMD64=v1` 兼容设置。
 - Flutter `3.47.7` 默认开启 macOS Impeller；macOS Monterey `12.7.6`、2016 Intel MacBook Pro / Intel HD Graphics 530 上出现条纹、文字拉伸和内容丢失。2026-10-14 用户已在受影响设备上确认切回 Skia 的同版本兼容测试包正常，正式构建沿用该兼容配置；Skia 仍使用 Metal，不是软件渲染。
 - 已核验原正式 Intel DMG `1.19.5+2090000191`（SHA-256 `e7e1ca2c970f28a8abac82d2a739af773bf6d0a38214ee159ecfd79999916e55`）最低系统为 `12.0`，没有设置 `FLTEnableImpeller`；同版本兼容测试仅将该键设为布尔 `false` 并重新进行 ad-hoc 签名。正式发布通过自定义工作流重新构建、递增构建号并更新应用内更新源。
 - `.github/workflows/custom-build.yml` 在两种 macOS 架构打包后读取最终 App 的 `Contents/Info.plist`，要求该键为布尔 `false`，避免后续构建覆盖兼容配置。
@@ -128,7 +131,7 @@
 - 不再提供信息价值有限的设备与流量统计子页面；请求和连接列表仍保留单条记录的实时速率、累计上传下载和连接详情。
 - 日志页按实际级别分类；Sub-Store 页支持凭据历史、固定规则读取/新增/修改/删除/拖动排序，保存前重新读取远端脚本并仅替换 `BETTBOX_CUSTOM_RULES`。
 - 选中请求或连接后展开可拖动详情，区分客户端、目标、Fake-IP、实际出站本地/远端地址、GeoIP/ASN 和完整策略链；macOS 通过 `NSWorkspace` 读取进程图标，并发请求合并且复用历史 `.app` 路径。
-- 上游请求/连接列表接入桌面进程图标；macOS 继续支持按进程名查找、并发合并和 120 ms 后补取，其他桌面平台接入上游文件图标服务，桌面占位使用终端图标。相关回归为 `test/views/connection/process_icon_test.dart` 与 `test/views/network_monitor_test.dart`。
+- 上游请求/连接列表接入桌面进程图标；macOS 继续支持按进程名查找、并发合并和 120 ms 后补取，保留面板复用的公开 `ProcessIcon(processPath:, size:)` 接口。接入上游桌面文件图标串行加载、缓存淘汰时释放图片以及按 DNS/进程路径选择占位图标，其他桌面平台使用上游文件图标服务。相关回归为 `test/common/process_icon_test.dart`、`test/views/connection/process_icon_test.dart` 与 `test/views/network_monitor_test.dart`。
 - custom-mihomo 为每条连接保存 DNS 逐服务器尝试、规则匹配、策略链和真实 socket 建立事件，`TrackerInfo` 返回 `trace / outboundLocalAddress / outboundRemoteAddress`；连接加入与离开均发送同 ID 通知，请求记录按 ID 原位更新。
 - 代码位于 `lib/views/network_monitor*.dart`、`lib/common/window.dart`、`lib/common/external_control.dart`、`lib/common/navigation.dart`、`lib/views/network_monitor_navigation.dart`、`lib/enum/enum.dart`、`lib/widgets/google_bottom_nav_bar.dart` 和 `lib/common/tray.dart`；回归测试为 `test/views/network_monitor_test.dart`、`core/Clash.Meta/tunnel/statistic/manager_notify_test.go` 及私有内核 `constant / dns / tunnel / tunnel/statistic` 测试。
 

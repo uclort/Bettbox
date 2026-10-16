@@ -13,26 +13,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:bett_box/providers/providers.dart';
 
 final _iconCache = <String, Uint8List?>{};
-final _iconCacheKeys = <String>[];
 final _iconLoads = <String, Future<Uint8List?>>{};
-const _maxIconCacheSize = 50;
+const _maxIconCacheSize = 100;
 Uint8List? _defaultIconCache;
 Future<Uint8List?>? _defaultIconFuture;
 
 void _addToIconCache(String key, Uint8List? value) {
-  if (_iconCache.containsKey(key)) {
-    _iconCacheKeys.remove(key);
-    _iconCacheKeys.add(key);
-    _iconCache[key] = value;
-    return;
+  _iconCache.remove(key);
+  while (_iconCache.length >= _maxIconCacheSize) {
+    final evicted = _iconCache.remove(_iconCache.keys.first);
+    if (evicted != null) {
+      imageCache.evict(MemoryImage(evicted), includeLive: false);
+    }
   }
 
-  while (_iconCacheKeys.length >= _maxIconCacheSize) {
-    final oldestKey = _iconCacheKeys.removeAt(0);
-    _iconCache.remove(oldestKey);
-  }
-
-  _iconCacheKeys.add(key);
   _iconCache[key] = value;
 }
 
@@ -187,6 +181,7 @@ class TrackerInfoItem extends ConsumerWidget {
         ? ProcessIcon(
             process: trackerInfo.metadata.process,
             processPath: trackerInfo.metadata.processPath,
+            port: trackerInfo.metadata.destinationPort,
             onClick: onClickKeyword,
           )
         : null;
@@ -285,6 +280,7 @@ Future<Uint8List?> _getDefaultPackageIcon() {
 class ProcessIcon extends StatefulWidget {
   final String process;
   final String processPath;
+  final String port;
   final double size;
   final Function(String)? onClick;
 
@@ -292,6 +288,7 @@ class ProcessIcon extends StatefulWidget {
     super.key,
     required this.process,
     this.processPath = '',
+    this.port = '',
     this.size = 42,
     this.onClick,
   });
@@ -307,6 +304,12 @@ class _ProcessIconState extends State<ProcessIcon> {
   void initState() {
     super.initState();
     _iconFuture = _getPackageIcon(widget.process, widget.processPath);
+  }
+
+  IconData get _fallbackIcon {
+    if (widget.port == '53') return Icons.dns_outlined;
+    if (widget.processPath.isNotEmpty) return Icons.settings_suggest_outlined;
+    return Icons.terminal;
   }
 
   @override
@@ -336,15 +339,40 @@ class _ProcessIconState extends State<ProcessIcon> {
           alignment: Alignment.center,
           child: FutureBuilder<Uint8List?>(
             key: ValueKey('${widget.process}\n${widget.processPath}'),
-            initialData: _iconCache[widget.process],
+            initialData: _iconCache['${widget.process}\n${widget.processPath}'],
             future: _iconFuture,
             builder: (context, snapshot) {
               final iconBytes = snapshot.data;
               if (iconBytes == null) {
                 if (system.isDesktop) {
-                  return Icon(Icons.terminal, size: widget.size);
+                  return DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: context.colorScheme.onSurfaceVariant.opacity10,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: SizedBox(
+                      width: widget.size,
+                      height: widget.size,
+                      child: Icon(
+                        snapshot.connectionState == ConnectionState.done
+                            ? _fallbackIcon
+                            : Icons.terminal,
+                        size: widget.size * 22 / 38,
+                        color: context.colorScheme.onSurfaceVariant.opacity80,
+                      ),
+                    ),
+                  );
                 }
                 return Icon(Icons.apps_outlined, size: widget.size);
+              }
+              if (system.isDesktop) {
+                return Image.memory(
+                  iconBytes,
+                  width: widget.size,
+                  height: widget.size,
+                  filterQuality: FilterQuality.medium,
+                  gaplessPlayback: true,
+                );
               }
               return Image(
                 image: ResizeImage(

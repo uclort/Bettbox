@@ -24,6 +24,7 @@
   "totalTraffic": "Total Traffic",
   "restartApp": "Restart App",
   "outboundMode": "Outbound Mode",
+  "runningMode": "Running Mode",
   "networkDetection": "Network",
   "upload": "Upload",
   "download": "Download",
@@ -607,8 +608,8 @@
   "saveChanges": "Save changes?",
   "generalDesc": "Modify global settings",
   "findProcessModeDesc": "Enable process matching",
-  "navBarHapticFeedback": "Haptic Feedback",
-  "navBarHapticFeedbackDesc": "Vibrate on navigation tab switch",
+  "navBarHapticFeedback": "Motion Feedback",
+  "navBarHapticFeedbackDesc": "Bottom navigation bar animation and haptic feedback",
   "saveTip": "Are you sure you want to save?",
   "colorSchemes": "Color Schemes",
   "palette": "Palette",
@@ -657,7 +658,6 @@
   "rename": "Rename",
   "unnamed": "Unnamed",
   "pleaseEnterScriptName": "Please enter a script name",
-  "overrideInvalidTip": "Inactive in script mode",
   "mixedPort": "Mixed Port",
   "socksPort": "Socks Port",
   "redirPort": "Redir Port",
@@ -834,5 +834,10 @@
   "menuShowAll": "Show All",
   "menuFullScreen": "Full Screen",
   "menuZoom": "Zoom",
-  "menuBringAllToFront": "Bring All to Front"
+  "menuBringAllToFront": "Bring All to Front",
+  "setcapNotInstalledFallback": "setcap is not installed, falling back to setuid",
+  "xattrUnsupportedFallback": "The filesystem does not support file capabilities, falling back to setuid",
+  "setcapFailedFallback": "Could not grant file capabilities, falling back to setuid",
+  "coreMountNosuid": "The core is on a filesystem mounted with nosuid, so file capabilities and setuid cannot take effect",
+  "coreCapabilityNotEffective": "Core authorization did not take effect: the running core lacks CAP_NET_ADMIN, TUN may fail"
 }

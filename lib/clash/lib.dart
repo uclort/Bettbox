@@ -281,9 +281,14 @@ class ClashLibHandler {
   Future<Map<String, dynamic>> getConfig(
     String id, {
     String? ageSecretKey,
+    List<String> disabledGroups = const [],
   }) async {
     final path = await appPath.getProfilePath(id);
-    final params = {'path': path, 'age-secret-key': ageSecretKey ?? ''};
+    final params = {
+      'path': path,
+      'age-secret-key': ageSecretKey ?? '',
+      'disabled-groups': disabledGroups,
+    };
     return using((arena) {
       final pathChar = json
           .encode(params)

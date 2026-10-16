@@ -24,6 +24,7 @@
   "totalTraffic": "전체 전송량",
   "restartApp": "앱 재시작",
   "outboundMode": "아웃바운드 모드",
+  "runningMode": "실행 모드",
   "networkDetection": "네트워크 진단",
   "upload": "업로드",
   "download": "다운로드",
@@ -607,8 +608,8 @@
   "saveChanges": "변경사항을 저장하시겠습니까?",
   "generalDesc": "글로벌 일반 설정 변경",
   "findProcessModeDesc": "활성화 시 프로세스 매칭 검색 가능",
-  "navBarHapticFeedback": "진동 피드백",
-  "navBarHapticFeedbackDesc": "하단 탭 전환 시 진동 피드백",
+  "navBarHapticFeedback": "모션 피드백",
+  "navBarHapticFeedbackDesc": "하단 내비게이션 바 애니메이션 및 진동 피드백",
   "saveTip": "저장하시겠습니까?",
   "colorSchemes": "색상 팔레트",
   "palette": "팔레트",
@@ -658,7 +659,6 @@
   "rename": "이름 변경",
   "unnamed": "제목 없음",
   "pleaseEnterScriptName": "스크립트 이름을 입력하세요",
-  "overrideInvalidTip": "스크립트 모드에서는 적용되지 않습니다",
   "mixedPort": "혼합 포트 (Mixed)",
   "socksPort": "Socks 포트",
   "redirPort": "Redir 포트",
@@ -835,5 +835,10 @@
   "menuShowAll": "모두 보기",
   "menuFullScreen": "전체 화면",
   "menuZoom": "확대/축소",
-  "menuBringAllToFront": "모두 앞으로 가져오기"
+  "menuBringAllToFront": "모두 앞으로 가져오기",
+  "setcapNotInstalledFallback": "setcap이 설치되어 있지 않아 setuid로 대체했습니다",
+  "xattrUnsupportedFallback": "파일 시스템이 파일 capability(xattr)를 지원하지 않아 setuid로 대체했습니다",
+  "setcapFailedFallback": "파일 capability를 부여할 수 없어 setuid로 대체했습니다",
+  "coreMountNosuid": "코어가 nosuid로 마운트된 파일 시스템에 있어 파일 capability와 setuid가 적용되지 않습니다",
+  "coreCapabilityNotEffective": "코어 권한 부여가 적용되지 않았습니다: 실행 중인 코어에 CAP_NET_ADMIN이 없어 TUN이 작동하지 않을 수 있습니다"
 }

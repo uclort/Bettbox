@@ -1088,7 +1088,8 @@ class AppController {
 
   Future<Result<bool>> _requestAdmin(bool enableTun) async {
     final realTunEnable = _ref.read(realTunEnableProvider);
-    if (enableTun != realTunEnable && realTunEnable == false) {
+    final hasAdmin = await system.checkIsAdmin();
+    if (enableTun && (!realTunEnable || !hasAdmin)) {
       final code = await system.authorizeCore();
       switch (code) {
         case AuthorizeCode.success:

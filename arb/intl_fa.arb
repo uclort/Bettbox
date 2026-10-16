@@ -24,6 +24,7 @@
   "totalTraffic": "مجموع ترافیک",
   "restartApp": "راه‌اندازی مجدد برنامه",
   "outboundMode": "حالت خروجی",
+  "runningMode": "حالت اجرا",
   "networkDetection": "تست شبکه",
   "upload": "آپلود",
   "download": "دانلود",
@@ -607,8 +608,8 @@
   "saveChanges": "آیا تغییرات ذخیره شوند؟",
   "generalDesc": "تغییر تنظیمات عمومی",
   "findProcessModeDesc": "امکان جستجو و تطبیق پردازش‌ها",
-  "navBarHapticFeedback": "بازخورد لمسی",
-  "navBarHapticFeedbackDesc": "لرزش هنگام تغییر زبانه‌های نوار پایین",
+  "navBarHapticFeedback": "بازخورد حرکتی",
+  "navBarHapticFeedbackDesc": "انیمیشن و بازخورد لمسی نوار ناوبری پایین",
   "saveTip": "آیا از ذخیره تغییرات اطمینان دارید؟",
   "colorSchemes": "پالت‌های رنگی",
   "palette": "پالت",
@@ -658,7 +659,6 @@
   "rename": "تغییر نام",
   "unnamed": "بدون نام",
   "pleaseEnterScriptName": "لطفاً نام اسکریپت را وارد کنید",
-  "overrideInvalidTip": "در حالت اسکریپت اعمال نمی‌شود",
   "mixedPort": "پورت ترکیبی (Mixed)",
   "socksPort": "پورت Socks",
   "redirPort": "پورت Redir",
@@ -835,5 +835,10 @@
   "menuShowAll": "نمایش همه",
   "menuFullScreen": "تمام صفحه",
   "menuZoom": "بزرگ‌نمایی",
-  "menuBringAllToFront": "آوردن همه به جلو"
+  "menuBringAllToFront": "آوردن همه به جلو",
+  "setcapNotInstalledFallback": "setcap نصب نیست؛ به setuid بازگشت داده شد",
+  "xattrUnsupportedFallback": "سیستم فایل از قابلیت‌های فایل (xattr) پشتیبانی نمی‌کند؛ به setuid بازگشت داده شد",
+  "setcapFailedFallback": "اعطای قابلیت‌های فایل ممکن نشد؛ به setuid بازگشت داده شد",
+  "coreMountNosuid": "هسته روی سیستم فایلی با گزینه nosuid قرار دارد، بنابراین قابلیت‌های فایل و setuid اعمال نمی‌شوند",
+  "coreCapabilityNotEffective": "مجوز هسته اعمال نشد: هسته در حال اجرا CAP_NET_ADMIN ندارد و TUN ممکن است کار نکند"
 }
