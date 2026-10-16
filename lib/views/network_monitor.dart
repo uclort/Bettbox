@@ -323,10 +323,13 @@ class _NetworkMonitorHostState extends ConsumerState<NetworkMonitorHost> {
   final _snapshotReader = NetworkMonitorSnapshotReader();
   ProviderSubscription<List<TrackerInfo>>? _requestsSubscription;
   ProviderSubscription<Log?>? _logsSubscription;
+  bool _historyLoaded = false;
 
   @override
   void initState() {
     super.initState();
+    clashCore.startTrackRequests(this);
+    clashCore.startLog(this);
     ExternalControl.setNetworkMonitorHandler(_handleMethodCall);
     _requestsSubscription = ref.listenManual(
       requestsProvider.select((state) => state.list),
@@ -348,11 +351,21 @@ class _NetworkMonitorHostState extends ConsumerState<NetworkMonitorHost> {
   void dispose() {
     _requestsSubscription?.close();
     _logsSubscription?.close();
+    clashCore.stopTrackRequests(this);
+    clashCore.stopLog(this);
     ExternalControl.setNetworkMonitorHandler(null);
     super.dispose();
   }
 
   Future<Map<String, Object?>> _snapshot() async {
+    if (!_historyLoaded) {
+      final requests = await clashCore.getRequests();
+      final logs = await clashCore.getLogs();
+      if (!mounted) return {};
+      ref.read(requestsProvider.notifier).addRequests(requests);
+      ref.read(logsProvider.notifier).mergeHistory(logs);
+      _historyLoaded = true;
+    }
     return _snapshotReader.read(
       requests: ref.read(requestsProvider).list,
       logs: ref.read(logsProvider).list,
@@ -389,9 +402,11 @@ class _NetworkMonitorHostState extends ConsumerState<NetworkMonitorHost> {
       case 'flushDnsCache':
         return await clashCore.flushDnsCache() && await clashCore.flushFakeIP();
       case 'clearRequests':
+        clashCore.clearRequests();
         ref.read(requestsProvider.notifier).clearRequests();
         return true;
       case 'clearLogs':
+        clashCore.clearLogs();
         ref.read(logsProvider.notifier).clearLogs();
         return true;
       case 'closeConnection':
@@ -510,6 +525,9 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
     _sidebarFilter = monitorDefaultSidebarFilter(_page);
     unawaited(_restorePreferences());
     if (widget.embedded) {
+      clashCore.startTrackRequests(this);
+      clashCore.startLog(this);
+      unawaited(_loadHistory());
       _requestsSubscription = ref.listenManual(
         requestsProvider.select((state) => state.list),
         (_, _) => _handleDataChanged(),
@@ -544,6 +562,15 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
     );
   }
 
+  Future<void> _loadHistory() async {
+    final requests = await clashCore.getRequests();
+    final logs = await clashCore.getLogs();
+    if (!mounted) return;
+    ref.read(requestsProvider.notifier).addRequests(requests);
+    ref.read(logsProvider.notifier).mergeHistory(logs);
+    await _refresh();
+  }
+
   void _update(VoidCallback change) => setState(change);
 
   Future<void> _restorePreferences() async {
@@ -562,6 +589,10 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
 
   @override
   void dispose() {
+    if (widget.embedded) {
+      clashCore.stopTrackRequests(this);
+      clashCore.stopLog(this);
+    }
     _networkMonitorSubscription?.cancel();
     _requestsSubscription?.close();
     _logsSubscription?.close();
@@ -658,8 +689,10 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
       if (widget.embedded) {
         switch (method) {
           case 'clearRequests':
+            clashCore.clearRequests();
             ref.read(requestsProvider.notifier).clearRequests();
           case 'clearLogs':
+            clashCore.clearLogs();
             ref.read(logsProvider.notifier).clearLogs();
           case 'closeConnection':
             clashCore.closeConnection(arguments as String);

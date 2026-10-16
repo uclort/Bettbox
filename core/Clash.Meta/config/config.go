@@ -518,6 +518,8 @@ func DefaultRawConfig() *RawConfig {
 				GeoSite:   []string{},
 			},
 			DefaultNameserver: []string{
+				// BETTBOX-CUSTOM: 无显式引导 DNS 时保留不依赖 UDP 或域名解析的 HTTPS 通道。
+				"https://223.5.5.5/dns-query",
 				"114.114.114.114",
 				"223.5.5.5",
 				"8.8.8.8",

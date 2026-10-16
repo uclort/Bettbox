@@ -325,7 +325,22 @@ func preHandleMetadata(metadata *C.Metadata) error {
 	return nil
 }
 
-func resolveMetadata(metadata *C.Metadata) (proxy C.Proxy, rule C.Rule, err error) {
+func resolveMetadata(ctx context.Context, metadata *C.Metadata) (proxy C.Proxy, rule C.Rule, err error) {
+	defer func() {
+		if err != nil {
+			C.AddConnectionTrace(ctx, "rule", "规则匹配失败", err.Error(), "error")
+			return
+		}
+		title := "默认规则"
+		detail := proxy.Name()
+		if rule != nil {
+			title = rule.RuleType().String()
+			if payload := rule.Payload(); payload != "" {
+				detail = payload + " → " + proxy.Name()
+			}
+		}
+		C.AddConnectionTrace(ctx, "rule", title, detail, "success")
+	}()
 	if metadata.SpecialProxy != "" {
 		var exist bool
 		proxy, exist = proxies[metadata.SpecialProxy]
@@ -342,19 +357,22 @@ func resolveMetadata(metadata *C.Metadata) (proxy C.Proxy, rule C.Rule, err erro
 	if node, ok := resolver.DefaultHosts.Search(metadata.Host, false); ok {
 		metadata.DstIP, _ = node.RandIP()
 		resolved = true
+		C.AddConnectionTrace(ctx, "dns", "Hosts 命中", fmt.Sprintf("%s → %s", metadata.Host, metadata.DstIP), "success")
 	}
 
 	helper := C.RuleMatchHelper{
 		ResolveIP: func() {
 			if !resolved && metadata.Host != "" && !metadata.Resolved() {
-				ctx, cancel := context.WithTimeout(context.Background(), resolver.DefaultDNSTimeout)
+				ctx, cancel := context.WithTimeout(ctx, resolver.DefaultDNSTimeout)
 				defer cancel()
 				ip, err := resolver.ResolveIP(ctx, metadata.Host)
 				if err != nil {
 					log.Debugln("[DNS] resolve %s error: %s", metadata.Host, err.Error())
+					C.AddConnectionTrace(ctx, "dns", "解析失败", fmt.Sprintf("%s · %s", metadata.Host, err), "error")
 				} else {
 					log.Debugln("[DNS] %s --> %s", metadata.Host, ip.String())
 					metadata.DstIP = ip
+					C.AddConnectionTrace(ctx, "dns", "解析完成", fmt.Sprintf("%s → %s", metadata.Host, ip), "success")
 				}
 				resolved = true
 			}
@@ -468,7 +486,11 @@ func handleUDPConn(packet C.PacketAdapter) {
 
 			_ = preHandleMetadata(metadata) // error was pre-checked
 
-			proxy, rule, err := resolveMetadata(metadata)
+			metadata.ConnectionTrace = C.NewConnectionTrace()
+			metadata.ConnectionTrace.Add("inbound", "客户端", metadata.SourceDetail(), "success")
+			traceCtx := C.WithConnectionTrace(context.Background(), metadata.ConnectionTrace)
+
+			proxy, rule, err := resolveMetadata(traceCtx, metadata)
 			if err != nil {
 				log.Warnln("[UDP] Parse metadata failed: %s", err.Error())
 				return nil, nil, err
@@ -490,17 +512,20 @@ func handleUDPConn(packet C.PacketAdapter) {
 			}
 
 			dialMetadata := metadata.Pure()
-			ctx, cancel := context.WithTimeout(context.Background(), C.DefaultUDPTimeout)
+			ctx, cancel := context.WithTimeout(traceCtx, C.DefaultUDPTimeout)
 			defer cancel()
 			rawPc, err := retry(ctx, func(ctx context.Context) (C.PacketConn, error) {
 				return proxy.ListenPacketContext(ctx, dialMetadata)
 			}, func(err error) {
 				logMetadataErr(metadata, rule, proxy, err)
+				C.AddConnectionTrace(traceCtx, "connect", "出站失败", err.Error(), "error")
 			})
 			if err != nil {
 				return nil, nil, err
 			}
 			logMetadata(metadata, rule, rawPc)
+			metadata.ConnectionTrace.Add("outbound", "策略链", strings.Join(rawPc.Chains(), " → "), "success")
+			metadata.ConnectionTrace.Add("connect", "远端对端", rawPc.RemoteDestination(), "success")
 
 			pc := statistic.NewUDPTracker(rawPc, statistic.DefaultManager, metadata, rule, 0, 0, true)
 
@@ -577,7 +602,11 @@ func handleTCPConn(connCtx C.ConnContext) {
 		}()
 	}
 
-	proxy, rule, err := resolveMetadata(metadata)
+	metadata.ConnectionTrace = C.NewConnectionTrace()
+	metadata.ConnectionTrace.Add("inbound", "客户端", metadata.SourceDetail(), "success")
+	traceCtx := C.WithConnectionTrace(context.Background(), metadata.ConnectionTrace)
+
+	proxy, rule, err := resolveMetadata(traceCtx, metadata)
 	if err != nil {
 		log.Warnln("[Metadata] parse failed: %s", err.Error())
 		return
@@ -597,7 +626,7 @@ func handleTCPConn(connCtx C.ConnContext) {
 	var peekBytes []byte
 	var peekLen int
 
-	ctx, cancel := context.WithTimeout(context.Background(), C.DefaultTCPTimeout)
+	ctx, cancel := context.WithTimeout(traceCtx, C.DefaultTCPTimeout)
 	defer cancel()
 	remoteConn, err := retry(ctx, func(ctx context.Context) (remoteConn C.Conn, err error) {
 		remoteConn, err = proxy.DialContext(ctx, dialMetadata)
@@ -632,11 +661,22 @@ func handleTCPConn(connCtx C.ConnContext) {
 		return
 	}, func(err error) {
 		logMetadataErr(metadata, rule, proxy, err)
+		C.AddConnectionTrace(traceCtx, "connect", "出站失败", err.Error(), "error")
 	})
 	if err != nil {
 		return
 	}
 	logMetadata(metadata, rule, remoteConn)
+	metadata.ConnectionTrace.Add("outbound", "策略链", strings.Join(remoteConn.Chains(), " → "), "success")
+	localAddress := ""
+	remoteAddress := ""
+	if address := remoteConn.LocalAddr(); address != nil {
+		localAddress = address.String()
+	}
+	if address := remoteConn.RemoteAddr(); address != nil {
+		remoteAddress = address.String()
+	}
+	metadata.ConnectionTrace.Add("connect", "出站套接字", fmt.Sprintf("%s → %s", localAddress, remoteAddress), "success")
 
 	remoteConn = statistic.NewTCPTracker(remoteConn, statistic.DefaultManager, metadata, rule, int64(peekLen), 0, true)
 	defer func(remoteConn C.Conn) {

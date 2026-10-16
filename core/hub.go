@@ -1239,6 +1239,13 @@ const maxRequestHistory = 256
 func recordRequestHistory(info *statistic.TrackerInfo) {
 	requestHistoryLock.Lock()
 	defer requestHistoryLock.Unlock()
+	// BETTBOX-CUSTOM: 加入、离开通知更新同一请求，历史回填不重复占位。
+	for i, previous := range requestHistory {
+		if previous.UUID == info.UUID {
+			requestHistory[i] = info
+			return
+		}
+	}
 	if len(requestHistory) >= maxRequestHistory {
 		requestHistory = requestHistory[1:]
 	}

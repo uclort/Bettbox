@@ -108,6 +108,12 @@ List<Group> buildGroups(String proxiesRaw, List<ExternalProvider> providers) {
 class ClashCore {
   static ClashCore? _instance;
   late ClashHandlerInterface clashInterface;
+  // BETTBOX-CUSTOM: 请求页、日志页和网络面板分别持有订阅，互不关闭对方的数据流。
+  final _requestOwners = <Object>{};
+  final _logOwners = <Object>{};
+
+  @visibleForTesting
+  ClashCore.test(this.clashInterface);
 
   ClashCore._internal() {
     if (system.isAndroid) {
@@ -187,9 +193,14 @@ class ClashCore {
   Future<bool> init() async {
     await initGeo();
     final homeDirPath = await appPath.homeDirPath;
-    return await clashInterface.init(
+    final initialized = await clashInterface.init(
       InitParams(homeDir: homeDirPath, version: globalState.appState.version),
     );
+    if (initialized) {
+      if (_requestOwners.isNotEmpty) await clashInterface.startTrackRequests();
+      if (_logOwners.isNotEmpty) await clashInterface.startLog();
+    }
+    return initialized;
   }
 
   Future<bool> setState(CoreState state) async {
@@ -477,12 +488,14 @@ class ClashCore {
     clashInterface.resetTraffic();
   }
 
-  void startLog() {
+  void startLog([Object? owner]) {
+    _logOwners.add(owner ?? this);
     clashInterface.startLog();
   }
 
-  void stopLog() {
-    clashInterface.stopLog();
+  void stopLog([Object? owner]) {
+    _logOwners.remove(owner ?? this);
+    if (_logOwners.isEmpty) clashInterface.stopLog();
   }
 
   Future<List<Log>> getLogs() async {
@@ -521,12 +534,14 @@ class ClashCore {
     }
   }
 
-  void startTrackRequests() {
+  void startTrackRequests([Object? owner]) {
+    _requestOwners.add(owner ?? this);
     clashInterface.startTrackRequests();
   }
 
-  void stopTrackRequests() {
-    clashInterface.stopTrackRequests();
+  void stopTrackRequests([Object? owner]) {
+    _requestOwners.remove(owner ?? this);
+    if (_requestOwners.isEmpty) clashInterface.stopTrackRequests();
   }
 
   void clearRequests() {

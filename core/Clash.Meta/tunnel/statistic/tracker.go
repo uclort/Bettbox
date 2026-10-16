@@ -23,16 +23,19 @@ type Tracker interface {
 }
 
 type TrackerInfo struct {
-	UUID          uuid.UUID    `json:"id"`
-	Metadata      *C.Metadata  `json:"metadata"`
-	UploadTotal   atomic.Int64 `json:"upload"`
-	DownloadTotal atomic.Int64 `json:"download"`
-	Start         time.Time    `json:"start"`
-	Chain         C.Chain      `json:"chains"`
-	ProviderChain C.Chain      `json:"providerChains"`
-	Rule          string       `json:"rule"`
-	RulePayload   string       `json:"rulePayload"`
-	IsDirect      bool         `json:"-"`
+	UUID                  uuid.UUID                `json:"id"`
+	Metadata              *C.Metadata              `json:"metadata"`
+	UploadTotal           atomic.Int64             `json:"upload"`
+	DownloadTotal         atomic.Int64             `json:"download"`
+	Start                 time.Time                `json:"start"`
+	Chain                 C.Chain                  `json:"chains"`
+	ProviderChain         C.Chain                  `json:"providerChains"`
+	Rule                  string                   `json:"rule"`
+	RulePayload           string                   `json:"rulePayload"`
+	OutboundLocalAddress  string                   `json:"outboundLocalAddress,omitempty"`
+	OutboundRemoteAddress string                   `json:"outboundRemoteAddress,omitempty"`
+	Trace                 []C.ConnectionTraceEvent `json:"trace,omitempty"`
+	IsDirect              bool                     `json:"-"`
 }
 
 type tcpTracker struct {
@@ -123,6 +126,14 @@ func (tt *tcpTracker) Upstream() any {
 
 func NewTCPTracker(conn C.Conn, manager *Manager, metadata *C.Metadata, rule C.Rule, uploadTotal int64, downloadTotal int64, pushToManager bool) *tcpTracker {
 	metadata.RemoteDst = conn.RemoteDestination()
+	outboundLocalAddress := ""
+	outboundRemoteAddress := ""
+	if address := conn.LocalAddr(); address != nil {
+		outboundLocalAddress = address.String()
+	}
+	if address := conn.RemoteAddr(); address != nil {
+		outboundRemoteAddress = address.String()
+	}
 
 	chains := conn.Chains()
 	lastChain := chains.Last()
@@ -132,15 +143,18 @@ func NewTCPTracker(conn C.Conn, manager *Manager, metadata *C.Metadata, rule C.R
 		Conn:    conn,
 		manager: manager,
 		TrackerInfo: &TrackerInfo{
-			UUID:          utils.NewUUIDV4(),
-			Start:         time.Now(),
-			Metadata:      metadata,
-			Chain:         chains,
-			ProviderChain: conn.ProviderChains(),
-			Rule:          "",
-			UploadTotal:   atomic.NewInt64(uploadTotal),
-			DownloadTotal: atomic.NewInt64(downloadTotal),
-			IsDirect:      isDirect,
+			UUID:                  utils.NewUUIDV4(),
+			Start:                 time.Now(),
+			Metadata:              metadata,
+			Chain:                 chains,
+			ProviderChain:         conn.ProviderChains(),
+			Rule:                  "",
+			OutboundLocalAddress:  outboundLocalAddress,
+			OutboundRemoteAddress: outboundRemoteAddress,
+			Trace:                 metadata.ConnectionTrace.Events(),
+			UploadTotal:           atomic.NewInt64(uploadTotal),
+			DownloadTotal:         atomic.NewInt64(downloadTotal),
+			IsDirect:              isDirect,
 		},
 		pushToManager: pushToManager,
 	}
@@ -223,6 +237,10 @@ func (ut *udpTracker) Upstream() any {
 
 func NewUDPTracker(conn C.PacketConn, manager *Manager, metadata *C.Metadata, rule C.Rule, uploadTotal int64, downloadTotal int64, pushToManager bool) *udpTracker {
 	metadata.RemoteDst = conn.RemoteDestination()
+	outboundLocalAddress := ""
+	if address := conn.LocalAddr(); address != nil {
+		outboundLocalAddress = address.String()
+	}
 
 	chains := conn.Chains()
 	lastChain := chains.Last()
@@ -232,15 +250,18 @@ func NewUDPTracker(conn C.PacketConn, manager *Manager, metadata *C.Metadata, ru
 		PacketConn: conn,
 		manager:    manager,
 		TrackerInfo: &TrackerInfo{
-			UUID:          utils.NewUUIDV4(),
-			Start:         time.Now(),
-			Metadata:      metadata,
-			Chain:         chains,
-			ProviderChain: conn.ProviderChains(),
-			Rule:          "",
-			UploadTotal:   atomic.NewInt64(uploadTotal),
-			DownloadTotal: atomic.NewInt64(downloadTotal),
-			IsDirect:      isDirect,
+			UUID:                  utils.NewUUIDV4(),
+			Start:                 time.Now(),
+			Metadata:              metadata,
+			Chain:                 chains,
+			ProviderChain:         conn.ProviderChains(),
+			Rule:                  "",
+			OutboundLocalAddress:  outboundLocalAddress,
+			OutboundRemoteAddress: metadata.RemoteDst,
+			Trace:                 metadata.ConnectionTrace.Events(),
+			UploadTotal:           atomic.NewInt64(uploadTotal),
+			DownloadTotal:         atomic.NewInt64(downloadTotal),
+			IsDirect:              isDirect,
 		},
 		pushToManager: pushToManager,
 	}

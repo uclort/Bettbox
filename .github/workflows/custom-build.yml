@@ -148,6 +148,25 @@ jobs:
             exit 1
           fi
 
+          # BETTBOX-CUSTOM: 防止私有内核同步覆盖面板链路和默认 DNS 引导修复。
+          for source in \
+            config/config.go \
+            config/dns_bootstrap_test.go \
+            constant/connection_trace.go \
+            constant/metadata.go \
+            dns/resolver.go \
+            dns/util.go \
+            tunnel/dns_dialer.go \
+            tunnel/tunnel.go \
+            tunnel/statistic/tracker.go \
+            tunnel/statistic/tracker_trace_test.go; do
+            if ! cmp -s "core/Clash.Meta/${source}" \
+                ".custom-build/runtime/custom-mihomo/source/${source}"; then
+              echo "私有内核缺少或覆盖了自定义回归文件：${source}" >&2
+              exit 1
+            fi
+          done
+
           expected_kernel="$(git rev-parse HEAD:core/Clash.Meta)"
           actual_kernel="$(
             tr -d '[:space:]' \

@@ -262,7 +262,7 @@ jobs:
               "${custom_repository}/patches/opensnell-v6.patch"
             git apply \
               "${custom_repository}/patches/opensnell-v6.patch"
-            go test ./transport/snell ./adapter/outbound
+            go test ./transport/snell ./adapter/outbound ./component/dialer ./component/dhcp ./config ./constant ./dns ./listener/sing_tun ./tunnel ./tunnel/statistic
           )
 
           rsync -a --delete \

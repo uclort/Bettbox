@@ -12,6 +12,7 @@ import (
 	"github.com/metacubex/mihomo/common/picker"
 	"github.com/metacubex/mihomo/component/ech/echparser"
 	"github.com/metacubex/mihomo/component/resolver"
+	C "github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/log"
 
 	D "github.com/miekg/dns"
@@ -425,16 +426,23 @@ func batchExchange(ctx context.Context, clients []dnsClient, m *D.Msg) (msg *D.M
 		}
 		client := client // shadow define client to ensure the value captured by the closure will not be changed in the next loop
 		fast.Go(func() (*D.Msg, error) {
-			log.Debugln("[DNS] resolve %s %s from %s", domain, qTypeStr, client.Address())
+			server := client.Address()
+			log.Debugln("[DNS] resolve %s %s from %s", domain, qTypeStr, server)
+			C.AddConnectionTrace(ctx, "dns", "查询 "+qTypeStr, domain+" · "+server, "pending")
 			m, err := client.ExchangeContext(ctx, m)
 			if err != nil {
+				C.AddConnectionTrace(ctx, "dns", "查询失败", domain+" · "+server+" · "+err.Error(), "error")
 				return nil, err
 			} else if cache && (m.Rcode == D.RcodeServerFailure || m.Rcode == D.RcodeRefused) {
 				// currently, cache indicates whether this msg was from a RCode client,
 				// so we would ignore RCode errors from RCode clients.
-				return nil, errors.New("server failure: " + D.RcodeToString[m.Rcode])
+				err = errors.New("server failure: " + D.RcodeToString[m.Rcode])
+				C.AddConnectionTrace(ctx, "dns", "查询失败", domain+" · "+server+" · "+err.Error(), "error")
+				return nil, err
 			}
-			log.Debugln("[DNS] %s --> %s from %s", domain, msgToLogString(m), client.Address())
+			result := msgToLogString(m)
+			log.Debugln("[DNS] %s --> %s from %s", domain, result, server)
+			C.AddConnectionTrace(ctx, "dns", "查询成功", domain+" → "+result+" · "+server, "success")
 			return m, nil
 		})
 	}

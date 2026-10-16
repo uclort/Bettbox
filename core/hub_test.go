@@ -6,10 +6,33 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gofrs/uuid/v5"
+	"github.com/metacubex/mihomo/common/atomic"
 	"github.com/metacubex/mihomo/common/yaml"
 	"github.com/metacubex/mihomo/log"
+	"github.com/metacubex/mihomo/tunnel/statistic"
 	yamlv3 "go.yaml.in/yaml/v3"
 )
+
+func TestRequestHistoryReplacesLifecycleUpdates(t *testing.T) {
+	handleClearRequests()
+	t.Cleanup(func() { handleClearRequests() })
+	id := uuid.UUID{1}
+	recordRequestHistory(&statistic.TrackerInfo{UUID: id})
+	recordRequestHistory(&statistic.TrackerInfo{UUID: uuid.UUID{2}})
+	recordRequestHistory(&statistic.TrackerInfo{UUID: id, DownloadTotal: atomic.NewInt64(123)})
+	var items []map[string]any
+	if err := json.Unmarshal([]byte(handleGetRequests()), &items); err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 2 || items[0]["id"] != id.String() || items[0]["download"] != float64(123) {
+		t.Fatalf("连接结束后历史记录应原位更新且无重复：%v", items)
+	}
+	handleClearRequests()
+	if got := handleGetRequests(); got != "[]" {
+		t.Fatalf("清除核心历史后不应回填旧请求：%s", got)
+	}
+}
 
 func TestPatchYamlShortID(t *testing.T) {
 	cases := map[string]string{

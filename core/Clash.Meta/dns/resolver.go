@@ -169,6 +169,7 @@ func (r *Resolver) ExchangeContext(ctx context.Context, m *D.Msg) (msg *D.Msg, e
 	msg, expireTime, hit := getMsgFromCache(r.cache, q)
 	if hit {
 		log.Debugln("[DNS] cache hit %s --> %s, expire at %s", domain, msgToLogString(msg), expireTime.Format("2006-01-02 15:04:05"))
+		C.AddConnectionTrace(ctx, "dns", "缓存命中", domain+" → "+msgToLogString(msg), "success")
 		now := time.Now()
 		if expireTime.Before(now) {
 			setMsgTTL(msg, uint32(1)) // Continue fetch
@@ -179,7 +180,13 @@ func (r *Resolver) ExchangeContext(ctx context.Context, m *D.Msg) (msg *D.Msg, e
 		}
 		return
 	}
-	return r.exchangeWithoutCache(ctx, m)
+	msg, err = r.exchangeWithoutCache(ctx, m)
+	if err != nil {
+		C.AddConnectionTrace(ctx, "dns", "解析失败", domain+" · "+err.Error(), "error")
+	} else if msg != nil {
+		C.AddConnectionTrace(ctx, "dns", "解析完成", domain+" → "+msgToLogString(msg), "success")
+	}
+	return
 }
 
 // ExchangeWithoutCache a batch of dns request, and it do NOT GET from cache
@@ -189,7 +196,7 @@ func (r *Resolver) exchangeWithoutCache(ctx context.Context, m *D.Msg) (msg *D.M
 	retryNum := 0
 	retryMax := 3
 	fn := func() (result *D.Msg, err error) {
-		ctx, cancel := context.WithTimeout(context.Background(), resolver.DefaultDNSTimeout) // reset timeout in singleflight
+		ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), resolver.DefaultDNSTimeout) // 重置 singleflight 超时并保留连接链路
 		defer cancel()
 		cache := false
 
