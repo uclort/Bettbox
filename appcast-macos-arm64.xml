@@ -6,9 +6,9 @@
     <description>Bettbox 自定义版本更新源</description>
     <language>zh-CN</language>
     <item>
-      <title>Bettbox 1.19.6+2090000202</title>
-      <pubDate>Thu, 22 Oct 2026 03:56:53 +0000</pubDate>
-      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.6+2090000202-r20261022034419-c5d099ae7bdc-e9f5caea46ce</link>
+      <title>Bettbox 1.19.6+2090000203</title>
+      <pubDate>Thu, 22 Oct 2026 05:38:08 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.6+2090000203-r20261022052032-c5d099ae7bdc-e9f5caea46ce</link>
       <description><![CDATA[<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https:;">
@@ -20,18 +20,11 @@ pre { white-space: pre-wrap; } code { font-size: .92em; }
 img,table { max-width: 100%; } table { border-collapse: collapse; } td,th { border: 1px solid #888; padding: 6px; }
 a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; padding-top: 12px; }
 </style></head><body><p dir="auto">基于上游 Bettbox <code class="notranslate">main@9582976d5371</code> 构建的自定义版本。</p>
-<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.6+2090000202</code></strong></p>
+<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.6+2090000203</code></strong></p>
 <h2 dir="auto">本次变更（相较上一自定义 Release）</h2>
 <ul dir="auto">
-<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.6+2090000200-r20261022031945-b16a152a8ce6-e9f5caea46ce"><code class="notranslate">custom-v1.19.6+2090000200-r20261022031945-b16a152a8ce6-e9f5caea46ce</code></a> → <code class="notranslate">custom-v1.19.6+2090000202-r20261022034419-c5d099ae7bdc-e9f5caea46ce</code></li>
-</ul>
-<h3 dir="auto">2026-10-22 修复网络面板连接状态、活动时间与排序</h3>
-<ul dir="auto">
-<li>连接时间不再直接显示创建时刻：列表显示“最后活跃”或观察到的“结束于”，历史缺少活跃与结束证据时显示“最后活跃未知”；详情单独显示创建时间和可确认的时长。</li>
-<li>“建立中 / 已连接 / 已结束 / 失败”统一为黄 / 绿 / 灰 / 红；请求页合并活动连接快照，并按连续快照的累计流量差显示实时上下行速率。</li>
-<li>请求与活动连接列表新增默认、下载速度、上传速度、累计总流量、累计上传流量、累计下载流量、最后活跃和创建时间排序；显式指标支持降序/升序，默认排序固定为活动连接优先。</li>
-<li>活动连接列表现在同时显示累计上传/下载流量与实时速率，历史请求保留累计上传/下载流量，累计流量排序可直接核对列表数值。</li>
-<li>内核在 TCP/UDP 拨号前发布 pending 请求，成功或失败沿用同一 UUID 原位更新，最近请求可显示拨号阶段的“建立中”状态。</li>
+<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.6+2090000202-r20261022034419-c5d099ae7bdc-e9f5caea46ce"><code class="notranslate">custom-v1.19.6+2090000202-r20261022034419-c5d099ae7bdc-e9f5caea46ce</code></a> → <code class="notranslate">custom-v1.19.6+2090000203-r20261022052032-c5d099ae7bdc-e9f5caea46ce</code></li>
+<li>无新的应用或内核功能变更。</li>
 </ul>
 <h2 dir="auto">本包改动（相较上游版本）</h2>
 <h3 dir="auto">上游融合必检</h3>
@@ -214,16 +207,16 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <h2 dir="auto">构建信息</h2>
 <ul dir="auto">
 <li>上游 Bettbox main 基线：<code class="notranslate">main@9582976d5371</code></li>
-<li>最终安装版本：<code class="notranslate">1.19.6+2090000202</code></li>
+<li>最终安装版本：<code class="notranslate">1.19.6+2090000203</code></li>
 <li>上游源码版本：<code class="notranslate">1.19.6+2026101603</code></li>
 <li>Bettbox custom-build commit：<code class="notranslate">c5d099ae7bdcd62e721b741db36168e183461c7e</code></li>
 </ul>
 <p dir="auto">Release 仅包含本次 Action 生成的安装包，不包含私有自定义 Mihomo 源码。</p>
 <p dir="auto">Windows 与 macOS 安装包未做商业代码签名；Android 安装包使用 Bettbox 自定义版固定 Release 签名。</p>
-<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.6%2B2090000202-r20261022034419-c5d099ae7bdc-e9f5caea46ce">查看完整发布页</a></footer></body></html>]]></description>
-      <sparkle:version>2090000202</sparkle:version>
-      <sparkle:shortVersionString>1.19.6+2090000202</sparkle:shortVersionString>
-      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.6+2090000202-r20261022034419-c5d099ae7bdc-e9f5caea46ce/Bettbox-1.19.6-macos-arm64.dmg" length="71552798" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="L71dW2vaEn54svA0TAxd2xwEHPLUtDOcjPKF+byojCzGwGnLNdTdlyPHgn7EIYGVkWlt20UrjwLIhvRXut+jCQ==" />
+<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.6%2B2090000203-r20261022052032-c5d099ae7bdc-e9f5caea46ce">查看完整发布页</a></footer></body></html>]]></description>
+      <sparkle:version>2090000203</sparkle:version>
+      <sparkle:shortVersionString>1.19.6+2090000203</sparkle:shortVersionString>
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.6+2090000203-r20261022052032-c5d099ae7bdc-e9f5caea46ce/Bettbox-1.19.6-macos-arm64.dmg" length="71552938" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="1139SC4O7BJUejlWgW7ij5MSs0A7v58+/bLK5I5tp//4CtM9AjZOJqK1tr1Uehty01veG1xqqW0d1NSxoWefAg==" />
     </item>
   </channel>
 </rss>

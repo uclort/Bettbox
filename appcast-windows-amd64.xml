@@ -6,9 +6,9 @@
     <description>Bettbox 自定义版本更新源</description>
     <language>zh-CN</language>
     <item>
-      <title>Bettbox 1.19.6+2090000198</title>
-      <pubDate>Fri, 16 Oct 2026 08:45:16 +0000</pubDate>
-      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.6+2090000198-r20261016082726-6dc20d7e5cba-a3abd8662258</link>
+      <title>Bettbox 1.19.6+2090000203</title>
+      <pubDate>Thu, 22 Oct 2026 05:38:08 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.6+2090000203-r20261022052032-c5d099ae7bdc-e9f5caea46ce</link>
       <description><![CDATA[<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https:;">
@@ -20,21 +20,11 @@ pre { white-space: pre-wrap; } code { font-size: .92em; }
 img,table { max-width: 100%; } table { border-collapse: collapse; } td,th { border: 1px solid #888; padding: 6px; }
 a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; padding-top: 12px; }
 </style></head><body><p dir="auto">基于上游 Bettbox <code class="notranslate">main@9582976d5371</code> 构建的自定义版本。</p>
-<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.6+2090000198</code></strong></p>
+<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.6+2090000203</code></strong></p>
 <h2 dir="auto">本次变更（相较上一自定义 Release）</h2>
 <ul dir="auto">
-<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.6+2090000194-r20261016073234-af0694cff7f1-a0216f00cef6"><code class="notranslate">custom-v1.19.6+2090000194-r20261016073234-af0694cff7f1-a0216f00cef6</code></a> → <code class="notranslate">custom-v1.19.6+2090000198-r20261016082726-6dc20d7e5cba-a3abd8662258</code></li>
-<li>自定义 Mihomo 源码：<code class="notranslate">206b7e70c730</code> → <code class="notranslate">54092e6fe4a7</code></li>
-</ul>
-<h3 dir="auto">2026-10-16 修复直连域名解析与网络面板数据链路</h3>
-<ul dir="auto">
-<li>源码版本更新为 <code class="notranslate">1.19.6+2026101603</code>，修复 UDP DNS 受限且未指定引导 DNS 时的域名直连超时，默认增加通过 IP 建立的 HTTPS 引导解析；保留用户显式指定的 DNS 设置。</li>
-<li>修复只打开网络面板时“最近请求”和核心日志为空的问题，面板独立订阅数据，上游页面切换、隐藏不再关闭面板流，核心重启后恢复订阅。</li>
-<li>恢复内核同步曾丢失的 DNS、规则、策略链与真实出站套接字追踪；请求历史按 ID 更新，清除请求/日志同时清理核心与界面，避免历史回流。</li>
-<li>私有内核发布前逐项比较关键功能文件，内核同步执行完整定向回归，防止功能被覆盖后静默发布。</li>
-<li>Impeller 按平台和架构选择，完整恢复上游构建逻辑，没有新增应用内开关。</li>
-<li>Intel Mac 打包时关闭 Impeller，继续使用 Skia/Metal，保留旧 Intel Mac 的闪屏兼容处理；Apple Silicon 移除强制关闭配置，恢复 Flutter 默认渲染路径。</li>
-<li>最终 Mac 安装包按架构校验配置：Intel 必须明确关闭，Apple Silicon 必须沿用默认值；Windows/Linux 继续遵循上游关闭策略。</li>
+<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.6+2090000202-r20261022034419-c5d099ae7bdc-e9f5caea46ce"><code class="notranslate">custom-v1.19.6+2090000202-r20261022034419-c5d099ae7bdc-e9f5caea46ce</code></a> → <code class="notranslate">custom-v1.19.6+2090000203-r20261022052032-c5d099ae7bdc-e9f5caea46ce</code></li>
+<li>无新的应用或内核功能变更。</li>
 </ul>
 <h2 dir="auto">本包改动（相较上游版本）</h2>
 <h3 dir="auto">上游融合必检</h3>
@@ -94,6 +84,7 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>Snell v6 支持 <code class="notranslate">version: 6</code> 及 <code class="notranslate">default / unshaped / unsafe-raw</code> 模式；补丁来源与许可证记录在私有仓库的 <code class="notranslate">OPEN-SNELL-V6</code> 和 <code class="notranslate">THIRD_PARTY_NOTICES.md</code>。</li>
 <li><code class="notranslate">.custom-build/metadata/custom-mihomo-commit</code> 固定每次构建使用的私有内核提交；构建前校验 Bettbox 核心树、Mihomo 版本和 Snell 补丁摘要。</li>
 <li>2026-10-16 网络回归修复内核固定为 <code class="notranslate">54092e6</code>，补齐面板追踪与默认 HTTPS 引导 DNS；应用内核与私有内核的全部修复文件逐字一致，Snell v6 补丁及私有覆写脚本保持不变。</li>
+<li>2026-10-22 网络面板拨号中状态同步至私有内核 <code class="notranslate">c69452b</code>；重试期间保持建立中，最终失败才发布错误终态。应用内核与私有内核的 <code class="notranslate">tunnel.go</code>、<code class="notranslate">tunnel/statistic/tracker.go</code>、<code class="notranslate">tunnel/statistic/patch.go</code>、<code class="notranslate">tunnel/statistic/tracker_trace_test.go</code> 逐字一致，Snell v6 补丁与私有覆写脚本保持不变。</li>
 <li>同步后至少运行 <code class="notranslate">go test ./transport/snell ./adapter/outbound ./component/dialer ./component/dhcp ./config ./dns ./listener/sing_tun ./constant ./tunnel ./tunnel/statistic</code>；<code class="notranslate">custom-sync.yml</code> 实际执行上述完整目录，包含默认 DNS 和面板链路回归。</li>
 </ul>
 <h3 dir="auto">应用内更新</h3>
@@ -173,6 +164,10 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>面板宿主与移动端内嵌面板独立持有请求/日志推送订阅，<code class="notranslate">ClashCore</code> 按订阅者集合管理；上游请求页/日志页关闭或进入后台只释放自身订阅，不能停掉面板流。核心重新初始化时恢复仍存在的订阅；面板初次读取同时回填核心历史，内嵌面板回填失败记录日志且不产生未捕获异常，清除操作同步清理核心与 Dart 状态，避免旧数据回流。</li>
 <li>主程序在 Core 初始化前启动 <code class="notranslate">ExternalControl</code>，即使 Core 启动失败也能让独立面板连接并展示明确的“主程序未运行或尚未完成启动”状态，不再直接暴露英文 <code class="notranslate">Bettbox is not running</code>。</li>
 <li>请求与连接按 Mihomo <code class="notranslate">TrackerInfo</code> 的进程、来源、目标、协议、规则、出站链和状态动态分类，支持全文搜索、移动端筛选、右键生成规则、当前配置追加/覆盖规则和独立详情；状态按活动快照、真实出站 socket、<code class="notranslate">REJECT</code> 和链路终态区分。</li>
+<li>2026-10-22 修正连接时间语义：详情显示创建时间，列表与详情显示流量或链路事件推进后的“最后活跃”，面板实际观察到关闭时显示“结束于”并据此冻结时长；历史回填缺少活跃与结束证据时显示“最后活跃未知”和“时长未知”，不再把创建时间误当成最后活跃或结束时间。</li>
+<li>2026-10-22 调整状态语义：建立中为黄色、已连接为绿色、已结束为灰色、失败或拦截为红色；请求页合并活动连接快照，实时上下行速度由连续快照的累计流量差计算。</li>
+<li>2026-10-22 请求和活动连接列表增加排序菜单，支持默认、下载速度、上传速度、累计总流量、累计上传流量、累计下载流量、最后活跃和创建时间，并可为显式指标切换降序/升序；默认排序固定为活动连接优先，再按实时总速度、累计总流量和最后活跃降序。两页均以 250 ms 刷新活动连接快照，活动记录同时显示累计上下行流量与实时速率，历史记录显示累计上下行流量。</li>
+<li>2026-10-22 内核在 TCP/UDP 出站拨号前发布稳定 UUID 的 pending 请求，成功后沿用同一 UUID 原位更新为已连接，失败后保留错误终态；因此最近请求可显示“建立中”，并可在详情查看拨号失败事件。</li>
 <li>DNS 页由当前生效配置读取 <code class="notranslate">default-nameserver / nameserver / fallback / proxy-server-nameserver / direct-nameserver / nameserver-policy / hosts</code>，并合并系统 Hosts、运行缓存、Fake-IP 与出站节点 DNS；支持同时清理 DNS 缓存和 Fake-IP。</li>
 <li>不再提供信息价值有限的设备与流量统计子页面；请求和连接列表仍保留单条记录的实时速率、累计上传下载和连接详情。</li>
 <li>日志页按实际级别分类；Sub-Store 页支持凭据历史、固定规则读取/新增/修改/删除/拖动排序，保存前重新读取远端脚本并仅替换 <code class="notranslate">BETTBOX_CUSTOM_RULES</code>。</li>
@@ -181,6 +176,7 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>custom-mihomo 为每条连接保存 DNS 逐服务器尝试、规则匹配、策略链和真实 socket 建立事件，<code class="notranslate">TrackerInfo</code> 返回 <code class="notranslate">trace / outboundLocalAddress / outboundRemoteAddress</code>；连接加入与离开均发送同 ID 通知，请求记录按 ID 原位更新。</li>
 <li>2026-10-16 排查发现：上述追踪实现曾被私有内核同步提交 <code class="notranslate">3f04fdd</code> 覆盖，当前 <code class="notranslate">206b7e7</code> 内核同样缺失；仅检查已有标记或运行不引用字段的旧测试无法发现功能已丢失。本次从历史 <code class="notranslate">5a0477b</code> 恢复追踪到公开内置核心再同步私有核心，补充 <code class="notranslate">tracker_trace_test.go</code>，真实序列化断言事件与 socket 字段；核心请求历史也按 UUID 原位更新。发布工作流逐字比较两套核心中的关键功能文件，私有内核不一致时禁止打包。</li>
 <li>新增订阅生命周期回归 <code class="notranslate">test/clash/message_stream_test.dart</code>，核心历史去重/清理回归 <code class="notranslate">core/hub_test.go</code>；相关实现为 <code class="notranslate">lib/clash/core.dart</code>、<code class="notranslate">lib/views/network_monitor.dart</code>、<code class="notranslate">core/Clash.Meta/constant/connection_trace.go</code>、<code class="notranslate">constant/metadata.go</code>、<code class="notranslate">dns/resolver.go</code>、<code class="notranslate">dns/util.go</code>、<code class="notranslate">tunnel/dns_dialer.go</code>、<code class="notranslate">tunnel/tunnel.go</code> 与 <code class="notranslate">tunnel/statistic/tracker.go</code>。</li>
+<li>2026-10-22 回归范围：面板数据单测覆盖实时速度计算与合并、八种排序及升/降序、最后活跃/未知时间、时长未知和 pending 状态；核心 <code class="notranslate">constant / tunnel / tunnel/statistic</code>、应用包装层 <code class="notranslate">go test ./...</code> 及私有内核 <code class="notranslate">transport/snell / adapter/outbound / component/dialer / component/dhcp / config / constant / dns / listener/sing_tun / tunnel / tunnel/statistic</code> 均通过。当前机器没有 Flutter SDK，面板 test 已加入 <code class="notranslate">custom-build.yml</code> 的 macOS 回归步骤，由正式构建补跑；独立 Dart 静态检查仍需在具备 Flutter 的环境执行。</li>
 <li>2026-10-16 修复验证：586 项 Flutter 全量回归、静态检查、核心包装层及两套核心的相关 Go 测试通过；实际构建核心以无显式引导 DNS 的隔离配置验证 DIRECT HTTPS 成功，核心返回请求历史与 DNS/规则/出站/socket 事件，连接结束后 ID 不重复，清空后历史为空。尚未用新安装包完成桌面界面实机验收。</li>
 <li>代码位于 <code class="notranslate">lib/views/network_monitor*.dart</code>、<code class="notranslate">lib/common/window.dart</code>、<code class="notranslate">lib/common/external_control.dart</code>、<code class="notranslate">lib/common/navigation.dart</code>、<code class="notranslate">lib/views/network_monitor_navigation.dart</code>、<code class="notranslate">lib/enum/enum.dart</code>、<code class="notranslate">lib/widgets/google_bottom_nav_bar.dart</code> 和 <code class="notranslate">lib/common/tray.dart</code>；回归测试为 <code class="notranslate">test/views/network_monitor_test.dart</code>、<code class="notranslate">core/Clash.Meta/tunnel/statistic/manager_notify_test.go</code> 及私有内核 <code class="notranslate">constant / dns / tunnel / tunnel/statistic</code> 测试。</li>
 </ul>
@@ -211,16 +207,16 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <h2 dir="auto">构建信息</h2>
 <ul dir="auto">
 <li>上游 Bettbox main 基线：<code class="notranslate">main@9582976d5371</code></li>
-<li>最终安装版本：<code class="notranslate">1.19.6+2090000198</code></li>
+<li>最终安装版本：<code class="notranslate">1.19.6+2090000203</code></li>
 <li>上游源码版本：<code class="notranslate">1.19.6+2026101603</code></li>
-<li>Bettbox custom-build commit：<code class="notranslate">6dc20d7e5cba8f43e33bb8c207c21fa0cbd13a79</code></li>
+<li>Bettbox custom-build commit：<code class="notranslate">c5d099ae7bdcd62e721b741db36168e183461c7e</code></li>
 </ul>
 <p dir="auto">Release 仅包含本次 Action 生成的安装包，不包含私有自定义 Mihomo 源码。</p>
 <p dir="auto">Windows 与 macOS 安装包未做商业代码签名；Android 安装包使用 Bettbox 自定义版固定 Release 签名。</p>
-<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.6%2B2090000198-r20261016082726-6dc20d7e5cba-a3abd8662258">查看完整发布页</a></footer></body></html>]]></description>
-      <sparkle:version>2090000198</sparkle:version>
-      <sparkle:shortVersionString>1.19.6+2090000198</sparkle:shortVersionString>
-      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.6+2090000198-r20261016082726-6dc20d7e5cba-a3abd8662258/Bettbox-1.19.6-windows-amd64-setup.exe" length="43991716" type="application/octet-stream" sparkle:os="windows" sparkle:dsaSignature="MD0CHAvxOBQsEl5lxGLHyA6lwDc5Cy6v0kb1T6fQOvICHQCbJO+Wj6o8cu8VnIS0zPnva9EVvuKYtaqn+wbR" />
+<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.6%2B2090000203-r20261022052032-c5d099ae7bdc-e9f5caea46ce">查看完整发布页</a></footer></body></html>]]></description>
+      <sparkle:version>2090000203</sparkle:version>
+      <sparkle:shortVersionString>1.19.6+2090000203</sparkle:shortVersionString>
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.6+2090000203-r20261022052032-c5d099ae7bdc-e9f5caea46ce/Bettbox-1.19.6-windows-amd64-setup.exe" length="44003000" type="application/octet-stream" sparkle:os="windows" sparkle:dsaSignature="MDwCHDlgVfd1tmdYhIIjZ2rlwYbhPd90yCs3vyVDjNwCHCRAr6jqz4ahf77DF2+4UDRMaBOGLzCBOmJbZts=" />
     </item>
   </channel>
 </rss>
