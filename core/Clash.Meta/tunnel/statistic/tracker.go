@@ -125,6 +125,10 @@ func (tt *tcpTracker) Upstream() any {
 }
 
 func NewTCPTracker(conn C.Conn, manager *Manager, metadata *C.Metadata, rule C.Rule, uploadTotal int64, downloadTotal int64, pushToManager bool) *tcpTracker {
+	return NewTCPTrackerWithID(conn, manager, metadata, rule, uploadTotal, downloadTotal, pushToManager, uuid.Nil, time.Time{})
+}
+
+func NewTCPTrackerWithID(conn C.Conn, manager *Manager, metadata *C.Metadata, rule C.Rule, uploadTotal int64, downloadTotal int64, pushToManager bool, id uuid.UUID, start time.Time) *tcpTracker {
 	metadata.RemoteDst = conn.RemoteDestination()
 	outboundLocalAddress := ""
 	outboundRemoteAddress := ""
@@ -143,8 +147,8 @@ func NewTCPTracker(conn C.Conn, manager *Manager, metadata *C.Metadata, rule C.R
 		Conn:    conn,
 		manager: manager,
 		TrackerInfo: &TrackerInfo{
-			UUID:                  utils.NewUUIDV4(),
-			Start:                 time.Now(),
+			UUID:                  trackerUUID(id),
+			Start:                 trackerStartTime(id, start),
 			Metadata:              metadata,
 			Chain:                 chains,
 			ProviderChain:         conn.ProviderChains(),
@@ -236,6 +240,10 @@ func (ut *udpTracker) Upstream() any {
 }
 
 func NewUDPTracker(conn C.PacketConn, manager *Manager, metadata *C.Metadata, rule C.Rule, uploadTotal int64, downloadTotal int64, pushToManager bool) *udpTracker {
+	return NewUDPTrackerWithID(conn, manager, metadata, rule, uploadTotal, downloadTotal, pushToManager, uuid.Nil, time.Time{})
+}
+
+func NewUDPTrackerWithID(conn C.PacketConn, manager *Manager, metadata *C.Metadata, rule C.Rule, uploadTotal int64, downloadTotal int64, pushToManager bool, id uuid.UUID, start time.Time) *udpTracker {
 	metadata.RemoteDst = conn.RemoteDestination()
 	outboundLocalAddress := ""
 	if address := conn.LocalAddr(); address != nil {
@@ -250,8 +258,8 @@ func NewUDPTracker(conn C.PacketConn, manager *Manager, metadata *C.Metadata, ru
 		PacketConn: conn,
 		manager:    manager,
 		TrackerInfo: &TrackerInfo{
-			UUID:                  utils.NewUUIDV4(),
-			Start:                 time.Now(),
+			UUID:                  trackerUUID(id),
+			Start:                 trackerStartTime(id, start),
 			Metadata:              metadata,
 			Chain:                 chains,
 			ProviderChain:         conn.ProviderChains(),
@@ -283,3 +291,51 @@ func NewUDPTracker(conn C.PacketConn, manager *Manager, metadata *C.Metadata, ru
 	manager.Join(ut)
 	return ut
 }
+
+func trackerUUID(id uuid.UUID) uuid.UUID {
+	if id != uuid.Nil {
+		return id
+	}
+	return utils.NewUUIDV4()
+}
+
+func trackerStartTime(id uuid.UUID, start time.Time) time.Time {
+	if id != uuid.Nil && !start.IsZero() {
+		return start
+	}
+	return time.Now()
+}
+
+// BETTBOX-CUSTOM: 出站套接字建立前先发布待连接记录，成功后沿用同一 UUID 替换。
+func NewPendingTrackerWithStart(id uuid.UUID, metadata *C.Metadata, rule C.Rule, start time.Time) Tracker {
+	info := &TrackerInfo{
+		UUID:     id,
+		Start:    start,
+		Metadata: metadata,
+		Chain:    C.Chain{},
+		Trace:    metadata.ConnectionTrace.Events(),
+	}
+	if rule != nil {
+		info.Rule = rule.RuleType().String()
+		info.RulePayload = rule.Payload()
+	}
+	return &pendingTracker{TrackerInfo: info}
+}
+
+type pendingTracker struct {
+	*TrackerInfo
+}
+
+func (pt *pendingTracker) ID() string { return pt.UUID.String() }
+
+func (pt *pendingTracker) Close() error { return nil }
+
+func (pt *pendingTracker) Info() *TrackerInfo { return pt.TrackerInfo }
+
+func (pt *pendingTracker) Chains() C.Chain { return C.Chain{} }
+
+func (pt *pendingTracker) ProviderChains() C.Chain { return C.Chain{} }
+
+func (pt *pendingTracker) AppendToChains(C.ProxyAdapter) {}
+
+func (pt *pendingTracker) RemoteDestination() string { return "" }

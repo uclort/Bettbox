@@ -229,9 +229,9 @@ Color _monitorStatusColor(BuildContext context, MonitorTrackerStatus status) {
     MonitorTrackerStatus.connecting =>
       dark ? const Color(0xFFFFC247) : const Color(0xFF8A5700),
     MonitorTrackerStatus.connected =>
-      dark ? const Color(0xFF64B5F6) : const Color(0xFF146CB8),
-    MonitorTrackerStatus.closed =>
       dark ? const Color(0xFF69D17D) : const Color(0xFF237A3B),
+    MonitorTrackerStatus.closed =>
+      dark ? const Color(0xFF9E9E9E) : const Color(0xFF6B7280),
     MonitorTrackerStatus.unknown => Theme.of(context).colorScheme.outline,
   };
 }
@@ -503,6 +503,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
   List<MonitorDnsEntry> _dnsSources = const [];
   MonitorPage _page = MonitorPage.requests;
   MonitorTrackerFacet _trackerFacet = MonitorTrackerFacet.process;
+  MonitorSort _sort = MonitorSort.smart;
   TrackerInfo? _selected;
   String? _trackerFilter;
   String _sidebarFilter = '';
@@ -517,6 +518,10 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
   String? _error;
   final _detailScrollController = ScrollController();
   final Map<String, Future<String>> _countryCodes = {};
+  final Map<String, DateTime> _lastActivityAt = {};
+  final Map<String, DateTime> _closedAt = {};
+  final Map<String, ({int upload, int download})> _lastTraffic = {};
+  DateTime? _connectionsSnapshotAt;
 
   @override
   void initState() {
@@ -552,7 +557,8 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
       unawaited(_refresh());
     });
     _connectionsTimer = Timer.periodic(const Duration(milliseconds: 250), (_) {
-      if (_page == MonitorPage.connections) {
+      if (_page == MonitorPage.requests ||
+          _page == MonitorPage.connections) {
         unawaited(_refreshConnections());
       }
     });
@@ -634,10 +640,22 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
       ]);
       requests = trackers.take(requests.length).toList();
       connections = trackers.skip(requests.length).toList();
+      final previousActiveIds = _connections.map((item) => item.id).toSet();
       final logs = (map['logs'] as List? ?? const [])
           .map(MonitorLog.fromJson)
           .toList();
+      final liveIds = {
+        for (final item in [...requests, ...connections]) item.id,
+      };
+      _lastActivityAt.removeWhere((id, _) => !liveIds.contains(id));
+      _closedAt.removeWhere((id, _) => !liveIds.contains(id));
+      _lastTraffic.removeWhere((id, _) => !liveIds.contains(id));
+      final now = DateTime.now();
+      _connectionsSnapshotAt = now;
       setState(() {
+        _trackActivity(requests);
+        _trackActivity(connections, active: true);
+        _trackClosed(previousActiveIds, connections, now);
         _requests = requests;
         _connections = connections;
         _logs = logs;
@@ -673,18 +691,62 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
         ...connections,
       ]);
       final resolvedConnections = trackers.skip(_requests.length).toList();
+      final previousActiveIds = _connections.map((item) => item.id).toSet();
+      final previousConnections = {
+        for (final item in _connections) item.id: item,
+      };
+      final now = DateTime.now();
+      final elapsed = now.difference(_connectionsSnapshotAt ?? now);
+      final withSpeed = monitorAttachLiveSpeeds(
+        resolvedConnections,
+        previousConnections,
+        elapsed,
+      );
+      _connectionsSnapshotAt = now;
       setState(() {
-        _connections = resolvedConnections;
+        _trackActivity(withSpeed, active: true);
+        _trackClosed(previousActiveIds, withSpeed, now);
+        _connections = withSpeed;
         _selected = monitorUpdatedSelection(
           _selected,
           _requests,
-          resolvedConnections,
+          withSpeed,
         );
       });
     } catch (error) {
       if (mounted) setState(() => _error = '读取活动连接失败：$error');
     } finally {
       _connectionsLoading = false;
+    }
+  }
+
+  void _trackClosed(
+    Set<String> previous,
+    Iterable<TrackerInfo> current,
+    DateTime now,
+  ) {
+    final active = current.map((item) => item.id).toSet();
+    for (final id in previous.difference(active)) {
+      _closedAt.putIfAbsent(id, () => now);
+    }
+    _closedAt.removeWhere((id, _) => active.contains(id));
+  }
+
+  void _trackActivity(Iterable<TrackerInfo> items, {bool active = false}) {
+    final now = DateTime.now();
+    for (final item in items) {
+      final nextActivity = monitorUpdatedActivity(
+        item,
+        previousActivity: _lastActivityAt[item.id],
+        previousTraffic: _lastTraffic[item.id],
+        now: now,
+        active: active,
+      );
+      if (nextActivity != null) _lastActivityAt[item.id] = nextActivity;
+      _lastTraffic[item.id] = (
+        upload: item.upload,
+        download: item.download,
+      );
     }
   }
 
@@ -776,7 +838,10 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
   List<TrackerInfo> get _visibleTrackers {
     final query = _query.toLowerCase().trim();
     final activeIds = _connections.map((item) => item.id).toSet();
-    final filtered = _pageTrackers.where((item) {
+    final pageTrackers = _page == MonitorPage.requests
+        ? monitorMergeLiveTrackers(_requests, _connections)
+        : _pageTrackers;
+    final filtered = pageTrackers.where((item) {
       if (monitorIsInternalTracker(item)) return false;
       final sideValue = monitorTrackerFacetValue(
         item,
@@ -795,8 +860,12 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
         item.metadata.destinationIP,
       ].join(' ').toLowerCase().contains(query);
     }).toList();
-    filtered.sort((a, b) => b.start.compareTo(a.start));
-    return filtered;
+    return monitorSortTrackers(
+      filtered,
+      _sort,
+      activeIds: activeIds,
+      lastActivity: _lastActivityAt,
+    );
   }
 
   Map<String, TrackerInfo> get _sidebarTrackers {
@@ -965,6 +1034,31 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
                       ),
                     ),
                   ),
+                ),
+              if (_page == MonitorPage.requests ||
+                  _page == MonitorPage.connections)
+                PopupMenuButton<MonitorSort>(
+                  tooltip: '排序：${monitorSortLabel(_sort)}',
+                  icon: const Icon(Icons.sort),
+                  initialValue: _sort,
+                  onSelected: (value) => setState(() => _sort = value),
+                  itemBuilder: (context) => [
+                    for (final sort in MonitorSort.values)
+                      PopupMenuItem(
+                        value: sort,
+                        child: ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(
+                            _sort == sort
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_unchecked,
+                            size: 20,
+                          ),
+                          title: Text(monitorSortLabel(sort)),
+                        ),
+                      ),
+                  ],
                 ),
               const SizedBox(width: 16),
             ],

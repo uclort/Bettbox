@@ -203,8 +203,10 @@ extension _NetworkMonitorMobile on _NetworkMonitorViewState {
                     children: [
                       Text(
                         [
-                          '↓ ${monitorBytes(item.download)}',
-                          '↑ ${monitorBytes(item.upload)}',
+                          monitorTrafficSummary(
+                            item,
+                            active: activeIds.contains(item.id),
+                          ),
                           if (policy.isNotEmpty) policy,
                         ].join('  ·  '),
                         maxLines: 1,
@@ -231,7 +233,15 @@ extension _NetworkMonitorMobile on _NetworkMonitorViewState {
                             color,
                           ),
                           Text(
-                            '${monitorClientName(item)}  ·  ${monitorMethodName(item)}  ·  ${monitorClock(item.start)}',
+                            [
+                              monitorClientName(item),
+                              monitorMethodName(item),
+                              monitorActivityLabel(
+                                item,
+                                lastActivity: _lastActivityAt[item.id],
+                                closedAt: _closedAt[item.id],
+                              ),
+                            ].join('  ·  '),
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ],

@@ -514,6 +514,14 @@ func handleUDPConn(packet C.PacketAdapter) {
 			dialMetadata := metadata.Pure()
 			ctx, cancel := context.WithTimeout(traceCtx, C.DefaultUDPTimeout)
 			defer cancel()
+			pendingID := utils.NewUUIDV4()
+			pendingStartedAt := time.Now()
+			notifyPending := func() {
+				// BETTBOX-CUSTOM: UDP 拨号前发布 pending，成功或失败都按同 ID 原位更新。
+				statistic.NotifyRequest(statistic.NewPendingTrackerWithStart(pendingID, metadata, rule, pendingStartedAt))
+			}
+			C.AddConnectionTrace(traceCtx, "connect", "建立出站", proxy.Name(), "pending")
+			notifyPending()
 			rawPc, err := retry(ctx, func(ctx context.Context) (C.PacketConn, error) {
 				return proxy.ListenPacketContext(ctx, dialMetadata)
 			}, func(err error) {
@@ -521,13 +529,14 @@ func handleUDPConn(packet C.PacketAdapter) {
 				C.AddConnectionTrace(traceCtx, "connect", "出站失败", err.Error(), "error")
 			})
 			if err != nil {
+				notifyPending()
 				return nil, nil, err
 			}
 			logMetadata(metadata, rule, rawPc)
 			metadata.ConnectionTrace.Add("outbound", "策略链", strings.Join(rawPc.Chains(), " → "), "success")
 			metadata.ConnectionTrace.Add("connect", "远端对端", rawPc.RemoteDestination(), "success")
 
-			pc := statistic.NewUDPTracker(rawPc, statistic.DefaultManager, metadata, rule, 0, 0, true)
+			pc := statistic.NewUDPTrackerWithID(rawPc, statistic.DefaultManager, metadata, rule, 0, 0, true, pendingID, pendingStartedAt)
 
 			sender.AddMapping(originMetadata, dialMetadata)
 			oAddrPort := dialMetadata.AddrPort()
@@ -628,6 +637,14 @@ func handleTCPConn(connCtx C.ConnContext) {
 
 	ctx, cancel := context.WithTimeout(traceCtx, C.DefaultTCPTimeout)
 	defer cancel()
+	pendingID := connCtx.ID()
+	pendingStartedAt := time.Now()
+	notifyPending := func() {
+		// BETTBOX-CUSTOM: TCP 复用入站 UUID，面板可在拨号阶段显示“建立中”。
+		statistic.NotifyRequest(statistic.NewPendingTrackerWithStart(pendingID, metadata, rule, pendingStartedAt))
+	}
+	C.AddConnectionTrace(traceCtx, "connect", "建立出站", proxy.Name(), "pending")
+	notifyPending()
 	remoteConn, err := retry(ctx, func(ctx context.Context) (remoteConn C.Conn, err error) {
 		remoteConn, err = proxy.DialContext(ctx, dialMetadata)
 		if err != nil {
@@ -664,6 +681,7 @@ func handleTCPConn(connCtx C.ConnContext) {
 		C.AddConnectionTrace(traceCtx, "connect", "出站失败", err.Error(), "error")
 	})
 	if err != nil {
+		notifyPending()
 		return
 	}
 	logMetadata(metadata, rule, remoteConn)
@@ -678,7 +696,7 @@ func handleTCPConn(connCtx C.ConnContext) {
 	}
 	metadata.ConnectionTrace.Add("connect", "出站套接字", fmt.Sprintf("%s → %s", localAddress, remoteAddress), "success")
 
-	remoteConn = statistic.NewTCPTracker(remoteConn, statistic.DefaultManager, metadata, rule, int64(peekLen), 0, true)
+	remoteConn = statistic.NewTCPTrackerWithID(remoteConn, statistic.DefaultManager, metadata, rule, int64(peekLen), 0, true, pendingID, pendingStartedAt)
 	defer func(remoteConn C.Conn) {
 		_ = remoteConn.Close()
 	}(remoteConn)

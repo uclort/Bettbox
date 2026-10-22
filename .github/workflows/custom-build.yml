@@ -159,6 +159,7 @@ jobs:
             tunnel/dns_dialer.go \
             tunnel/tunnel.go \
             tunnel/statistic/tracker.go \
+            tunnel/statistic/patch.go \
             tunnel/statistic/tracker_trace_test.go; do
             if ! cmp -s "core/Clash.Meta/${source}" \
                 ".custom-build/runtime/custom-mihomo/source/${source}"; then

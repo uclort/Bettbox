@@ -208,10 +208,18 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
     if (_detailTab == 0) {
       return LayoutBuilder(
         builder: (context, constraints) {
+          final active = _connections.any((value) => value.id == item.id);
+          final closedAt = _closedAt[item.id];
           final connection = _infoCard(context, '连接', [
             '方法：${monitorMethodName(item)}',
             '网络：${item.metadata.network}',
-            '时长：${monitorDuration(item.start)}',
+            '创建：${monitorClock(item.start)}',
+            monitorActivityLabel(
+              item,
+              lastActivity: _lastActivityAt[item.id],
+              closedAt: closedAt,
+            ),
+            '时长：${monitorDurationLabel(item.start, active: active, closedAt: closedAt)}',
           ]);
           final traffic = _infoCard(context, '流量', [
             '上传：${monitorBytes(item.upload)}',
@@ -329,6 +337,14 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
 
   Widget _buildMihomoFlow(BuildContext context, TrackerInfo item) {
     final trace = monitorConnectionTrace(item);
+    final active = _connections.any((value) => value.id == item.id);
+    final duration = active || _closedAt[item.id] != null
+        ? monitorDurationLabel(
+            item.start,
+            active: active,
+            closedAt: _closedAt[item.id],
+          )
+        : null;
     if (trace.isNotEmpty) {
       final targetResolution = monitorTargetResolutionSummary(item);
       final titleWidth = _flowTitleWidth(context, [
@@ -413,8 +429,11 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
         (
           icon: Icons.link,
           title: '建立出站',
-          value:
-              '$remote · ${monitorClock(item.start)} · ${monitorDuration(item.start)}',
+          value: [
+            remote,
+            monitorClock(item.start),
+            if (duration != null) duration,
+          ].join(' · '),
         ),
     ];
     final titleWidth = _flowTitleWidth(
@@ -556,13 +575,21 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
     TrackerInfo item,
     String statusLabel,
   ) async {
+    final active = _connections.any((value) => value.id == item.id);
+    final closedAt = _closedAt[item.id];
     final lines = <String>[
       '状态：$statusLabel',
       '客户端：${monitorClientName(item)}',
       '目标：${monitorAddress(item)}',
       '方法：${monitorMethodName(item)}',
       '网络：${item.metadata.network}',
-      '时长：${monitorDuration(item.start)}',
+      '创建：${monitorClock(item.start)}',
+      monitorActivityLabel(
+        item,
+        lastActivity: _lastActivityAt[item.id],
+        closedAt: closedAt,
+      ),
+      '时长：${monitorDurationLabel(item.start, active: active, closedAt: closedAt)}',
       '上传：${monitorBytes(item.upload)}',
       '下载：${monitorBytes(item.download)}',
       '规则：${monitorRuleName(item)}',

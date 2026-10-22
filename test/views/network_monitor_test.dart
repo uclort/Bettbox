@@ -16,6 +16,10 @@ TrackerInfo _tracker({
   required String id,
   required String process,
   required int upload,
+  int download = 0,
+  int? uploadSpeed,
+  int? downloadSpeed,
+  DateTime? start,
   Metadata? metadata,
   List<String> chains = const ['代理'],
   String rule = 'MATCH',
@@ -27,7 +31,10 @@ TrackerInfo _tracker({
   return TrackerInfo(
     id: id,
     upload: upload,
-    start: DateTime.utc(2026, 8, 10),
+    download: download,
+    uploadSpeed: uploadSpeed,
+    downloadSpeed: downloadSpeed,
+    start: start ?? DateTime.utc(2026, 8, 10),
     metadata: metadata ?? Metadata(process: process),
     chains: chains,
     rule: rule,
@@ -332,6 +339,235 @@ void main() {
     expect(
       monitorTrackerStatus(unknown, const {}),
       MonitorTrackerStatus.unknown,
+    );
+  });
+
+  test('请求与活动连接按 ID 合并实时速度', () {
+    final request = _tracker(id: 'same', process: 'A', upload: 1);
+    final live = _tracker(
+      id: 'same',
+      process: 'A',
+      upload: 2,
+      downloadSpeed: 4096,
+    );
+
+    final merged = monitorMergeLiveTrackers([request], [live]);
+
+    expect(merged.single.upload, 2);
+    expect(merged.single.downloadSpeed, 4096);
+  });
+
+  test('连续活动连接快照按累计流量差计算实时速度', () {
+    final previous = _tracker(
+      id: 'live',
+      process: 'A',
+      upload: 1024,
+      download: 2048,
+    );
+    final current = _tracker(
+      id: 'live',
+      process: 'A',
+      upload: 2048,
+      download: 6144,
+    );
+
+    final result = monitorAttachLiveSpeeds(
+      [current],
+      {previous.id: previous},
+      const Duration(seconds: 1),
+    ).single;
+
+    expect(result.uploadSpeed, 1024);
+    expect(result.downloadSpeed, 4096);
+  });
+
+  test('连接列表支持速度、流量、活跃时间和创建时间排序', () {
+    final older = _tracker(
+      id: 'older',
+      process: 'A',
+      upload: 100,
+      download: 100,
+      downloadSpeed: 10,
+      start: DateTime.utc(2026, 8, 10, 8, 50),
+    );
+    final newer = _tracker(
+      id: 'newer',
+      process: 'B',
+      upload: 1000,
+      download: 2000,
+      downloadSpeed: 20,
+      start: DateTime.utc(2026, 8, 10, 9, 50),
+    );
+    final active = _tracker(
+      id: 'active',
+      process: 'C',
+      upload: 0,
+      uploadSpeed: 4096,
+      start: DateTime.utc(2026, 8, 10, 7),
+    );
+    final activity = {
+      older.id: DateTime(2026, 8, 10, 21, 58),
+      newer.id: DateTime(2026, 8, 10, 21, 59),
+      active.id: DateTime(2026, 8, 10, 22),
+    };
+
+    List<String> sorted(MonitorSort sort) => monitorSortTrackers(
+      [older, newer, active],
+      sort,
+      activeIds: const {'active'},
+      lastActivity: activity,
+    ).map((item) => item.id).toList();
+
+    expect(sorted(MonitorSort.smart).first, 'active');
+    expect(sorted(MonitorSort.downloadSpeed), ['newer', 'older', 'active']);
+    expect(sorted(MonitorSort.uploadSpeed), ['active', 'newer', 'older']);
+    expect(sorted(MonitorSort.totalTraffic), ['newer', 'older', 'active']);
+    expect(sorted(MonitorSort.lastActivity), ['active', 'newer', 'older']);
+    expect(sorted(MonitorSort.createdAt), ['newer', 'older', 'active']);
+  });
+
+  test('活动连接列表显示实时速度，历史请求显示累计流量', () {
+    final item = _tracker(
+      id: 'speed',
+      process: 'A',
+      upload: 1024,
+      download: 2048,
+      uploadSpeed: 512,
+      downloadSpeed: 1536,
+    );
+
+    expect(
+      monitorTrafficSummary(item, active: true),
+      '↓ 1.5 KB/s  ↑ 512 B/s',
+    );
+    expect(
+      monitorTrafficSummary(item, active: false),
+      '↓ 2.0 KB  ↑ 1.0 KB',
+    );
+  });
+
+  test('最后活跃时间优先使用面板记录和链路事件', () {
+    final item = _tracker(
+      id: 'activity',
+      process: 'A',
+      upload: 0,
+      start: DateTime.utc(2026, 8, 10, 8, 50),
+      trace: const [
+        {
+          'timestamp': 1786400000000,
+          'stage': 'connect',
+          'title': '建立出站',
+          'detail': '正在连接',
+          'status': 'pending',
+        },
+      ],
+    );
+    final known = DateTime(2026, 8, 10, 21, 58);
+
+    expect(monitorKnownLastActivity(item, known), known);
+    expect(
+      monitorKnownLastActivity(item),
+      DateTime.fromMillisecondsSinceEpoch(1786400000000),
+    );
+    expect(
+      monitorActivityLabel(item, lastActivity: known),
+      '最后活跃 21:58',
+    );
+    expect(
+      monitorActivityLabel(_tracker(id: 'unknown', process: 'A', upload: 0)),
+      '最后活跃 未知',
+    );
+    expect(
+      monitorActivityLabel(
+        item,
+        lastActivity: known,
+        closedAt: DateTime(2026, 8, 10, 22),
+      ),
+      '结束于 22:00',
+    );
+    expect(
+      monitorDurationLabel(
+        item.start,
+        active: false,
+      ),
+      '未知',
+    );
+  });
+
+  test('历史请求不会把创建时间回填为最后活跃', () {
+    final now = DateTime(2026, 8, 10, 22);
+    final item = _tracker(
+      id: 'historical',
+      process: 'A',
+      upload: 0,
+      start: DateTime.utc(2026, 8, 10, 8, 50),
+    );
+
+    expect(
+      monitorUpdatedActivity(item, now: now),
+      isNull,
+    );
+    expect(
+      monitorUpdatedActivity(item, now: now, active: true),
+      now,
+    );
+    expect(
+      monitorUpdatedActivity(
+        _tracker(
+          id: 'live',
+          process: 'A',
+          upload: 2048,
+          start: DateTime.utc(2026, 8, 10, 8),
+        ),
+        previousTraffic: (upload: 1024, download: 0),
+        now: now,
+      ),
+      now,
+    );
+  });
+
+  test('最后活跃排序把未知记录放在已知记录之后', () {
+    final known = _tracker(
+      id: 'known',
+      process: 'A',
+      upload: 0,
+      start: DateTime.utc(2026, 8, 10, 8),
+    );
+    final unknown = _tracker(
+      id: 'unknown',
+      process: 'B',
+      upload: 0,
+      start: DateTime.utc(2026, 8, 10, 21),
+    );
+
+    final sorted = monitorSortTrackers(
+      [unknown, known],
+      MonitorSort.lastActivity,
+      lastActivity: {known.id: DateTime.utc(2026, 8, 10, 20)},
+    );
+
+    expect(sorted.map((item) => item.id).toList(), ['known', 'unknown']);
+  });
+
+  test('历史请求中的 pending 链路显示为建立中', () {
+    final item = _tracker(
+      id: 'pending',
+      process: 'A',
+      upload: 0,
+      trace: const [
+        {
+          'timestamp': 1786400000000,
+          'stage': 'connect',
+          'title': '建立出站',
+          'detail': '正在连接',
+          'status': 'pending',
+        },
+      ],
+    );
+
+    expect(
+      monitorTrackerStatus(item, const {}),
+      MonitorTrackerStatus.connecting,
     );
   });
 

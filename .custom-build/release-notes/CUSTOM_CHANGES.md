@@ -57,6 +57,7 @@
 - Snell v6 支持 `version: 6` 及 `default / unshaped / unsafe-raw` 模式；补丁来源与许可证记录在私有仓库的 `OPEN-SNELL-V6` 和 `THIRD_PARTY_NOTICES.md`。
 - `.custom-build/metadata/custom-mihomo-commit` 固定每次构建使用的私有内核提交；构建前校验 Bettbox 核心树、Mihomo 版本和 Snell 补丁摘要。
 - 2026-10-16 网络回归修复内核固定为 `54092e6`，补齐面板追踪与默认 HTTPS 引导 DNS；应用内核与私有内核的全部修复文件逐字一致，Snell v6 补丁及私有覆写脚本保持不变。
+- 2026-10-22 网络面板拨号中状态同步至私有内核 `7b45acb`；重试期间保持建立中，最终失败才发布错误终态。应用内核与私有内核的 `tunnel.go`、`tunnel/statistic/tracker.go`、`tunnel/statistic/patch.go`、`tunnel/statistic/tracker_trace_test.go` 逐字一致，Snell v6 补丁与私有覆写脚本保持不变。
 - 同步后至少运行 `go test ./transport/snell ./adapter/outbound ./component/dialer ./component/dhcp ./config ./dns ./listener/sing_tun ./constant ./tunnel ./tunnel/statistic`；`custom-sync.yml` 实际执行上述完整目录，包含默认 DNS 和面板链路回归。
 
 ### 应用内更新
@@ -136,6 +137,10 @@
 - 面板宿主与移动端内嵌面板独立持有请求/日志推送订阅，`ClashCore` 按订阅者集合管理；上游请求页/日志页关闭或进入后台只释放自身订阅，不能停掉面板流。核心重新初始化时恢复仍存在的订阅；面板初次读取同时回填核心历史，内嵌面板回填失败记录日志且不产生未捕获异常，清除操作同步清理核心与 Dart 状态，避免旧数据回流。
 - 主程序在 Core 初始化前启动 `ExternalControl`，即使 Core 启动失败也能让独立面板连接并展示明确的“主程序未运行或尚未完成启动”状态，不再直接暴露英文 `Bettbox is not running`。
 - 请求与连接按 Mihomo `TrackerInfo` 的进程、来源、目标、协议、规则、出站链和状态动态分类，支持全文搜索、移动端筛选、右键生成规则、当前配置追加/覆盖规则和独立详情；状态按活动快照、真实出站 socket、`REJECT` 和链路终态区分。
+- 2026-10-22 修正连接时间语义：详情显示创建时间，列表与详情显示流量或链路事件推进后的“最后活跃”，面板实际观察到关闭时显示“结束于”并据此冻结时长；历史回填缺少活跃与结束证据时显示“最后活跃未知”和“时长未知”，不再把创建时间误当成最后活跃或结束时间。
+- 2026-10-22 调整状态语义：建立中为黄色、已连接为绿色、已结束为灰色、失败或拦截为红色；请求页合并活动连接快照，实时上下行速度由连续快照的累计流量差计算。
+- 2026-10-22 请求和活动连接列表增加排序菜单，支持智能、下载速度、上传速度、总流量、最后活跃和创建时间；智能排序优先活动连接，其余排序严格执行所选指标。两页均以 250 ms 刷新活动连接快照，活动记录直接显示上下行速率。
+- 2026-10-22 内核在 TCP/UDP 出站拨号前发布稳定 UUID 的 pending 请求，成功后沿用同一 UUID 原位更新为已连接，失败后保留错误终态；因此最近请求可显示“建立中”，并可在详情查看拨号失败事件。
 - DNS 页由当前生效配置读取 `default-nameserver / nameserver / fallback / proxy-server-nameserver / direct-nameserver / nameserver-policy / hosts`，并合并系统 Hosts、运行缓存、Fake-IP 与出站节点 DNS；支持同时清理 DNS 缓存和 Fake-IP。
 - 不再提供信息价值有限的设备与流量统计子页面；请求和连接列表仍保留单条记录的实时速率、累计上传下载和连接详情。
 - 日志页按实际级别分类；Sub-Store 页支持凭据历史、固定规则读取/新增/修改/删除/拖动排序，保存前重新读取远端脚本并仅替换 `BETTBOX_CUSTOM_RULES`。
@@ -144,6 +149,7 @@
 - custom-mihomo 为每条连接保存 DNS 逐服务器尝试、规则匹配、策略链和真实 socket 建立事件，`TrackerInfo` 返回 `trace / outboundLocalAddress / outboundRemoteAddress`；连接加入与离开均发送同 ID 通知，请求记录按 ID 原位更新。
 - 2026-10-16 排查发现：上述追踪实现曾被私有内核同步提交 `3f04fdd` 覆盖，当前 `206b7e7` 内核同样缺失；仅检查已有标记或运行不引用字段的旧测试无法发现功能已丢失。本次从历史 `5a0477b` 恢复追踪到公开内置核心再同步私有核心，补充 `tracker_trace_test.go`，真实序列化断言事件与 socket 字段；核心请求历史也按 UUID 原位更新。发布工作流逐字比较两套核心中的关键功能文件，私有内核不一致时禁止打包。
 - 新增订阅生命周期回归 `test/clash/message_stream_test.dart`，核心历史去重/清理回归 `core/hub_test.go`；相关实现为 `lib/clash/core.dart`、`lib/views/network_monitor.dart`、`core/Clash.Meta/constant/connection_trace.go`、`constant/metadata.go`、`dns/resolver.go`、`dns/util.go`、`tunnel/dns_dialer.go`、`tunnel/tunnel.go` 与 `tunnel/statistic/tracker.go`。
+- 2026-10-22 回归范围：面板数据单测覆盖实时速度计算与合并、六种排序、最后活跃/未知时间、时长未知和 pending 状态；核心 `constant / tunnel / tunnel/statistic`、应用包装层 `go test ./...` 及私有内核 `transport/snell / adapter/outbound / component/dialer / component/dhcp / config / constant / dns / listener/sing_tun / tunnel / tunnel/statistic` 均通过。当前机器没有 Flutter SDK，Dart 静态检查和面板 test 需在具备 Flutter 的环境补跑。
 - 2026-10-16 修复验证：586 项 Flutter 全量回归、静态检查、核心包装层及两套核心的相关 Go 测试通过；实际构建核心以无显式引导 DNS 的隔离配置验证 DIRECT HTTPS 成功，核心返回请求历史与 DNS/规则/出站/socket 事件，连接结束后 ID 不重复，清空后历史为空。尚未用新安装包完成桌面界面实机验收。
 - 代码位于 `lib/views/network_monitor*.dart`、`lib/common/window.dart`、`lib/common/external_control.dart`、`lib/common/navigation.dart`、`lib/views/network_monitor_navigation.dart`、`lib/enum/enum.dart`、`lib/widgets/google_bottom_nav_bar.dart` 和 `lib/common/tray.dart`；回归测试为 `test/views/network_monitor_test.dart`、`core/Clash.Meta/tunnel/statistic/manager_notify_test.go` 及私有内核 `constant / dns / tunnel / tunnel/statistic` 测试。
 

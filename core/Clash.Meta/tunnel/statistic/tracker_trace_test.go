@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"net"
 	"testing"
+	"time"
 
 	N "github.com/metacubex/mihomo/common/net"
 	C "github.com/metacubex/mihomo/constant"
+
+	"github.com/gofrs/uuid/v5"
 )
 
 type traceTestConn struct{ N.ExtendedConn }
@@ -39,5 +42,29 @@ func TestTCPTrackerExportsSocketAddressesAndTrace(t *testing.T) {
 		item["outboundRemoteAddress"] != local.RemoteAddr().String() ||
 		len(item["trace"].([]any)) != 1 {
 		t.Fatalf("面板所需的真实套接字地址或 DNS 事件丢失：%s", data)
+	}
+}
+
+func TestPendingTrackerKeepsStableIDAndPendingState(t *testing.T) {
+	id := uuid.Must(uuid.NewV4())
+	startedAt := time.Unix(1786400000, 0)
+	trace := C.NewConnectionTrace()
+	trace.Add("connect", "建立出站", "正在连接", "pending")
+	tracker := NewPendingTrackerWithStart(id, &C.Metadata{
+		Host:            "example.com",
+		ConnectionTrace: trace,
+	}, nil, startedAt)
+
+	if tracker.ID() != id.String() {
+		t.Fatalf("待连接记录 UUID = %s，期望 %s", tracker.ID(), id)
+	}
+	if tracker.Info().Trace[0].Status != "pending" {
+		t.Fatalf("待连接记录未保留 pending 链路状态：%#v", tracker.Info().Trace)
+	}
+	if tracker.Info().Chain == nil {
+		t.Fatal("待连接记录的 chains 不能为 null，否则 Dart 面板解析失败")
+	}
+	if !tracker.Info().Start.Equal(startedAt) {
+		t.Fatalf("待连接记录创建时间 = %s，期望 %s", tracker.Info().Start, startedAt)
 	}
 }

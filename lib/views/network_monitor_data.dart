@@ -7,6 +7,24 @@ import 'package:flutter/foundation.dart';
 
 enum MonitorPage { requests, connections, dns, logs, subStore }
 
+enum MonitorSort {
+  smart,
+  downloadSpeed,
+  uploadSpeed,
+  totalTraffic,
+  lastActivity,
+  createdAt,
+}
+
+String monitorSortLabel(MonitorSort sort) => switch (sort) {
+  MonitorSort.smart => '智能',
+  MonitorSort.downloadSpeed => '下载速度',
+  MonitorSort.uploadSpeed => '上传速度',
+  MonitorSort.totalTraffic => '总流量',
+  MonitorSort.lastActivity => '最后活跃',
+  MonitorSort.createdAt => '创建时间',
+};
+
 enum MonitorRuleSource { domain, ip, process, transport }
 
 enum MonitorRuleType {
@@ -311,20 +329,12 @@ class NetworkMonitorSnapshotReader {
     final connections = await connectionsFuture;
     final now = DateTime.now();
     final elapsed = now.difference(_previousConnectionsAt ?? now);
-    final current = <String, TrackerInfo>{};
-    final withSpeed = connections.map((item) {
-      final old = _previousConnections[item.id];
-      final next = item.copyWith(
-        uploadSpeed: old == null
-            ? 0
-            : monitorBytesPerSecond(item.upload, old.upload, elapsed),
-        downloadSpeed: old == null
-            ? 0
-            : monitorBytesPerSecond(item.download, old.download, elapsed),
-      );
-      current[item.id] = item;
-      return next;
-    }).toList();
+    final current = {for (final item in connections) item.id: item};
+    final withSpeed = monitorAttachLiveSpeeds(
+      connections,
+      _previousConnections,
+      elapsed,
+    );
     _previousConnections = current;
     _previousConnectionsAt = now;
     return {
@@ -333,6 +343,24 @@ class NetworkMonitorSnapshotReader {
       'logs': logs.map((log) => log.toJson()).toList(),
     };
   }
+}
+
+List<TrackerInfo> monitorAttachLiveSpeeds(
+  Iterable<TrackerInfo> items,
+  Map<String, TrackerInfo> previous,
+  Duration elapsed,
+) {
+  return items.map((item) {
+    final old = previous[item.id];
+    return item.copyWith(
+      uploadSpeed: old == null
+          ? 0
+          : monitorBytesPerSecond(item.upload, old.upload, elapsed),
+      downloadSpeed: old == null
+          ? 0
+          : monitorBytesPerSecond(item.download, old.download, elapsed),
+    );
+  }).toList();
 }
 
 Map<String, Object?> monitorTrackerToJson(TrackerInfo tracker) => {
@@ -375,10 +403,121 @@ TrackerInfo? monitorUpdatedSelection(
   Iterable<TrackerInfo> connections,
 ) {
   if (selected == null) return null;
-  for (final item in [...requests, ...connections]) {
+  for (final item in [...connections, ...requests]) {
     if (item.id == selected.id) return item;
   }
   return selected;
+}
+
+List<TrackerInfo> monitorMergeLiveTrackers(
+  Iterable<TrackerInfo> requests,
+  Iterable<TrackerInfo> connections,
+) {
+  final live = {for (final item in connections) item.id: item};
+  final merged = <String, TrackerInfo>{};
+  for (final item in requests) {
+    merged[item.id] = live[item.id] ?? item;
+  }
+  for (final item in connections) {
+    merged[item.id] = item;
+  }
+  return merged.values.toList();
+}
+
+DateTime? monitorKnownLastActivity(TrackerInfo item, [DateTime? known]) {
+  if (known != null) return known;
+  final trace = monitorConnectionTrace(item);
+  if (trace.isNotEmpty && trace.last.timestamp > 0) {
+    return DateTime.fromMillisecondsSinceEpoch(trace.last.timestamp);
+  }
+  return null;
+}
+
+DateTime? monitorUpdatedActivity(
+  TrackerInfo item, {
+  DateTime? previousActivity,
+  ({int upload, int download})? previousTraffic,
+  required DateTime now,
+  bool active = false,
+}) {
+  final trace = monitorConnectionTrace(item);
+  final traceAt = trace.isEmpty || trace.last.timestamp <= 0
+      ? null
+      : DateTime.fromMillisecondsSinceEpoch(trace.last.timestamp);
+  final trafficAdvanced =
+      previousTraffic != null &&
+      (item.upload > previousTraffic.upload ||
+          item.download > previousTraffic.download);
+  final candidate = trafficAdvanced ? now : traceAt ?? (active ? now : null);
+  if (candidate == null) return previousActivity;
+  final next = candidate.isBefore(item.start) ? item.start : candidate;
+  return previousActivity == null || next.isAfter(previousActivity)
+      ? next
+      : previousActivity;
+}
+
+List<TrackerInfo> monitorSortTrackers(
+  Iterable<TrackerInfo> items,
+  MonitorSort sort, {
+  Set<String> activeIds = const {},
+  Map<String, DateTime> lastActivity = const {},
+}) {
+  int descending(int a, int b) => b.compareTo(a);
+  int activityOrder(TrackerInfo a, TrackerInfo b) {
+    final aActivity = monitorKnownLastActivity(a, lastActivity[a.id]);
+    final bActivity = monitorKnownLastActivity(b, lastActivity[b.id]);
+    if (aActivity == null) {
+      return bActivity == null ? b.start.compareTo(a.start) : 1;
+    }
+    if (bActivity == null) return -1;
+    final order = bActivity.compareTo(aActivity);
+    return order != 0 ? order : b.start.compareTo(a.start);
+  }
+
+  final result = items.toList();
+  result.sort((a, b) {
+    final order = switch (sort) {
+      MonitorSort.smart => () {
+        final active = (activeIds.contains(b.id) ? 1 : 0).compareTo(
+          activeIds.contains(a.id) ? 1 : 0,
+        );
+        if (active != 0) return active;
+        final speed = descending(
+          (a.uploadSpeed ?? 0) + (a.downloadSpeed ?? 0),
+          (b.uploadSpeed ?? 0) + (b.downloadSpeed ?? 0),
+        );
+        return speed != 0
+            ? speed
+            : descending(a.upload + a.download, b.upload + b.download);
+      }(),
+      MonitorSort.downloadSpeed => descending(
+        a.downloadSpeed ?? 0,
+        b.downloadSpeed ?? 0,
+      ),
+      MonitorSort.uploadSpeed => descending(
+        a.uploadSpeed ?? 0,
+        b.uploadSpeed ?? 0,
+      ),
+      MonitorSort.totalTraffic => descending(
+        a.upload + a.download,
+        b.upload + b.download,
+      ),
+      MonitorSort.lastActivity => activityOrder(a, b),
+      MonitorSort.createdAt => b.start.compareTo(a.start),
+    };
+    if (order != 0) return order;
+    return activityOrder(a, b);
+  });
+  return result;
+}
+
+String monitorTrafficSummary(TrackerInfo item, {required bool active}) {
+  final speed = [
+    '↓ ${monitorBytes(item.downloadSpeed ?? 0)}/s',
+    '↑ ${monitorBytes(item.uploadSpeed ?? 0)}/s',
+  ].join('  ');
+  if (active) return speed;
+  return '↓ ${monitorBytes(item.download)}  ↑ ${monitorBytes(item.upload)}';
 }
 
 String monitorTrackerFacetLabel(MonitorTrackerFacet facet) => switch (facet) {
@@ -507,6 +646,9 @@ MonitorTrackerStatus monitorTrackerStatus(
   }
   if (trace.isNotEmpty && trace.last.status == 'error') {
     return MonitorTrackerStatus.failed;
+  }
+  if (trace.isNotEmpty && trace.last.status == 'pending') {
+    return MonitorTrackerStatus.connecting;
   }
   if (item.id.isNotEmpty &&
       (item.metadata.host.isNotEmpty ||
@@ -935,11 +1077,33 @@ String monitorClock(DateTime value) {
   return '${two(value.hour)}:${two(value.minute)}:${two(value.second)}';
 }
 
-String monitorDuration(DateTime start) {
-  final seconds = DateTime.now().difference(start).inSeconds.clamp(0, 1 << 30);
+String monitorActivityLabel(
+  TrackerInfo item, {
+  DateTime? lastActivity,
+  DateTime? closedAt,
+}) {
+  if (closedAt != null) return '结束于 ${monitorClock(closedAt)}';
+  final value = monitorKnownLastActivity(item, lastActivity);
+  return value == null ? '最后活跃 未知' : '最后活跃 ${monitorClock(value)}';
+}
+
+String monitorDuration(DateTime start, [DateTime? end]) {
+  final seconds = (end ?? DateTime.now())
+      .difference(start)
+      .inSeconds
+      .clamp(0, 1 << 30);
   if (seconds < 60) return '${seconds}s';
   if (seconds < 3600) return '${seconds ~/ 60}m ${seconds % 60}s';
   return '${seconds ~/ 3600}h ${(seconds % 3600) ~/ 60}m';
+}
+
+String monitorDurationLabel(
+  DateTime start, {
+  required bool active,
+  DateTime? closedAt,
+}) {
+  if (active) return monitorDuration(start);
+  return closedAt == null ? '未知' : monitorDuration(start, closedAt);
 }
 
 String monitorBytes(int value) {
