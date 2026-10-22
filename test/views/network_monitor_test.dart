@@ -381,20 +381,20 @@ void main() {
     expect(result.downloadSpeed, 4096);
   });
 
-  test('连接列表支持速度、流量、活跃时间和创建时间排序', () {
+  test('连接列表支持速度、累计流量、时间排序及升降序', () {
     final older = _tracker(
       id: 'older',
       process: 'A',
       upload: 100,
-      download: 100,
+      download: 5000,
       downloadSpeed: 10,
       start: DateTime.utc(2026, 8, 10, 8, 50),
     );
     final newer = _tracker(
       id: 'newer',
       process: 'B',
-      upload: 1000,
-      download: 2000,
+      upload: 10000,
+      download: 0,
       downloadSpeed: 20,
       start: DateTime.utc(2026, 8, 10, 9, 50),
     );
@@ -411,22 +411,49 @@ void main() {
       active.id: DateTime(2026, 8, 10, 22),
     };
 
-    List<String> sorted(MonitorSort sort) => monitorSortTrackers(
+    List<String> sorted(
+      MonitorSort sort, {
+      MonitorSortDirection direction = MonitorSortDirection.descending,
+    }) => monitorSortTrackers(
       [older, newer, active],
       sort,
+      direction: direction,
       activeIds: const {'active'},
       lastActivity: activity,
     ).map((item) => item.id).toList();
 
-    expect(sorted(MonitorSort.smart).first, 'active');
+    expect(sorted(MonitorSort.defaultSort).first, 'active');
     expect(sorted(MonitorSort.downloadSpeed), ['newer', 'older', 'active']);
     expect(sorted(MonitorSort.uploadSpeed), ['active', 'newer', 'older']);
     expect(sorted(MonitorSort.totalTraffic), ['newer', 'older', 'active']);
+    expect(sorted(MonitorSort.uploadTraffic), ['newer', 'older', 'active']);
+    expect(sorted(MonitorSort.downloadTraffic), ['older', 'newer', 'active']);
     expect(sorted(MonitorSort.lastActivity), ['active', 'newer', 'older']);
     expect(sorted(MonitorSort.createdAt), ['newer', 'older', 'active']);
+    expect(
+      sorted(
+        MonitorSort.totalTraffic,
+        direction: MonitorSortDirection.ascending,
+      ),
+      ['active', 'older', 'newer'],
+    );
+    expect(
+      sorted(
+        MonitorSort.lastActivity,
+        direction: MonitorSortDirection.ascending,
+      ),
+      ['older', 'newer', 'active'],
+    );
+    expect(
+      sorted(
+        MonitorSort.createdAt,
+        direction: MonitorSortDirection.ascending,
+      ),
+      ['active', 'older', 'newer'],
+    );
   });
 
-  test('活动连接列表显示实时速度，历史请求显示累计流量', () {
+  test('活动连接列表同时显示累计流量和实时速度', () {
     final item = _tracker(
       id: 'speed',
       process: 'A',
@@ -438,11 +465,11 @@ void main() {
 
     expect(
       monitorTrafficSummary(item, active: true),
-      '↓ 1.5 KB/s  ↑ 512 B/s',
+      '累计 ↓ 2.0 KB  ↑ 1.0 KB  ·  ↓ 1.5 KB/s  ↑ 512 B/s',
     );
     expect(
       monitorTrafficSummary(item, active: false),
-      '↓ 2.0 KB  ↑ 1.0 KB',
+      '累计 ↓ 2.0 KB  ↑ 1.0 KB',
     );
   });
 

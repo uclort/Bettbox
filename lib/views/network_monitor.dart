@@ -503,7 +503,8 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
   List<MonitorDnsEntry> _dnsSources = const [];
   MonitorPage _page = MonitorPage.requests;
   MonitorTrackerFacet _trackerFacet = MonitorTrackerFacet.process;
-  MonitorSort _sort = MonitorSort.smart;
+  MonitorSort _sort = MonitorSort.defaultSort;
+  MonitorSortDirection _sortDirection = MonitorSortDirection.descending;
   TrackerInfo? _selected;
   String? _trackerFilter;
   String _sidebarFilter = '';
@@ -863,8 +864,18 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
     return monitorSortTrackers(
       filtered,
       _sort,
+      direction: _sortDirection,
       activeIds: activeIds,
       lastActivity: _lastActivityAt,
+    );
+  }
+
+  void _toggleSortDirection() {
+    setState(
+      () => _sortDirection =
+          _sortDirection == MonitorSortDirection.descending
+          ? MonitorSortDirection.ascending
+          : MonitorSortDirection.descending,
     );
   }
 
@@ -1038,10 +1049,28 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
               if (_page == MonitorPage.requests ||
                   _page == MonitorPage.connections)
                 PopupMenuButton<MonitorSort>(
-                  tooltip: '排序：${monitorSortLabel(_sort)}',
-                  icon: const Icon(Icons.sort),
+                  tooltip: _sort == MonitorSort.defaultSort
+                      ? '默认排序：活动连接优先，再按总速度、累计总流量、最后活跃降序'
+                      : '排序：${monitorSortLabel(_sort)}',
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.sort, size: 20),
+                        const SizedBox(width: 4),
+                        Text(monitorSortLabel(_sort)),
+                        const Icon(Icons.arrow_drop_down),
+                      ],
+                    ),
+                  ),
                   initialValue: _sort,
-                  onSelected: (value) => setState(() => _sort = value),
+                  onSelected: (value) => setState(() {
+                    _sort = value;
+                    if (value == MonitorSort.defaultSort) {
+                      _sortDirection = MonitorSortDirection.descending;
+                    }
+                  }),
                   itemBuilder: (context) => [
                     for (final sort in MonitorSort.values)
                       PopupMenuItem(
@@ -1055,10 +1084,38 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
                                 : Icons.radio_button_unchecked,
                             size: 20,
                           ),
-                          title: Text(monitorSortLabel(sort)),
+                          title: Text(
+                            sort == MonitorSort.defaultSort
+                                ? '${monitorSortLabel(sort)}（活动连接优先）'
+                                : monitorSortLabel(sort),
+                          ),
                         ),
                       ),
                   ],
+                ),
+              if (_page == MonitorPage.requests ||
+                  _page == MonitorPage.connections)
+                Tooltip(
+                  message: _sort == MonitorSort.defaultSort
+                      ? '默认排序固定为降序（数值大或时间新在前）'
+                      : '当前为${monitorSortDirectionLabel(_sortDirection)}，点击切换',
+                  child: TextButton.icon(
+                    onPressed: _sort == MonitorSort.defaultSort
+                        ? null
+                        : _toggleSortDirection,
+                    icon: Icon(
+                      _sortDirection == MonitorSortDirection.descending
+                          ? Icons.arrow_downward
+                          : Icons.arrow_upward,
+                      size: 18,
+                    ),
+                    label: Text(
+                      monitorSortDirectionLabel(_sortDirection),
+                    ),
+                    style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
                 ),
               const SizedBox(width: 16),
             ],

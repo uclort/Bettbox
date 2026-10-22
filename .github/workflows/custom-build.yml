@@ -715,12 +715,15 @@ jobs:
             test/widgets/app_update_dialog_test.dart \
             test/widgets/macos_menu_bar_test.dart
 
-      - name: 回归测试 macOS 应用菜单与更新展示
+      - name: 回归测试 macOS 网络面板、应用菜单与更新展示
         if: matrix.platform == 'macos'
         shell: bash
         run: |
           set -euo pipefail
-          flutter test test/widgets/macos_menu_bar_test.dart test/widgets/app_update_dialog_test.dart
+          flutter test \
+            test/views/network_monitor_test.dart \
+            test/widgets/macos_menu_bar_test.dart \
+            test/widgets/app_update_dialog_test.dart
 
       - name: 校验 Windows 安装启动器运行库
         if: matrix.platform == 'windows'

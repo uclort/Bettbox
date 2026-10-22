@@ -139,7 +139,7 @@
 - 请求与连接按 Mihomo `TrackerInfo` 的进程、来源、目标、协议、规则、出站链和状态动态分类，支持全文搜索、移动端筛选、右键生成规则、当前配置追加/覆盖规则和独立详情；状态按活动快照、真实出站 socket、`REJECT` 和链路终态区分。
 - 2026-10-22 修正连接时间语义：详情显示创建时间，列表与详情显示流量或链路事件推进后的“最后活跃”，面板实际观察到关闭时显示“结束于”并据此冻结时长；历史回填缺少活跃与结束证据时显示“最后活跃未知”和“时长未知”，不再把创建时间误当成最后活跃或结束时间。
 - 2026-10-22 调整状态语义：建立中为黄色、已连接为绿色、已结束为灰色、失败或拦截为红色；请求页合并活动连接快照，实时上下行速度由连续快照的累计流量差计算。
-- 2026-10-22 请求和活动连接列表增加排序菜单，支持智能、下载速度、上传速度、总流量、最后活跃和创建时间；智能排序优先活动连接，其余排序严格执行所选指标。两页均以 250 ms 刷新活动连接快照，活动记录直接显示上下行速率。
+- 2026-10-22 请求和活动连接列表增加排序菜单，支持默认、下载速度、上传速度、累计总流量、累计上传流量、累计下载流量、最后活跃和创建时间，并可为显式指标切换降序/升序；默认排序固定为活动连接优先，再按实时总速度、累计总流量和最后活跃降序。两页均以 250 ms 刷新活动连接快照，活动记录同时显示累计上下行流量与实时速率，历史记录显示累计上下行流量。
 - 2026-10-22 内核在 TCP/UDP 出站拨号前发布稳定 UUID 的 pending 请求，成功后沿用同一 UUID 原位更新为已连接，失败后保留错误终态；因此最近请求可显示“建立中”，并可在详情查看拨号失败事件。
 - DNS 页由当前生效配置读取 `default-nameserver / nameserver / fallback / proxy-server-nameserver / direct-nameserver / nameserver-policy / hosts`，并合并系统 Hosts、运行缓存、Fake-IP 与出站节点 DNS；支持同时清理 DNS 缓存和 Fake-IP。
 - 不再提供信息价值有限的设备与流量统计子页面；请求和连接列表仍保留单条记录的实时速率、累计上传下载和连接详情。
@@ -149,7 +149,7 @@
 - custom-mihomo 为每条连接保存 DNS 逐服务器尝试、规则匹配、策略链和真实 socket 建立事件，`TrackerInfo` 返回 `trace / outboundLocalAddress / outboundRemoteAddress`；连接加入与离开均发送同 ID 通知，请求记录按 ID 原位更新。
 - 2026-10-16 排查发现：上述追踪实现曾被私有内核同步提交 `3f04fdd` 覆盖，当前 `206b7e7` 内核同样缺失；仅检查已有标记或运行不引用字段的旧测试无法发现功能已丢失。本次从历史 `5a0477b` 恢复追踪到公开内置核心再同步私有核心，补充 `tracker_trace_test.go`，真实序列化断言事件与 socket 字段；核心请求历史也按 UUID 原位更新。发布工作流逐字比较两套核心中的关键功能文件，私有内核不一致时禁止打包。
 - 新增订阅生命周期回归 `test/clash/message_stream_test.dart`，核心历史去重/清理回归 `core/hub_test.go`；相关实现为 `lib/clash/core.dart`、`lib/views/network_monitor.dart`、`core/Clash.Meta/constant/connection_trace.go`、`constant/metadata.go`、`dns/resolver.go`、`dns/util.go`、`tunnel/dns_dialer.go`、`tunnel/tunnel.go` 与 `tunnel/statistic/tracker.go`。
-- 2026-10-22 回归范围：面板数据单测覆盖实时速度计算与合并、六种排序、最后活跃/未知时间、时长未知和 pending 状态；核心 `constant / tunnel / tunnel/statistic`、应用包装层 `go test ./...` 及私有内核 `transport/snell / adapter/outbound / component/dialer / component/dhcp / config / constant / dns / listener/sing_tun / tunnel / tunnel/statistic` 均通过。当前机器没有 Flutter SDK，Dart 静态检查和面板 test 需在具备 Flutter 的环境补跑。
+- 2026-10-22 回归范围：面板数据单测覆盖实时速度计算与合并、八种排序及升/降序、最后活跃/未知时间、时长未知和 pending 状态；核心 `constant / tunnel / tunnel/statistic`、应用包装层 `go test ./...` 及私有内核 `transport/snell / adapter/outbound / component/dialer / component/dhcp / config / constant / dns / listener/sing_tun / tunnel / tunnel/statistic` 均通过。当前机器没有 Flutter SDK，面板 test 已加入 `custom-build.yml` 的 macOS 回归步骤，由正式构建补跑；独立 Dart 静态检查仍需在具备 Flutter 的环境执行。
 - 2026-10-16 修复验证：586 项 Flutter 全量回归、静态检查、核心包装层及两套核心的相关 Go 测试通过；实际构建核心以无显式引导 DNS 的隔离配置验证 DIRECT HTTPS 成功，核心返回请求历史与 DNS/规则/出站/socket 事件，连接结束后 ID 不重复，清空后历史为空。尚未用新安装包完成桌面界面实机验收。
 - 代码位于 `lib/views/network_monitor*.dart`、`lib/common/window.dart`、`lib/common/external_control.dart`、`lib/common/navigation.dart`、`lib/views/network_monitor_navigation.dart`、`lib/enum/enum.dart`、`lib/widgets/google_bottom_nav_bar.dart` 和 `lib/common/tray.dart`；回归测试为 `test/views/network_monitor_test.dart`、`core/Clash.Meta/tunnel/statistic/manager_notify_test.go` 及私有内核 `constant / dns / tunnel / tunnel/statistic` 测试。
 

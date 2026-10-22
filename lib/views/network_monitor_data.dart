@@ -8,22 +8,34 @@ import 'package:flutter/foundation.dart';
 enum MonitorPage { requests, connections, dns, logs, subStore }
 
 enum MonitorSort {
-  smart,
+  defaultSort,
   downloadSpeed,
   uploadSpeed,
   totalTraffic,
+  uploadTraffic,
+  downloadTraffic,
   lastActivity,
   createdAt,
 }
 
+enum MonitorSortDirection { descending, ascending }
+
 String monitorSortLabel(MonitorSort sort) => switch (sort) {
-  MonitorSort.smart => '智能',
+  MonitorSort.defaultSort => '默认',
   MonitorSort.downloadSpeed => '下载速度',
   MonitorSort.uploadSpeed => '上传速度',
-  MonitorSort.totalTraffic => '总流量',
+  MonitorSort.totalTraffic => '累计总流量',
+  MonitorSort.uploadTraffic => '累计上传流量',
+  MonitorSort.downloadTraffic => '累计下载流量',
   MonitorSort.lastActivity => '最后活跃',
   MonitorSort.createdAt => '创建时间',
 };
+
+String monitorSortDirectionLabel(MonitorSortDirection direction) =>
+    switch (direction) {
+      MonitorSortDirection.descending => '降序',
+      MonitorSortDirection.ascending => '升序',
+    };
 
 enum MonitorRuleSource { domain, ip, process, transport }
 
@@ -459,51 +471,68 @@ DateTime? monitorUpdatedActivity(
 List<TrackerInfo> monitorSortTrackers(
   Iterable<TrackerInfo> items,
   MonitorSort sort, {
+  MonitorSortDirection direction = MonitorSortDirection.descending,
   Set<String> activeIds = const {},
   Map<String, DateTime> lastActivity = const {},
 }) {
-  int descending(int a, int b) => b.compareTo(a);
-  int activityOrder(TrackerInfo a, TrackerInfo b) {
+  int ordered(int a, int b) => direction == MonitorSortDirection.descending
+      ? b.compareTo(a)
+      : a.compareTo(b);
+  int activityOrder(
+    TrackerInfo a,
+    TrackerInfo b, {
+    MonitorSortDirection direction = MonitorSortDirection.descending,
+  }) {
     final aActivity = monitorKnownLastActivity(a, lastActivity[a.id]);
     final bActivity = monitorKnownLastActivity(b, lastActivity[b.id]);
     if (aActivity == null) {
       return bActivity == null ? b.start.compareTo(a.start) : 1;
     }
     if (bActivity == null) return -1;
-    final order = bActivity.compareTo(aActivity);
+    final order = direction == MonitorSortDirection.descending
+        ? bActivity.compareTo(aActivity)
+        : aActivity.compareTo(bActivity);
     return order != 0 ? order : b.start.compareTo(a.start);
   }
 
   final result = items.toList();
   result.sort((a, b) {
     final order = switch (sort) {
-      MonitorSort.smart => () {
+      MonitorSort.defaultSort => () {
         final active = (activeIds.contains(b.id) ? 1 : 0).compareTo(
           activeIds.contains(a.id) ? 1 : 0,
         );
         if (active != 0) return active;
-        final speed = descending(
-          (a.uploadSpeed ?? 0) + (a.downloadSpeed ?? 0),
-          (b.uploadSpeed ?? 0) + (b.downloadSpeed ?? 0),
-        );
+        final aSpeed = (a.uploadSpeed ?? 0) + (a.downloadSpeed ?? 0);
+        final bSpeed = (b.uploadSpeed ?? 0) + (b.downloadSpeed ?? 0);
+        final speed = bSpeed.compareTo(aSpeed);
         return speed != 0
             ? speed
-            : descending(a.upload + a.download, b.upload + b.download);
+            : (b.upload + b.download).compareTo(a.upload + a.download);
       }(),
-      MonitorSort.downloadSpeed => descending(
+      MonitorSort.downloadSpeed => ordered(
         a.downloadSpeed ?? 0,
         b.downloadSpeed ?? 0,
       ),
-      MonitorSort.uploadSpeed => descending(
+      MonitorSort.uploadSpeed => ordered(
         a.uploadSpeed ?? 0,
         b.uploadSpeed ?? 0,
       ),
-      MonitorSort.totalTraffic => descending(
+      MonitorSort.totalTraffic => ordered(
         a.upload + a.download,
         b.upload + b.download,
       ),
-      MonitorSort.lastActivity => activityOrder(a, b),
-      MonitorSort.createdAt => b.start.compareTo(a.start),
+      MonitorSort.uploadTraffic => ordered(a.upload, b.upload),
+      MonitorSort.downloadTraffic => ordered(a.download, b.download),
+      MonitorSort.lastActivity => activityOrder(
+        a,
+        b,
+        direction: direction,
+      ),
+      MonitorSort.createdAt => ordered(
+        a.start.millisecondsSinceEpoch,
+        b.start.millisecondsSinceEpoch,
+      ),
     };
     if (order != 0) return order;
     return activityOrder(a, b);
@@ -512,12 +541,13 @@ List<TrackerInfo> monitorSortTrackers(
 }
 
 String monitorTrafficSummary(TrackerInfo item, {required bool active}) {
-  final speed = [
-    '↓ ${monitorBytes(item.downloadSpeed ?? 0)}/s',
-    '↑ ${monitorBytes(item.uploadSpeed ?? 0)}/s',
-  ].join('  ');
-  if (active) return speed;
-  return '↓ ${monitorBytes(item.download)}  ↑ ${monitorBytes(item.upload)}';
+  final total =
+      '累计 ↓ ${monitorBytes(item.download)}  ↑ ${monitorBytes(item.upload)}';
+  if (!active) return total;
+  final speed =
+      '↓ ${monitorBytes(item.downloadSpeed ?? 0)}/s  '
+      '↑ ${monitorBytes(item.uploadSpeed ?? 0)}/s';
+  return '$total  ·  $speed';
 }
 
 String monitorTrackerFacetLabel(MonitorTrackerFacet facet) => switch (facet) {
