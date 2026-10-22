@@ -10,9 +10,12 @@
 
 ### 当前上游融合基线
 
-- 2026-10-16 同步 Bettbox 正式 `v1.19.6 / main@9582976d5371`（源码版本 `1.19.6+2026101603`）；Mihomo 保持 `v1.19.32`，Flutter 构建工具链保持 `3.47.7`。Impeller 配置按用户要求恢复上游按平台、架构选择的策略，删除对应的全架构关闭覆写标记；补齐面板请求/日志订阅，恢复历史同步丢失的连接追踪，并修复默认 DNS 引导通道。
+- 2026-10-22 同步 Bettbox 正式 `v1.19.7 / main@1fb8806fdf82`（源码版本 `1.19.7+2026102201`）；Mihomo 稳定版 `v1.19.33`，源码版本由构建注入，Flutter 构建工具链保持 `3.47.7`。接入上游工具箱、仪表盘布局、备份密码与自动备份、连接页合并请求页、Linux 系统 DNS、Windows 便携模式跳过 Helper，以及全部 macOS 架构关闭 Impeller。
+- 继续保留桌面 TUN 同步安全启动与失败回滚、异常退出关闭代理和 TUN、`resetConnections` IPC 名、WebDAV 仅同步 shared-config、macOS DNS 托管与唤醒恢复、Dock 跟随窗口、Android 悬浮总开关、桌面运行时间卡片只展示、Windows 临时目录安装器、Sparkle 公钥和网络面板。侧边栏仍通过 `_selectPage` 打开独立网络面板。
+- 2026-10-22 融合验证：Flutter 3.47.7 下 `flutter analyze --no-pub` 无问题，全量 Flutter 测试通过；补丁后的指定目录 Go 回归通过。核心包装层 `go test ./...` 仅 `core/toolbox` 的本机 ping 用例失败，原因是当前网络把不存在域名解析到 Fake-IP。
+- 2026-10-16 同步 Bettbox 正式 `v1.19.6 / main@9582976d5371`（源码版本 `1.19.6+2026101603`）；Mihomo 当时为 `v1.19.32`。该次补齐面板请求/日志订阅，恢复连接追踪，并修复默认 DNS 引导通道。
 - 接入上游出站模式布局、导航动效与页面存活管理、超椭圆样式、编辑器缩放、运行配置保留原始 YAML 信息、禁用策略组引用清理、脚本与覆写规则协同，以及 Linux AppImage 授权/重启修复；桌面 TUN 继续使用自定义同步安全链和失败回滚，Windows Helper 仍按需授权启动。
-- 接入上游 Material UI、Riverpod 3、Rust 脚本引擎与新版编辑器、批量日志/请求通知及仪表盘；侧边栏继续通过 `_selectPage` 打开独立网络面板，Android 首页继续保留单一悬浮总开关。请求、连接和日志保留上游桌面/更多入口，自定义网络面板只作为额外入口。
+- 接入上游 Material UI、Riverpod 3、Rust 脚本引擎与新版编辑器、批量日志/请求通知及仪表盘；侧边栏继续通过 `_selectPage` 打开独立网络面板，Android 首页继续保留单一悬浮总开关。连接和日志保留上游桌面/更多入口，自定义网络面板只作为额外入口。
 - 核心启动兼容上游 Linux AppImage 内核同步与控制通道重建重试；首次控制连接失败后清理旧进程和 socket 再重试一次，两次失败仍抛错并执行原有代理/TUN 回滚。Windows Helper 继续按需授权启动，macOS 网络恢复继续等待 `resetConnections` 的真实结果。
 - Windows 系统代理吸收上游 `::1` 绕过兼容处理，同时保留 WinINet/RAS 和注册表双通道启停；模型保留首次安装关闭系统代理的默认值，并接入上游历史绕过域名清洗。
 - 核心配置接入上游 `SetupParams / SetupResult`，保留 60 秒配置超时和完整失败回滚；socket 断开立即中止该连接待处理 IPC 请求。请求批量写入仍按 ID 原位更新，保留连接终态；日志延迟写入前检查页面是否仍挂载。
@@ -58,6 +61,7 @@
 - `.custom-build/metadata/custom-mihomo-commit` 固定每次构建使用的私有内核提交；构建前校验 Bettbox 核心树、Mihomo 版本和 Snell 补丁摘要。
 - 2026-10-16 网络回归修复内核固定为 `54092e6`，补齐面板追踪与默认 HTTPS 引导 DNS；应用内核与私有内核的全部修复文件逐字一致，Snell v6 补丁及私有覆写脚本保持不变。
 - 2026-10-22 网络面板拨号中状态同步至私有内核 `c69452b`；重试期间保持建立中，最终失败才发布错误终态。应用内核与私有内核的 `tunnel.go`、`tunnel/statistic/tracker.go`、`tunnel/statistic/patch.go`、`tunnel/statistic/tracker_trace_test.go` 逐字一致，Snell v6 补丁与私有覆写脚本保持不变。
+- 2026-10-22 同步 v1.19.7 内置核心树 `6e2181d648592534c015626c5e780bf926206505`，Mihomo 稳定版记为 `v1.19.33`；OpenSnell v6 补丁摘要不变，私有覆写脚本不改。补丁后的指定目录 Go 回归已通过，私有内核提交为 `888cb118e9d2a5d29297e5e6d5c4519a8b9158b9`。
 - 同步后至少运行 `go test ./transport/snell ./adapter/outbound ./component/dialer ./component/dhcp ./config ./dns ./listener/sing_tun ./constant ./tunnel ./tunnel/statistic`；`custom-sync.yml` 实际执行上述完整目录，包含默认 DNS 和面板链路回归。
 
 ### 应用内更新
@@ -78,11 +82,11 @@
 
 ### macOS 渲染配置
 
-- 2026-10-16 按用户要求与上游 `3cac238a` 保持一致：Windows/Linux 原生关闭 Impeller，macOS Intel 由 `setup.dart` 打包时临时注入布尔值 `FLTEnableImpeller = false`，Apple Silicon 不写入该键，沿用 Flutter 默认配置；没有应用内切换开关。
-- 删除 `macos/Runner/Info.plist` 的全架构关闭覆写，恢复上游 `setup.dart` 注入与 `finally` 还原源码的完整逻辑，避免重复键；保留上游 macOS Intel 的 `GOAMD64=v1` 兼容设置。主窗口和独立网络面板使用各自架构的同一配置。
+- 2026-10-22 起跟随上游 `99e542ff`：macOS 全部架构在 `macos/Runner/Info.plist` 写入布尔值 `FLTEnableImpeller = false`，同时保留 Sparkle `SUPublicEDKey`；Windows/Linux 继续原生关闭 Impeller，没有应用内切换开关。独立网络面板与主窗口使用同一配置。
+- 2026-10-16 曾按当时上游策略只在 Intel 包注入 `FLTEnableImpeller = false`。v1.19.7 已改为全架构关闭，源码不再由 `setup.dart` 临时注入。
 - Flutter `3.47.7` 默认开启 macOS Impeller；macOS Monterey `12.7.6`、2016 Intel MacBook Pro / Intel HD Graphics 530 上出现条纹、文字拉伸和内容丢失。2026-10-14 用户已在受影响设备上确认切回 Skia 的同版本兼容测试包正常，正式构建沿用该兼容配置；Skia 仍使用 Metal，不是软件渲染。
 - 已核验原正式 Intel DMG `1.19.5+2090000191`（SHA-256 `e7e1ca2c970f28a8abac82d2a739af773bf6d0a38214ee159ecfd79999916e55`）最低系统为 `12.0`，没有设置 `FLTEnableImpeller`；同版本兼容测试仅将该键设为布尔 `false` 并重新进行 ad-hoc 签名。正式发布通过自定义工作流重新构建、递增构建号并更新应用内更新源。
-- `.github/workflows/custom-build.yml` 打包后读取最终 App 的 `Contents/Info.plist`，Intel 必须为布尔 `false`，Apple Silicon 必须不存在该键，确保与上游策略一致。
+- `.github/workflows/custom-build.yml` 打包后读取最终 App 的 `Contents/Info.plist`，Intel 与 Apple Silicon 都必须为布尔 `false`。
 - 验证方式：源 plist 语法与无覆写校验、`setup.dart` 与上游注入/还原逻辑比对、两种架构正确/错误配置的产物校验回归，以及最终安装包配置校验；既有界面回归为 `flutter test --no-pub test/widgets/macos_menu_bar_test.dart test/views/proxies/list_rebuild_test.dart test/views/dashboard_pack_test.dart`。用户已确认上述 Intel/macOS 12 设备使用关闭 Impeller 的兼容测试包正常；新版与 Apple Silicon 默认渲染仍需实机验收。
 - 2026-10-16 恢复上游策略验证：打包配置段与上游逐字一致，两种架构的生成 plist 与 8 种正确/错误产物配置校验通过；Dart 静态检查、工作流 actionlint、8 项界面回归与 3 项发布说明回归通过。
 

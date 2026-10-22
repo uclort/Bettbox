@@ -143,6 +143,7 @@ _DAV _$DAVFromJson(Map<String, dynamic> json) => _DAV(
   user: json['user'] as String,
   password: json['password'] as String,
   fileName: json['fileName'] as String? ?? defaultDavFileName,
+  autoBackup: json['autoBackup'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$DAVToJson(_DAV instance) => <String, dynamic>{
@@ -150,6 +151,7 @@ Map<String, dynamic> _$DAVToJson(_DAV instance) => <String, dynamic>{
   'user': instance.user,
   'password': instance.password,
   'fileName': instance.fileName,
+  'autoBackup': instance.autoBackup,
 };
 
 _NetworkInfo _$NetworkInfoFromJson(Map<String, dynamic> json) => _NetworkInfo(

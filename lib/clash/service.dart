@@ -27,6 +27,8 @@ class ClashService extends ClashHandlerInterface {
   bool _isDestroying = false;
   bool _unexpectedExitReported = false;
 
+  bool get _usesHelper => windows?.usesHelper ?? false;
+
   Process? process;
 
   Completer<void>? _restartCompleter;
@@ -166,7 +168,7 @@ class ClashService extends ClashHandlerInterface {
     try {
       await _destroySocket();
 
-      if (system.isWindows) {
+      if (_usesHelper) {
         await helperClient.stopCore().catchError((_) => false);
       }
 
@@ -196,7 +198,7 @@ class ClashService extends ClashHandlerInterface {
       final environment = Map<String, String>.from(Platform.environment);
       environment['SAFE_PATHS'] = homeDirPath;
 
-      if (system.isWindows) {
+      if (_usesHelper) {
         final isHealthy = await windows?.isHelperHealthy() ?? false;
         if (isHealthy) {
           final started = await helperClient.startCore(
@@ -311,8 +313,7 @@ class ClashService extends ClashHandlerInterface {
   }
 
   void _setWindowsCorePriority() {
-    if (!system.isWindows ||
-        !globalState.config.appSetting.enableHighPriority) {
+    if (!_usesHelper || !globalState.config.appSetting.enableHighPriority) {
       return;
     }
     unawaited(
@@ -443,7 +444,7 @@ class ClashService extends ClashHandlerInterface {
   @override
   shutdown() async {
     _isDestroying = true;
-    if (system.isWindows) {
+    if (_usesHelper) {
       await helperClient.stopCore();
     }
     await _destroySocket();

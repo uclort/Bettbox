@@ -4,17 +4,17 @@
 
 <h1 align="center">⚡ Bettbox</h1>
 <p align="center">
-  <strong>Another Better Mihomo Client</strong>
+  <strong>Another Better Network Toolbox</strong>
 </p>
 
-**Bettbox는 강력한 Mihomo 코어를 기반으로 깊이 있게 제작된 멀티플랫폼 트래픽 라우팅 및 DNS 디버깅 도구입니다. 최고의 사용자 경험, 엄격한 개인정보 보호 및 보안, 세심한 기능 완성도에 집중하여, 더욱 가볍고 쾌적하며 적은 리소스 소모로 장기간 안정적으로 실행되는 현대적인 클라이언트 경험을 제공합니다.**
+**Bettbox는 강력한 Mihomo 코어를 기반으로 깊이 있게 제작된 멀티플랫폼 트래픽 라우팅 및 DNS 디버깅 도구입니다. 더 많은 사용자 경험, 엄격한 개인정보 보호 및 보안, 세심한 기능 완성도에 집중하여, 더욱 가볍고 쾌적하며 적은 리소스 소모로 장기간 안정적으로 실행되는 현대적인 클라이언트 제공을 목표로 합니다.**
 
-**“Better Experience, Out of the box(더 나은 경험, 설치 즉시 완벽한 사용)”**이라는 디자인 철학을 바탕으로, Bettbox는 시스템과 하드웨어의 잠재력을 깊이 있게 활용하여 포그라운드에서의 고프레임의 부드러운 애니메이션과 백그라운드에서의 저전력 및 최소 리소스 점유를 실현합니다. 본 프로젝트는 SignPath 오픈소스 재단의 수동 보안 검증을 선도적으로 통과하였으며, Windows 버전에는 공식 권위의 OV 디지털 서명 인증서가 탑재되어 있습니다.
+Bettbox는 Better Network Toolbox를 의미합니다. 본 프로젝트는 SignPath 오픈소스 재단의 수동 보안 검증을 선도적으로 통과하였으며, Windows 버전에는 공식 권위의 OV 디지털 서명 인증서가 탑재되어 있습니다.
 
 [![Latest Release](https://img.shields.io/github/v/release/appshubcc/Bettbox?style=for-the-badge&logo=github&color=238636&label=Release)](https://github.com/appshubcc/Bettbox/releases/latest) [![Core](https://img.shields.io/github/v/release/MetaCubeX/mihomo?style=for-the-badge&logo=go&logoColor=white&color=8A2BE2&label=Mihomo)](https://github.com/MetaCubeX/mihomo/releases/latest)
 
 <p align="center">
-  <img src="../snapshots/home.png" alt="Bettbox" />
+  <img src="../snapshots/home.jpg" alt="Bettbox" />
 </p>
 
 ---
@@ -25,14 +25,15 @@
 ---
 ## 🚀 핵심 특징
 
-* **설치 즉시 사용**: 완벽한 권한 안내와 쾌적한 TUN / VPN 경험, 미리 구성된 최적화 정책으로 설치 즉시 최적의 상태로 사용할 수 있습니다.
-* **가볍고 쾌적함**: 시스템 및 렌더링 파이프라인 심층 최적화. 포그라운드 고프레임의 부드러운 애니메이션, 모바일 저전력 소비, 데스크톱 최소 리소스 점유를 실현했습니다.
+* **설치 즉시 사용**: 완성도 높은 권한 사전 처리 로직과 쾌적한 TUN 경험, 합리적인 기본 정책 사전 탑재로 설치 즉시 최적의 상태로 사용할 수 있습니다.
+* **가볍고 쾌적함**: 시스템 및 렌더링 파이프라인 심층 최적화. 포그라운드 고프레임의 부드러운 애니메이션, 모바일 저전력 소비, 데스크톱 백그라운드 최소 점유를 실현했습니다.
 * **안전하고 신뢰할 수 있음**: 코어는 Mihomo 메인라인을 긴밀히 추적하고 각 플랫폼의 최소 권한 원칙을 준수합니다. SignPath 보안 감사를 통과하였으며 Windows 공식 OV 디지털 서명 인증서가 탑재되었습니다.
-* **강력한 안정성과 결함 허용**: 다중 플랫폼 극한 네트워크 환경에서의 경계 문제를 최적화하고, 이중 설정 검증 및 보호 메커니즘을 내장하여 엔터프라이즈급의 장기적인 안정성을 제공합니다.
+* **강력한 안정성과 결함 허용**: 다중 플랫폼 극한 네트워크 환경에서의 경계 문제를 최적화하고, 이중 설정 검증 및 보호 메커니즘을 내장하여 엔터프라이즈급의 장기적인 안정성을 자랑합니다.
 * **아키텍처 최적화**: 데스크톱 네이티브 ARM64 아키텍처를 심층 지원하고 하드웨어 성능을 등급화하며, 구형 기기를 위한 Compatible 호환 버전을 지속적으로 유지 관리합니다.
-* **스마트 데몬**: 다중 플랫폼 무감각 스마트 시작/중지, 모바일 저전력 절전 정책, 원클릭 QUIC 비활성화 및 시스템 트레이 메뉴 다차원 빠른 제어를 지원합니다.
+* **스마트 데몬**: 다중 플랫폼 무감각 스마트 시작/중지, 모바일 Doze 절전 정책, 원클릭 QUIC 비활성화 및 시스템 트레이 메뉴 다차원 빠른 제어를 지원합니다.
 * **시각적 설정**: 풍부하고 깊이 있는 파라미터 시각화 조정 인터페이스를 제공하며 설정 변경 시 실시간 반영되어 번거로운 수동 설정 편집 부담을 덜어줍니다.
 * **홈 위젯**: 정교하게 디자인된 다수의 위젯이 내장되어 홈 화면에서 실시간 네트워크 속도, 활성 연결 및 전체 실행 상태를 직관적으로 파악할 수 있습니다.
+* **올인원 툴박스**: 정교하고 우아하며 실용적인 전문급 네트워크 및 DNS 분기 디버깅 도구를 내장하여 완벽하게 제어할 수 있습니다.
 * **개인화 맞춤 설정**: 다양한 컬러 테마, 커스텀 아이콘 및 타이틀을 지원하며, 30가지의 정교한 속도 측정 애니메이션이 내장되어 있습니다.
 * **생태계 및 확장성**: 외부 JS 오버라이드 스크립트의 시각적 UI 적응을 지원하며, 심층 리팩토링된 고성능 Code-forge 에디터를 탑재했습니다.
 * **개인정보 보호 위험 Zero**: 완전 오픈소스 및 광고 없음. 포괄적인 감사를 거친 자동화 CI/CD 파이프라인을 적용하여 어떠한 백그라운드 개인정보도 수집하지 않습니다.
@@ -54,7 +55,7 @@
 
 **Linux 커뮤니티 유지 관리 패키지:**<br>
 * **ArchLinux:** <code>yay -S bettbox-bin</code> 또는 <code>paru -S bettbox-bin</code> ([lyj404](https://github.com/lyj404/bettbox-aur) 관리)<br>
-* **AMD64=v1 (구형 하드웨어 호환):** <code>yay -S bettbox-compatible-bin</code> 또는 <code>paru -S bettbox-compatible-bin</code> ([VillagerTom](https://github.com/VillagerTom) 관리)
+* **AMD64=v1 (호환 버전):** <code>yay -S bettbox-compatible-bin</code> 또는 <code>paru -S bettbox-compatible-bin</code> ([VillagerTom](https://github.com/VillagerTom) 관리)
 
 ---
 ## 💡 자주 묻는 질문

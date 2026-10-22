@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:typed_data';
 
 import 'package:archive/archive_io.dart';
 import 'package:bett_box/clash/clash.dart';
@@ -14,7 +15,9 @@ import 'package:bett_box/providers/providers.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/app_update_dialog.dart';
 import 'package:bett_box/widgets/dialog.dart';
+import 'package:bett_box/widgets/input.dart';
 import 'package:collection/collection.dart';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
@@ -26,8 +29,10 @@ import 'package:tray_manager/tray_manager.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:yaml/yaml.dart';
 
-import 'common/archive.dart' show restoreBackupFiles;
+import 'common/archive.dart'
+    show BackupPasswordException, decodeBackupArchive, restoreBackupFiles;
 import 'common/common.dart';
+import 'common/dav_client.dart';
 import 'models/models.dart';
 import 'views/profiles/override_profile.dart';
 
@@ -144,6 +149,11 @@ class AppController {
   int _macOSNetworkRecoveryGeneration = 0;
   int _localNetworkId = 0;
   Timer? _idleGcTimer;
+  bool _isAutoBackupPending = false;
+  bool _isAutoBackupRunning = false;
+  bool _isAutoBackupSuppressed = false;
+
+  static const _autoBackupFingerprintKey = 'auto_backup_fingerprint';
 
   AppController(this.context, WidgetRef ref) : _ref = ref;
 
@@ -1097,7 +1107,11 @@ class AppController {
         case AuthorizeCode.none:
           break;
         case AuthorizeCode.error:
-          globalState.showNotifier(appLocalizations.tunEnableRequireAdmin);
+          globalState.showNotifier(
+            appLocalizations.tunEnableRequireAdmin,
+            actionLabel: appPath.isPortable ? appLocalizations.restart : null,
+            onAction: appPath.isPortable ? system.restartAsAdmin : null,
+          );
           return Result<bool>.error(appLocalizations.tunEnableRequireAdmin);
       }
     }
@@ -1490,7 +1504,7 @@ class AppController {
         '${AppIdentity.mainExecutableName}.exe',
         enable,
       );
-      if (kDebugMode) return;
+      if (kDebugMode || appPath.isPortable) return;
       await helperClient.setProcessPriority(
         '${AppIdentity.coreExecutableName}.exe',
         enable,
@@ -1539,19 +1553,17 @@ class AppController {
     } catch (e) {
       commonPrint.warn('handleExit error: $e');
     } finally {
-      if (windows != null) {
+      if (windows?.usesHelper ?? false) {
         try {
           await windows!.stopHelperService();
         } catch (e) {
           commonPrint.log('Failed to stop Windows helper on exit: $e');
         }
       }
-      if (macOS != null) {
-        try {
-          await macOS!.updateDns(true);
-        } catch (e) {
-          commonPrint.warn('Failed to restore macOS system DNS on exit: $e');
-        }
+      try {
+        await system.updateDns(true);
+      } catch (e) {
+        commonPrint.warn('Failed to restore system DNS on exit: $e');
       }
       if (!exitLock.isCompleted) {
         exitLock.complete();
@@ -1739,6 +1751,18 @@ class AppController {
     _wakelockSyncTimer = null;
   }
 
+  Future<void> holdWakelock(bool hold) async {
+    try {
+      if (hold) {
+        await WakelockPlus.enable();
+      } else if (!_ref.read(wakelockStateProvider)) {
+        await WakelockPlus.disable();
+      }
+    } catch (e) {
+      commonPrint.warn('Failed to update wake lock: $e');
+    }
+  }
+
   Future<void> syncWakelockIfNeeded() async {
     final userEnabled = _ref.read(wakelockStateProvider);
     if (!userEnabled) {
@@ -1877,8 +1901,8 @@ class AppController {
         }
       }
     }
-    if (system.isMacOS && !globalState.isStart) {
-      await macOS?.updateDns(true);
+    if (!globalState.isStart) {
+      await system.updateDns(true);
     }
     final hasProfile = _ref.read(currentProfileProvider) != null;
     final shouldStart =
@@ -2347,7 +2371,10 @@ class AppController {
         null;
   }
 
-  Future<List<int>> backupData({bool sharedOnly = false}) async {
+  Future<List<int>> backupData({
+    bool sharedOnly = false,
+    String password = '',
+  }) async {
     final homeDirPath = await appPath.homeDirPath;
     final profilesPath = await appPath.profilesPath;
     final scripts = await Future.wait(
@@ -2358,9 +2385,9 @@ class AppController {
     final backupConfig = globalState.config.copyWith.scriptProps(
       scripts: scripts,
     );
-    final configJson = sharedOnly
-        ? webDavSharedConfigJson(backupConfig)
-        : backupConfig.toJson();
+    final configJson = Map<String, dynamic>.from(
+      sharedOnly ? webDavSharedConfigJson(backupConfig) : backupConfig.toJson(),
+    );
     if (configJson['dav'] is Map) {
       final davMap = Map<String, dynamic>.from(configJson['dav'] as Map);
       if (davMap['user'] is String) {
@@ -2370,6 +2397,9 @@ class AppController {
         davMap['password'] = utils.encryptSecret(davMap['password'] as String);
       }
       configJson['dav'] = davMap;
+    }
+    if (configJson['appSetting'] case final Map<String, dynamic> appSetting) {
+      appSetting.remove('backupPassword');
     }
 
     // Get valid profile IDs
@@ -2389,7 +2419,9 @@ class AppController {
         tempDir.path,
         'bettbox_backup_${DateTime.now().millisecondsSinceEpoch}.zip',
       );
-      final encoder = ZipFileEncoder();
+      final encoder = ZipFileEncoder(
+        password: password.isEmpty ? null : password,
+      );
       encoder.create(tempZipPath);
 
       // Add marker file
@@ -2482,6 +2514,95 @@ class AppController {
     });
   }
 
+  Future<String> _webDAVBackupFingerprint(DAV dav) async {
+    final profiles = _ref.read(profilesProvider);
+    final profilesPath = await appPath.profilesPath;
+    final meta = json.encode([
+      dav.uri,
+      dav.fileName,
+      ...profiles.map(
+        (profile) => profile.backupView.copyWith(lastUpdateDate: null),
+      ),
+    ]);
+    final ids = profiles.map((profile) => profile.id).toList();
+    return Isolate.run(() {
+      final builder = BytesBuilder(copy: false)..add(utf8.encode(meta));
+      for (final id in ids) {
+        final file = File(join(profilesPath, '$id.yaml'));
+        if (!file.existsSync()) continue;
+        final bytes = file.readAsBytesSync();
+        builder
+          ..add(utf8.encode('\n$id:${bytes.length}\n'))
+          ..add(bytes);
+      }
+      return sha256.convert(builder.takeBytes()).toString();
+    });
+  }
+
+  Future<bool> backupToWebDAV(DAVClient client, DAV dav) async {
+    final fingerprint = await _webDAVBackupFingerprint(dav);
+    final data = await backupData(
+      sharedOnly: true,
+      password: _ref.read(
+        appSettingProvider.select((state) => state.backupPassword),
+      ),
+    );
+    final res = await client.backup(Uint8List.fromList(data));
+    if (res) {
+      final prefs = await preferences.sharedPreferencesCompleter.future;
+      await prefs?.setString(_autoBackupFingerprintKey, fingerprint);
+    }
+    return res;
+  }
+
+  void autoBackupDebounce() {
+    if (_isAutoBackupSuppressed) return;
+    if (_ref.read(appDAVSettingProvider)?.autoBackup != true) return;
+    debouncer.call(FunctionTag.autoBackup, () {
+      _isAutoBackupPending = true;
+      unawaited(flushAutoBackup());
+    }, duration: const Duration(seconds: 10));
+  }
+
+  Future<void> flushAutoBackup() async {
+    if (!_isAutoBackupPending ||
+        _isAutoBackupRunning ||
+        _isAutoBackupSuppressed) {
+      return;
+    }
+    final lifecycleState = WidgetsBinding.instance.lifecycleState;
+    if (lifecycleState != null && lifecycleState != AppLifecycleState.resumed) {
+      return;
+    }
+    final dav = _ref.read(appDAVSettingProvider);
+    _isAutoBackupPending = false;
+    if (dav == null || !dav.autoBackup) return;
+    _isAutoBackupRunning = true;
+    try {
+      final fingerprint = await _webDAVBackupFingerprint(dav);
+      final prefs = await preferences.sharedPreferencesCompleter.future;
+      if (prefs?.getString(_autoBackupFingerprintKey) == fingerprint) {
+        commonPrint.log('Auto backup skipped: no changes');
+        return;
+      }
+      final res = await backupToWebDAV(DAVClient(dav), dav);
+      if (res) {
+        commonPrint.log('Auto backup finished');
+        globalState.showNotifier(appLocalizations.autoBackupSuccess);
+      }
+    } catch (e) {
+      commonPrint.error('Auto backup failed: ${e.formatErrorLog}');
+      globalState.showNotifier(
+        appLocalizations.autoBackupFailed(e.formatError),
+      );
+    } finally {
+      _isAutoBackupRunning = false;
+    }
+    if (_isAutoBackupPending) {
+      unawaited(flushAutoBackup());
+    }
+  }
+
   Future<void> updateTray([
     bool focus = false,
     bool silent = false,
@@ -2508,65 +2629,123 @@ class AppController {
     await tray.showContextMenu(trayState: trayState, groups: groups);
   }
 
-  Future<void> _processRecoveryArchive(
-    Future<Archive> Function() getArchive,
+  Future<String?> _requestBackupPassword(bool wrong) async {
+    if (wrong) {
+      globalState.showNotifier(appLocalizations.backupPasswordWrong);
+    }
+    final loading = _ref.read(loadingProvider);
+    if (loading) {
+      _ref.read(loadingProvider.notifier).value = false;
+    }
+    final password = await globalState.showCommonDialog<String>(
+      child: InputDialog(
+        title: appLocalizations.backupPassword,
+        value: '',
+        hintText: appLocalizations.backupPasswordRequired,
+        obscureText: true,
+        autofocus: true,
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return appLocalizations.emptyTip(appLocalizations.password);
+          }
+          return null;
+        },
+      ),
+    );
+    if (loading) {
+      _ref.read(loadingProvider.notifier).value = true;
+    }
+    return password;
+  }
+
+  Future<({bool decrypted})?> _processRecoveryArchive(
+    Future<({Archive archive, bool encrypted})> Function(String? password)
+    getArchive,
     RecoveryOption recoveryOption, {
     bool sharedOnly = false,
   }) async {
+    final savedPassword = _ref.read(
+      appSettingProvider.select((state) => state.backupPassword),
+    );
+    String? password = savedPassword.isEmpty ? null : savedPassword;
+    var userInput = false;
+    _isAutoBackupSuppressed = true;
     try {
-      final archive = await getArchive();
-      commonPrint.log('Archive decoded: ${archive.files.length} files');
-      await _recoveryFromArchive(
-        archive,
-        recoveryOption,
-        sharedOnly: sharedOnly,
-      );
+      while (true) {
+        try {
+          final (:archive, :encrypted) = await getArchive(password);
+          commonPrint.log('Archive decoded: ${archive.files.length} files');
+          await _recoveryFromArchive(
+            archive,
+            recoveryOption,
+            sharedOnly: sharedOnly,
+          );
+          if (userInput && password != null && savedPassword.isEmpty) {
+            final value = password;
+            _ref
+                .read(appSettingProvider.notifier)
+                .updateState((state) => state.copyWith(backupPassword: value));
+          }
+          return (decrypted: encrypted);
+        } on BackupPasswordException catch (e) {
+          final value = await _requestBackupPassword(e.wrong && userInput);
+          if (value == null) return null;
+          password = value;
+          userInput = true;
+        }
+      }
     } catch (e) {
       commonPrint.error('Recovery failed: $e');
       throw 'Backup file is corrupted or invalid: $e';
+    } finally {
+      debouncer.cancel(FunctionTag.autoBackup);
+      _isAutoBackupPending = false;
+      _isAutoBackupSuppressed = false;
     }
   }
 
   /// Restore data from bytes
-  Future<void> recoveryData(
+  Future<({bool decrypted})?> recoveryData(
     List<int> data,
     RecoveryOption recoveryOption, {
     bool sharedOnly = false,
   }) async {
     commonPrint.log('Starting recovery from bytes: ${data.length} bytes');
-    await _processRecoveryArchive(
-      () => Isolate.run<Archive>(() {
-        final zipDecoder = ZipDecoder();
-        return zipDecoder.decodeBytes(data);
-      }),
+    return _processRecoveryArchive(
+      (password) => Isolate.run(
+        () => decodeBackupArchive(InputMemoryStream(data), password),
+      ),
       recoveryOption,
       sharedOnly: sharedOnly,
     );
   }
 
   /// Restore data from file path
-  Future<void> recoveryDataFromFile(
+  Future<({bool decrypted})?> recoveryDataFromFile(
     String path,
     RecoveryOption recoveryOption,
   ) async {
     commonPrint.log('Starting recovery from file: $path');
-    await _processRecoveryArchive(
-      () => Isolate.run<Archive>(() {
+    return _processRecoveryArchive(
+      (password) => Isolate.run(() {
         try {
           final input = InputFileStream(path);
-          final zipDecoder = ZipDecoder();
-          final result = zipDecoder.decodeStream(input);
-          input.close();
-          if (result.files.isNotEmpty) {
-            return result;
+          try {
+            final result = decodeBackupArchive(input, password);
+            if (result.archive.files.isNotEmpty) {
+              return result;
+            }
+          } finally {
+            input.close();
           }
+        } on BackupPasswordException {
+          rethrow;
         } catch (e) {
           commonPrint.warn('Stream decoding failed: $e');
         }
 
         final bytes = File(path).readAsBytesSync();
-        final zipDecoder = ZipDecoder();
-        return zipDecoder.decodeBytes(bytes);
+        return decodeBackupArchive(InputMemoryStream(bytes), password);
       }),
       recoveryOption,
     );
@@ -2966,8 +3145,11 @@ class AppController {
 
       // 2. App settings
       final backupAppSetting = config.appSetting;
+      final currentAppSetting = _ref.read(appSettingProvider);
 
       _ref.read(appSettingProvider.notifier).value = backupAppSetting.copyWith(
+        backupPassword: currentAppSetting.backupPassword,
+        recoveryStrategy: currentAppSetting.recoveryStrategy,
         mobileDashboardWidgets: backupAppSetting.mobileDashboardWidgets,
         desktopDashboardWidgets: backupAppSetting.desktopDashboardWidgets,
         dashboardWidgets: system.isAndroid
@@ -2980,7 +3162,9 @@ class AppController {
           config.currentProfileId;
 
       // 4. Restore WebDAV settings
-      _ref.read(appDAVSettingProvider.notifier).value = config.dav;
+      if (config.dav case final dav?) {
+        _ref.read(appDAVSettingProvider.notifier).value = dav;
+      }
 
       // 5. Restore theme settings
       _ref.read(themeSettingProvider.notifier).value = config.themeProps;
@@ -3027,12 +3211,24 @@ class AppController {
 
       // 11. Restore script settings
       final scriptIds = config.scriptProps.scripts.map((e) => e.id).toSet();
-      for (final script in _ref.read(scriptStateProvider).scripts) {
-        if (!scriptIds.contains(script.id)) {
+      final currentScriptProps = _ref.read(scriptStateProvider);
+      final localScripts = currentScriptProps.scripts.where(
+        (script) => !scriptIds.contains(script.id),
+      );
+      if (_ref.read(appSettingProvider).recoveryStrategy ==
+          RecoveryStrategy.override) {
+        for (final script in localScripts) {
           unawaited(script.deleteContent());
         }
+        _ref.read(scriptStateProvider.notifier).value = config.scriptProps;
+      } else {
+        _ref.read(scriptStateProvider.notifier).value = config.scriptProps
+            .copyWith(
+              currentId:
+                  config.scriptProps.currentId ?? currentScriptProps.currentId,
+              scripts: [...config.scriptProps.scripts, ...localScripts],
+            );
       }
-      _ref.read(scriptStateProvider.notifier).value = config.scriptProps;
     }
 
     // Ensure current profile exists

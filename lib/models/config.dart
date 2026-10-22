@@ -116,6 +116,7 @@ List<DashboardWidget> desktopDashboardWidgetsSafeFromJson(
 const List<SidebarFlyoutEntry> defaultSidebarFlyoutEntries = [
   SidebarFlyoutEntry.resources,
   SidebarFlyoutEntry.script,
+  SidebarFlyoutEntry.toolbox,
   SidebarFlyoutEntry.theme,
   SidebarFlyoutEntry.basicConfig,
   SidebarFlyoutEntry.otherSettings,
@@ -218,6 +219,7 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(false) bool hidden,
     @Default(false) bool developerMode,
     @Default(RecoveryStrategy.compatible) RecoveryStrategy recoveryStrategy,
+    @Default('') String backupPassword,
     @Default(false) bool enableHighPriority,
     @Default(true) bool sidebarCollapsed,
     @Default(false) bool sidebarFlyout,
@@ -227,6 +229,16 @@ abstract class AppSettingProps with _$AppSettingProps {
     @JsonKey(fromJson: sidebarFlyoutEntriesSafeFromJson)
     List<SidebarFlyoutEntry> sidebarFlyoutEntries,
     String? dashboardTitle,
+    @Default(<String>[]) List<String> toolboxTiles,
+    @Default(false) bool mrsCopyRawLink,
+    @JsonKey(unknownEnumValue: MrsRawSource.bettRules)
+    @Default(MrsRawSource.bettRules)
+    MrsRawSource mrsRawSource,
+    @Default(true) bool mrsResolveDns,
+    @Default(IperfOptions()) IperfOptions iperfOptions,
+    @Default(LocalPingOptions()) LocalPingOptions localPingOptions,
+    @Default(<String, String>{}) Map<String, String> mobileDashboardSizes,
+    @Default(<String, String>{}) Map<String, String> desktopDashboardSizes,
   }) = _AppSettingProps;
 
   factory AppSettingProps.fromJson(Map<String, Object?> json) =>

@@ -1,18 +1,18 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:bett_box/state.dart';
-import 'package:bett_box/views/dashboard/widgets/start_button.dart';
-import 'package:flutter/foundation.dart';
-
-import 'package:defer_pointer/defer_pointer.dart';
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/models.dart';
 import 'package:bett_box/providers/providers.dart';
+import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:defer_pointer/defer_pointer.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+
+import 'widgets/widgets.dart';
 
 typedef _IsEditWidgetBuilder = Widget Function(bool isEdit);
 
@@ -24,10 +24,8 @@ class DashboardView extends ConsumerStatefulWidget {
 }
 
 class _DashboardViewState extends ConsumerState<DashboardView> {
-  final key = GlobalKey<SuperGridState>();
   final GlobalKey<_DashboardStartSwitchState> _startSwitchKey = GlobalKey();
   final _isEditNotifier = ValueNotifier<bool>(false);
-  final _addedWidgetsNotifier = ValueNotifier<List<GridItem>>([]);
   final _menuOpenNotifier = ValueNotifier<bool>(false);
 
   @override
@@ -51,44 +49,109 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
       globalState.focusDashboardStartSwitch = null;
     }
     _isEditNotifier.dispose();
-    _addedWidgetsNotifier.dispose();
     _menuOpenNotifier.dispose();
     super.dispose();
   }
 
   Widget _buildIsEdit(_IsEditWidgetBuilder builder) {
-    return ValueListenableBuilder(
+    return ValueListenableBuilder<bool>(
       valueListenable: _isEditNotifier,
-      builder: (_, isEdit, _) {
-        return builder(isEdit);
-      },
+      builder: (_, isEdit, _) => builder(isEdit),
     );
   }
 
-  List<Widget> _buildActions() {
-    final showStartSwitch = ref.watch(
-      appSettingProvider.select((state) => state.showStartSwitch),
-    );
-    final isDark = ref.watch(currentBrightnessProvider) == Brightness.dark;
+  List<DashboardWidget> _addableWidgets(List<DashboardWidget> current) {
+    final families = {for (final item in current) item.family};
+    return [
+      for (final item in DashboardWidget.values)
+        if (item == item.family &&
+            !families.contains(item) &&
+            item.platforms.contains(SupportPlatform.currentPlatform))
+          item,
+    ];
+  }
+
+  List<DashboardWidget> _currentWidgets() =>
+      ref.read(dashboardStateProvider).dashboardWidgets;
+
+  Map<String, String> _currentSizes() => ref.read(
+    appSettingProvider.select(
+      (state) => system.isAndroid
+          ? state.mobileDashboardSizes
+          : state.desktopDashboardSizes,
+    ),
+  );
+
+  void _saveWidgets(
+    List<DashboardWidget> dashboardWidgets, {
+    Map<String, String>? sizes,
+  }) {
+    ref
+        .read(appSettingProvider.notifier)
+        .updateState(
+          (state) => system.isAndroid
+              ? state.copyWith(
+                  mobileDashboardWidgets: dashboardWidgets,
+                  dashboardWidgets: dashboardWidgets,
+                  mobileDashboardSizes: sizes ?? state.mobileDashboardSizes,
+                )
+              : state.copyWith(
+                  desktopDashboardWidgets: dashboardWidgets,
+                  dashboardWidgets: dashboardWidgets,
+                  desktopDashboardSizes: sizes ?? state.desktopDashboardSizes,
+                ),
+        );
+  }
+
+  Map<String, String> _sizesWithout(DashboardWidget widget) =>
+      {..._currentSizes()}..remove(widget.family.name);
+
+  void _resizeWidget(DashboardTile tile) {
+    final sizes = tile.widget.sizes;
+    final next = sizes[(sizes.indexOf(tile.size) + 1) % sizes.length];
+    final widget = tile.widget.variantFor(next);
+    final nextSizes = _sizesWithout(widget);
+    if (widget.nativeSize != next) nextSizes[widget.family.name] = next.name;
+    _saveWidgets([
+      for (final item in _currentWidgets()) item == tile.widget ? widget : item,
+    ], sizes: nextSizes);
+  }
+
+  void _deleteWidget(DashboardTile tile) {
+    _saveWidgets([
+      for (final item in _currentWidgets())
+        if (item != tile.widget) item,
+    ], sizes: _sizesWithout(tile.widget));
+  }
+
+  void _moveWidget(DashboardTile from, DashboardTile to) {
+    final widgets = [..._currentWidgets()];
+    final source = widgets.indexOf(from.widget);
+    final target = widgets.indexOf(to.widget);
+    if (source < 0 || target < 0 || source == target) return;
+    widgets.insert(target, widgets.removeAt(source));
+    _saveWidgets(widgets);
+  }
+
+  List<Widget> _buildActions(bool showStartSwitch, bool isDark) {
     return [
       _buildIsEdit((isEdit) {
-        return isEdit
-            ? ValueListenableBuilder(
-                valueListenable: _addedWidgetsNotifier,
-                builder: (_, addedChildren, child) {
-                  if (addedChildren.isEmpty) {
-                    return Container();
-                  }
-                  return child!;
-                },
-                child: IconButton(
-                  onPressed: () {
-                    _showAddWidgetsModal();
-                  },
-                  icon: Icon(Icons.add_circle),
-                ),
-              )
-            : SizedBox();
+        if (!isEdit) return const SizedBox.shrink();
+        return Consumer(
+          builder: (_, ref, child) {
+            final addable = _addableWidgets(
+              ref.watch(dashboardStateProvider).dashboardWidgets,
+            );
+            if (addable.isEmpty || child == null) {
+              return const SizedBox.shrink();
+            }
+            return child;
+          },
+          child: IconButton(
+            onPressed: _showAddWidgetsModal,
+            icon: const Icon(Icons.add_circle),
+          ),
+        );
       }),
       _buildIsEdit((isEdit) {
         if (isEdit) {
@@ -109,7 +172,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
               },
               tooltip: appLocalizations.more,
               icon: showStartSwitch
-                  ? ValueListenableBuilder(
+                  ? ValueListenableBuilder<bool>(
                       valueListenable: _menuOpenNotifier,
                       builder: (_, isOpen, _) => _MenuDots(isOpen: isOpen),
                     )
@@ -163,15 +226,23 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   void _showAddWidgetsModal() {
     showSheet(
       builder: (_, type) {
-        return ValueListenableBuilder(
-          valueListenable: _addedWidgetsNotifier,
-          builder: (_, value, _) {
+        return Consumer(
+          builder: (_, ref, _) {
+            final current = ref.watch(dashboardStateProvider).dashboardWidgets;
             return AdaptiveSheetScaffold(
               type: type,
               body: _AddDashboardWidgetModal(
-                items: value,
+                items: [
+                  for (final item in _addableWidgets(current)) item.widget,
+                ],
                 onAdd: (gridItem) {
-                  key.currentState?.handleAdd(gridItem);
+                  final widget = DashboardWidget.values.firstWhere(
+                    (item) => item.widget == gridItem,
+                  );
+                  _saveWidgets([
+                    ..._currentWidgets(),
+                    widget,
+                  ], sizes: _sizesWithout(widget));
                 },
               ),
               title: appLocalizations.add,
@@ -193,8 +264,9 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     globalState.showNotifier(appLocalizations.success);
   }
 
-  void _showEditTitleDialog() async {
-    final currentTitle = ref.read(appSettingProvider).dashboardTitle ?? '';
+  Future<void> _showEditTitleDialog() async {
+    final currentTitle =
+        ref.read(appSettingProvider.select((s) => s.dashboardTitle)) ?? '';
     final title = await globalState.showCommonDialog<String>(
       child: _DashboardTitleDialog(initialValue: currentTitle),
     );
@@ -209,64 +281,41 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   }
 
   void _handleUpdateIsEdit() {
-    if (_isEditNotifier.value == true) {
-      _handleSave();
-    }
     _isEditNotifier.value = !_isEditNotifier.value;
-  }
-
-  void _handleSave() {
-    final children = key.currentState?.children;
-    if (children == null) {
-      return;
-    }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final dashboardWidgets = children
-          .map((item) => DashboardWidget.getDashboardWidget(item))
-          .toList();
-      ref
-          .read(appSettingProvider.notifier)
-          .updateState(
-            (state) => system.isAndroid
-                ? state.copyWith(
-                    mobileDashboardWidgets: dashboardWidgets,
-                    dashboardWidgets: dashboardWidgets,
-                  )
-                : state.copyWith(
-                    desktopDashboardWidgets: dashboardWidgets,
-                    dashboardWidgets: dashboardWidgets,
-                  ),
-          );
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final dashboardState = ref.watch(dashboardStateProvider);
-    final spacing = 12.mAp;
+    final dashboardWidgets = ref.watch(
+      dashboardStateProvider.select((state) => state.dashboardWidgets),
+    );
     final isMobileView = ref.watch(isMobileViewProvider);
-    final children = [
-      ...dashboardState.dashboardWidgets
-          .where(
-            (item) => item.platforms.contains(SupportPlatform.currentPlatform),
-          )
-          .map((item) => item.widget),
+    final (customTitle, showStartSwitch) = ref.watch(
+      appSettingProvider.select(
+        (state) => (state.dashboardTitle, state.showStartSwitch),
+      ),
+    );
+    final isDark = ref.watch(
+      currentBrightnessProvider.select(
+        (brightness) => brightness == Brightness.dark,
+      ),
+    );
+
+    final spacing = 12.mAp;
+    final sizes = ref.watch(
+      appSettingProvider.select(
+        (state) => system.isAndroid
+            ? state.mobileDashboardSizes
+            : state.desktopDashboardSizes,
+      ),
+    );
+    final children = <DashboardTile>[
+      for (final item in dashboardWidgets)
+        if (item.platforms.contains(SupportPlatform.currentPlatform))
+          (widget: item, size: resolveDashboardSize(item, sizes)),
     ];
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      _addedWidgetsNotifier.value = DashboardWidget.values
-          .where(
-            (item) =>
-                !children.contains(item.widget) &&
-                item.platforms.contains(SupportPlatform.currentPlatform),
-          )
-          .map((item) => item.widget)
-          .toList();
-    });
-    final title =
-        ref.watch(appSettingProvider.select((s) => s.dashboardTitle)) ??
-        appLocalizations.dashboard;
+
+    final title = customTitle ?? appLocalizations.dashboard;
     return CommonScaffold(
       title: title,
       titleWidget: globalState.isPre
@@ -286,7 +335,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
               ],
             )
           : null,
-      actions: _buildActions(),
+      actions: _buildActions(showStartSwitch, isDark),
       floatingActionButton: system.isAndroid && !globalState.isAndroidTV
           ? Padding(
               padding: EdgeInsets.only(
@@ -309,11 +358,10 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
               final int columns = isMobileView
                   ? 8
                   : DashboardGridBand.of(contentWidth).columns;
-              final verticalPadding =
-                  32.0 +
-                  (isMobileView
-                      ? getFloatingBottomBarReserveHeight(context)
-                      : 0);
+              final bottomReserve = isMobileView
+                  ? getFloatingBottomBarReserveHeight(context)
+                  : 0.0;
+              final verticalPadding = 32.0 + bottomReserve;
               final unitHeight = dashboardUnitHeight(
                 contentWidth,
                 availableHeight: constraints.hasBoundedHeight
@@ -328,60 +376,56 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                   maxWidth: dashboardMaxGridWidth,
                 ),
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.all(16).copyWith(
-                    top: 16 + rise,
-                    bottom:
-                        16 +
-                        (isMobileView
-                            ? getFloatingBottomBarReserveHeight(context)
-                            : 0) +
-                        (system.isAndroid ? 72.0 : 0.0),
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    16 + rise,
+                    16,
+                    16 +
+                        bottomReserve +
+                        (system.isAndroid && !globalState.isAndroidTV
+                            ? 72.0
+                            : 0.0),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _buildIsEdit((isEdit) {
-                        if (isEdit) {
-                          return SystemBackBlock(
-                            child: CommonPopScope(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SuperGrid(
-                                    key: key,
-                                    crossAxisCount: columns,
-                                    crossAxisSpacing: spacing,
-                                    mainAxisSpacing: spacing,
-                                    children: [
-                                      ...dashboardState.dashboardWidgets
-                                          .where(
-                                            (item) => item.platforms.contains(
-                                              SupportPlatform.currentPlatform,
-                                            ),
-                                          )
-                                          .map((item) => item.widget),
-                                    ],
-                                    onUpdate: () {
-                                      _handleSave();
-                                    },
-                                  ),
-                                ],
-                              ),
-                              onPop: () {
-                                _handleUpdateIsEdit();
-                                return false;
-                              },
-                            ),
-                          );
-                        } else {
-                          return Grid(
-                            crossAxisCount: columns,
-                            crossAxisSpacing: spacing,
-                            mainAxisSpacing: spacing,
-                            children: [...children],
-                          );
-                        }
-                      }),
+                      _buildIsEdit(
+                        (isEdit) => isEdit
+                            ? SystemBackBlock(
+                                child: CommonPopScope(
+                                  onPop: () {
+                                    _handleUpdateIsEdit();
+                                    return false;
+                                  },
+                                  child: const SizedBox.shrink(),
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                      _buildIsEdit(
+                        (isEdit) => EditableGrid<DashboardTile>(
+                          key: const ValueKey('dashboard-grid'),
+                          items: children,
+                          editing: isEdit,
+                          crossAxisCount: columns,
+                          crossAxisSpacing: spacing,
+                          mainAxisSpacing: spacing,
+                          keyOf: (tile) => tile.widget.family,
+                          crossAxisCellCountOf: (tile) => tile.size.cross * 4,
+                          itemBuilder: (_, tile) => buildDashboardTile(tile),
+                          canResize: (tile) => tile.widget.resizable,
+                          onResize: _resizeWidget,
+                          canDelete: (tile) => tile.widget.widget.isDeletable,
+                          onDelete: _deleteWidget,
+                          onMove: _moveWidget,
+                          overlayWrapper: (child) => DashboardWidgetMetrics(
+                            unitHeight: unitHeight,
+                            spacing: spacing,
+                            columns: columns,
+                            child: child,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -429,7 +473,7 @@ List<GridItem> packGridItems(List<GridItem> items, int totalColumns) {
 
 class _AddDashboardWidgetModal extends StatelessWidget {
   final List<GridItem> items;
-  final Function(GridItem item) onAdd;
+  final void Function(GridItem item) onAdd;
 
   const _AddDashboardWidgetModal({required this.items, required this.onAdd});
 
@@ -444,25 +488,27 @@ class _AddDashboardWidgetModal extends StatelessWidget {
       columns: columns,
       child: DeferredPointerHandler(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            16,
+            16,
+            16 + MediaQuery.paddingOf(context).bottom,
+          ),
           child: Grid(
             crossAxisCount: columns,
             crossAxisSpacing: spacing,
             mainAxisSpacing: spacing,
-            children: packedItems
-                .map(
-                  (item) => item.wrap(
-                    builder: (child) {
-                      return _AddedContainer(
-                        onAdd: () {
-                          onAdd(item);
-                        },
-                        child: child,
-                      );
-                    },
-                  ),
-                )
-                .toList(),
+            children: [
+              for (final item in packedItems)
+                item.wrap(
+                  builder: (child) {
+                    return _AddedContainer(
+                      onAdd: () => onAdd(item),
+                      child: child,
+                    );
+                  },
+                ),
+            ],
           ),
         ),
       ),
@@ -470,43 +516,18 @@ class _AddDashboardWidgetModal extends StatelessWidget {
   }
 }
 
-class _AddedContainer extends StatefulWidget {
+class _AddedContainer extends StatelessWidget {
   final Widget child;
   final VoidCallback onAdd;
 
   const _AddedContainer({required this.child, required this.onAdd});
 
   @override
-  State<_AddedContainer> createState() => _AddedContainerState();
-}
-
-class _AddedContainerState extends State<_AddedContainer> {
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  void didUpdateWidget(_AddedContainer oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.child != widget.child) {}
-  }
-
-  Future<void> _handleAdd() async {
-    widget.onAdd();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        ActivateBox(child: widget.child),
+        ActivateBox(child: child),
         Positioned(
           top: -8,
           right: -8,
@@ -516,9 +537,9 @@ class _AddedContainerState extends State<_AddedContainer> {
               height: 24,
               child: IconButton.filled(
                 iconSize: 20,
-                padding: EdgeInsets.all(2),
-                onPressed: _handleAdd,
-                icon: Icon(Icons.add),
+                padding: const EdgeInsets.all(2),
+                onPressed: onAdd,
+                icon: const Icon(Icons.add),
               ),
             ),
           ),
@@ -558,13 +579,12 @@ class _DashboardTitleDialogState extends State<_DashboardTitleDialog> {
     for (int i = 0; i < value.length; i++) {
       len += value.codeUnitAt(i) > 127 ? 2 : 1;
     }
-    setState(() {
-      if (len > 20) {
-        _errorText = appLocalizations.titleTooLong;
-      } else {
-        _errorText = null;
-      }
-    });
+    final nextErrorText = len > 20 ? appLocalizations.titleTooLong : null;
+    if (nextErrorText != _errorText) {
+      setState(() {
+        _errorText = nextErrorText;
+      });
+    }
   }
 
   @override
@@ -639,7 +659,7 @@ class _DashboardStartSwitchState extends ConsumerState<_DashboardStartSwitch> {
     _focusNode?.requestFocus();
   }
 
-  void _handleStart() async {
+  Future<void> _handleStart() async {
     if (_isDisabled) return;
     final isStart = ref.read(runTimeProvider) != null;
     final newState = !isStart;
@@ -664,16 +684,19 @@ class _DashboardStartSwitchState extends ConsumerState<_DashboardStartSwitch> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(startButtonSelectorStateProvider);
+    final (isInit, hasProfile) = ref.watch(
+      startButtonSelectorStateProvider.select(
+        (state) => (state.isInit, state.hasProfile),
+      ),
+    );
     final isRestarting = ref.watch(isRestartingCoreProvider);
     final isSmartStopped = ref.watch(isSmartStoppedProvider);
-    final runTime = ref.watch(runTimeProvider);
-    final isStart = runTime != null;
+    final isStart = ref.watch(runTimeProvider.select((state) => state != null));
     final displayStart = isSmartStopped ? false : (_optimisticStart ?? isStart);
 
     final canPress =
-        state.isInit &&
-        state.hasProfile &&
+        isInit &&
+        hasProfile &&
         !_isDisabled &&
         !isRestarting &&
         !isSmartStopped;
@@ -681,7 +704,7 @@ class _DashboardStartSwitchState extends ConsumerState<_DashboardStartSwitch> {
     final colorScheme = context.colorScheme;
     final isLight = colorScheme.brightness == Brightness.light;
     final isBusy = _isDisabled || isRestarting;
-    final isAvailable = state.isInit && state.hasProfile && !isSmartStopped;
+    final isAvailable = isInit && hasProfile && !isSmartStopped;
     final (style, onLabel, offLabel) = ref.watch(
       appSettingProvider.select(
         (state) => (
@@ -715,6 +738,7 @@ class _DashboardStartSwitchState extends ConsumerState<_DashboardStartSwitch> {
     final iconColor = displayStart
         ? colorScheme.primary
         : colorScheme.onSurfaceVariant;
+    final labelMediumStyle = context.textTheme.labelMedium;
     final labels = [
       (
         offLabel ?? appLocalizations.disabled,
@@ -768,9 +792,7 @@ class _DashboardStartSwitchState extends ConsumerState<_DashboardStartSwitch> {
                           child: Text(
                             label,
                             maxLines: 1,
-                            style: context.textTheme.labelMedium?.copyWith(
-                              color: color,
-                            ),
+                            style: labelMediumStyle?.copyWith(color: color),
                           ),
                         ),
                     ],
@@ -788,11 +810,13 @@ class _DashboardStartSwitchState extends ConsumerState<_DashboardStartSwitch> {
                     dimension: 20,
                     child: Center(
                       child: isBusy
-                          ? SizedBox.square(
-                              dimension: 14,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: iconColor,
+                          ? RepaintBoundary(
+                              child: SizedBox.square(
+                                dimension: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: iconColor,
+                                ),
                               ),
                             )
                           : Icon(
@@ -849,17 +873,19 @@ class _MenuDots extends ConsumerWidget {
     final isStart = ref.watch(runTimeProvider.select((value) => value != null));
     final colorScheme = context.colorScheme;
     final color = IconTheme.of(context).color ?? colorScheme.onSurfaceVariant;
-    return AnimatedRotation(
-      turns: isOpen ? 0.125 : 0,
-      duration: midDuration,
-      curve: Curves.easeOutBack,
-      child: TweenAnimationBuilder<Color?>(
-        tween: ColorTween(end: isStart ? colorScheme.primary : color),
+    return RepaintBoundary(
+      child: AnimatedRotation(
+        turns: isOpen ? 0.125 : 0,
         duration: midDuration,
-        builder: (_, accent, _) => SizedBox.square(
-          dimension: 24,
-          child: CustomPaint(
-            painter: _MenuDotsPainter(color: color, accent: accent ?? color),
+        curve: Curves.easeOutBack,
+        child: TweenAnimationBuilder<Color?>(
+          tween: ColorTween(end: isStart ? colorScheme.primary : color),
+          duration: midDuration,
+          builder: (_, accent, _) => SizedBox.square(
+            dimension: 24,
+            child: CustomPaint(
+              painter: _MenuDotsPainter(color: color, accent: accent ?? color),
+            ),
           ),
         ),
       ),
@@ -868,6 +894,8 @@ class _MenuDots extends ConsumerWidget {
 }
 
 class _MenuDotsPainter extends CustomPainter {
+  static final Paint _paint = Paint();
+
   final Color color;
   final Color accent;
 
@@ -878,22 +906,27 @@ class _MenuDotsPainter extends CustomPainter {
     const radius = 2.6;
     const distance = 5.2;
     final center = size.center(Offset.zero);
-    final paint = Paint()..color = color;
+    _paint.color = color;
     canvas.drawCircle(
       center + const Offset(-distance, -distance),
       radius,
-      paint,
+      _paint,
     );
     canvas.drawCircle(
       center + const Offset(-distance, distance),
       radius,
-      paint,
+      _paint,
     );
-    canvas.drawCircle(center + const Offset(distance, distance), radius, paint);
+    canvas.drawCircle(
+      center + const Offset(distance, distance),
+      radius,
+      _paint,
+    );
+    _paint.color = accent;
     canvas.drawCircle(
       center + const Offset(distance, -distance),
       radius,
-      Paint()..color = accent,
+      _paint,
     );
   }
 

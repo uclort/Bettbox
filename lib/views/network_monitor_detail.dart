@@ -432,7 +432,7 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
           value: [
             remote,
             monitorClock(item.start),
-            if (duration != null) duration,
+            ?duration,
           ].join(' · '),
         ),
     ];

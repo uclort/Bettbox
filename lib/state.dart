@@ -77,6 +77,7 @@ class GlobalState {
   int _taskLoopToken = 0;
   bool _isExecutingTasks = false;
   bool _needsTaskRestart = false;
+  Timer? _backgroundCoreGcTimer;
   Timer? _backgroundCleanupTimer;
   final Lock _scriptEvaluateLock = Lock();
   bool isInit = false;
@@ -250,6 +251,9 @@ class GlobalState {
 
   bool get isAndroidTV => _isAndroidTV ?? false;
 
+  @visibleForTesting
+  set isAndroidTV(bool value) => _isAndroidTV = value;
+
   String get ua => config.patchClashConfig.globalUa ?? packageInfo.ua;
 
   Future<void> startUpdateTasks([UpdateTasks? tasks]) async {
@@ -314,6 +318,7 @@ class GlobalState {
     }
     if (!backgroundMode.value) {
       backgroundMode.value = true;
+      windows?.setBackgroundMemoryPriority(true);
       _scheduleBackgroundCleanup();
     }
     render?.pause();
@@ -337,6 +342,9 @@ class GlobalState {
       return;
     }
     backgroundMode.value = false;
+    windows?.setBackgroundMemoryPriority(false);
+    _backgroundCoreGcTimer?.cancel();
+    _backgroundCoreGcTimer = null;
     _backgroundCleanupTimer?.cancel();
     _backgroundCleanupTimer = null;
     _syncVpnState();
@@ -378,14 +386,50 @@ class GlobalState {
   }
 
   void _scheduleBackgroundCleanup() {
+    _backgroundCoreGcTimer?.cancel();
+    _backgroundCoreGcTimer = Timer(const Duration(seconds: 30), () {
+      _backgroundCoreGcTimer = null;
+      if (!backgroundMode.value) {
+        return;
+      }
+      _checkAndRunBackgroundCoreGc();
+    });
+
     _backgroundCleanupTimer?.cancel();
-    _backgroundCleanupTimer = Timer(const Duration(minutes: 3), () {
+    _backgroundCleanupTimer = Timer(const Duration(seconds: 300), () {
       _backgroundCleanupTimer = null;
       if (!backgroundMode.value) {
         return;
       }
       cleanupBackgroundResources();
     });
+  }
+
+  Future<void> _checkAndRunBackgroundCoreGc() async {
+    if (!backgroundMode.value) return;
+
+    const threshold = 2 * 1024 * 1024;
+    var consecutiveBusyCount = 0;
+
+    for (var i = 0; i < 3; i++) {
+      if (!backgroundMode.value) return;
+      try {
+        final traffic = await clashCore.getTraffic();
+        if (traffic.down.value > threshold || traffic.speed > threshold) {
+          consecutiveBusyCount++;
+        }
+      } catch (_) {}
+      if (i < 2) {
+        await Future.delayed(const Duration(seconds: 1));
+      }
+    }
+
+    if (consecutiveBusyCount == 3) {
+      return;
+    }
+
+    if (!backgroundMode.value) return;
+    await clashCore.requestGc(forceFreeOSMemory: false);
   }
 
   void cleanupBackgroundResources() async {
@@ -398,9 +442,11 @@ class GlobalState {
     if (!backgroundMode.value) return;
     WidgetsBinding.instance.handleMemoryPressure();
 
-    await Future.delayed(const Duration(milliseconds: 250));
+    await Future.delayed(const Duration(seconds: 3));
     if (!backgroundMode.value) return;
-    await clashCore.requestGc();
+    android?.purgeMemory();
+    system.purgeMemory();
+    windows?.emptyWorkingSet();
   }
 
   Future<void> handleStart([
@@ -922,6 +968,7 @@ class GlobalState {
       'tun': {
         'enable': tun.enable,
         'device': tun.device,
+        if (tun.dnsMode case final dnsMode?) 'dns-mode': dnsMode.name,
         'dns-hijack': tun.dnsHijack.isEmpty ? const ['any:53'] : tun.dnsHijack,
         'stack': tun.stack.name,
         'congestion-controller': tun.congestionController.name,
@@ -945,8 +992,6 @@ class GlobalState {
     final overrideData = profile.overrideData;
     final isRussian =
         config.appSetting.locale?.toLowerCase().startsWith('ru') ?? false;
-    final isChinese =
-        config.appSetting.locale?.toLowerCase().startsWith('zh') ?? false;
     final listenPorts = patchConfig.listenPorts;
 
     return {
@@ -962,7 +1007,6 @@ class GlobalState {
         },
       ],
       'override-dns': config.overrideDns,
-      'dns-node-override': isChinese,
       'dns': {
         ...dns.toJson(),
         'nameserver-policy': {
@@ -1411,6 +1455,7 @@ class MediaUnlockStateNotifier {
   static MediaUnlockStateNotifier? _instance;
   final _checker = MediaUnlockChecker();
   int _requestId = 0;
+  int _epoch = 0;
   Timer? _nodeChangeTimer;
   static const _nodeChangeDelay = Duration(milliseconds: 800);
   String? _lastCheckedOutboundNode;
@@ -1445,7 +1490,17 @@ class MediaUnlockStateNotifier {
         .toList();
   }
 
+  void cancelUnattended() {
+    if (globalState.hasMediaUnlockWidget) return;
+    if (!state.value.isLoading && state.value.testingPlatforms.isEmpty) return;
+    _epoch++;
+    _requestId++;
+    _checker.cancel();
+    state.value = state.value.copyWith(isLoading: false);
+  }
+
   void checkSingle(MediaPlatform platform) async {
+    final epoch = _epoch;
     _batchTestingPlatforms.remove(platform);
     if (state.value.testingPlatforms.contains(platform)) return;
     final currentTesting = Set<MediaPlatform>.from(state.value.testingPlatforms)
@@ -1462,6 +1517,7 @@ class MediaUnlockStateNotifier {
               status: MediaUnlockStatus.failed,
             ),
           );
+      if (epoch != _epoch) return;
       final finalMap = Map<MediaPlatform, MediaUnlockResult>.from(
         state.value.results,
       );
@@ -1471,6 +1527,7 @@ class MediaUnlockStateNotifier {
         lastChecked: DateTime.now(),
       );
     } catch (_) {
+      if (epoch != _epoch) return;
       final finalMap = Map<MediaPlatform, MediaUnlockResult>.from(
         state.value.results,
       );

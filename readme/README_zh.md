@@ -4,17 +4,17 @@
 
 <h1 align="center">⚡ Bettbox</h1>
 <p align="center">
-  <strong>Another Better Mihomo Client</strong>
+  <strong>Another Better Network Toolbox</strong>
 </p>
 
-**Bettbox 是一款多平台的网络分流和 DNS 调试工具，基于强大的 Mihomo 内核深度打造。我们专注于极致的用户体验、严格的隐私安全与细微的功能打磨，致力于提供更加轻量畅快、低资源消耗即可长期稳定运行的现代化客户端体验。**
+**Bettbox 是一款多平台的网络分流和 DNS 调试工具，基于强大的 Mihomo 内核深度打造。我们关注更多的用户体验、严格的隐私安全以及细微的功能打磨，目标致力于提供更加轻量畅快、低资源消耗即可长期稳定运行的现代化客户端。**
 
-秉承 **“Better Experience, Out of the box”（更优体验，亦开箱可用）** 的设计理念，Bettbox 深度挖掘系统与硬件潜能，实现前台高帧率简洁流畅、后台低能耗与低资源占用。项目已率先通过 SignPath 开源基金会的人工审核安全溯源，Windows 端已装载官方权威的 OV 数字签名证书。
+Bettbox 意为：Better Network Toolbox，项目已率先通过 SignPath 开源基金会的人工审核安全溯源，Windows 端已装载官方权威的 OV 数字签名证书。
 
 [![Latest Release](https://img.shields.io/github/v/release/appshubcc/Bettbox?style=for-the-badge&logo=github&color=238636&label=Release)](https://github.com/appshubcc/Bettbox/releases/latest) [![Core](https://img.shields.io/github/v/release/MetaCubeX/mihomo?style=for-the-badge&logo=go&logoColor=white&color=8A2BE2&label=Mihomo)](https://github.com/MetaCubeX/mihomo/releases/latest)
 
 <p align="center">
-  <img src="../snapshots/home.png" alt="Bettbox" />
+  <img src="../snapshots/home.jpg" alt="Bettbox" />
 </p>
 
 ---
@@ -25,14 +25,15 @@
 ---
 ## 🚀 核心特性
 
-* **开箱即用**：完善的权限引导与舒适的 TUN / VPN 体验，预置大量合理优化策略，安装即达最佳可用状态。
-* **轻量畅快**：深度调优系统与渲染管线，前台交互动画高帧率简洁丝滑，移动端低能耗，桌面端低资源占用。
+* **开箱即用**：完善的权限前置逻辑与舒适的 TUN 体验，预置大量合理默认策略，安装即达最佳可用状态。
+* **轻量畅快**：深度调优系统与渲染管线，前台交互动画高帧率简洁丝滑，移动端低能耗，桌面端低后台占用。
 * **安全可信**：内核紧跟 Mihomo 主线，遵循各平台最小权限设计；通过 SignPath 审计并装载 Windows OV 数字签名证书。
-* **稳定容错**：优化多平台极端网络环境下的边界问题，内置双重配置检测验证与保护机制，带来媲美企业级应用的长期稳定性。
+* **稳定容错**：优化多平台极端网络环境下的边界问题，内置双重配置检测验证与保护机制，媲美企业级应用的长期稳定性。
 * **架构优化**：桌面端原生 ARM64 架构深度支持，提供硬件性能分级，同时持续维护面向老旧设备的 Compatible 兼容版本。
-* **智能守护**：支持多平台无感智能启停、移动端低功耗休眠策略、一键禁用 QUIC 以及托盘菜单多维快捷控制。
+* **智能守护**：支持多平台无感智能启停、移动端 Doze 休眠策略、一键禁用 QUIC 以及托盘菜单多维快捷控制。
 * **可视化设置**：提供丰富深入的可视化参数调节界面，支持改动即时生效，摆脱繁琐的手动改写配置负担。
 * **首页小组件**：内置多款设计精良的 Widget 小组件，在首页直观掌控实时网速、连接与全局运行状态。
+* **全能工具箱**：内含多款精致优雅实用的专业级网络与 DNS 分流调试工具，你的网络完全由自己做主。
 * **个性化定制**：支持丰富的色彩主题、自定义图标与标题等，并内置 30 种精美的测速动效。
 * **生态与扩展**：支持外置 JS 覆写脚本的可视化 UI 适配，深度重构的Code-forge高性能编辑器。
 * **零隐私风险**：代码完全透明开源、无广告，全自动化 CI/CD 流程接受全方位审计，零后台隐私收集。
@@ -54,7 +55,7 @@
 
 **Linux社区维护包:**<br>
 * **ArchLinux:** <code>yay -S bettbox-bin</code> 或 <code>paru -S bettbox-bin</code> (由 [lyj404](https://github.com/lyj404/bettbox-aur) 维护)<br>
-* **AMD64=v1 (旧硬件兼容):** <code>yay -S bettbox-compatible-bin</code> 或 <code>paru -S bettbox-compatible-bin</code> (由 [VillagerTom](https://github.com/VillagerTom) 维护)
+* **AMD64=v1 (兼容版):** <code>yay -S bettbox-compatible-bin</code> 或 <code>paru -S bettbox-compatible-bin</code> (由 [VillagerTom](https://github.com/VillagerTom) 维护)
 
 ---
 ## 💡 常见问题

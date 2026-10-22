@@ -264,6 +264,7 @@ class _OutboundStatusChips extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isStart = ref.watch(runTimeProvider.select((value) => value != null));
+    final realTunEnable = ref.watch(realTunEnableProvider);
     final (tunEnable, systemProxyEnable) = system.isAndroid
         ? ref.watch(
             vpnSettingProvider.select(
@@ -283,7 +284,7 @@ class _OutboundStatusChips extends ConsumerWidget {
       children: [
         _StatusChip(
           label: system.isAndroid ? 'VPN' : 'TUN',
-          active: isStart && tunEnable,
+          active: isStart && tunEnable && (system.isAndroid || realTunEnable),
           onTap: () =>
               system.isAndroid ? showVpnSheet(context) : showTunSheet(context),
         ),

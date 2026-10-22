@@ -230,7 +230,7 @@ void main() {
     await AppLocalizations.load(const Locale('zh', 'CN'));
   });
 
-  test('保留上游请求、连接和日志入口，并额外提供网络面板', () {
+  test('保留上游连接和日志入口，并额外提供网络面板', () {
     final items = navigation.getItems(hasProxies: true);
     final labels = items.map((item) => item.label).toSet();
 
@@ -253,11 +253,7 @@ void main() {
       navigationItemLocalizedTitle(embeddedMonitor),
       isNot(PageLabel.networkMonitorView.name),
     );
-    for (final label in [
-      PageLabel.requests,
-      PageLabel.connections,
-      PageLabel.logs,
-    ]) {
+    for (final label in [PageLabel.connections, PageLabel.logs]) {
       expect(labels, contains(label));
       final original = items.singleWhere((item) => item.label == label);
       expect(original.modes, [

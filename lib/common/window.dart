@@ -9,11 +9,12 @@ import 'package:material_ui/material_ui.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:window_ext/window_ext.dart';
 
 class Window {
   Future<void> init() async {
     final props = globalState.config.windowProps;
-    if (system.isWindows) {
+    if (system.isWindows && !appPath.isPortable) {
       protocol.register('clash');
       protocol.register('clashmeta');
       protocol.register('flclash');
@@ -85,8 +86,18 @@ class Window {
     if (!system.isMacOS) {
       await windowManager.setSkipTaskbar(false);
     }
+    await _syncDockIcon(true);
     await globalState.resumeForegroundUpdates();
     await globalState.appController.syncWakelockIfNeeded();
+  }
+
+  Future<void> _syncDockIcon(bool visible) async {
+    if (!system.isMacOS) return;
+    try {
+      await windowExtManager.setDockIconVisible(visible);
+    } catch (e) {
+      commonPrint.warn('Sync dock icon visibility failed: $e');
+    }
   }
 
   Future<bool> get isVisible async {
@@ -113,6 +124,7 @@ class Window {
     if (!system.isMacOS) {
       await windowManager.setSkipTaskbar(true);
     }
+    await _syncDockIcon(false);
     await globalState.handleBackground();
   }
 }

@@ -11,7 +11,6 @@ import 'package:bett_box/models/models.dart';
 import 'package:bett_box/providers/providers.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/views/connection/item.dart';
-import 'package:bett_box/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
@@ -1052,18 +1051,6 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
                   tooltip: _sort == MonitorSort.defaultSort
                       ? '默认排序：活动连接优先，再按总速度、累计总流量、最后活跃降序'
                       : '排序：${monitorSortLabel(_sort)}',
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.sort, size: 20),
-                        const SizedBox(width: 4),
-                        Text(monitorSortLabel(_sort)),
-                        const Icon(Icons.arrow_drop_down),
-                      ],
-                    ),
-                  ),
                   initialValue: _sort,
                   onSelected: (value) => setState(() {
                     _sort = value;
@@ -1092,6 +1079,18 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
                         ),
                       ),
                   ],
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.sort, size: 20),
+                        const SizedBox(width: 4),
+                        Text(monitorSortLabel(_sort)),
+                        const Icon(Icons.arrow_drop_down),
+                      ],
+                    ),
+                  ),
                 ),
               if (_page == MonitorPage.requests ||
                   _page == MonitorPage.connections)

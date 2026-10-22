@@ -142,6 +142,36 @@ class SystemProxyItem extends ConsumerWidget {
   }
 }
 
+
+class AutoSetSystemDnsItem extends ConsumerWidget {
+  const AutoSetSystemDnsItem({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final canSet =
+        ref.watch(runTimeProvider.select((state) => state != null)) &&
+        ref.watch(realTunEnableProvider);
+    final autoSetSystemDns = ref.watch(
+      networkSettingProvider.select((state) => state.autoSetSystemDns),
+    );
+    return ListItem.switchItem(
+      title: Text(appLocalizations.autoSetSystemDns),
+      delegate: SwitchDelegate(
+        value: autoSetSystemDns,
+        onChanged: canSet
+            ? (bool value) async {
+                ref
+                    .read(networkSettingProvider.notifier)
+                    .updateState(
+                      (state) => state.copyWith(autoSetSystemDns: value),
+                    );
+              }
+            : null,
+      ),
+    );
+  }
+}
+
 class StrictRouteItem extends ConsumerWidget {
   const StrictRouteItem({super.key});
 
@@ -684,6 +714,7 @@ class NetworkListView extends ConsumerWidget {
         title: appLocalizations.options,
         items: [
           if (system.isDesktop) const TUNItem(),
+          if (system.isLinux) const AutoSetSystemDnsItem(),
           if (!system.isAndroid) const StrictRouteItem(),
           const IcmpForwardingItem(),
           const DnsHijackItem(),

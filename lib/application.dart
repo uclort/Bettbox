@@ -284,7 +284,16 @@ class ApplicationState extends ConsumerState<Application>
   void _handleConnectivityChanged(List<ConnectivityResult> results) {
     if (!system.isMacOS) {
       if (!results.contains(ConnectivityResult.vpn)) {
-        unawaited(clashCore.closeConnections());
+        unawaited(
+          clashCore.closeConnections().then<void>(
+            (_) {},
+            onError: (Object error) =>
+                commonPrint.log('closeConnections ignored: $error'),
+          ),
+        );
+      }
+      if (system.isLinux) {
+        unawaited(_syncLinuxSystemDns());
       }
       globalState.appController.updateLocalNetwork();
       globalState.appController.addCheckIpNumDebounce();
@@ -294,6 +303,16 @@ class ApplicationState extends ConsumerState<Application>
     unawaited(globalState.appController.updateLocalNetwork());
     if (!_macOSNetworkRecoveryReady) return;
     _scheduleMacOSNetworkRecovery();
+  }
+
+
+  Future<void> _syncLinuxSystemDns() async {
+    await Future.delayed(const Duration(seconds: 1));
+    if (!mounted) return;
+    final isStart = ref.read(runTimeProvider) != null;
+    final tunEnabled = ref.read(realTunEnableProvider);
+    final autoSet = ref.read(networkSettingProvider).autoSetSystemDns;
+    await system.updateDns(!(isStart && tunEnabled && autoSet));
   }
 
   void _handleMacOSSystemWake() {

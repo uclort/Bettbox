@@ -1019,17 +1019,14 @@ jobs:
         run: |
           set -euo pipefail
           app_path="$(find build/macos/Build/Products/Release -maxdepth 1 -name '*.app' -print -quit)"
-          # BETTBOX-CUSTOM: 校验最终产物遵循上游按架构选择的渲染配置。
+          # BETTBOX-CUSTOM: v1.19.7 起上游对全部 macOS 架构关闭 Impeller。
           python3 - "${app_path}/Contents/Info.plist" "${{ matrix.arch }}" <<'PY'
           import plistlib
           import sys
           with open(sys.argv[1], 'rb') as source:
               info = plistlib.load(source)
-          if sys.argv[2] == 'amd64':
-              if info.get('FLTEnableImpeller') is not False:
-                  raise SystemExit('Intel Mac 正式包必须沿用上游关闭 Impeller。')
-          elif 'FLTEnableImpeller' in info:
-              raise SystemExit('Apple Silicon 正式包必须沿用上游 Flutter 默认渲染配置。')
+          if info.get('FLTEnableImpeller') is not False:
+              raise SystemExit('macOS 正式包必须沿用上游关闭 Impeller。')
           print('macOS 正式包上游渲染配置校验通过：' + sys.argv[2])
           PY
           bash .custom-build/scripts/test-macos-updater.sh "${app_path}" "${{ matrix.arch }}"

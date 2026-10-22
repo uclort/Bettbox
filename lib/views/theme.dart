@@ -1,19 +1,16 @@
-// ignore_for_file: deprecated_member_use
-
 import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/enum/enum.dart';
-import 'package:bett_box/models/selector.dart';
 import 'package:bett_box/plugins/app.dart';
 import 'package:bett_box/providers/config.dart';
 import 'package:bett_box/providers/state.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:material_ui/material_ui.dart';
 
 class ThemeModeItem {
   final ThemeMode themeMode;
@@ -40,22 +37,25 @@ class ThemeView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final brightness = ref.watch(currentBrightnessProvider);
-    final locale = ref.watch(
-      appSettingProvider.select((state) => state.locale),
+    final shouldShowHarmonyFont = ref.watch(
+      appSettingProvider.select(
+        (state) => switch (state.locale) {
+          final locale? => locale.startsWith('zh') || locale.startsWith('en'),
+          null => false,
+        },
+      ),
     );
-    final shouldShowHarmonyFont =
-        locale?.startsWith('zh') == true || locale?.startsWith('en') == true;
 
-    final toggleItems = [
-      if (shouldShowHarmonyFont) _HarmonyFontItem(),
+    final toggleItems = <Widget>[
+      if (shouldShowHarmonyFont) const _HarmonyFontItem(),
       if (system.isAndroid) const _DarkIconItem(),
       _TextScaleFactorItem(),
     ];
 
-    final items = [
-      _ThemeModeItem(),
-      _PrimaryColorItem(),
-      if (brightness == Brightness.dark) _PrueBlackItem(),
+    final items = <Widget>[
+      const _ThemeModeItem(),
+      const _PrimaryColorItem(),
+      if (brightness == Brightness.dark) const _PrueBlackItem(),
       if (toggleItems.isNotEmpty) ...generateSection(items: toggleItems),
     ];
     return generateListView(items);
@@ -99,7 +99,7 @@ class _ThemeModeItem extends ConsumerWidget {
     final themeMode = ref.watch(
       themeSettingProvider.select((state) => state.themeMode),
     );
-    List<ThemeModeItem> themeModeItems = [
+    final themeModeItems = <ThemeModeItem>[
       ThemeModeItem(
         iconData: Icons.auto_mode,
         label: appLocalizations.auto,
@@ -153,9 +153,7 @@ class _ThemeModeItem extends ConsumerWidget {
               ),
             );
           },
-          separatorBuilder: (_, _) {
-            return const SizedBox(width: 16);
-          },
+          separatorBuilder: (_, _) => const SizedBox(width: 16),
         ),
       ),
     );
@@ -202,14 +200,12 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
     ref.read(themeSettingProvider.notifier).updateState((state) {
       final newPrimaryColors = List<int>.from(state.primaryColors)
         ..remove(color);
-      int? newPrimaryColor = state.primaryColor;
-      if (state.primaryColor == color) {
-        if (newPrimaryColors.contains(defaultPrimaryColor)) {
-          newPrimaryColor = defaultPrimaryColor;
-        } else {
-          newPrimaryColor = null;
-        }
-      }
+      final int? newPrimaryColor = switch (state.primaryColor == color) {
+        true when newPrimaryColors.contains(defaultPrimaryColor) =>
+          defaultPrimaryColor,
+        true => null,
+        false => state.primaryColor,
+      };
       return state.copyWith(
         primaryColors: newPrimaryColors,
         primaryColor: newPrimaryColor,
@@ -219,7 +215,7 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
 
   Future<void> _handleAdd() async {
     final res = await globalState.showCommonDialog<int>(
-      child: _PaletteDialog(),
+      child: const _PaletteDialog(),
     );
     if (res == null) {
       return;
@@ -235,7 +231,7 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
     }
     ref.read(themeSettingProvider.notifier).updateState((state) {
       return state.copyWith(
-        primaryColors: List.from(state.primaryColors)..add(res),
+        primaryColors: List<int>.from(state.primaryColors)..add(res),
       );
     });
   }
@@ -262,29 +258,27 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
 
   @override
   Widget build(BuildContext context) {
-    final vm4 = ref.watch(
+    final (primaryColor, rawPrimaryColors, schemeVariant, isEquals) = ref.watch(
       themeSettingProvider.select(
-        (state) => VM4(
-          a: state.primaryColor,
-          b: state.primaryColors,
-          c: state.schemeVariant,
-          d:
-              state.primaryColor == defaultPrimaryColor &&
+        (state) => (
+          state.primaryColor,
+          state.primaryColors,
+          state.schemeVariant,
+          state.primaryColor == defaultPrimaryColor &&
               intListEquality.equals(state.primaryColors, defaultPrimaryColors),
         ),
       ),
     );
-    final primaryColor = vm4.a;
-    final primaryColors = [null, ...vm4.b];
-    final schemeVariant = vm4.c;
-    final isEquals = vm4.d;
+    final primaryColors = <int?>[null, ...rawPrimaryColors];
 
     return ItemCard(
       info: Info(label: appLocalizations.themeColor, iconData: Icons.palette),
       actions: genActions([
         FilledButton(
           style: const ButtonStyle(visualDensity: VisualDensity.compact),
-          onPressed: _handleChangeSchemeVariant,
+          onPressed: primaryColor == null && globalState.corePalette != null
+              ? null
+              : _handleChangeSchemeVariant,
           child: Text(Intl.message('${schemeVariant.name}Scheme')),
         ),
         if (!isEquals)
@@ -358,7 +352,7 @@ class _PrueBlackItem extends ConsumerWidget {
       themeSettingProvider.select((state) => state.pureBlack),
     );
     return ListItem.switchItem(
-      leading: Icon(Icons.contrast),
+      leading: const Icon(Icons.contrast),
       horizontalTitleGap: 12,
       title: Text(
         appLocalizations.pureBlackMode,
@@ -386,19 +380,19 @@ class _HarmonyFontItem extends ConsumerWidget {
     final useHarmonyFont = ref.watch(
       themeSettingProvider.select((state) => state.useHarmonyFont),
     );
+    final textTheme = Theme.of(context).textTheme;
+    final onSurfaceVariant = context.colorScheme.onSurfaceVariant;
     return ListItem.switchItem(
-      leading: Icon(Icons.font_download_outlined),
+      leading: const Icon(Icons.font_download_outlined),
       horizontalTitleGap: 12,
       title: Text(
         appLocalizations.harmonyFont,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-          color: context.colorScheme.onSurfaceVariant,
-        ),
+        style: textTheme.titleSmall?.copyWith(color: onSurfaceVariant),
       ),
       subtitle: Text(
         appLocalizations.harmonyFontDesc,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: context.colorScheme.onSurfaceVariant.withOpacity(0.7),
+        style: textTheme.bodySmall?.copyWith(
+          color: onSurfaceVariant.withValues(alpha: 0.7),
         ),
       ),
       delegate: SwitchDelegate(
@@ -421,19 +415,19 @@ class _DarkIconItem extends ConsumerWidget {
     final useDarkIcon = ref.watch(
       themeSettingProvider.select((state) => state.useDarkIcon),
     );
+    final textTheme = Theme.of(context).textTheme;
+    final onSurfaceVariant = context.colorScheme.onSurfaceVariant;
     return ListItem.switchItem(
       leading: const Icon(Icons.dark_mode_outlined),
       horizontalTitleGap: 12,
       title: Text(
         appLocalizations.darkIcon,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-          color: context.colorScheme.onSurfaceVariant,
-        ),
+        style: textTheme.titleSmall?.copyWith(color: onSurfaceVariant),
       ),
       subtitle: Text(
         appLocalizations.darkIconDesc,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: context.colorScheme.onSurfaceVariant.withOpacity(0.7),
+        style: textTheme.bodySmall?.copyWith(
+          color: onSurfaceVariant.withValues(alpha: 0.7),
         ),
       ),
       delegate: SwitchDelegate(
@@ -454,17 +448,19 @@ class _TextScaleFactorItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final textScale = ref.watch(
-      themeSettingProvider.select((state) => state.textScale),
+    final (enable, scale) = ref.watch(
+      themeSettingProvider.select(
+        (state) => (state.textScale.enable, state.textScale.scale),
+      ),
     );
-    final String process = '${(textScale.scale * 100).round()}%';
+    final String process = '${(scale * 100).round()}%';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.only(bottom: 8),
           child: ListItem.switchItem(
-            leading: Icon(Icons.text_fields),
+            leading: const Icon(Icons.text_fields),
             horizontalTitleGap: 12,
             title: Text(
               appLocalizations.textScale,
@@ -473,7 +469,7 @@ class _TextScaleFactorItem extends ConsumerWidget {
               ),
             ),
             delegate: SwitchDelegate(
-              value: textScale.enable,
+              value: enable,
               onChanged: (value) {
                 ref
                     .read(themeSettingProvider.notifier)
@@ -485,7 +481,7 @@ class _TextScaleFactorItem extends ConsumerWidget {
           ),
         ),
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             mainAxisSize: MainAxisSize.max,
@@ -493,16 +489,16 @@ class _TextScaleFactorItem extends ConsumerWidget {
             children: [
               Expanded(
                 child: DisabledMask(
-                  status: !textScale.enable,
+                  status: !enable,
                   child: ActivateBox(
-                    active: textScale.enable,
+                    active: enable,
                     child: SliderTheme(
                       data: _SliderDefaultsM3(context),
                       child: Slider(
                         padding: EdgeInsets.zero,
                         min: minTextScale,
                         max: maxTextScale,
-                        value: textScale.scale,
+                        value: scale,
                         onChanged: (value) {
                           ref
                               .read(themeSettingProvider.notifier)
@@ -517,7 +513,7 @@ class _TextScaleFactorItem extends ConsumerWidget {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.only(right: 4),
+                padding: const EdgeInsets.only(right: 4),
                 child: Text(process, style: context.textTheme.titleMedium),
               ),
             ],
@@ -536,43 +532,61 @@ class _PaletteDialog extends StatefulWidget {
 }
 
 class _PaletteDialogState extends State<_PaletteDialog> {
+  static final RegExp _hex6RegExp = RegExp(r'^#?[0-9a-f]{6}$');
+  static final RegExp _hex8RegExp = RegExp(r'^#?[0-9a-f]{8}$');
+  static final RegExp _rgbRegExp = RegExp(
+    r'^rgba?\((\d+),(\d+),(\d+)(?:,([\d.]+))?\)$',
+  );
+
   final _controller = ValueNotifier<ui.Color>(const Color(defaultPrimaryColor));
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   ui.Color? _parseColor(String input) {
     final cleanInput = input.trim().replaceAll(' ', '').toLowerCase();
 
-    // Hex: #RRGGBB or RRGGBB
-    if (RegExp(r'^#?[0-9a-f]{6}$').hasMatch(cleanInput)) {
+    if (_hex6RegExp.hasMatch(cleanInput)) {
       final hexString = cleanInput.startsWith('#')
           ? cleanInput.substring(1)
           : cleanInput;
-      return ui.Color(int.parse('FF$hexString', radix: 16));
+      final parsed = int.tryParse('FF$hexString', radix: 16);
+      return parsed != null ? ui.Color(parsed) : null;
     }
 
-    // Hex with alpha: #AARRGGBB or AARRGGBB
-    if (RegExp(r'^#?[0-9a-f]{8}$').hasMatch(cleanInput)) {
+    if (_hex8RegExp.hasMatch(cleanInput)) {
       final hexString = cleanInput.startsWith('#')
           ? cleanInput.substring(1)
           : cleanInput;
-      return ui.Color(int.parse(hexString, radix: 16));
+      final parsed = int.tryParse(hexString, radix: 16);
+      return parsed != null ? ui.Color(parsed) : null;
     }
 
-    // RGB/RGBA: rgb(255,255,255) or rgba(255,255,255,1.0)
-    final rgbMatch = RegExp(
-      r'^rgba?\((\d+),(\d+),(\d+)(?:,([\d.]+))?\)$',
-    ).firstMatch(cleanInput);
-    if (rgbMatch != null) {
-      final r = int.parse(rgbMatch.group(1)!);
-      final g = int.parse(rgbMatch.group(2)!);
-      final b = int.parse(rgbMatch.group(3)!);
-      final aStr = rgbMatch.group(4);
-      final a = aStr != null ? double.parse(aStr) : 1.0;
+    if (_rgbRegExp.firstMatch(cleanInput) case final rgbMatch?) {
+      if ((rgbMatch.group(1), rgbMatch.group(2), rgbMatch.group(3)) case (
+        final rStr?,
+        final gStr?,
+        final bStr?,
+      )) {
+        final r = int.tryParse(rStr);
+        final g = int.tryParse(gStr);
+        final b = int.tryParse(bStr);
+        if ((r, g, b) case (final rVal?, final gVal?, final bVal?)) {
+          final aStr = rgbMatch.group(4);
+          final a = aStr != null ? (double.tryParse(aStr) ?? 1.0) : 1.0;
 
-      final alphaVal = (a * 255).round().clamp(0, 255);
-      final rVal = r.clamp(0, 255);
-      final gVal = g.clamp(0, 255);
-      final bVal = b.clamp(0, 255);
-      return ui.Color.fromARGB(alphaVal, rVal, gVal, bVal);
+          final alphaVal = (a * 255).round().clamp(0, 255);
+          return ui.Color.fromARGB(
+            alphaVal,
+            rVal.clamp(0, 255),
+            gVal.clamp(0, 255),
+            bVal.clamp(0, 255),
+          );
+        }
+      }
     }
 
     return null;
@@ -598,14 +612,16 @@ class _PaletteDialogState extends State<_PaletteDialog> {
       ],
       child: Column(
         children: [
-          SizedBox(height: 8),
-          SizedBox(
-            width: 250,
-            height: 250,
-            child: Palette(controller: _controller),
+          const SizedBox(height: 8),
+          RepaintBoundary(
+            child: SizedBox(
+              width: 250,
+              height: 250,
+              child: Palette(controller: _controller),
+            ),
           ),
-          SizedBox(height: 24),
-          ValueListenableBuilder(
+          const SizedBox(height: 24),
+          ValueListenableBuilder<ui.Color>(
             valueListenable: _controller,
             builder: (_, color, _) {
               return FilledButton(
@@ -658,6 +674,38 @@ class _SliderDefaultsM3 extends SliderThemeData {
   final BuildContext context;
   late final ColorScheme _colors = Theme.of(context).colorScheme;
 
+  late final Color _overlayColor = WidgetStateColor.resolveWith((
+    Set<WidgetState> states,
+  ) {
+    if (states.contains(WidgetState.dragged)) {
+      return _colors.primary.withValues(alpha: 0.1);
+    }
+    if (states.contains(WidgetState.hovered)) {
+      return _colors.primary.withValues(alpha: 0.08);
+    }
+    if (states.contains(WidgetState.focused)) {
+      return _colors.primary.withValues(alpha: 0.1);
+    }
+    return Colors.transparent;
+  });
+
+  static final WidgetStateProperty<Size?> _thumbSize =
+      WidgetStateProperty.resolveWith((Set<WidgetState> states) {
+        if (states.contains(WidgetState.disabled)) {
+          return const Size(4.0, 44.0);
+        }
+        if (states.contains(WidgetState.hovered)) {
+          return const Size(4.0, 44.0);
+        }
+        if (states.contains(WidgetState.focused)) {
+          return const Size(2.0, 44.0);
+        }
+        if (states.contains(WidgetState.pressed)) {
+          return const Size(2.0, 44.0);
+        }
+        return const Size(4.0, 44.0);
+      });
+
   @override
   Color? get activeTrackColor => _colors.primary;
 
@@ -665,24 +713,27 @@ class _SliderDefaultsM3 extends SliderThemeData {
   Color? get inactiveTrackColor => _colors.secondaryContainer;
 
   @override
-  Color? get secondaryActiveTrackColor => _colors.primary.withOpacity(0.54);
+  Color? get secondaryActiveTrackColor =>
+      _colors.primary.withValues(alpha: 0.54);
 
   @override
-  Color? get disabledActiveTrackColor => _colors.onSurface.withOpacity(0.38);
+  Color? get disabledActiveTrackColor =>
+      _colors.onSurface.withValues(alpha: 0.38);
 
   @override
-  Color? get disabledInactiveTrackColor => _colors.onSurface.withOpacity(0.12);
+  Color? get disabledInactiveTrackColor =>
+      _colors.onSurface.withValues(alpha: 0.12);
 
   @override
   Color? get disabledSecondaryActiveTrackColor =>
-      _colors.onSurface.withOpacity(0.38);
+      _colors.onSurface.withValues(alpha: 0.38);
 
   @override
-  Color? get activeTickMarkColor => _colors.onPrimary.withOpacity(1.0);
+  Color? get activeTickMarkColor => _colors.onPrimary.withValues(alpha: 1.0);
 
   @override
   Color? get inactiveTickMarkColor =>
-      _colors.onSecondaryContainer.withOpacity(1.0);
+      _colors.onSecondaryContainer.withValues(alpha: 1.0);
 
   @override
   Color? get disabledActiveTickMarkColor => _colors.onInverseSurface;
@@ -694,28 +745,15 @@ class _SliderDefaultsM3 extends SliderThemeData {
   Color? get thumbColor => _colors.primary;
 
   @override
-  Color? get disabledThumbColor => _colors.onSurface.withOpacity(0.38);
+  Color? get disabledThumbColor => _colors.onSurface.withValues(alpha: 0.38);
 
   @override
-  Color? get overlayColor =>
-      WidgetStateColor.resolveWith((Set<WidgetState> states) {
-        if (states.contains(WidgetState.dragged)) {
-          return _colors.primary.withOpacity(0.1);
-        }
-        if (states.contains(WidgetState.hovered)) {
-          return _colors.primary.withOpacity(0.08);
-        }
-        if (states.contains(WidgetState.focused)) {
-          return _colors.primary.withOpacity(0.1);
-        }
-
-        return Colors.transparent;
-      });
+  Color? get overlayColor => _overlayColor;
 
   @override
   TextStyle? get valueIndicatorTextStyle => Theme.of(
     context,
-  ).textTheme.labelLarge!.copyWith(color: _colors.onInverseSurface);
+  ).textTheme.labelLarge?.copyWith(color: _colors.onInverseSurface);
 
   @override
   Color? get valueIndicatorColor => _colors.inverseSurface;
@@ -738,23 +776,7 @@ class _SliderDefaultsM3 extends SliderThemeData {
       const RoundSliderTickMarkShape(tickMarkRadius: 4.0 / 2);
 
   @override
-  WidgetStateProperty<Size?>? get thumbSize {
-    return WidgetStateProperty.resolveWith((Set<WidgetState> states) {
-      if (states.contains(WidgetState.disabled)) {
-        return const Size(4.0, 44.0);
-      }
-      if (states.contains(WidgetState.hovered)) {
-        return const Size(4.0, 44.0);
-      }
-      if (states.contains(WidgetState.focused)) {
-        return const Size(2.0, 44.0);
-      }
-      if (states.contains(WidgetState.pressed)) {
-        return const Size(2.0, 44.0);
-      }
-      return const Size(4.0, 44.0);
-    });
-  }
+  WidgetStateProperty<Size?>? get thumbSize => _thumbSize;
 
   @override
   double? get trackGap => 6.0;

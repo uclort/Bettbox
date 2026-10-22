@@ -4,17 +4,17 @@
 
 <h1 align="center">⚡ Bettbox</h1>
 <p align="center">
-  <strong>Another Better Mihomo Client</strong>
+  <strong>Another Better Network Toolbox</strong>
 </p>
 
-**Bettbox is a cross-platform network traffic routing and DNS debugging tool, deeply built on the powerful Mihomo core. We focus on ultimate user experience, strict privacy and security, and refined feature craftsmanship, dedicated to delivering a more lightweight, smooth, and modern client experience that runs stably over the long term with minimal resource consumption.**
+**Bettbox is a cross-platform network traffic routing and DNS debugging tool, deeply built on the powerful Mihomo core. We focus on enhancing user experience, strict privacy and security, as well as refined feature craftsmanship, dedicated to delivering a more lightweight, smooth, and modern client experience that runs stably over the long term with minimal resource consumption.**
 
-Guided by the design philosophy of **"Better Experience, Out of the box"**, Bettbox deeply taps into system and hardware potential, achieving high frame rates with silky-smooth foreground animations alongside low power consumption and minimal background resource usage. The project has pioneered manual security provenance review by the SignPath Foundation, and the Windows client is signed with an official authoritative OV digital certificate.
+Bettbox stands for: Better Network Toolbox. The project has pioneered manual security provenance review by the SignPath Foundation, and the Windows client is signed with an official authoritative OV digital certificate.
 
 [![Latest Release](https://img.shields.io/github/v/release/appshubcc/Bettbox?style=for-the-badge&logo=github&color=238636&label=Release)](https://github.com/appshubcc/Bettbox/releases/latest) [![Core](https://img.shields.io/github/v/release/MetaCubeX/mihomo?style=for-the-badge&logo=go&logoColor=white&color=8A2BE2&label=Mihomo)](https://github.com/MetaCubeX/mihomo/releases/latest)
 
 <p align="center">
-  <img src="../snapshots/home.png" alt="Bettbox" />
+  <img src="../snapshots/home.jpg" alt="Bettbox" />
 </p>
 
 ---
@@ -25,14 +25,15 @@ Guided by the design philosophy of **"Better Experience, Out of the box"**, Bett
 ---
 ## 🚀 Core Features
 
-* **Out-of-the-Box**: Comprehensive permission guidance and smooth TUN / VPN experience with well-tuned presets, ready for optimal use right after installation.
-* **Lightweight & Smooth**: Deeply optimized system and rendering pipeline, delivering high FPS, clean and fluid foreground animations, ultra-low mobile power consumption, and minimal desktop resource usage.
+* **Out-of-the-Box**: Comprehensive pre-permission logic and smooth TUN experience with well-tuned default policies, ready for optimal use right after installation.
+* **Lightweight & Smooth**: Deeply optimized system and rendering pipeline, delivering high FPS, clean and fluid foreground animations, ultra-low mobile power consumption, and minimal desktop background usage.
 * **Security & Trustworthy**: Core closely tracks the upstream Mihomo branch, adheres to the principle of least privilege across platforms, passed SignPath security audit, and comes loaded with an official Windows OV digital certificate.
-* **Stability & Fault Tolerance**: Optimized edge-case behavior in extreme multi-platform network environments, featuring built-in dual configuration verification and protection mechanisms for enterprise-grade long-term stability.
+* **Stability & Fault Tolerance**: Optimized edge-case behavior in extreme multi-platform network environments, featuring built-in dual configuration verification and protection mechanisms, rivaling enterprise-grade long-term stability.
 * **Architecture Optimization**: Deep native desktop ARM64 support with hardware performance tiering, alongside continuous maintenance of Compatible editions for legacy devices.
-* **Smart Daemon**: Supports seamless smart start/stop across platforms, mobile low-power sleep policies, one-click QUIC disabling, and multi-dimensional tray menu quick controls.
+* **Smart Daemon**: Supports seamless smart start/stop across platforms, mobile Doze sleep policies, one-click QUIC disabling, and multi-dimensional tray menu quick controls.
 * **Visual Settings**: Rich and in-depth visual parameter tuning interface with instant-effect toggles, freeing you from tedious manual configuration editing.
 * **Home Widgets**: Multiple beautifully crafted built-in widgets, providing at-a-glance control over real-time network speeds, active connections, and overall operational status on the home screen.
+* **All-in-One Toolbox**: Packed with a suite of sleek, elegant, and practical professional-grade network and DNS split debugging tools, giving you full control over your network.
 * **Personalization**: Rich color themes, custom icons and titles, along with 30 exquisite speedtest animations.
 * **Ecosystem & Extension**: Supports visual UI adaptation for external JS override scripts, and includes a deeply refactored high-performance Code-forge editor.
 * **Zero Privacy Risk**: Fully open-source and transparent code, completely ad-free, automated CI/CD pipelines subject to comprehensive audit, and zero background telemetry.
@@ -54,7 +55,7 @@ Please visit the **[[Releases]](https://github.com/appshubcc/Bettbox/releases)**
 
 **Linux Community Packages:**<br>
 * **ArchLinux:** <code>yay -S bettbox-bin</code> or <code>paru -S bettbox-bin</code> (Maintained by [lyj404](https://github.com/lyj404/bettbox-aur))<br>
-* **AMD64=v1 (Legacy Hardware Compatibility):** <code>yay -S bettbox-compatible-bin</code> or <code>paru -S bettbox-compatible-bin</code> (Maintained by [VillagerTom](https://github.com/VillagerTom))
+* **AMD64=v1 (Compatible):** <code>yay -S bettbox-compatible-bin</code> or <code>paru -S bettbox-compatible-bin</code> (Maintained by [VillagerTom](https://github.com/VillagerTom))
 
 ---
 ## 💡 Frequently Asked Questions

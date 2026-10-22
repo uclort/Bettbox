@@ -67,6 +67,7 @@ _AppSettingProps _$AppSettingPropsFromJson(
         json['recoveryStrategy'],
       ) ??
       RecoveryStrategy.compatible,
+  backupPassword: json['backupPassword'] as String? ?? '',
   enableHighPriority: json['enableHighPriority'] as bool? ?? false,
   sidebarCollapsed: json['sidebarCollapsed'] as bool? ?? true,
   sidebarFlyout: json['sidebarFlyout'] as bool? ?? false,
@@ -82,6 +83,38 @@ _AppSettingProps _$AppSettingPropsFromJson(
       ? defaultSidebarFlyoutEntries
       : sidebarFlyoutEntriesSafeFromJson(json['sidebarFlyoutEntries'] as List?),
   dashboardTitle: json['dashboardTitle'] as String?,
+  toolboxTiles:
+      (json['toolboxTiles'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const <String>[],
+  mrsCopyRawLink: json['mrsCopyRawLink'] as bool? ?? false,
+  mrsRawSource:
+      $enumDecodeNullable(
+        _$MrsRawSourceEnumMap,
+        json['mrsRawSource'],
+        unknownValue: MrsRawSource.bettRules,
+      ) ??
+      MrsRawSource.bettRules,
+  mrsResolveDns: json['mrsResolveDns'] as bool? ?? true,
+  iperfOptions: json['iperfOptions'] == null
+      ? const IperfOptions()
+      : IperfOptions.fromJson(json['iperfOptions'] as Map<String, dynamic>),
+  localPingOptions: json['localPingOptions'] == null
+      ? const LocalPingOptions()
+      : LocalPingOptions.fromJson(
+          json['localPingOptions'] as Map<String, dynamic>,
+        ),
+  mobileDashboardSizes:
+      (json['mobileDashboardSizes'] as Map<String, dynamic>?)?.map(
+        (k, e) => MapEntry(k, e as String),
+      ) ??
+      const <String, String>{},
+  desktopDashboardSizes:
+      (json['desktopDashboardSizes'] as Map<String, dynamic>?)?.map(
+        (k, e) => MapEntry(k, e as String),
+      ) ??
+      const <String, String>{},
 );
 
 Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
@@ -127,6 +160,7 @@ Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
       'hidden': instance.hidden,
       'developerMode': instance.developerMode,
       'recoveryStrategy': _$RecoveryStrategyEnumMap[instance.recoveryStrategy]!,
+      'backupPassword': instance.backupPassword,
       'enableHighPriority': instance.enableHighPriority,
       'sidebarCollapsed': instance.sidebarCollapsed,
       'sidebarFlyout': instance.sidebarFlyout,
@@ -137,6 +171,14 @@ Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
           .map((e) => _$SidebarFlyoutEntryEnumMap[e]!)
           .toList(),
       'dashboardTitle': instance.dashboardTitle,
+      'toolboxTiles': instance.toolboxTiles,
+      'mrsCopyRawLink': instance.mrsCopyRawLink,
+      'mrsRawSource': _$MrsRawSourceEnumMap[instance.mrsRawSource]!,
+      'mrsResolveDns': instance.mrsResolveDns,
+      'iperfOptions': instance.iperfOptions,
+      'localPingOptions': instance.localPingOptions,
+      'mobileDashboardSizes': instance.mobileDashboardSizes,
+      'desktopDashboardSizes': instance.desktopDashboardSizes,
     };
 
 const _$StartSwitchStyleEnumMap = {
@@ -153,6 +195,11 @@ const _$SidebarFlyoutDelayEnumMap = {
   SidebarFlyoutDelay.fast: 'fast',
   SidebarFlyoutDelay.standard: 'standard',
   SidebarFlyoutDelay.slow: 'slow',
+};
+
+const _$MrsRawSourceEnumMap = {
+  MrsRawSource.bettRules: 'bettRules',
+  MrsRawSource.metaRulesDat: 'metaRulesDat',
 };
 
 const _$DashboardWidgetEnumMap = {
@@ -243,6 +290,7 @@ const _$MediaPlatformEnumMap = {
 const _$SidebarFlyoutEntryEnumMap = {
   SidebarFlyoutEntry.resources: 'resources',
   SidebarFlyoutEntry.script: 'script',
+  SidebarFlyoutEntry.toolbox: 'toolbox',
   SidebarFlyoutEntry.theme: 'theme',
   SidebarFlyoutEntry.backupAndRecovery: 'backupAndRecovery',
   SidebarFlyoutEntry.hotkeyManagement: 'hotkeyManagement',

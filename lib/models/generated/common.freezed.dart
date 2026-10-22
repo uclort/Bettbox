@@ -2386,7 +2386,7 @@ as bool,
 /// @nodoc
 mixin _$DAV {
 
- String get uri; String get user; String get password; String get fileName;
+ String get uri; String get user; String get password; String get fileName; bool get autoBackup;
 /// Create a copy of DAV
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2400,20 +2400,20 @@ $DAVCopyWith<DAV> get copyWith => _$DAVCopyWithImpl<DAV>(this as DAV, _$identity
 @override
 bool operator ==(Object other) {
   final _this = this as DAV;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DAV&&(identical(other.uri, _this.uri) || other.uri == _this.uri)&&(identical(other.user, _this.user) || other.user == _this.user)&&(identical(other.password, _this.password) || other.password == _this.password)&&(identical(other.fileName, _this.fileName) || other.fileName == _this.fileName));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DAV&&(identical(other.uri, _this.uri) || other.uri == _this.uri)&&(identical(other.user, _this.user) || other.user == _this.user)&&(identical(other.password, _this.password) || other.password == _this.password)&&(identical(other.fileName, _this.fileName) || other.fileName == _this.fileName)&&(identical(other.autoBackup, _this.autoBackup) || other.autoBackup == _this.autoBackup));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as DAV;
-  return Object.hash(runtimeType,_this.uri,_this.user,_this.password,_this.fileName);
+  return Object.hash(runtimeType,_this.uri,_this.user,_this.password,_this.fileName,_this.autoBackup);
 }
 
 @override
 String toString() {
   final _this = this as DAV;
-  return 'DAV(uri: ${_this.uri}, user: ${_this.user}, password: ${_this.password}, fileName: ${_this.fileName})';
+  return 'DAV(uri: ${_this.uri}, user: ${_this.user}, password: ${_this.password}, fileName: ${_this.fileName}, autoBackup: ${_this.autoBackup})';
 }
 
 
@@ -2424,7 +2424,7 @@ abstract mixin class $DAVCopyWith<$Res>  {
   factory $DAVCopyWith(DAV value, $Res Function(DAV) _then) = _$DAVCopyWithImpl;
 @useResult
 $Res call({
- String uri, String user, String password, String fileName
+ String uri, String user, String password, String fileName, bool autoBackup
 });
 
 
@@ -2441,13 +2441,14 @@ class _$DAVCopyWithImpl<$Res>
 
 /// Create a copy of DAV
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? uri = null,Object? user = null,Object? password = null,Object? fileName = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? uri = null,Object? user = null,Object? password = null,Object? fileName = null,Object? autoBackup = null,}) {
   return _then(DAV(
 uri: null == uri ? _self.uri : uri // ignore: cast_nullable_to_non_nullable
 as String,user: null == user ? _self.user : user // ignore: cast_nullable_to_non_nullable
 as String,password: null == password ? _self.password : password // ignore: cast_nullable_to_non_nullable
 as String,fileName: null == fileName ? _self.fileName : fileName // ignore: cast_nullable_to_non_nullable
-as String,
+as String,autoBackup: null == autoBackup ? _self.autoBackup : autoBackup // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -2532,10 +2533,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String uri,  String user,  String password,  String fileName)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String uri,  String user,  String password,  String fileName,  bool autoBackup)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DAV() when $default != null:
-return $default(_that.uri,_that.user,_that.password,_that.fileName);case _:
+return $default(_that.uri,_that.user,_that.password,_that.fileName,_that.autoBackup);case _:
   return orElse();
 
 }
@@ -2553,10 +2554,10 @@ return $default(_that.uri,_that.user,_that.password,_that.fileName);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String uri,  String user,  String password,  String fileName)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String uri,  String user,  String password,  String fileName,  bool autoBackup)  $default,) {final _that = this;
 switch (_that) {
 case _DAV():
-return $default(_that.uri,_that.user,_that.password,_that.fileName);case _:
+return $default(_that.uri,_that.user,_that.password,_that.fileName,_that.autoBackup);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -2573,10 +2574,10 @@ return $default(_that.uri,_that.user,_that.password,_that.fileName);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String uri,  String user,  String password,  String fileName)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String uri,  String user,  String password,  String fileName,  bool autoBackup)?  $default,) {final _that = this;
 switch (_that) {
 case _DAV() when $default != null:
-return $default(_that.uri,_that.user,_that.password,_that.fileName);case _:
+return $default(_that.uri,_that.user,_that.password,_that.fileName,_that.autoBackup);case _:
   return null;
 
 }
@@ -2588,13 +2589,14 @@ return $default(_that.uri,_that.user,_that.password,_that.fileName);case _:
 @JsonSerializable()
 
 class _DAV implements DAV {
-  const _DAV({required this.uri, required this.user, required this.password, this.fileName = defaultDavFileName});
+  const _DAV({required this.uri, required this.user, required this.password, this.fileName = defaultDavFileName, this.autoBackup = false});
   factory _DAV.fromJson(Map<String, dynamic> json) => _$DAVFromJson(json);
 
 @override final  String uri;
 @override final  String user;
 @override final  String password;
 @override@JsonKey() final  String fileName;
+@override@JsonKey() final  bool autoBackup;
 
 /// Create a copy of DAV
 /// with the given fields replaced by the non-null parameter values.
@@ -2609,18 +2611,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DAV&&(identical(other.uri, uri) || other.uri == uri)&&(identical(other.user, user) || other.user == user)&&(identical(other.password, password) || other.password == password)&&(identical(other.fileName, fileName) || other.fileName == fileName));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DAV&&(identical(other.uri, uri) || other.uri == uri)&&(identical(other.user, user) || other.user == user)&&(identical(other.password, password) || other.password == password)&&(identical(other.fileName, fileName) || other.fileName == fileName)&&(identical(other.autoBackup, autoBackup) || other.autoBackup == autoBackup));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,uri,user,password,fileName);
+    return Object.hash(runtimeType,uri,user,password,fileName,autoBackup);
 }
 
 @override
 String toString() {
-    return 'DAV(uri: $uri, user: $user, password: $password, fileName: $fileName)';
+    return 'DAV(uri: $uri, user: $user, password: $password, fileName: $fileName, autoBackup: $autoBackup)';
 }
 
 
@@ -2631,7 +2633,7 @@ abstract mixin class _$DAVCopyWith<$Res> implements $DAVCopyWith<$Res> {
   factory _$DAVCopyWith(_DAV value, $Res Function(_DAV) _then) = __$DAVCopyWithImpl;
 @override @useResult
 $Res call({
- String uri, String user, String password, String fileName
+ String uri, String user, String password, String fileName, bool autoBackup
 });
 
 
@@ -2648,13 +2650,14 @@ class __$DAVCopyWithImpl<$Res>
 
 /// Create a copy of DAV
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? uri = null,Object? user = null,Object? password = null,Object? fileName = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? uri = null,Object? user = null,Object? password = null,Object? fileName = null,Object? autoBackup = null,}) {
   return _then(_DAV(
 uri: null == uri ? _self.uri : uri // ignore: cast_nullable_to_non_nullable
 as String,user: null == user ? _self.user : user // ignore: cast_nullable_to_non_nullable
 as String,password: null == password ? _self.password : password // ignore: cast_nullable_to_non_nullable
 as String,fileName: null == fileName ? _self.fileName : fileName // ignore: cast_nullable_to_non_nullable
-as String,
+as String,autoBackup: null == autoBackup ? _self.autoBackup : autoBackup // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
