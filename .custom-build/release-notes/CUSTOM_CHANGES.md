@@ -57,7 +57,7 @@
 - Snell v6 支持 `version: 6` 及 `default / unshaped / unsafe-raw` 模式；补丁来源与许可证记录在私有仓库的 `OPEN-SNELL-V6` 和 `THIRD_PARTY_NOTICES.md`。
 - `.custom-build/metadata/custom-mihomo-commit` 固定每次构建使用的私有内核提交；构建前校验 Bettbox 核心树、Mihomo 版本和 Snell 补丁摘要。
 - 2026-10-16 网络回归修复内核固定为 `54092e6`，补齐面板追踪与默认 HTTPS 引导 DNS；应用内核与私有内核的全部修复文件逐字一致，Snell v6 补丁及私有覆写脚本保持不变。
-- 2026-10-22 网络面板拨号中状态同步至私有内核 `7b45acb`；重试期间保持建立中，最终失败才发布错误终态。应用内核与私有内核的 `tunnel.go`、`tunnel/statistic/tracker.go`、`tunnel/statistic/patch.go`、`tunnel/statistic/tracker_trace_test.go` 逐字一致，Snell v6 补丁与私有覆写脚本保持不变。
+- 2026-10-22 网络面板拨号中状态同步至私有内核 `c69452b`；重试期间保持建立中，最终失败才发布错误终态。应用内核与私有内核的 `tunnel.go`、`tunnel/statistic/tracker.go`、`tunnel/statistic/patch.go`、`tunnel/statistic/tracker_trace_test.go` 逐字一致，Snell v6 补丁与私有覆写脚本保持不变。
 - 同步后至少运行 `go test ./transport/snell ./adapter/outbound ./component/dialer ./component/dhcp ./config ./dns ./listener/sing_tun ./constant ./tunnel ./tunnel/statistic`；`custom-sync.yml` 实际执行上述完整目录，包含默认 DNS 和面板链路回归。
 
 ### 应用内更新
