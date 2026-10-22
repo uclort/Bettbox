@@ -394,7 +394,7 @@ void main() {
       id: 'newer',
       process: 'B',
       upload: 10000,
-      download: 0,
+      download: 1,
       downloadSpeed: 20,
       start: DateTime.utc(2026, 8, 10, 9, 50),
     );
@@ -498,7 +498,7 @@ void main() {
     );
     expect(
       monitorActivityLabel(item, lastActivity: known),
-      '最后活跃 21:58',
+      '最后活跃 21:58:00',
     );
     expect(
       monitorActivityLabel(_tracker(id: 'unknown', process: 'A', upload: 0)),
@@ -510,7 +510,7 @@ void main() {
         lastActivity: known,
         closedAt: DateTime(2026, 8, 10, 22),
       ),
-      '结束于 22:00',
+      '结束于 22:00:00',
     );
     expect(
       monitorDurationLabel(
