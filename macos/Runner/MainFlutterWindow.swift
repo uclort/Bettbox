@@ -22,16 +22,18 @@ class MainFlutterWindow: NSWindow {
         .setMethodCallHandler { (_ call: FlutterMethodCall, result: @escaping FlutterResult) in
             switch call.method {
             case "launchAtStartupIsEnabled":
-                result(LaunchAtLogin.isEnabled)
+                result(MacLaunchAtLogin.isEnabled)
             case "launchAtStartupSetEnabled":
-                if let arguments = call.arguments as? [String: Any] {
-                    LaunchAtLogin.isEnabled = arguments["setEnabledValue"] as! Bool
+                if let arguments = call.arguments as? [String: Any],
+                   let enabled = arguments["setEnabledValue"] as? Bool {
+                    MacLaunchAtLogin.setEnabled(enabled)
                 }
                 result(nil)
             default:
                 result(FlutterMethodNotImplemented)
             }
         }
+        MacLaunchAtLogin.removeLegacyAgentIfNeeded()
 
         setupAppMethodChannel(flutterViewController: flutterViewController)
         setupSystemWakeNotification()
@@ -188,4 +190,42 @@ class MainFlutterWindow: NSWindow {
         }
     }
 
+}
+
+private enum MacLaunchAtLogin {
+    static var isEnabled: Bool {
+        if #available(macOS 13, *) {
+            return LaunchAtLogin.isEnabled
+        }
+        return LegacyLaunchAtLogin.isEnabled(
+            agentDirectory: LegacyLaunchAtLogin.defaultAgentDirectory,
+            bundleURL: Bundle.main.bundleURL
+        )
+    }
+
+    static func setEnabled(_ enabled: Bool) {
+        if #available(macOS 13, *) {
+            LaunchAtLogin.isEnabled = enabled
+            return
+        }
+        do {
+            // shortcut: 启动项记下当前 App 路径；移动位置后要重新打开并保持开关，才会改写。
+            try LegacyLaunchAtLogin.setEnabled(
+                enabled,
+                agentDirectory: LegacyLaunchAtLogin.defaultAgentDirectory,
+                bundleURL: Bundle.main.bundleURL
+            )
+        } catch {
+            NSLog("开机启动设置失败: \(error.localizedDescription)")
+        }
+    }
+
+    static func removeLegacyAgentIfNeeded() {
+        guard #available(macOS 13, *) else { return }
+        try? LegacyLaunchAtLogin.setEnabled(
+            false,
+            agentDirectory: LegacyLaunchAtLogin.defaultAgentDirectory,
+            bundleURL: Bundle.main.bundleURL
+        )
+    }
 }

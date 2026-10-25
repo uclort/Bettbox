@@ -1030,6 +1030,7 @@ jobs:
           print('macOS 正式包上游渲染配置校验通过：' + sys.argv[2])
           PY
           bash .custom-build/scripts/test-macos-updater.sh "${app_path}" "${{ matrix.arch }}"
+          bash .custom-build/scripts/test-macos-login-item.sh
 
       - name: 签署桌面更新包并生成更新元数据
         if: matrix.platform == 'macos' || matrix.platform == 'windows'

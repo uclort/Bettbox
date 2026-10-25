@@ -90,6 +90,12 @@
 - 验证方式：源 plist 语法与无覆写校验、`setup.dart` 与上游注入/还原逻辑比对、两种架构正确/错误配置的产物校验回归，以及最终安装包配置校验；既有界面回归为 `flutter test --no-pub test/widgets/macos_menu_bar_test.dart test/views/proxies/list_rebuild_test.dart test/views/dashboard_pack_test.dart`。用户已确认上述 Intel/macOS 12 设备使用关闭 Impeller 的兼容测试包正常；新版与 Apple Silicon 默认渲染仍需实机验收。
 - 2026-10-16 恢复上游策略验证：打包配置段与上游逐字一致，两种架构的生成 plist 与 8 种正确/错误产物配置校验通过；Dart 静态检查、工作流 actionlint、8 项界面回归与 3 项发布说明回归通过。
 
+### macOS Monterey 开机启动
+
+- 应用最低系统是 macOS 12。`LaunchAtLogin` 在 macOS 13 及以上使用 `SMAppService.mainApp`；在 Monterey 上改为 `SMLoginItemSetEnabled`，并要求包内存在 `Contents/Library/LoginItems/LaunchAtLoginHelper.app`。工程只链接了库，没有加入复制 Helper 的构建阶段，正式包也未做商业签名。因此 Monterey 12.7.6 上开关会被记录，但系统登录项实际没有注册。
+- macOS 12 改为写入 `~/Library/LaunchAgents/com.appshub.bettbox.login.plist`，用 `/usr/bin/open` 打开当前 App 包，权限固定为 `644`，下次登录生效。macOS 13 及以上仍使用原来的 `SMAppService`，并在窗口创建时删除这份旧 Agent。
+- 代码位于 `macos/Runner/LegacyLaunchAtLogin.swift` 与 `macos/Runner/MainFlutterWindow.swift`。回归为 `.custom-build/scripts/test-macos-login-item.sh`，由 macOS 构建步骤执行。启动项保存当前 App 路径，移动目录后需要重新打开并保持开关才会改写。尚未在 Monterey 12.7.6 实机重启验收。
+
 ### macOS TUN、DNS 与唤醒恢复
 
 - macOS 实际 TUN 配置将 `system` 栈映射为 `mixed`；显式 `mixed` 或 `gvisor` 保持原值。
