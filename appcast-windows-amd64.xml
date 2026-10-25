@@ -6,9 +6,9 @@
     <description>Bettbox 自定义版本更新源</description>
     <language>zh-CN</language>
     <item>
-      <title>Bettbox 1.19.7+2090000204</title>
-      <pubDate>Thu, 22 Oct 2026 08:33:24 +0000</pubDate>
-      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000204-r20261022081328-7db3920809e9-37d74e1c7912</link>
+      <title>Bettbox 1.19.7+2090000205</title>
+      <pubDate>Sun, 25 Oct 2026 13:41:24 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000205-r20261025132341-c1c83c071e00-37d74e1c7912</link>
       <description><![CDATA[<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https:;">
@@ -20,48 +20,15 @@ pre { white-space: pre-wrap; } code { font-size: .92em; }
 img,table { max-width: 100%; } table { border-collapse: collapse; } td,th { border: 1px solid #888; padding: 6px; }
 a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; padding-top: 12px; }
 </style></head><body><p dir="auto">基于上游 Bettbox <code class="notranslate">main@1fb8806fdf82</code> 构建的自定义版本。</p>
-<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.7+2090000204</code></strong></p>
+<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.7+2090000205</code></strong></p>
 <h2 dir="auto">本次变更（相较上一自定义 Release）</h2>
 <ul dir="auto">
-<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.6+2090000203-r20261022052032-c5d099ae7bdc-e9f5caea46ce"><code class="notranslate">custom-v1.19.6+2090000203-r20261022052032-c5d099ae7bdc-e9f5caea46ce</code></a> → <code class="notranslate">custom-v1.19.7+2090000204-r20261022081328-7db3920809e9-37d74e1c7912</code></li>
-<li>上游基线：<code class="notranslate">main@9582976d5371</code> → <code class="notranslate">main@1fb8806fdf82</code></li>
+<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000204-r20261022081328-7db3920809e9-37d74e1c7912"><code class="notranslate">custom-v1.19.7+2090000204-r20261022081328-7db3920809e9-37d74e1c7912</code></a> → <code class="notranslate">custom-v1.19.7+2090000205-r20261025132341-c1c83c071e00-37d74e1c7912</code></li>
 </ul>
-<h3 dir="auto">上游同步</h3>
+<h3 dir="auto">2026-10-25 修复 macOS Monterey 开机启动</h3>
 <ul dir="auto">
-<li>Update README.md (<code class="notranslate">8ce0b280</code>)</li>
-<li>Support Linux system DNS management (<code class="notranslate">cee22bbc</code>)</li>
-<li>Sync macOS dock icon with window (<code class="notranslate">4bd7a21d</code>)</li>
-<li>Bump version (<code class="notranslate">7006a026</code>)</li>
-<li>Update core (<code class="notranslate">77b96dfc</code>)</li>
-<li>Refine config patch (<code class="notranslate">cb161ca8</code>)</li>
-<li>Add network toolbox (<code class="notranslate">0c178aaa</code>)</li>
-<li>Redesign dashboard layout (<code class="notranslate">951cdbc5</code>)</li>
-<li>Merge requests into connections (<code class="notranslate">0096f7e4</code>)</li>
-<li>Improve media unlock checks (<code class="notranslate">22addec1</code>)</li>
-<li>Optimize code-forge details (<code class="notranslate">89b185ca</code>)</li>
-<li>Add auto backup (<code class="notranslate">546633ec</code>)</li>
-<li>Improve Windows portable mode (<code class="notranslate">5a00fdf1</code>)</li>
-<li>Disable impeller on macOS (<code class="notranslate">99e542ff</code>)</li>
-<li>Harden core runtime (<code class="notranslate">a041eda0</code>)</li>
-<li>Refine dialogs and widgets (<code class="notranslate">b109f56b</code>)</li>
-<li>Update localizations (<code class="notranslate">b3e0661e</code>)</li>
-<li>Update app settings and models (<code class="notranslate">2f0932ba</code>)</li>
-<li>Update core (<code class="notranslate">f202000b</code>)</li>
-<li>Support TUN dns-mode (<code class="notranslate">68134d92</code>)</li>
-<li>Remove DNS node override (<code class="notranslate">b6f98f59</code>)</li>
-<li>Add speed test server selection (<code class="notranslate">89fbb679</code>)</li>
-<li>Use core palette for dynamic color (<code class="notranslate">09ae9b02</code>)</li>
-<li>Adjust some details (<code class="notranslate">0a02798f</code>)</li>
-<li>Release v1.19.7 (<code class="notranslate">5df714e0</code>)</li>
-<li>Update readme (<code class="notranslate">1fb8806f</code>)</li>
-<li>自定义 Mihomo 源码：<code class="notranslate">c69452b48c35</code> → <code class="notranslate">888cb118e9d2</code></li>
-</ul>
-<h3 dir="auto">2026-10-22 同步 Bettbox v1.19.7</h3>
-<ul dir="auto">
-<li>上游基线从 <code class="notranslate">v1.19.6 / main@9582976d5371</code> 更新到 <code class="notranslate">v1.19.7 / main@1fb8806fdf82</code>，Mihomo 稳定版记为 <code class="notranslate">v1.19.33</code>。</li>
-<li>接入工具箱、新版仪表盘、备份密码与自动备份、连接页合并原请求页、Linux 系统 DNS，以及 Windows 便携模式跳过 Helper。</li>
-<li>macOS 全部架构跟随上游关闭 Impeller，并保留 Sparkle 公钥。</li>
-<li>桌面 TUN 安全启动与回滚、异常退出关闭代理和 TUN、WebDAV 共享配置、macOS DNS 托管、Dock 跟随窗口、Android 悬浮总开关、网络面板和 Windows 临时目录安装器保持不变。</li>
+<li>macOS 12 不再调用缺少 Helper 的 <code class="notranslate">SMLoginItemSetEnabled</code>，改为写入当前用户的 LaunchAgent，下次登录启动当前 App。</li>
+<li>macOS 13 及以上继续使用 <code class="notranslate">SMAppService</code>，启动时删除 Monterey 留下的 LaunchAgent，避免两套机制同时启动。</li>
 </ul>
 <h2 dir="auto">本包改动（相较上游版本）</h2>
 <h3 dir="auto">上游融合必检</h3>
@@ -153,6 +120,12 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li><code class="notranslate">.github/workflows/custom-build.yml</code> 打包后读取最终 App 的 <code class="notranslate">Contents/Info.plist</code>，Intel 与 Apple Silicon 都必须为布尔 <code class="notranslate">false</code>。</li>
 <li>验证方式：源 plist 语法与无覆写校验、<code class="notranslate">setup.dart</code> 与上游注入/还原逻辑比对、两种架构正确/错误配置的产物校验回归，以及最终安装包配置校验；既有界面回归为 <code class="notranslate">flutter test --no-pub test/widgets/macos_menu_bar_test.dart test/views/proxies/list_rebuild_test.dart test/views/dashboard_pack_test.dart</code>。用户已确认上述 Intel/macOS 12 设备使用关闭 Impeller 的兼容测试包正常；新版与 Apple Silicon 默认渲染仍需实机验收。</li>
 <li>2026-10-16 恢复上游策略验证：打包配置段与上游逐字一致，两种架构的生成 plist 与 8 种正确/错误产物配置校验通过；Dart 静态检查、工作流 actionlint、8 项界面回归与 3 项发布说明回归通过。</li>
+</ul>
+<h3 dir="auto">macOS Monterey 开机启动</h3>
+<ul dir="auto">
+<li>应用最低系统是 macOS 12。<code class="notranslate">LaunchAtLogin</code> 在 macOS 13 及以上使用 <code class="notranslate">SMAppService.mainApp</code>；在 Monterey 上改为 <code class="notranslate">SMLoginItemSetEnabled</code>，并要求包内存在 <code class="notranslate">Contents/Library/LoginItems/LaunchAtLoginHelper.app</code>。工程只链接了库，没有加入复制 Helper 的构建阶段，正式包也未做商业签名。因此 Monterey 12.7.6 上开关会被记录，但系统登录项实际没有注册。</li>
+<li>macOS 12 改为写入 <code class="notranslate">~/Library/LaunchAgents/com.appshub.bettbox.login.plist</code>，用 <code class="notranslate">/usr/bin/open</code> 打开当前 App 包，权限固定为 <code class="notranslate">644</code>，下次登录生效。macOS 13 及以上仍使用原来的 <code class="notranslate">SMAppService</code>，并在窗口创建时删除这份旧 Agent。</li>
+<li>代码位于 <code class="notranslate">macos/Runner/LegacyLaunchAtLogin.swift</code> 与 <code class="notranslate">macos/Runner/MainFlutterWindow.swift</code>。回归为 <code class="notranslate">.custom-build/scripts/test-macos-login-item.sh</code>，由 macOS 构建步骤执行。启动项保存当前 App 路径，移动目录后需要重新打开并保持开关才会改写。尚未在 Monterey 12.7.6 实机重启验收。</li>
 </ul>
 <h3 dir="auto">macOS TUN、DNS 与唤醒恢复</h3>
 <ul dir="auto">
@@ -248,16 +221,16 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <h2 dir="auto">构建信息</h2>
 <ul dir="auto">
 <li>上游 Bettbox main 基线：<code class="notranslate">main@1fb8806fdf82</code></li>
-<li>最终安装版本：<code class="notranslate">1.19.7+2090000204</code></li>
+<li>最终安装版本：<code class="notranslate">1.19.7+2090000205</code></li>
 <li>上游源码版本：<code class="notranslate">1.19.7+2026102201</code></li>
-<li>Bettbox custom-build commit：<code class="notranslate">7db3920809e9a76665a1f490dc55f16b6222aca2</code></li>
+<li>Bettbox custom-build commit：<code class="notranslate">c1c83c071e00bc7f89c376d0d3b8e02a8f6a2541</code></li>
 </ul>
 <p dir="auto">Release 仅包含本次 Action 生成的安装包，不包含私有自定义 Mihomo 源码。</p>
 <p dir="auto">Windows 与 macOS 安装包未做商业代码签名；Android 安装包使用 Bettbox 自定义版固定 Release 签名。</p>
-<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7%2B2090000204-r20261022081328-7db3920809e9-37d74e1c7912">查看完整发布页</a></footer></body></html>]]></description>
-      <sparkle:version>2090000204</sparkle:version>
-      <sparkle:shortVersionString>1.19.7+2090000204</sparkle:shortVersionString>
-      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.7+2090000204-r20261022081328-7db3920809e9-37d74e1c7912/Bettbox-1.19.7-windows-amd64-setup.exe" length="44509118" type="application/octet-stream" sparkle:os="windows" sparkle:dsaSignature="MDwCHDSA4Kp08eCgls71vhz92yM+68v0k5bRG1I7p/UCHEVHWL7zcieXX0bB6A7KME8Qh1hAiGWftBLvJjc=" />
+<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7%2B2090000205-r20261025132341-c1c83c071e00-37d74e1c7912">查看完整发布页</a></footer></body></html>]]></description>
+      <sparkle:version>2090000205</sparkle:version>
+      <sparkle:shortVersionString>1.19.7+2090000205</sparkle:shortVersionString>
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.7+2090000205-r20261025132341-c1c83c071e00-37d74e1c7912/Bettbox-1.19.7-windows-amd64-setup.exe" length="44510559" type="application/octet-stream" sparkle:os="windows" sparkle:dsaSignature="MD0CHBAHuOAZH353wiOINf0KJctF45z84ekKiIw/Q7kCHQCfOByqt+MQfVXCr17SqtyFCz+D9cXpzfoxitUC" />
     </item>
   </channel>
 </rss>
