@@ -70,11 +70,14 @@ class MainFlutterWindow: NSWindow {
 
     override public func order(_ place: NSWindow.OrderingMode, relativeTo otherWin: Int) {
         super.order(place, relativeTo: otherWin)
-        if !isNetworkPanel {
-          DispatchQueue.main.async {
+        if isNetworkPanel {
+            return
+        }
+        // BETTBOX-CUSTOM: xib 启动就会显示窗口；先藏起首次显示，Dart 才能按静默启动决定打开或留在后台。
+        hiddenWindowAtLaunch()
+        DispatchQueue.main.async {
             // BETTBOX-CUSTOM: 等窗口排序完成后，以最终状态同步 Dock。
             DockIconVisibility.synchronize()
-          }
         }
     }
 

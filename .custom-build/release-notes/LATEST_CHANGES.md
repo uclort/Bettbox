@@ -1,5 +1,5 @@
-### 2026-10-25 修复 macOS Monterey 开机启动
+### 2026-10-26 修复 macOS 静默启动
 
-- macOS 12 不再调用缺少 Helper 的 `SMLoginItemSetEnabled`，改为写入当前用户的 LaunchAgent，下次登录启动当前 App。
-- macOS 13 及以上继续使用 `SMAppService`，启动时删除 Monterey 留下的 LaunchAgent，避免两套机制同时启动。
+- 主窗口首次被系统显示后立即隐藏，再按静默启动开关决定打开窗口还是留在后台。网络面板仍直接显示。
+- 之前窗口排序只同步 Dock，启动时窗口已经可见，静默启动因此在各个 macOS 版本上都不生效。
 

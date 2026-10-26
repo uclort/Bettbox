@@ -96,6 +96,13 @@
 - macOS 12 改为写入 `~/Library/LaunchAgents/com.appshub.bettbox.login.plist`，用 `/usr/bin/open` 打开当前 App 包，权限固定为 `644`，下次登录生效。macOS 13 及以上仍使用原来的 `SMAppService`，并在窗口创建时删除这份旧 Agent。
 - 代码位于 `macos/Runner/LegacyLaunchAtLogin.swift` 与 `macos/Runner/MainFlutterWindow.swift`。回归为 `.custom-build/scripts/test-macos-login-item.sh`，由 macOS 构建步骤执行。启动项保存当前 App 路径，移动目录后需要重新打开并保持开关才会改写。尚未在 Monterey 12.7.6 实机重启验收。
 
+### macOS 静默启动
+
+- 主窗口 `order` 在系统首次显示后调用 `hiddenWindowAtLaunch()`，窗口随即不可见；已有 Dart 逻辑再按 `silentLaunch` 调用 `show` 或 `hide`。之后的 Dock、托盘和菜单栏打开仍走原来的 `show`，因为该隐藏只拦截第一次。网络面板不隐藏。
+- 自定义 `order` 之前只同步 Dock，把 window_manager 的首次隐藏弄丢了。macOS 的 xib 窗口启动即可见，`isVisible` 一直为真，静默启动因此永远打开窗口。这与系统版本无关。
+- Dock 同步仍留在同一次 `order` 的异步回调里，只把可见或最小化窗口算作有窗口。代码位于 `macos/Runner/MainFlutterWindow.swift`，判断位于 `lib/controller.dart`。
+- 尚未在实机确认窗口会不会闪一下。融合时必须保留 `hiddenWindowAtLaunch()`，不能只留下 Dock 同步。
+
 ### macOS TUN、DNS 与唤醒恢复
 
 - macOS 实际 TUN 配置将 `system` 栈映射为 `mixed`；显式 `mixed` 或 `gvisor` 保持原值。
