@@ -6,9 +6,9 @@
     <description>Bettbox 自定义版本更新源</description>
     <language>zh-CN</language>
     <item>
-      <title>Bettbox 1.19.7+2090000205</title>
-      <pubDate>Sun, 25 Oct 2026 13:41:24 +0000</pubDate>
-      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000205-r20261025132341-c1c83c071e00-37d74e1c7912</link>
+      <title>Bettbox 1.19.7+2090000206</title>
+      <pubDate>Mon, 26 Oct 2026 13:03:49 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000206-r20261026124506-118645778896-37d74e1c7912</link>
       <description><![CDATA[<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https:;">
@@ -20,15 +20,15 @@ pre { white-space: pre-wrap; } code { font-size: .92em; }
 img,table { max-width: 100%; } table { border-collapse: collapse; } td,th { border: 1px solid #888; padding: 6px; }
 a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; padding-top: 12px; }
 </style></head><body><p dir="auto">基于上游 Bettbox <code class="notranslate">main@1fb8806fdf82</code> 构建的自定义版本。</p>
-<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.7+2090000205</code></strong></p>
+<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.7+2090000206</code></strong></p>
 <h2 dir="auto">本次变更（相较上一自定义 Release）</h2>
 <ul dir="auto">
-<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000204-r20261022081328-7db3920809e9-37d74e1c7912"><code class="notranslate">custom-v1.19.7+2090000204-r20261022081328-7db3920809e9-37d74e1c7912</code></a> → <code class="notranslate">custom-v1.19.7+2090000205-r20261025132341-c1c83c071e00-37d74e1c7912</code></li>
+<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000205-r20261025132341-c1c83c071e00-37d74e1c7912"><code class="notranslate">custom-v1.19.7+2090000205-r20261025132341-c1c83c071e00-37d74e1c7912</code></a> → <code class="notranslate">custom-v1.19.7+2090000206-r20261026124506-118645778896-37d74e1c7912</code></li>
 </ul>
-<h3 dir="auto">2026-10-25 修复 macOS Monterey 开机启动</h3>
+<h3 dir="auto">2026-10-26 修复 macOS 静默启动</h3>
 <ul dir="auto">
-<li>macOS 12 不再调用缺少 Helper 的 <code class="notranslate">SMLoginItemSetEnabled</code>，改为写入当前用户的 LaunchAgent，下次登录启动当前 App。</li>
-<li>macOS 13 及以上继续使用 <code class="notranslate">SMAppService</code>，启动时删除 Monterey 留下的 LaunchAgent，避免两套机制同时启动。</li>
+<li>主窗口首次被系统显示后立即隐藏，再按静默启动开关决定打开窗口还是留在后台。网络面板仍直接显示。</li>
+<li>之前窗口排序只同步 Dock，启动时窗口已经可见，静默启动因此在各个 macOS 版本上都不生效。</li>
 </ul>
 <h2 dir="auto">本包改动（相较上游版本）</h2>
 <h3 dir="auto">上游融合必检</h3>
@@ -127,6 +127,13 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>macOS 12 改为写入 <code class="notranslate">~/Library/LaunchAgents/com.appshub.bettbox.login.plist</code>，用 <code class="notranslate">/usr/bin/open</code> 打开当前 App 包，权限固定为 <code class="notranslate">644</code>，下次登录生效。macOS 13 及以上仍使用原来的 <code class="notranslate">SMAppService</code>，并在窗口创建时删除这份旧 Agent。</li>
 <li>代码位于 <code class="notranslate">macos/Runner/LegacyLaunchAtLogin.swift</code> 与 <code class="notranslate">macos/Runner/MainFlutterWindow.swift</code>。回归为 <code class="notranslate">.custom-build/scripts/test-macos-login-item.sh</code>，由 macOS 构建步骤执行。启动项保存当前 App 路径，移动目录后需要重新打开并保持开关才会改写。尚未在 Monterey 12.7.6 实机重启验收。</li>
 </ul>
+<h3 dir="auto">macOS 静默启动</h3>
+<ul dir="auto">
+<li>主窗口 <code class="notranslate">order</code> 在系统首次显示后调用 <code class="notranslate">hiddenWindowAtLaunch()</code>，窗口随即不可见；已有 Dart 逻辑再按 <code class="notranslate">silentLaunch</code> 调用 <code class="notranslate">show</code> 或 <code class="notranslate">hide</code>。之后的 Dock、托盘和菜单栏打开仍走原来的 <code class="notranslate">show</code>，因为该隐藏只拦截第一次。网络面板不隐藏。</li>
+<li>自定义 <code class="notranslate">order</code> 之前只同步 Dock，把 window_manager 的首次隐藏弄丢了。macOS 的 xib 窗口启动即可见，<code class="notranslate">isVisible</code> 一直为真，静默启动因此永远打开窗口。这与系统版本无关。</li>
+<li>Dock 同步仍留在同一次 <code class="notranslate">order</code> 的异步回调里，只把可见或最小化窗口算作有窗口。代码位于 <code class="notranslate">macos/Runner/MainFlutterWindow.swift</code>，判断位于 <code class="notranslate">lib/controller.dart</code>。</li>
+<li>尚未在实机确认窗口会不会闪一下。融合时必须保留 <code class="notranslate">hiddenWindowAtLaunch()</code>，不能只留下 Dock 同步。</li>
+</ul>
 <h3 dir="auto">macOS TUN、DNS 与唤醒恢复</h3>
 <ul dir="auto">
 <li>macOS 实际 TUN 配置将 <code class="notranslate">system</code> 栈映射为 <code class="notranslate">mixed</code>；显式 <code class="notranslate">mixed</code> 或 <code class="notranslate">gvisor</code> 保持原值。</li>
@@ -221,16 +228,16 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <h2 dir="auto">构建信息</h2>
 <ul dir="auto">
 <li>上游 Bettbox main 基线：<code class="notranslate">main@1fb8806fdf82</code></li>
-<li>最终安装版本：<code class="notranslate">1.19.7+2090000205</code></li>
+<li>最终安装版本：<code class="notranslate">1.19.7+2090000206</code></li>
 <li>上游源码版本：<code class="notranslate">1.19.7+2026102201</code></li>
-<li>Bettbox custom-build commit：<code class="notranslate">c1c83c071e00bc7f89c376d0d3b8e02a8f6a2541</code></li>
+<li>Bettbox custom-build commit：<code class="notranslate">1186457788963dcc662384892658cd77c89a5b99</code></li>
 </ul>
 <p dir="auto">Release 仅包含本次 Action 生成的安装包，不包含私有自定义 Mihomo 源码。</p>
 <p dir="auto">Windows 与 macOS 安装包未做商业代码签名；Android 安装包使用 Bettbox 自定义版固定 Release 签名。</p>
-<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7%2B2090000205-r20261025132341-c1c83c071e00-37d74e1c7912">查看完整发布页</a></footer></body></html>]]></description>
-      <sparkle:version>2090000205</sparkle:version>
-      <sparkle:shortVersionString>1.19.7+2090000205</sparkle:shortVersionString>
-      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.7+2090000205-r20261025132341-c1c83c071e00-37d74e1c7912/Bettbox-1.19.7-macos-arm64.dmg" length="72915245" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="1udzc2KfO8NDnpG4s5mIiwIBxMhFwW0rCXlykPar2BDoZBJ4NMqstxS8N5nIk6Us7dOFsENLWKJ7eeC0vTvRDQ==" />
+<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7%2B2090000206-r20261026124506-118645778896-37d74e1c7912">查看完整发布页</a></footer></body></html>]]></description>
+      <sparkle:version>2090000206</sparkle:version>
+      <sparkle:shortVersionString>1.19.7+2090000206</sparkle:shortVersionString>
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.7+2090000206-r20261026124506-118645778896-37d74e1c7912/Bettbox-1.19.7-macos-arm64.dmg" length="72916536" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="TNB37qxB/5OEbChSo2zRm2qj8P0MNTvlDajBgeA6GmQyMz+Q7XpK3v/BR2vm8/R6za7yfIGLmppZhSkXcEuBCQ==" />
     </item>
   </channel>
 </rss>
