@@ -455,6 +455,9 @@ _NetworkProps _$NetworkPropsFromJson(Map<String, dynamic> json) =>
               .toList() ??
           const [],
       autoSetSystemDns: json['autoSetSystemDns'] as bool? ?? true,
+      tailscale: json['tailscale'] == null
+          ? defaultTailscaleProps
+          : TailscaleProps.fromJson(json['tailscale'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$NetworkPropsToJson(_NetworkProps instance) =>
@@ -464,6 +467,37 @@ Map<String, dynamic> _$NetworkPropsToJson(_NetworkProps instance) =>
       'bypassPrivateRoute': instance.bypassPrivateRoute,
       'bypassPrivateRouteAddress': instance.bypassPrivateRouteAddress,
       'autoSetSystemDns': instance.autoSetSystemDns,
+      'tailscale': instance.tailscale,
+    };
+
+_TailscaleProps _$TailscalePropsFromJson(Map<String, dynamic> json) =>
+    _TailscaleProps(
+      enable: json['enable'] as bool? ?? false,
+      routeExcludeAddress:
+          (json['routeExcludeAddress'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          defaultTailscaleRouteExcludeAddress,
+      dnsDomains:
+          (json['dnsDomains'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          defaultTailscaleDnsDomains,
+      dnsServer: json['dnsServer'] as String? ?? defaultTailscaleDnsServer,
+      bypassDomain:
+          (json['bypassDomain'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          defaultTailscaleBypassDomain,
+    );
+
+Map<String, dynamic> _$TailscalePropsToJson(_TailscaleProps instance) =>
+    <String, dynamic>{
+      'enable': instance.enable,
+      'routeExcludeAddress': instance.routeExcludeAddress,
+      'dnsDomains': instance.dnsDomains,
+      'dnsServer': instance.dnsServer,
+      'bypassDomain': instance.bypassDomain,
     };
 
 _ProxiesStyle _$ProxiesStyleFromJson(Map<String, dynamic> json) =>

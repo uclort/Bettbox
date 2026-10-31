@@ -9734,6 +9734,106 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Tailscale Coexistence`
+  String get tailscaleCoexist {
+    return Intl.message(
+      'Tailscale Coexistence',
+      name: 'tailscaleCoexist',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Keep Tailnet ranges out of TUN and resolve MagicDNS names via Tailscale`
+  String get tailscaleCoexistDesc {
+    return Intl.message(
+      'Keep Tailnet ranges out of TUN and resolve MagicDNS names via Tailscale',
+      name: 'tailscaleCoexistDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Excluded Ranges`
+  String get tailscaleRouteExclude {
+    return Intl.message(
+      'Excluded Ranges',
+      name: 'tailscaleRouteExclude',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `These ranges bypass TUN; the core reaches them via system routing (Tailscale)`
+  String get tailscaleRouteExcludeDesc {
+    return Intl.message(
+      'These ranges bypass TUN; the core reaches them via system routing (Tailscale)',
+      name: 'tailscaleRouteExcludeDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `MagicDNS Domains`
+  String get tailscaleDnsDomains {
+    return Intl.message(
+      'MagicDNS Domains',
+      name: 'tailscaleDnsDomains',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Return real IPs and resolve with the DNS server below`
+  String get tailscaleDnsDomainsDesc {
+    return Intl.message(
+      'Return real IPs and resolve with the DNS server below',
+      name: 'tailscaleDnsDomainsDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `MagicDNS Server`
+  String get tailscaleDnsServer {
+    return Intl.message(
+      'MagicDNS Server',
+      name: 'tailscaleDnsServer',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Leave empty to use the configured DNS`
+  String get tailscaleDnsServerDesc {
+    return Intl.message(
+      'Leave empty to use the configured DNS',
+      name: 'tailscaleDnsServerDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `System Proxy Exceptions`
+  String get tailscaleBypassDomain {
+    return Intl.message(
+      'System Proxy Exceptions',
+      name: 'tailscaleBypassDomain',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Appended to the system proxy bypass list while enabled`
+  String get tailscaleBypassDomainDesc {
+    return Intl.message(
+      'Appended to the system proxy bypass list while enabled',
+      name: 'tailscaleBypassDomainDesc',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

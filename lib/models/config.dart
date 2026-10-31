@@ -39,6 +39,16 @@ const defaultBypassDomain = [
   '192.168.*',
 ];
 
+// BETTBOX-CUSTOM: Tailscale 共存默认值，可在网络设置中自定义并一键恢复。
+const defaultTailscaleRouteExcludeAddress = [
+  '100.64.0.0/10',
+  'fd7a:115c:a1e0::/48',
+];
+const defaultTailscaleDnsDomains = ['ts.net'];
+const defaultTailscaleDnsServer = '100.100.100.100';
+const defaultTailscaleBypassDomain = ['*.ts.net', '100.64.0.0/10'];
+const defaultTailscaleProps = TailscaleProps();
+
 const defaultAppSettingProps = AppSettingProps();
 const defaultVpnProps = VpnProps();
 const defaultNetworkProps = NetworkProps();
@@ -369,13 +379,77 @@ abstract class NetworkProps with _$NetworkProps {
     @Default(true) bool bypassPrivateRoute,
     @Default([]) List<String> bypassPrivateRouteAddress,
     @Default(true) bool autoSetSystemDns,
+    @Default(defaultTailscaleProps) TailscaleProps tailscale,
   }) = _NetworkProps;
 
   factory NetworkProps.fromJson(Map<String, Object?>? json) =>
       json == null ? const NetworkProps() : _$NetworkPropsFromJson(json);
 }
 
+// BETTBOX-CUSTOM: Tailscale 共存（桌面端）。开启后 Tailnet 网段不进 TUN、MagicDNS 域名
+// 返回真实 IP 并交给 Tailscale DNS 解析、系统代理绕过 Tailnet。
+@freezed
+abstract class TailscaleProps with _$TailscaleProps {
+  const factory TailscaleProps({
+    @Default(false) bool enable,
+    @Default(defaultTailscaleRouteExcludeAddress)
+    List<String> routeExcludeAddress,
+    @Default(defaultTailscaleDnsDomains) List<String> dnsDomains,
+    @Default(defaultTailscaleDnsServer) String dnsServer,
+    @Default(defaultTailscaleBypassDomain) List<String> bypassDomain,
+  }) = _TailscaleProps;
+
+  factory TailscaleProps.fromJson(Map<String, Object?> json) =>
+      _$TailscalePropsFromJson(json);
+}
+
+extension TailscalePropsExt on TailscaleProps {
+  bool get active => enable && system.isDesktop;
+
+  /// 把 Tailnet 网段并入 TUN 排除路由（桌面端 TUN 的 route-exclude-address）。
+  Tun applyToTun(Tun tun) {
+    if (!active) return tun;
+    final addresses = {
+      ...tun.routeExcludeAddress,
+      for (final address in routeExcludeAddress)
+        if (address.trim().isNotEmpty) address.trim(),
+    }.toList();
+    return tun.copyWith(routeExcludeAddress: addresses);
+  }
+
+  Map<String, dynamic>? get patchJson => active
+      ? {'dns-domains': dnsDomains, 'dns-server': dnsServer.trim()}
+      : null;
+
+  /// 恢复默认值，保留开关状态。
+  TailscaleProps reset() => defaultTailscaleProps.copyWith(enable: enable);
+
+  List<String> get prependRules => [
+    for (final domain in dnsDomains)
+      if (normalizeTailscaleDomain(domain) case final d when d.isNotEmpty)
+        'DOMAIN-SUFFIX,$d,DIRECT',
+    for (final address in routeExcludeAddress)
+      if (address.trim().isNotEmpty)
+        '${address.contains(':') ? 'IP-CIDR6' : 'IP-CIDR'},${address.trim()},DIRECT,no-resolve',
+  ];
+}
+
+String normalizeTailscaleDomain(String domain) {
+  var value = domain.trim().toLowerCase();
+  for (final prefix in const ['+.', '*.', '.']) {
+    if (value.startsWith(prefix)) value = value.substring(prefix.length);
+  }
+  if (value.endsWith('.')) value = value.substring(0, value.length - 1);
+  return value;
+}
+
 extension NetworkPropsExt on NetworkProps {
+  /// 系统代理实际绕过列表：开启 Tailscale 共存时追加 Tailnet 例外。
+  List<String> get realBypassDomain {
+    if (!tailscale.active) return bypassDomain;
+    return {...bypassDomain, ...tailscale.bypassDomain}.toList();
+  }
+
   List<String> get realBypassPrivateRouteAddress {
     if (bypassPrivateRouteAddress.isNotEmpty) return bypassPrivateRouteAddress;
     return system.isDesktop

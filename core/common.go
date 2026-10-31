@@ -26,6 +26,7 @@ import (
 	"github.com/metacubex/mihomo/log"
 	rp "github.com/metacubex/mihomo/rules/provider"
 	"github.com/metacubex/mihomo/tunnel"
+	"net/netip"
 	"os"
 	"runtime/debug"
 	"strings"
@@ -36,10 +37,12 @@ import (
 var (
 	currentConfig    *config.Config
 	currentRawConfig *config.RawConfig
-	version          = 0
-	isRunning        = false
-	runLock          sync.Mutex
-	mBatch, _        = batch.New[bool](context.Background(), batch.WithConcurrencyNum[bool](50))
+	// BETTBOX-CUSTOM: 当前订阅原始 route-exclude-address。
+	currentProfileRouteExclude []netip.Prefix
+	version                    = 0
+	isRunning                  = false
+	runLock                    sync.Mutex
+	mBatch, _                  = batch.New[bool](context.Background(), batch.WithConcurrencyNum[bool](50))
 )
 
 type ExternalProviders []ExternalProvider
@@ -258,7 +261,7 @@ func updateConfig(params *UpdateParams) {
 		general.Tun.Device = *params.Tun.Device
 		general.Tun.RouteAddress = *params.Tun.RouteAddress
 		if params.Tun.RouteExcludeAddress != nil {
-			general.Tun.RouteExcludeAddress = *params.Tun.RouteExcludeAddress
+			general.Tun.RouteExcludeAddress = mergeRouteExcludeAddress(*params.Tun.RouteExcludeAddress, currentProfileRouteExclude)
 		}
 		if params.Tun.StrictRoute != nil {
 			general.Tun.StrictRoute = *params.Tun.StrictRoute
@@ -381,6 +384,8 @@ type preparedSetup struct {
 	global string
 	expire time.Time
 	reused bool
+	// BETTBOX-CUSTOM: 订阅原始 route-exclude-address，热更新 tun 时与 GUI 取并集。
+	profileRouteExclude []netip.Prefix
 }
 
 var (
@@ -478,7 +483,11 @@ func prepareSetup(params *SetupParams) (*preparedSetup, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &preparedSetup{key: key, rawCfg: rawCfg, cfg: cfg, global: global}, nil
+	prepared := &preparedSetup{key: key, rawCfg: rawCfg, cfg: cfg, global: global}
+	if params.Patch != nil {
+		prepared.profileRouteExclude = params.Patch.profileRouteExclude
+	}
+	return prepared, nil
 }
 
 func setupConfig(params *SetupParams) (string, error) {
@@ -496,6 +505,7 @@ func setupConfig(params *SetupParams) (string, error) {
 	applyStart := time.Now()
 	currentConfig = prepared.cfg
 	currentRawConfig = prepared.rawCfg
+	currentProfileRouteExclude = prepared.profileRouteExclude
 	hub.ApplyConfig(currentConfig)
 	resetGroupShapes()
 	selectedMap := params.SelectedMap

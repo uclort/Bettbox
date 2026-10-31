@@ -1155,5 +1155,15 @@
   "menuShowAll": "Показать все",
   "menuFullScreen": "Полный экран",
   "menuZoom": "Масштаб",
-  "menuBringAllToFront": "Все окна на передний план"
+  "menuBringAllToFront": "Все окна на передний план",
+  "tailscaleCoexist": "Совместимость с Tailscale",
+  "tailscaleCoexistDesc": "Исключить сети Tailnet из TUN и разрешать имена MagicDNS через Tailscale",
+  "tailscaleRouteExclude": "Исключённые сети",
+  "tailscaleRouteExcludeDesc": "Эти сети не проходят через TUN; ядро использует системную маршрутизацию (Tailscale)",
+  "tailscaleDnsDomains": "Домены MagicDNS",
+  "tailscaleDnsDomainsDesc": "Возвращать реальные IP и разрешать через DNS-сервер ниже",
+  "tailscaleDnsServer": "DNS-сервер MagicDNS",
+  "tailscaleDnsServerDesc": "Оставьте пустым для текущего DNS",
+  "tailscaleBypassDomain": "Исключения системного прокси",
+  "tailscaleBypassDomainDesc": "Добавляются в список исключений системного прокси"
 }

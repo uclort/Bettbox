@@ -1151,5 +1151,15 @@
   "menuShowAll": "显示全部",
   "menuFullScreen": "全屏",
   "menuZoom": "缩放",
-  "menuBringAllToFront": "全部置于前台"
+  "menuBringAllToFront": "全部置于前台",
+  "tailscaleCoexist": "Tailscale 共存",
+  "tailscaleCoexistDesc": "Tailnet 网段不进虚拟网卡，MagicDNS 域名交给 Tailscale 解析",
+  "tailscaleRouteExclude": "排除网段",
+  "tailscaleRouteExcludeDesc": "这些网段不经过虚拟网卡，内核访问时按系统路由走 Tailscale",
+  "tailscaleDnsDomains": "MagicDNS 域名",
+  "tailscaleDnsDomainsDesc": "返回真实 IP，并使用下方 DNS 服务器解析",
+  "tailscaleDnsServer": "MagicDNS 服务器",
+  "tailscaleDnsServerDesc": "留空则使用当前配置的 DNS",
+  "tailscaleBypassDomain": "系统代理例外",
+  "tailscaleBypassDomainDesc": "开启共存时追加到系统代理排除列表"
 }

@@ -734,7 +734,7 @@ class GlobalState {
       vpnProps: config.vpnProps,
       onlyStatisticsProxy: config.appSetting.onlyStatisticsProxy,
       currentProfileName: currentProfile?.label ?? currentProfile?.id ?? '',
-      bypassDomain: config.networkProps.bypassDomain,
+      bypassDomain: config.networkProps.realBypassDomain,
     );
   }
 
@@ -925,12 +925,16 @@ class GlobalState {
       ipv6Enabled: patchConfig.ipv6,
     );
     final dns = patchConfig.dns.copyWith(fakeIpRangeV6: fakeIpRangeV6);
-    final tun = patchConfig.tun.getRealTun(
-      config.networkProps.bypassPrivateRoute,
-      fakeIpRange: patchConfig.dns.fakeIpRange,
-      fakeIpRangeV6: fakeIpRangeV6,
-      bypassPrivateRouteAddress:
-          config.networkProps.realBypassPrivateRouteAddress,
+    // BETTBOX-CUSTOM: Tailscale 共存时把 Tailnet 网段并入 TUN 排除路由。
+    final tailscale = config.networkProps.tailscale;
+    final tun = tailscale.applyToTun(
+      patchConfig.tun.getRealTun(
+        config.networkProps.bypassPrivateRoute,
+        fakeIpRange: patchConfig.dns.fakeIpRange,
+        fakeIpRangeV6: fakeIpRangeV6,
+        bypassPrivateRouteAddress:
+            config.networkProps.realBypassPrivateRouteAddress,
+      ),
     );
     final externalController = patchConfig.externalController;
     final secret = patchConfig.secret;
@@ -1031,7 +1035,9 @@ class GlobalState {
               'rules': overrideData.runningRule,
             }
           : null,
+      'tailscale': tailscale.patchJson,
       'prepend-rules': [
+        if (tailscale.active) ...tailscale.prependRules,
         if (config.vpnProps.loopbackProtection) ...[
           if (listenPorts.isNotEmpty) ...[
             'AND,((DST-PORT,$listenPorts),(IP-CIDR,127.0.0.0/8,no-resolve)),REJECT',

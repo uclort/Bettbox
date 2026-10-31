@@ -1671,6 +1671,26 @@ class MessageLookup extends MessageLookupByLibrary {
     "systemProxy": MessageLookupByLibrary.simpleMessage("시스템 프록시"),
     "systemProxyDesc": MessageLookupByLibrary.simpleMessage("시스템 프록시 설정"),
     "tab": MessageLookupByLibrary.simpleMessage("탭"),
+    "tailscaleBypassDomain": MessageLookupByLibrary.simpleMessage("시스템 프록시 예외"),
+    "tailscaleBypassDomainDesc": MessageLookupByLibrary.simpleMessage(
+      "활성화 시 시스템 프록시 제외 목록에 추가",
+    ),
+    "tailscaleCoexist": MessageLookupByLibrary.simpleMessage("Tailscale 공존"),
+    "tailscaleCoexistDesc": MessageLookupByLibrary.simpleMessage(
+      "Tailnet 대역을 TUN에서 제외하고 MagicDNS 이름을 Tailscale로 확인",
+    ),
+    "tailscaleDnsDomains": MessageLookupByLibrary.simpleMessage("MagicDNS 도메인"),
+    "tailscaleDnsDomainsDesc": MessageLookupByLibrary.simpleMessage(
+      "실제 IP를 반환하고 아래 DNS 서버로 확인",
+    ),
+    "tailscaleDnsServer": MessageLookupByLibrary.simpleMessage("MagicDNS 서버"),
+    "tailscaleDnsServerDesc": MessageLookupByLibrary.simpleMessage(
+      "비워 두면 현재 DNS 사용",
+    ),
+    "tailscaleRouteExclude": MessageLookupByLibrary.simpleMessage("제외 대역"),
+    "tailscaleRouteExcludeDesc": MessageLookupByLibrary.simpleMessage(
+      "이 대역은 TUN을 거치지 않으며 코어는 시스템 라우팅(Tailscale)으로 접속",
+    ),
     "tcpConcurrent": MessageLookupByLibrary.simpleMessage("TCP 동시 연결"),
     "tcpConcurrentDesc": MessageLookupByLibrary.simpleMessage(
       "TCP 동시 다중 연결 허용",

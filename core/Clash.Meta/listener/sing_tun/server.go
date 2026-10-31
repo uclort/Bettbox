@@ -405,6 +405,7 @@ func New(options LC.Tun, tunnel C.Tunnel, additions ...inbound.Addition) (l *Lis
 			l.cDialerInterfaceFinder = &cDialerInterfaceFinder{
 				tunName:                 tunName,
 				defaultInterfaceMonitor: defaultInterfaceMonitor,
+				routeExcludeAddress:     routeExcludeAddress,
 			}
 			if !dialer.DefaultInterfaceFinder.CompareAndSwap(nil, l.cDialerInterfaceFinder) {
 				err = E.New("not allowed two tun listener using auto-detect-interface")
@@ -633,6 +634,22 @@ func (l *Listener) OnReload() {
 type cDialerInterfaceFinder struct {
 	tunName                 string
 	defaultInterfaceMonitor tun.DefaultInterfaceMonitor
+	routeExcludeAddress     []netip.Prefix
+}
+
+// BETTBOX-CUSTOM: route-exclude-address 内的目标本就不进 TUN，内核自身出站（DNS、DIRECT）
+// 不绑定默认网卡，交给系统路由选择出口（如 Tailscale 的 utun），避免被强制绑到 en0 后不可达。
+func (d *cDialerInterfaceFinder) isRouteExcluded(destination netip.Addr) bool {
+	if !destination.IsValid() || destination.IsUnspecified() {
+		return false
+	}
+	destination = destination.Unmap()
+	for _, prefix := range d.routeExcludeAddress {
+		if prefix.Contains(destination) {
+			return true
+		}
+	}
+	return false
 }
 
 func (d *cDialerInterfaceFinder) DefaultInterfaceName(destination netip.Addr) string {
@@ -646,6 +663,10 @@ func (d *cDialerInterfaceFinder) DefaultInterfaceName(destination netip.Addr) st
 }
 
 func (d *cDialerInterfaceFinder) FindInterfaceName(destination netip.Addr) string {
+	if d.isRouteExcluded(destination) {
+		log.Debugln("[TUN] %s is route excluded, follow system routing", destination)
+		return ""
+	}
 	for _, dest := range []netip.Addr{destination, netip.IPv4Unspecified(), netip.IPv6Unspecified()} {
 		autoDetectInterfaceName := d.DefaultInterfaceName(dest)
 		if autoDetectInterfaceName == d.tunName {

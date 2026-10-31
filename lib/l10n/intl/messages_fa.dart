@@ -2053,6 +2053,34 @@ class MessageLookup extends MessageLookupByLibrary {
       "تنظیمات پروکسی سیستم",
     ),
     "tab": MessageLookupByLibrary.simpleMessage("زبانه"),
+    "tailscaleBypassDomain": MessageLookupByLibrary.simpleMessage(
+      "استثناهای پروکسی سیستم",
+    ),
+    "tailscaleBypassDomainDesc": MessageLookupByLibrary.simpleMessage(
+      "هنگام فعال بودن به فهرست استثنای پروکسی سیستم افزوده می‌شود",
+    ),
+    "tailscaleCoexist": MessageLookupByLibrary.simpleMessage(
+      "هم‌زیستی با Tailscale",
+    ),
+    "tailscaleCoexistDesc": MessageLookupByLibrary.simpleMessage(
+      "محدوده‌های Tailnet از TUN مستثنا و نام‌های MagicDNS با Tailscale حل می‌شوند",
+    ),
+    "tailscaleDnsDomains": MessageLookupByLibrary.simpleMessage(
+      "دامنه‌های MagicDNS",
+    ),
+    "tailscaleDnsDomainsDesc": MessageLookupByLibrary.simpleMessage(
+      "IP واقعی برگردانده و با سرور DNS زیر حل می‌شود",
+    ),
+    "tailscaleDnsServer": MessageLookupByLibrary.simpleMessage("سرور MagicDNS"),
+    "tailscaleDnsServerDesc": MessageLookupByLibrary.simpleMessage(
+      "خالی بگذارید تا DNS فعلی استفاده شود",
+    ),
+    "tailscaleRouteExclude": MessageLookupByLibrary.simpleMessage(
+      "محدوده‌های مستثنا",
+    ),
+    "tailscaleRouteExcludeDesc": MessageLookupByLibrary.simpleMessage(
+      "این محدوده‌ها از TUN عبور نمی‌کنند و هسته با مسیریابی سیستم (Tailscale) متصل می‌شود",
+    ),
     "tcpConcurrent": MessageLookupByLibrary.simpleMessage("اتصال همزمان TCP"),
     "tcpConcurrentDesc": MessageLookupByLibrary.simpleMessage(
       "اجازه به اتصال‌های همزمان TCP",

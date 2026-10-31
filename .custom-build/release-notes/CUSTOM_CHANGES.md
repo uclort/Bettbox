@@ -103,6 +103,15 @@
 - Dock 同步仍留在同一次 `order` 的异步回调里，只把可见或最小化窗口算作有窗口。代码位于 `macos/Runner/MainFlutterWindow.swift`，判断位于 `lib/controller.dart`。
 - 尚未在实机确认窗口会不会闪一下。融合时必须保留 `hiddenWindowAtLaunch()`，不能只留下 Dock 同步。
 
+### Tailscale 共存（桌面端）
+
+- 网络设置新增「Tailscale 共存」，默认关闭；齿轮入口可自定义排除网段（默认 `100.64.0.0/10`、`fd7a:115c:a1e0::/48`）、MagicDNS 域名（默认 `ts.net`）、MagicDNS 服务器（默认 `100.100.100.100`，留空只返回真实 IP 不改 DNS 服务器）与系统代理例外（默认 `*.ts.net`、`100.64.0.0/10`），右上角一键恢复默认且保留开关状态。
+- 开启后：排除网段并入 TUN `route-exclude-address`（setup 与热更新两条路径）；前置 `DOMAIN-SUFFIX/IP-CIDR(6) ... DIRECT` 规则；内核按 `fake-ip-filter-mode` 给域名补 `+.domain`（blacklist）或 `DOMAIN-SUFFIX,domain,real-ip`（rule），并在订阅未定义同名策略时补 `nameserver-policy`；系统代理例外追加到实际 bypass 列表，不改写用户保存的排除域名。
+- 与开关无关的通用修复：GUI 的 tun 设置不再整体替换订阅的 `route-exclude-address`，内核在 `applyPatch` 记录订阅原值，setup 与 `updateConfig` 热更新均与 GUI 列表取并集。
+- 内核 TUN `auto-detect-interface` 对落在 `route-exclude-address` 内的目标不再绑定默认网卡，交由系统路由（如 Tailscale utun）；DNS 请求 `100.100.100.100`、系统代理 DIRECT 访问 Tailnet 因此可达。显式配置全局 `interface-name` 时仍以该网卡为准。
+- 代码落点：`lib/models/config.dart`（`TailscaleProps`、`realBypassDomain`）、`lib/state.dart`（`buildPatchParams`、`getCoreState`）、`lib/providers/state.dart`（`updateParams`、`coreState`、`proxyState`）、`lib/views/config/network.dart`（`TailscaleItem`）、`arb/intl_*.arb`；`core/patch.go`、`core/patch_tailscale.go`、`core/common.go`；`core/Clash.Meta/listener/sing_tun/server.go`。
+- 回归：`test/models/tailscale_props_test.dart`、`core/patch_tailscale_test.go`、`core/Clash.Meta/listener/sing_tun/route_exclude_test.go`；实机验证 `dig +short wiki.gwm.cn` 为 Fake-IP、`dscacheutil -q host -a name <设备>.<tailnet>.ts.net` 为 100.x、`tailscale ping` 正常。
+
 ### macOS TUN、DNS 与唤醒恢复
 
 - macOS 实际 TUN 配置将 `system` 栈映射为 `mixed`；显式 `mixed` 或 `gvisor` 保持原值。

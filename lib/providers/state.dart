@@ -140,7 +140,7 @@ CoreState coreState(Ref ref) {
     networkSettingProvider.select(
       (state) => (
         bypassPrivateRoute: state.bypassPrivateRoute,
-        bypassDomain: state.bypassDomain,
+        bypassDomain: state.realBypassDomain,
       ),
     ),
   );
@@ -156,24 +156,29 @@ CoreState coreState(Ref ref) {
 
 @riverpod
 UpdateParams updateParams(Ref ref) {
-  final (:bypassPrivateRoute, :realBypassPrivateRouteAddress) = ref.watch(
-    networkSettingProvider.select(
-      (state) => (
-        bypassPrivateRoute: state.bypassPrivateRoute,
-        realBypassPrivateRouteAddress: state.realBypassPrivateRouteAddress,
-      ),
-    ),
-  );
+  final (:bypassPrivateRoute, :realBypassPrivateRouteAddress, :tailscale) = ref
+      .watch(
+        networkSettingProvider.select(
+          (state) => (
+            bypassPrivateRoute: state.bypassPrivateRoute,
+            realBypassPrivateRouteAddress: state.realBypassPrivateRouteAddress,
+            tailscale: state.tailscale,
+          ),
+        ),
+      );
   return ref.watch(
     patchClashConfigProvider.select(
       (state) => UpdateParams(
-        tun: state.tun.getRealTun(
-          bypassPrivateRoute,
-          fakeIpRange: state.dns.fakeIpRange,
-          fakeIpRangeV6: state.dns.effectiveFakeIpRangeV6(
-            ipv6Enabled: state.ipv6,
+        // BETTBOX-CUSTOM: Tailscale 共存时把 Tailnet 网段并入 TUN 排除路由。
+        tun: tailscale.applyToTun(
+          state.tun.getRealTun(
+            bypassPrivateRoute,
+            fakeIpRange: state.dns.fakeIpRange,
+            fakeIpRangeV6: state.dns.effectiveFakeIpRangeV6(
+              ipv6Enabled: state.ipv6,
+            ),
+            bypassPrivateRouteAddress: realBypassPrivateRouteAddress,
           ),
-          bypassPrivateRouteAddress: realBypassPrivateRouteAddress,
         ),
         allowLan: state.allowLan,
         findProcessMode: state.findProcessMode,
@@ -194,7 +199,7 @@ ProxyState proxyState(Ref ref) {
   final isStart = ref.watch(runTimeProvider.select((state) => state != null));
   final vm2 = ref.watch(
     networkSettingProvider.select(
-      (state) => VM2(a: state.systemProxy, b: state.bypassDomain),
+      (state) => VM2(a: state.systemProxy, b: state.realBypassDomain),
     ),
   );
   final mixedPort = ref.watch(

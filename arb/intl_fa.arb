@@ -1151,5 +1151,15 @@
   "menuShowAll": "نمایش همه",
   "menuFullScreen": "تمام صفحه",
   "menuZoom": "بزرگ‌نمایی",
-  "menuBringAllToFront": "آوردن همه به جلو"
+  "menuBringAllToFront": "آوردن همه به جلو",
+  "tailscaleCoexist": "هم‌زیستی با Tailscale",
+  "tailscaleCoexistDesc": "محدوده‌های Tailnet از TUN مستثنا و نام‌های MagicDNS با Tailscale حل می‌شوند",
+  "tailscaleRouteExclude": "محدوده‌های مستثنا",
+  "tailscaleRouteExcludeDesc": "این محدوده‌ها از TUN عبور نمی‌کنند و هسته با مسیریابی سیستم (Tailscale) متصل می‌شود",
+  "tailscaleDnsDomains": "دامنه‌های MagicDNS",
+  "tailscaleDnsDomainsDesc": "IP واقعی برگردانده و با سرور DNS زیر حل می‌شود",
+  "tailscaleDnsServer": "سرور MagicDNS",
+  "tailscaleDnsServerDesc": "خالی بگذارید تا DNS فعلی استفاده شود",
+  "tailscaleBypassDomain": "استثناهای پروکسی سیستم",
+  "tailscaleBypassDomainDesc": "هنگام فعال بودن به فهرست استثنای پروکسی سیستم افزوده می‌شود"
 }

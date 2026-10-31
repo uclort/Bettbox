@@ -1151,5 +1151,15 @@
   "menuShowAll": "모두 보기",
   "menuFullScreen": "전체 화면",
   "menuZoom": "확대/축소",
-  "menuBringAllToFront": "모두 앞으로 가져오기"
+  "menuBringAllToFront": "모두 앞으로 가져오기",
+  "tailscaleCoexist": "Tailscale 공존",
+  "tailscaleCoexistDesc": "Tailnet 대역을 TUN에서 제외하고 MagicDNS 이름을 Tailscale로 확인",
+  "tailscaleRouteExclude": "제외 대역",
+  "tailscaleRouteExcludeDesc": "이 대역은 TUN을 거치지 않으며 코어는 시스템 라우팅(Tailscale)으로 접속",
+  "tailscaleDnsDomains": "MagicDNS 도메인",
+  "tailscaleDnsDomainsDesc": "실제 IP를 반환하고 아래 DNS 서버로 확인",
+  "tailscaleDnsServer": "MagicDNS 서버",
+  "tailscaleDnsServerDesc": "비워 두면 현재 DNS 사용",
+  "tailscaleBypassDomain": "시스템 프록시 예외",
+  "tailscaleBypassDomainDesc": "활성화 시 시스템 프록시 제외 목록에 추가"
 }

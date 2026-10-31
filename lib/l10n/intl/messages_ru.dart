@@ -2100,6 +2100,36 @@ class MessageLookup extends MessageLookupByLibrary {
       "Настроить системный прокси",
     ),
     "tab": MessageLookupByLibrary.simpleMessage("Вкладки"),
+    "tailscaleBypassDomain": MessageLookupByLibrary.simpleMessage(
+      "Исключения системного прокси",
+    ),
+    "tailscaleBypassDomainDesc": MessageLookupByLibrary.simpleMessage(
+      "Добавляются в список исключений системного прокси",
+    ),
+    "tailscaleCoexist": MessageLookupByLibrary.simpleMessage(
+      "Совместимость с Tailscale",
+    ),
+    "tailscaleCoexistDesc": MessageLookupByLibrary.simpleMessage(
+      "Исключить сети Tailnet из TUN и разрешать имена MagicDNS через Tailscale",
+    ),
+    "tailscaleDnsDomains": MessageLookupByLibrary.simpleMessage(
+      "Домены MagicDNS",
+    ),
+    "tailscaleDnsDomainsDesc": MessageLookupByLibrary.simpleMessage(
+      "Возвращать реальные IP и разрешать через DNS-сервер ниже",
+    ),
+    "tailscaleDnsServer": MessageLookupByLibrary.simpleMessage(
+      "DNS-сервер MagicDNS",
+    ),
+    "tailscaleDnsServerDesc": MessageLookupByLibrary.simpleMessage(
+      "Оставьте пустым для текущего DNS",
+    ),
+    "tailscaleRouteExclude": MessageLookupByLibrary.simpleMessage(
+      "Исключённые сети",
+    ),
+    "tailscaleRouteExcludeDesc": MessageLookupByLibrary.simpleMessage(
+      "Эти сети не проходят через TUN; ядро использует системную маршрутизацию (Tailscale)",
+    ),
     "tcpConcurrent": MessageLookupByLibrary.simpleMessage(
       "Параллельные TCP-соединения",
     ),

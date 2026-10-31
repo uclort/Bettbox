@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"net/netip"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -43,6 +44,9 @@ type PatchParams struct {
 	PrependRules       []string        `json:"prepend-rules"`
 	DisabledGroups     []string        `json:"disabled-groups"`
 	SelectGlobal       bool            `json:"select-global"`
+	Tailscale          *PatchTailscale `json:"tailscale"`
+
+	profileRouteExclude []netip.Prefix
 }
 
 const defaultHealthCheckTimeout = 5000
@@ -72,9 +76,13 @@ func hasPatchValue(data json.RawMessage) bool {
 func applyPatch(raw *config.RawConfig, params *PatchParams) (string, error) {
 	defaults := config.DefaultRawConfig()
 	if hasPatchValue(params.General) {
+		// BETTBOX-CUSTOM: 记录订阅 route-exclude-address，与 GUI tun 设置取并集。
+		profileRouteExclude := append([]netip.Prefix(nil), raw.Tun.RouteExcludeAddress...)
 		if err := yaml.Unmarshal(params.General, raw); err != nil {
 			return "", fmt.Errorf("patch general: %w", err)
 		}
+		params.profileRouteExclude = profileRouteExclude
+		raw.Tun.RouteExcludeAddress = mergeRouteExcludeAddress(raw.Tun.RouteExcludeAddress, profileRouteExclude)
 		var nullable struct {
 			GlobalUA *string `json:"global-ua"`
 		}
@@ -94,6 +102,8 @@ func applyPatch(raw *config.RawConfig, params *PatchParams) (string, error) {
 	if err := patchDns(raw, params, defaults); err != nil {
 		return "", err
 	}
+	patchTailscaleDns(raw, params.Tailscale) // BETTBOX-CUSTOM: Tailscale 共存
+	patchTailscaleDns(raw, params.Tailscale)
 	if hasPatchValue(params.Ntp) {
 		raw.NTP = defaults.NTP
 		if err := yaml.Unmarshal(params.Ntp, &raw.NTP); err != nil {

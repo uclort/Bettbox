@@ -2028,6 +2028,36 @@ class MessageLookup extends MessageLookupByLibrary {
     "systemProxy": MessageLookupByLibrary.simpleMessage("System Proxy"),
     "systemProxyDesc": MessageLookupByLibrary.simpleMessage("Set system proxy"),
     "tab": MessageLookupByLibrary.simpleMessage("Tab"),
+    "tailscaleBypassDomain": MessageLookupByLibrary.simpleMessage(
+      "System Proxy Exceptions",
+    ),
+    "tailscaleBypassDomainDesc": MessageLookupByLibrary.simpleMessage(
+      "Appended to the system proxy bypass list while enabled",
+    ),
+    "tailscaleCoexist": MessageLookupByLibrary.simpleMessage(
+      "Tailscale Coexistence",
+    ),
+    "tailscaleCoexistDesc": MessageLookupByLibrary.simpleMessage(
+      "Keep Tailnet ranges out of TUN and resolve MagicDNS names via Tailscale",
+    ),
+    "tailscaleDnsDomains": MessageLookupByLibrary.simpleMessage(
+      "MagicDNS Domains",
+    ),
+    "tailscaleDnsDomainsDesc": MessageLookupByLibrary.simpleMessage(
+      "Return real IPs and resolve with the DNS server below",
+    ),
+    "tailscaleDnsServer": MessageLookupByLibrary.simpleMessage(
+      "MagicDNS Server",
+    ),
+    "tailscaleDnsServerDesc": MessageLookupByLibrary.simpleMessage(
+      "Leave empty to use the configured DNS",
+    ),
+    "tailscaleRouteExclude": MessageLookupByLibrary.simpleMessage(
+      "Excluded Ranges",
+    ),
+    "tailscaleRouteExcludeDesc": MessageLookupByLibrary.simpleMessage(
+      "These ranges bypass TUN; the core reaches them via system routing (Tailscale)",
+    ),
     "tcpConcurrent": MessageLookupByLibrary.simpleMessage("TCP Concurrent"),
     "tcpConcurrentDesc": MessageLookupByLibrary.simpleMessage(
       "Allow concurrent TCP connections",

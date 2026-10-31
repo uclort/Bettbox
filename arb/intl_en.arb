@@ -1150,5 +1150,15 @@
   "menuShowAll": "Show All",
   "menuFullScreen": "Full Screen",
   "menuZoom": "Zoom",
-  "menuBringAllToFront": "Bring All to Front"
+  "menuBringAllToFront": "Bring All to Front",
+  "tailscaleCoexist": "Tailscale Coexistence",
+  "tailscaleCoexistDesc": "Keep Tailnet ranges out of TUN and resolve MagicDNS names via Tailscale",
+  "tailscaleRouteExclude": "Excluded Ranges",
+  "tailscaleRouteExcludeDesc": "These ranges bypass TUN; the core reaches them via system routing (Tailscale)",
+  "tailscaleDnsDomains": "MagicDNS Domains",
+  "tailscaleDnsDomainsDesc": "Return real IPs and resolve with the DNS server below",
+  "tailscaleDnsServer": "MagicDNS Server",
+  "tailscaleDnsServerDesc": "Leave empty to use the configured DNS",
+  "tailscaleBypassDomain": "System Proxy Exceptions",
+  "tailscaleBypassDomainDesc": "Appended to the system proxy bypass list while enabled"
 }

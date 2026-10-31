@@ -1151,5 +1151,15 @@
   "menuShowAll": "すべてを表示",
   "menuFullScreen": "フルスクリーン",
   "menuZoom": "拡大／縮小",
-  "menuBringAllToFront": "すべてを手前に移動"
+  "menuBringAllToFront": "すべてを手前に移動",
+  "tailscaleCoexist": "Tailscale 共存",
+  "tailscaleCoexistDesc": "Tailnet の範囲を TUN から除外し、MagicDNS 名を Tailscale で解決",
+  "tailscaleRouteExclude": "除外範囲",
+  "tailscaleRouteExcludeDesc": "これらの範囲は TUN を経由せず、コアはシステムルーティング（Tailscale）で接続",
+  "tailscaleDnsDomains": "MagicDNS ドメイン",
+  "tailscaleDnsDomainsDesc": "実 IP を返し、下記 DNS サーバーで解決",
+  "tailscaleDnsServer": "MagicDNS サーバー",
+  "tailscaleDnsServerDesc": "空欄の場合は現在の DNS を使用",
+  "tailscaleBypassDomain": "システムプロキシ例外",
+  "tailscaleBypassDomainDesc": "有効時にシステムプロキシの除外リストへ追加"
 }

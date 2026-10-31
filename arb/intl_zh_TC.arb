@@ -1150,5 +1150,15 @@
   "menuShowAll": "顯示全部",
   "menuFullScreen": "全螢幕",
   "menuZoom": "縮放",
-  "menuBringAllToFront": "全部置於最前"
+  "menuBringAllToFront": "全部置於最前",
+  "tailscaleCoexist": "Tailscale 共存",
+  "tailscaleCoexistDesc": "Tailnet 網段不經過虛擬網卡，MagicDNS 網域交由 Tailscale 解析",
+  "tailscaleRouteExclude": "排除網段",
+  "tailscaleRouteExcludeDesc": "這些網段不經過虛擬網卡，核心存取時依系統路由走 Tailscale",
+  "tailscaleDnsDomains": "MagicDNS 網域",
+  "tailscaleDnsDomainsDesc": "回傳真實 IP，並使用下方 DNS 伺服器解析",
+  "tailscaleDnsServer": "MagicDNS 伺服器",
+  "tailscaleDnsServerDesc": "留空則使用目前設定的 DNS",
+  "tailscaleBypassDomain": "系統代理例外",
+  "tailscaleBypassDomainDesc": "開啟共存時追加到系統代理排除清單"
 }

@@ -156,6 +156,8 @@ jobs:
             constant/metadata.go \
             dns/resolver.go \
             dns/util.go \
+            listener/sing_tun/server.go \
+            listener/sing_tun/route_exclude_test.go \
             tunnel/dns_dialer.go \
             tunnel/tunnel.go \
             tunnel/statistic/tracker.go \

@@ -142,7 +142,6 @@ class SystemProxyItem extends ConsumerWidget {
   }
 }
 
-
 class AutoSetSystemDnsItem extends ConsumerWidget {
   const AutoSetSystemDnsItem({super.key});
 
@@ -681,6 +680,175 @@ class BypassPrivateRouteItem extends ConsumerWidget {
   }
 }
 
+// BETTBOX-CUSTOM: Tailscale 共存。DNS 与前置规则需要重建配置，网段与系统代理例外会随状态热更新。
+Future<void> _updateTailscale(
+  WidgetRef ref,
+  TailscaleProps Function(TailscaleProps state) builder,
+) async {
+  ref
+      .read(networkSettingProvider.notifier)
+      .updateState(
+        (state) => state.copyWith(tailscale: builder(state.tailscale)),
+      );
+  globalState.appController.setupClashConfigDebounce();
+}
+
+class TailscaleItem extends ConsumerWidget {
+  const TailscaleItem({super.key});
+
+  Widget _listEntry({
+    required String title,
+    required String subtitle,
+    required List<String> Function(TailscaleProps state) select,
+    required TailscaleProps Function(TailscaleProps state, List<String> items)
+    update,
+  }) {
+    return ListItem.next(
+      title: Text(title),
+      subtitle: Text(subtitle),
+      delegate: NextDelegate(
+        blur: false,
+        title: title,
+        widget: Consumer(
+          builder: (_, ref, _) {
+            final items = ref.watch(
+              networkSettingProvider.select((state) => select(state.tailscale)),
+            );
+            return ListInputPage(
+              title: title,
+              items: items,
+              titleBuilder: (item) => Text(item),
+              onChange: (items) => _updateTailscale(
+                ref,
+                (state) => update(state, List.from(items)),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showEditPage(BuildContext context) {
+    showExtend(
+      context,
+      builder: (_, type) => AdaptiveSheetScaffold(
+        type: type,
+        title: appLocalizations.tailscaleCoexist,
+        actions: [
+          Consumer(
+            builder: (_, ref, _) {
+              return IconButton(
+                onPressed: () async {
+                  final res = await globalState.showMessage(
+                    title: appLocalizations.reset,
+                    message: TextSpan(text: appLocalizations.resetTip),
+                  );
+                  if (res != true) return;
+                  await _updateTailscale(ref, (state) => state.reset());
+                },
+                tooltip: appLocalizations.reset,
+                icon: const Icon(Icons.replay),
+              );
+            },
+          ),
+        ],
+        body: Consumer(
+          builder: (_, ref, _) {
+            final dnsServer = ref.watch(
+              networkSettingProvider.select(
+                (state) => state.tailscale.dnsServer,
+              ),
+            );
+            return generateListView([
+              _listEntry(
+                title: appLocalizations.tailscaleRouteExclude,
+                subtitle: appLocalizations.tailscaleRouteExcludeDesc,
+                select: (state) => state.routeExcludeAddress,
+                update: (state, items) =>
+                    state.copyWith(routeExcludeAddress: items),
+              ),
+              _listEntry(
+                title: appLocalizations.tailscaleDnsDomains,
+                subtitle: appLocalizations.tailscaleDnsDomainsDesc,
+                select: (state) => state.dnsDomains,
+                update: (state, items) => state.copyWith(dnsDomains: items),
+              ),
+              ListItem.input(
+                title: Text(appLocalizations.tailscaleDnsServer),
+                subtitle: Text(
+                  dnsServer.isEmpty
+                      ? appLocalizations.tailscaleDnsServerDesc
+                      : dnsServer,
+                ),
+                delegate: InputDelegate(
+                  title: appLocalizations.tailscaleDnsServer,
+                  value: dnsServer,
+                  resetValue: defaultTailscaleDnsServer,
+                  hintText: defaultTailscaleDnsServer,
+                  onChanged: (value) {
+                    if (value == null) return;
+                    _updateTailscale(
+                      ref,
+                      (state) => state.copyWith(dnsServer: value.trim()),
+                    );
+                  },
+                ),
+              ),
+              _listEntry(
+                title: appLocalizations.tailscaleBypassDomain,
+                subtitle: appLocalizations.tailscaleBypassDomainDesc,
+                select: (state) => state.bypassDomain,
+                update: (state, items) => state.copyWith(bypassDomain: items),
+              ),
+            ]);
+          },
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, ref) {
+    final enable = ref.watch(
+      networkSettingProvider.select((state) => state.tailscale.enable),
+    );
+    return ListItem.switchItem(
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(appLocalizations.tailscaleCoexist),
+          Tooltip(
+            message: appLocalizations.edit,
+            child: Material(
+              color: Colors.transparent,
+              child: InkResponse(
+                radius: 16,
+                highlightShape: BoxShape.circle,
+                onTap: () => _showEditPage(context),
+                child: Padding(
+                  padding: const EdgeInsets.all(7),
+                  child: Icon(
+                    Icons.settings_outlined,
+                    size: 18,
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      subtitle: Text(appLocalizations.tailscaleCoexistDesc),
+      delegate: SwitchDelegate(
+        value: enable,
+        onChanged: (value) =>
+            _updateTailscale(ref, (state) => state.copyWith(enable: value)),
+      ),
+    );
+  }
+}
+
 class NetworkListView extends ConsumerWidget {
   const NetworkListView({super.key});
 
@@ -723,6 +891,7 @@ class NetworkListView extends ConsumerWidget {
           if (isMipsStack) const TunCongestionControllerItem(),
           const MtuItem(),
           const BypassPrivateRouteItem(),
+          if (system.isDesktop) const TailscaleItem(),
         ],
       ),
     ];

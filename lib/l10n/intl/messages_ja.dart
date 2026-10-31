@@ -1677,6 +1677,28 @@ class MessageLookup extends MessageLookupByLibrary {
     "systemProxy": MessageLookupByLibrary.simpleMessage("システムプロキシ"),
     "systemProxyDesc": MessageLookupByLibrary.simpleMessage("システムプロキシの設定"),
     "tab": MessageLookupByLibrary.simpleMessage("タブ"),
+    "tailscaleBypassDomain": MessageLookupByLibrary.simpleMessage("システムプロキシ例外"),
+    "tailscaleBypassDomainDesc": MessageLookupByLibrary.simpleMessage(
+      "有効時にシステムプロキシの除外リストへ追加",
+    ),
+    "tailscaleCoexist": MessageLookupByLibrary.simpleMessage("Tailscale 共存"),
+    "tailscaleCoexistDesc": MessageLookupByLibrary.simpleMessage(
+      "Tailnet の範囲を TUN から除外し、MagicDNS 名を Tailscale で解決",
+    ),
+    "tailscaleDnsDomains": MessageLookupByLibrary.simpleMessage(
+      "MagicDNS ドメイン",
+    ),
+    "tailscaleDnsDomainsDesc": MessageLookupByLibrary.simpleMessage(
+      "実 IP を返し、下記 DNS サーバーで解決",
+    ),
+    "tailscaleDnsServer": MessageLookupByLibrary.simpleMessage("MagicDNS サーバー"),
+    "tailscaleDnsServerDesc": MessageLookupByLibrary.simpleMessage(
+      "空欄の場合は現在の DNS を使用",
+    ),
+    "tailscaleRouteExclude": MessageLookupByLibrary.simpleMessage("除外範囲"),
+    "tailscaleRouteExcludeDesc": MessageLookupByLibrary.simpleMessage(
+      "これらの範囲は TUN を経由せず、コアはシステムルーティング（Tailscale）で接続",
+    ),
     "tcpConcurrent": MessageLookupByLibrary.simpleMessage("TCP並列接続"),
     "tcpConcurrentDesc": MessageLookupByLibrary.simpleMessage("TCPの同時並列接続を許可"),
     "testUrl": MessageLookupByLibrary.simpleMessage("テストURL"),

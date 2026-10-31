@@ -1502,6 +1502,26 @@ class MessageLookup extends MessageLookupByLibrary {
     "systemProxy": MessageLookupByLibrary.simpleMessage("系統代理"),
     "systemProxyDesc": MessageLookupByLibrary.simpleMessage("設定系統代理"),
     "tab": MessageLookupByLibrary.simpleMessage("分頁"),
+    "tailscaleBypassDomain": MessageLookupByLibrary.simpleMessage("系統代理例外"),
+    "tailscaleBypassDomainDesc": MessageLookupByLibrary.simpleMessage(
+      "開啟共存時追加到系統代理排除清單",
+    ),
+    "tailscaleCoexist": MessageLookupByLibrary.simpleMessage("Tailscale 共存"),
+    "tailscaleCoexistDesc": MessageLookupByLibrary.simpleMessage(
+      "Tailnet 網段不經過虛擬網卡，MagicDNS 網域交由 Tailscale 解析",
+    ),
+    "tailscaleDnsDomains": MessageLookupByLibrary.simpleMessage("MagicDNS 網域"),
+    "tailscaleDnsDomainsDesc": MessageLookupByLibrary.simpleMessage(
+      "回傳真實 IP，並使用下方 DNS 伺服器解析",
+    ),
+    "tailscaleDnsServer": MessageLookupByLibrary.simpleMessage("MagicDNS 伺服器"),
+    "tailscaleDnsServerDesc": MessageLookupByLibrary.simpleMessage(
+      "留空則使用目前設定的 DNS",
+    ),
+    "tailscaleRouteExclude": MessageLookupByLibrary.simpleMessage("排除網段"),
+    "tailscaleRouteExcludeDesc": MessageLookupByLibrary.simpleMessage(
+      "這些網段不經過虛擬網卡，核心存取時依系統路由走 Tailscale",
+    ),
     "tcpConcurrent": MessageLookupByLibrary.simpleMessage("TCP 並發"),
     "tcpConcurrentDesc": MessageLookupByLibrary.simpleMessage("開啟後允許 TCP 併發連接"),
     "testUrl": MessageLookupByLibrary.simpleMessage("測試連結"),
