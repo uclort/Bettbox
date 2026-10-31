@@ -6,9 +6,9 @@
     <description>Bettbox 自定义版本更新源</description>
     <language>zh-CN</language>
     <item>
-      <title>Bettbox 1.19.7+2090000206</title>
-      <pubDate>Mon, 26 Oct 2026 13:03:49 +0000</pubDate>
-      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000206-r20261026124506-118645778896-37d74e1c7912</link>
+      <title>Bettbox 1.19.7+2090000208</title>
+      <pubDate>Sat, 31 Oct 2026 09:29:31 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000208-r20261031091121-417db1ec212f-40f6454ffad0</link>
       <description><![CDATA[<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https:;">
@@ -20,10 +20,17 @@ pre { white-space: pre-wrap; } code { font-size: .92em; }
 img,table { max-width: 100%; } table { border-collapse: collapse; } td,th { border: 1px solid #888; padding: 6px; }
 a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; padding-top: 12px; }
 </style></head><body><p dir="auto">基于上游 Bettbox <code class="notranslate">main@1fb8806fdf82</code> 构建的自定义版本。</p>
-<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.7+2090000206</code></strong></p>
+<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.7+2090000208</code></strong></p>
 <h2 dir="auto">本次变更（相较上一自定义 Release）</h2>
 <ul dir="auto">
-<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000205-r20261025132341-c1c83c071e00-37d74e1c7912"><code class="notranslate">custom-v1.19.7+2090000205-r20261025132341-c1c83c071e00-37d74e1c7912</code></a> → <code class="notranslate">custom-v1.19.7+2090000206-r20261026124506-118645778896-37d74e1c7912</code></li>
+<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000206-r20261026124506-118645778896-37d74e1c7912"><code class="notranslate">custom-v1.19.7+2090000206-r20261026124506-118645778896-37d74e1c7912</code></a> → <code class="notranslate">custom-v1.19.7+2090000208-r20261031091121-417db1ec212f-40f6454ffad0</code></li>
+<li>自定义 Mihomo 源码：<code class="notranslate">888cb118e9d2</code> → <code class="notranslate">060bfee5865a</code></li>
+</ul>
+<h3 dir="auto">2026-10-31 Tailscale 共存</h3>
+<ul dir="auto">
+<li>网络设置新增「Tailscale 共存」（桌面端，默认关闭）：Tailnet 网段不进虚拟网卡，<code class="notranslate">*.ts.net</code> 返回真实 IP 并交给 <code class="notranslate">100.100.100.100</code> 解析，系统代理自动绕过 Tailnet；各项可自定义，支持一键恢复默认。</li>
+<li>订阅里写的 <code class="notranslate">tun.route-exclude-address</code> 不再被客户端设置覆盖，改为合并生效（包括热更新）。</li>
+<li>内核访问被排除的网段时不再强制绑定 en0，按系统路由走 Tailscale。</li>
 </ul>
 <h3 dir="auto">2026-10-26 修复 macOS 静默启动</h3>
 <ul dir="auto">
@@ -134,6 +141,15 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>Dock 同步仍留在同一次 <code class="notranslate">order</code> 的异步回调里，只把可见或最小化窗口算作有窗口。代码位于 <code class="notranslate">macos/Runner/MainFlutterWindow.swift</code>，判断位于 <code class="notranslate">lib/controller.dart</code>。</li>
 <li>尚未在实机确认窗口会不会闪一下。融合时必须保留 <code class="notranslate">hiddenWindowAtLaunch()</code>，不能只留下 Dock 同步。</li>
 </ul>
+<h3 dir="auto">Tailscale 共存（桌面端）</h3>
+<ul dir="auto">
+<li>网络设置新增「Tailscale 共存」，默认关闭；齿轮入口可自定义排除网段（默认 <code class="notranslate">100.64.0.0/10</code>、<code class="notranslate">fd7a:115c:a1e0::/48</code>）、MagicDNS 域名（默认 <code class="notranslate">ts.net</code>）、MagicDNS 服务器（默认 <code class="notranslate">100.100.100.100</code>，留空只返回真实 IP 不改 DNS 服务器）与系统代理例外（默认 <code class="notranslate">*.ts.net</code>、<code class="notranslate">100.64.0.0/10</code>），右上角一键恢复默认且保留开关状态。</li>
+<li>开启后：排除网段并入 TUN <code class="notranslate">route-exclude-address</code>（setup 与热更新两条路径）；前置 <code class="notranslate">DOMAIN-SUFFIX/IP-CIDR(6) ... DIRECT</code> 规则；内核按 <code class="notranslate">fake-ip-filter-mode</code> 给域名补 <code class="notranslate">+.domain</code>（blacklist）或 <code class="notranslate">DOMAIN-SUFFIX,domain,real-ip</code>（rule），并在订阅未定义同名策略时补 <code class="notranslate">nameserver-policy</code>；系统代理例外追加到实际 bypass 列表，不改写用户保存的排除域名。</li>
+<li>与开关无关的通用修复：GUI 的 tun 设置不再整体替换订阅的 <code class="notranslate">route-exclude-address</code>，内核在 <code class="notranslate">applyPatch</code> 记录订阅原值，setup 与 <code class="notranslate">updateConfig</code> 热更新均与 GUI 列表取并集。</li>
+<li>内核 TUN <code class="notranslate">auto-detect-interface</code> 对落在 <code class="notranslate">route-exclude-address</code> 内的目标不再绑定默认网卡，交由系统路由（如 Tailscale utun）；DNS 请求 <code class="notranslate">100.100.100.100</code>、系统代理 DIRECT 访问 Tailnet 因此可达。显式配置全局 <code class="notranslate">interface-name</code> 时仍以该网卡为准。</li>
+<li>代码落点：<code class="notranslate">lib/models/config.dart</code>（<code class="notranslate">TailscaleProps</code>、<code class="notranslate">realBypassDomain</code>）、<code class="notranslate">lib/state.dart</code>（<code class="notranslate">buildPatchParams</code>、<code class="notranslate">getCoreState</code>）、<code class="notranslate">lib/providers/state.dart</code>（<code class="notranslate">updateParams</code>、<code class="notranslate">coreState</code>、<code class="notranslate">proxyState</code>）、<code class="notranslate">lib/views/config/network.dart</code>（<code class="notranslate">TailscaleItem</code>）、<code class="notranslate">arb/intl_*.arb</code>；<code class="notranslate">core/patch.go</code>、<code class="notranslate">core/patch_tailscale.go</code>、<code class="notranslate">core/common.go</code>；<code class="notranslate">core/Clash.Meta/listener/sing_tun/server.go</code>。</li>
+<li>回归：<code class="notranslate">test/models/tailscale_props_test.dart</code>、<code class="notranslate">core/patch_tailscale_test.go</code>、<code class="notranslate">core/Clash.Meta/listener/sing_tun/route_exclude_test.go</code>；实机验证 <code class="notranslate">dig +short wiki.gwm.cn</code> 为 Fake-IP、<code class="notranslate">dscacheutil -q host -a name &lt;设备&gt;.&lt;tailnet&gt;.ts.net</code> 为 100.x、<code class="notranslate">tailscale ping</code> 正常。</li>
+</ul>
 <h3 dir="auto">macOS TUN、DNS 与唤醒恢复</h3>
 <ul dir="auto">
 <li>macOS 实际 TUN 配置将 <code class="notranslate">system</code> 栈映射为 <code class="notranslate">mixed</code>；显式 <code class="notranslate">mixed</code> 或 <code class="notranslate">gvisor</code> 保持原值。</li>
@@ -228,16 +244,16 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <h2 dir="auto">构建信息</h2>
 <ul dir="auto">
 <li>上游 Bettbox main 基线：<code class="notranslate">main@1fb8806fdf82</code></li>
-<li>最终安装版本：<code class="notranslate">1.19.7+2090000206</code></li>
+<li>最终安装版本：<code class="notranslate">1.19.7+2090000208</code></li>
 <li>上游源码版本：<code class="notranslate">1.19.7+2026102201</code></li>
-<li>Bettbox custom-build commit：<code class="notranslate">1186457788963dcc662384892658cd77c89a5b99</code></li>
+<li>Bettbox custom-build commit：<code class="notranslate">417db1ec212f9e089720c6e163aeb51887b05810</code></li>
 </ul>
 <p dir="auto">Release 仅包含本次 Action 生成的安装包，不包含私有自定义 Mihomo 源码。</p>
 <p dir="auto">Windows 与 macOS 安装包未做商业代码签名；Android 安装包使用 Bettbox 自定义版固定 Release 签名。</p>
-<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7%2B2090000206-r20261026124506-118645778896-37d74e1c7912">查看完整发布页</a></footer></body></html>]]></description>
-      <sparkle:version>2090000206</sparkle:version>
-      <sparkle:shortVersionString>1.19.7+2090000206</sparkle:shortVersionString>
-      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.7+2090000206-r20261026124506-118645778896-37d74e1c7912/Bettbox-1.19.7-windows-amd64-setup.exe" length="44510838" type="application/octet-stream" sparkle:os="windows" sparkle:dsaSignature="MDwCHFHeMG7zOjHsitInr+fOh38j+HXC/C5rAxyIIYwCHEqgUvJjY2JA+mrWfkqqb/vMjZ2FHxp0Gz/rNf4=" />
+<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7%2B2090000208-r20261031091121-417db1ec212f-40f6454ffad0">查看完整发布页</a></footer></body></html>]]></description>
+      <sparkle:version>2090000208</sparkle:version>
+      <sparkle:shortVersionString>1.19.7+2090000208</sparkle:shortVersionString>
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.7+2090000208-r20261031091121-417db1ec212f-40f6454ffad0/Bettbox-1.19.7-windows-amd64-setup.exe" length="44553469" type="application/octet-stream" sparkle:os="windows" sparkle:dsaSignature="MDwCHBU3ACPZuTjhmi1PubnhJ4Wf/YytFbj43Q6hqZYCHDOEYJu8OWJy0qIIS8F+i1WHwwiVCt3VzNWe7dI=" />
     </item>
   </channel>
 </rss>
