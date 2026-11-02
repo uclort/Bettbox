@@ -6,9 +6,9 @@
     <description>Bettbox 自定义版本更新源</description>
     <language>zh-CN</language>
     <item>
-      <title>Bettbox 1.19.7+2090000213</title>
-      <pubDate>Mon, 02 Nov 2026 09:32:30 +0000</pubDate>
-      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000213-r20261102091509-8e0a97321a7e-40f6454ffad0</link>
+      <title>Bettbox 1.19.7+2090000222</title>
+      <pubDate>Mon, 02 Nov 2026 13:23:30 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000222-r20261102130048-b48e3b8dc54c-40f6454ffad0</link>
       <description><![CDATA[<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https:;">
@@ -20,15 +20,19 @@ pre { white-space: pre-wrap; } code { font-size: .92em; }
 img,table { max-width: 100%; } table { border-collapse: collapse; } td,th { border: 1px solid #888; padding: 6px; }
 a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; padding-top: 12px; }
 </style></head><body><p dir="auto">基于上游 Bettbox <code class="notranslate">main@1fb8806fdf82</code> 构建的自定义版本。</p>
-<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.7+2090000213</code></strong></p>
+<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.7+2090000222</code></strong></p>
 <h2 dir="auto">本次变更（相较上一自定义 Release）</h2>
 <ul dir="auto">
-<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000212-r20261102084911-739811b9c9c2-40f6454ffad0"><code class="notranslate">custom-v1.19.7+2090000212-r20261102084911-739811b9c9c2-40f6454ffad0</code></a> → <code class="notranslate">custom-v1.19.7+2090000213-r20261102091509-8e0a97321a7e-40f6454ffad0</code></li>
+<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000213-r20261102091509-8e0a97321a7e-40f6454ffad0"><code class="notranslate">custom-v1.19.7+2090000213-r20261102091509-8e0a97321a7e-40f6454ffad0</code></a> → <code class="notranslate">custom-v1.19.7+2090000222-r20261102130048-b48e3b8dc54c-40f6454ffad0</code></li>
 </ul>
 <h3 dir="auto">2026-11-02 托盘显示策略组选中目标、Android 应用权限页</h3>
 <ul dir="auto">
 <li>托盘策略组左侧为组名，右侧以灰色显示当前选中项和延迟，紧贴箭头；展开后节点行右侧灰色显示延迟，策略组子项显示其选中节点与延迟，选中的仍是策略组时以 <code class="notranslate">组名 (最终节点)</code> 显示。名称与右侧说明分为两列，中间留固定间隔，不再上下交错。macOS 与 Windows 效果一致。</li>
 <li>Fallback、URLTest 等自动选择的策略组，托盘子菜单中的节点改为灰色（与右侧延迟同色），点击无反应且不会关闭菜单；只有手动选择（Selector）组的节点可点选。</li>
+<li>修复 macOS 按住 Option 打开托盘（显示隐藏策略组）时，点击延迟测试没有加载动画、延迟不刷新的问题。</li>
+<li>Windows 支持按住 Alt 点击托盘图标临时显示隐藏策略组（对应 macOS 的 Option）。</li>
+<li>Windows 托盘菜单新增字母快捷键：菜单打开时按 M 显示窗口、D 网络面板、S 系统代理、E 虚拟网卡、R 重启内核、Q 退出，与 macOS 的 ⌘ 快捷键字母一致。</li>
+<li>Tailscale 共存开启后，<code class="notranslate">tailscale.com</code> / <code class="notranslate">tailscale.io</code>（控制面、登录、DERP）固定返回真实 IP，DNS 服务器与分流规则不变；修复开启虚拟网卡时 Rex 等内嵌 Tailscale（tsnet）的应用点「Sign in」一直无反应。请勿把 <code class="notranslate">tailscale.com</code> 填进 MagicDNS 域名，MagicDNS 无法解析它，浏览器会报 NXDOMAIN。</li>
 <li>关于页新增「应用权限」（Android）：列出 Bettbox 所需全部权限与授权状态，可直接申请或跳转系统设置。</li>
 <li>补充 Android 17 本地网络权限（ACCESS_LOCAL_NETWORK）运行时申请，与通知权限合并为一次系统弹窗；修复未授权时无法连接同一网段设备（如局域网 HTTP 代理）、测速超时和 502。</li>
 </ul>
@@ -120,6 +124,7 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>macOS 使用 Sparkle、Windows 使用 WinSparkle；安装前继续执行内核、代理和系统 DNS 退出清理。</li>
 <li>Windows 自定义安装包使用单文件启动器内嵌原 Inno Setup 安装器；启动器优先在 <code class="notranslate">%LOCALAPPDATA%\Bettbox\InstallerTemp</code> 创建独立临时目录并覆盖子进程的 <code class="notranslate">TEMP/TMP</code>，避免系统 <code class="notranslate">%TEMP%</code> 权限损坏或安全策略导致“错误 5：拒绝访问”。载荷释放缓冲使用堆内存，避免 1 MB 栈缓冲触发 <code class="notranslate">STATUS_STACK_OVERFLOW</code>。静默卸载跳过用户数据确认框并默认保留用户数据，交互卸载保留确认；Helper 服务按需启动，主程序退出时主动停止，首次 TUN 管理员授权后最多等待 30 秒直至 Helper 可用，已有服务启动失败时立即进入提权重配，只有实际启动成功才执行短健康等待，避免重复等待 30 秒；安装器升级时仅更新已有服务路径并保留鉴权环境，不创建或启动 Helper，残留 Helper/Core 由安装器静默清理。Windows 主窗口使用稳定原生标记识别已有实例，重复启动会恢复并聚焦现有窗口；首次启动窗口展示位于核心、TUN 授权和 Helper 初始化之前，不被网络启动链路阻塞。WinSparkle 初始化时从 <code class="notranslate">ProductVersion</code> 提取构建号，完整版本通过 <code class="notranslate">win_sparkle_set_app_details</code> 展示，纯构建号通过 <code class="notranslate">win_sparkle_set_app_build_version</code> 与 appcast 的 <code class="notranslate">sparkle:version</code> 比较；appcast 的 <code class="notranslate">title</code> 和 <code class="notranslate">sparkle:shortVersionString</code> 也发布最终安装版本 <code class="notranslate">1.19.3+构建号</code>，更新弹窗两侧均可直接对比版本差异；代码位于 <code class="notranslate">lib/common/app_updater.dart</code>、<code class="notranslate">lib/common/system.dart</code>、<code class="notranslate">lib/controller.dart</code>、<code class="notranslate">windows/runner</code>、<code class="notranslate">windows/packaging/exe/launcher</code>、<code class="notranslate">windows/packaging/exe/package_windows.dart</code>、<code class="notranslate">windows/packaging/exe/inno_setup.iss</code> 与 <code class="notranslate">.github/workflows/custom-build.yml</code>，自定义构建通过无效 <code class="notranslate">TEMP/TMP</code> 下的静默安装回归验证；回归安装和卸载均有 5 分钟超时、进程诊断和强制清理，并校验 Windows <code class="notranslate">ProductVersion</code> 包含本次构建号、appcast <code class="notranslate">echo</code> 生成字段包含完整版本、窗口展示顺序、Helper 启动失败快速回退以及安装后 Helper 进程与服务未运行。</li>
 <li>Windows 安装启动器 Release 构建使用静态 MSVC 运行库（<code class="notranslate">/MT</code>），不依赖系统 <code class="notranslate">VCRUNTIME140.dll</code> / <code class="notranslate">MSVCP140.dll</code>；构建校验位于 <code class="notranslate">.github/workflows/custom-build.yml</code>。</li>
+<li>2026-11-02 macOS 构建 Runner 由 <code class="notranslate">macos-15</code> 改为 <code class="notranslate">macos-26</code>（两个 macOS job 都在 arm64 Runner 上，Intel 包为交叉编译）：<code class="notranslate">macos-15</code> arm64 资源紧张，job 排队约 15 分钟后报 “not acquired by Runner … capacity constraints” 被取消；<code class="notranslate">macos-26</code> 约 1 分钟分配，临时分支验证双架构构建与 macOS 回归均通过。若 arm64 资源再次不足，可改用 <code class="notranslate">macos-15-intel</code> / <code class="notranslate">macos-26-intel</code>（x64 资源池，回归脚本按宿主架构编译测试程序，可交叉构建 arm64）。</li>
 <li>默认 Release 同时发布 Windows x64 与 Windows ARM64；ARM64 使用原生 Runner 和 Flutter ARM 工具链，私有内核检出时以 UTF-8 无 BOM、LF 结尾写入 SSH 私钥并收紧 ACL，同时让 PowerShell 原生命令错误立即终止构建；ARM64 仅执行 <code class="notranslate">flutter pub get</code>，复用源码中已提交的 build_runner 生成文件，避免 Dart 生成器在原生镜像上长时间无输出。<code class="notranslate">vclibs 0.1.3</code> 发布包中的 ARM64 运行库实为 32 位 ARM，ARM64 构建会在依赖获取后用 <code class="notranslate">.custom-build/vendor/vclibs-arm64</code> 内的真正 ARM64 DLL 覆盖插件缓存。Helper 显式选择对应 Rust MSVC target，WinSparkle 按目标架构切换预编译库，并对安装包及最终目录内原生 EXE/DLL 执行 PE 架构校验。Windows ARM64 使用独立 <code class="notranslate">appcast-windows-arm64.xml</code> 更新源；补丁脚本位于 <code class="notranslate">windows/packaging/patch_auto_updater_windows.dart</code>。</li>
 <li>Android 使用 arm64-v8a 固定签名 APK，校验 SHA-256 后通过独立 <code class="notranslate">FileProvider</code> URI 调用系统安装器；安装器无法打开时显示失败提示，发布前校验 Provider 与 <code class="notranslate">app_updates</code> 路径配置。更新检查读取 <code class="notranslate">custom-update-feed</code> 分支静态 JSON，避免 GitHub Releases API 匿名限流。</li>
 <li>自动检查与手动检查使用同一发布源，草稿 Release 不会被识别为可用更新。</li>
@@ -153,6 +158,7 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>开启后：排除网段并入 TUN <code class="notranslate">route-exclude-address</code>（setup 与热更新两条路径）；前置 <code class="notranslate">DOMAIN-SUFFIX/IP-CIDR(6) ... DIRECT</code> 规则；内核按 <code class="notranslate">fake-ip-filter-mode</code> 给域名补 <code class="notranslate">+.domain</code>（blacklist）或 <code class="notranslate">DOMAIN-SUFFIX,domain,real-ip</code>（rule），并在订阅未定义同名策略时补 <code class="notranslate">nameserver-policy</code>；系统代理例外追加到实际 bypass 列表，不改写用户保存的排除域名。</li>
 <li>与开关无关的通用修复：GUI 的 tun 设置不再整体替换订阅的 <code class="notranslate">route-exclude-address</code>，内核在 <code class="notranslate">applyPatch</code> 记录订阅原值，setup 与 <code class="notranslate">updateConfig</code> 热更新均与 GUI 列表取并集。</li>
 <li>内核 TUN <code class="notranslate">auto-detect-interface</code> 对落在 <code class="notranslate">route-exclude-address</code> 内的目标不再绑定默认网卡，交由系统路由（如 Tailscale utun）；DNS 请求 <code class="notranslate">100.100.100.100</code>、系统代理 DIRECT 访问 Tailnet 因此可达。显式配置全局 <code class="notranslate">interface-name</code> 时仍以该网卡为准。</li>
+<li>2026-11-02 Tailscale 服务域名：开启时内核固定把 <code class="notranslate">tailscaleServiceDomains</code>（<code class="notranslate">tailscale.com</code>、<code class="notranslate">tailscale.io</code>，<code class="notranslate">core/patch_tailscale.go</code>）加入 fake-ip-filter（blacklist 为 <code class="notranslate">+.domain</code>，rule 为 <code class="notranslate">DOMAIN-SUFFIX,domain,real-ip</code>），<strong>不加</strong> <code class="notranslate">nameserver-policy</code> 与 DIRECT 规则。原因：tsnet（Rex 内嵌节点）与 Tailscale 客户端把连接绑定物理网卡绕过 TUN，拿到 Fake-IP 时 <code class="notranslate">fetch control key</code> 黑洞，登录无响应；而 MagicDNS <code class="notranslate">100.100.100.100</code> 对非 Tailnet 域名返回 SERVFAIL，交给它会让浏览器打开 <code class="notranslate">login.tailscale.com</code> 报 NXDOMAIN，所以不能放进用户的 MagicDNS 域名列表。同时去掉 <code class="notranslate">core/patch.go</code> 中重复的 <code class="notranslate">patchTailscaleDns</code> 调用。回归为 <code class="notranslate">core/patch_tailscale_test.go</code>；实机验证 Rex 设置页 Sign in 可弹出登录页、<code class="notranslate">lsof</code> 中 tsnet 连接目标为真实 IP。</li>
 <li>代码落点：<code class="notranslate">lib/models/config.dart</code>（<code class="notranslate">TailscaleProps</code>、<code class="notranslate">realBypassDomain</code>）、<code class="notranslate">lib/state.dart</code>（<code class="notranslate">buildPatchParams</code>、<code class="notranslate">getCoreState</code>）、<code class="notranslate">lib/providers/state.dart</code>（<code class="notranslate">updateParams</code>、<code class="notranslate">coreState</code>、<code class="notranslate">proxyState</code>）、<code class="notranslate">lib/views/config/network.dart</code>（<code class="notranslate">TailscaleItem</code>）、<code class="notranslate">arb/intl_*.arb</code>；<code class="notranslate">core/patch.go</code>、<code class="notranslate">core/patch_tailscale.go</code>、<code class="notranslate">core/common.go</code>；<code class="notranslate">core/Clash.Meta/listener/sing_tun/server.go</code>。</li>
 <li>回归：<code class="notranslate">test/models/tailscale_props_test.dart</code>、<code class="notranslate">core/patch_tailscale_test.go</code>、<code class="notranslate">core/Clash.Meta/listener/sing_tun/route_exclude_test.go</code>；实机验证 <code class="notranslate">dig +short wiki.gwm.cn</code> 为 Fake-IP、<code class="notranslate">dscacheutil -q host -a name &lt;设备&gt;.&lt;tailnet&gt;.ts.net</code> 为 100.x、<code class="notranslate">tailscale ping</code> 正常。</li>
 </ul>
@@ -179,7 +185,7 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>Windows Shell 回调和菜单改由独立隐藏消息窗口承载，不依赖 Flutter 主窗口可见性；菜单使用 <code class="notranslate">TrackPopupMenuEx + TPM_RETURNCMD</code> 同步返回命令，显示期间冻结原生结构和 Dart 回调 ID，关闭后再应用最新状态。</li>
 <li>Windows 仅 <code class="notranslate">persistent-delay-test</code> 测速项通过 <code class="notranslate">WH_MSGFILTER</code> 截获鼠标/键盘激活并保持原生菜单跟踪，不以关闭后重弹模拟；普通节点与其他操作仍遵循 Windows 默认关闭行为。测速动画和节点结果按稳定 key 复用 ID、按原生命令 ID 原位刷新，结构与点击回调冻结至关闭后应用，避免测速排序变动后点错节点。代码位于 <code class="notranslate">plugins/tray_manager/windows/tray_menu_host.h</code>、<code class="notranslate">tray_manager_plugin.cpp</code>、插件 Dart <code class="notranslate">setContextMenu</code> 与 <code class="notranslate">lib/common/tray.dart</code>；原生 <code class="notranslate">tray_menu_host_test.cpp</code> 覆盖真实子菜单内鼠标/回车测速、结果刷新和普通项关闭，Dart 生命周期回归覆盖排序后结果与 ID 对应关系。</li>
 <li>macOS 与 Windows 共用模板图标：启用系统代理或虚拟网卡时高亮，未启用时使用 60% 中性灰渲染，配色和启停语义保持一致；Windows 启用态按系统明暗使用黑色或白色高对比前景，避免深色任务栏上仍显示成灰色。Windows 移除“托盘反转”设置，历史配置继续保留但不再影响托盘。</li>
-<li>托盘一级菜单提供显示窗口、网络面板、模式、策略组、系统代理、虚拟网卡和重启内核；“显示窗口 / 网络面板 / 系统代理 / 虚拟网卡 / 重启内核 / 退出”使用 <code class="notranslate">⌘M / ⌘D / ⌘S / ⌘E / ⌘R / ⌘Q</code>。</li>
+<li>托盘一级菜单提供显示窗口、网络面板、模式、策略组、系统代理、虚拟网卡和重启内核；“显示窗口 / 网络面板 / 系统代理 / 虚拟网卡 / 重启内核 / 退出”使用 <code class="notranslate">⌘M / ⌘D / ⌘S / ⌘E / ⌘R / ⌘Q</code>。Windows 原生菜单把同一 <code class="notranslate">shortcut:command-x</code> key 转为助记键 <code class="notranslate">名称(&amp;X)</code>（<code class="notranslate">tray_manager_plugin.cpp</code> 的 <code class="notranslate">WithMnemonic</code>，创建与原位更新都应用），菜单打开时直接按字母触发；Windows 弹出菜单不支持 Ctrl 组合键，因此不显示 <code class="notranslate">Ctrl+X</code> 文字。</li>
 <li>二级菜单父项只展开子菜单；节点测速结果使用独立右对齐列。</li>
 <li>2026-11-02 策略组显示选中目标：一级策略组行左侧为组名，右侧灰色显示当前直接选中项与最终节点延迟（如 <code class="notranslate">Fallback  169ms</code>），再接箭头；展开后，节点行右侧灰色显示延迟，子项本身是策略组时显示其选中节点与延迟，若选中的仍是策略组则用括号补最终节点（如 <code class="notranslate">Other (FC-日本 1)  123ms</code>）。选中项与延迟以两个空格分隔（<code class="notranslate">joinTrayDetail</code>）。解析使用含隐藏组的完整 <code class="notranslate">groupsProvider</code>（<code class="notranslate">AppController.getAllGroups</code>），沿 Selector 本地选择 / URLTest、Fallback 的 <code class="notranslate">now</code> / REMATCH 链路走到底并防循环。</li>
 <li>托盘自绘行：macOS 的 <code class="notranslate">proxy-item:</code> 行（<code class="notranslate">AlignedTrayMenuItemView</code>）右侧说明按本行宽度右对齐、使用 <code class="notranslate">secondaryLabelColor</code>，富文本带段落对齐，避免覆盖 <code class="notranslate">NSTextField.alignment</code> 变成左对齐；<code class="notranslate">group-item:</code> 子菜单行改用 <code class="notranslate">SubmenuTrayMenuItemView</code> 自绘名称、灰色说明和 <code class="notranslate">chevron.right</code>，因为原生子菜单项会为快捷键列留出空白，子菜单展开仍由 NSMenu 处理。自绘行按整张菜单分两列：左列宽为最长名称、右列宽为最长说明，中间固定 28pt 间隔，任何一行的灰色说明都不会伸进其他行的名称区域（macOS <code class="notranslate">preferredMenuWidth</code>，Windows 同层自绘项共享 <code class="notranslate">TrayOwnerDrawColumn</code> 测量）。Windows 对同样两类 key 使用 <code class="notranslate">MF_OWNERDRAW</code>（<code class="notranslate">plugins/tray_manager/windows/tray_menu_owner_draw.h</code>）：主题度量对齐文字起点，正文色名称 + 灰色右对齐说明，自绘勾选与箭头并 <code class="notranslate">ExcludeClipRect</code> 屏蔽系统经典箭头，浅色高亮使用 <code class="notranslate">MENU_POPUPITEM/MPI_HOT</code>，深色使用圆角高亮；菜单打开期间刷新只更新自绘数据并重绘。代码位于 <code class="notranslate">lib/common/tray_selection.dart</code>、<code class="notranslate">lib/common/tray.dart</code>、<code class="notranslate">plugins/tray_manager/macos/Classes/TrayMenu.swift</code>、<code class="notranslate">plugins/tray_manager/windows/tray_manager_plugin.cpp</code>、<code class="notranslate">tray_menu_host.h</code> 与 <code class="notranslate">tray_menu_owner_draw.h</code>；回归为 <code class="notranslate">test/common/tray_selection_test.dart</code>，macOS 已离线渲染核对布局，子菜单悬停展开与 Windows 自绘效果需实机验收。</li>
@@ -198,7 +204,7 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <h3 dir="auto">隐藏策略组</h3>
 <ul dir="auto">
 <li>代理页“显示隐藏项”按配置原始顺序显示隐藏策略组，托盘同步遵循该设置。</li>
-<li>设置关闭时，macOS 可按住 Option 点击托盘图标临时显示隐藏策略组；Option 状态同时读取点击事件和当前键盘修饰键，避免菜单栏事件丢失修饰键。</li>
+<li>设置关闭时，macOS 可按住 Option、Windows 可按住 Alt 点击托盘图标临时显示隐藏策略组；Windows 原生 <code class="notranslate">HandleWindowProc</code> 用 <code class="notranslate">GetAsyncKeyState(VK_MENU)</code> 检测 Alt，按下时不弹缓存菜单，改为带 <code class="notranslate">optionKeyPressed: true</code> 通知 Dart（<code class="notranslate">_shouldTemporarilyShowHiddenItems</code> 放行 macOS 与 Windows）；整棵菜单关闭后 <code class="notranslate">AppController.handleTrayMenuClosed</code> 清除临时标记，Windows 立即重建普通菜单，避免缓存菜单残留隐藏组。回归为 <code class="notranslate">test/plugins/windows_tray_native_test.dart</code>。macOS Option 状态同时读取点击事件和当前键盘修饰键，避免菜单栏事件丢失修饰键。Option 菜单打开期间，<code class="notranslate">AppController.updateTray</code> 依据 <code class="notranslate">_trayMenuIncludesHiddenItems</code> 与 <code class="notranslate">trayManager.isMenuOpen</code> 继续传入含隐藏组的 <code class="notranslate">groupsOverride</code>（<code class="notranslate">Tray.update</code> 与排队刷新均携带），否则测速动画等刷新的菜单项数量与已打开菜单不一致，macOS <code class="notranslate">TrayMenu.update</code> 会整体跳过，表现为测速无动画、延迟不刷新。</li>
 </ul>
 <h3 dir="auto">Inline Provider 内容查看</h3>
 <ul dir="auto">
@@ -261,16 +267,16 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <h2 dir="auto">构建信息</h2>
 <ul dir="auto">
 <li>上游 Bettbox main 基线：<code class="notranslate">main@1fb8806fdf82</code></li>
-<li>最终安装版本：<code class="notranslate">1.19.7+2090000213</code></li>
+<li>最终安装版本：<code class="notranslate">1.19.7+2090000222</code></li>
 <li>上游源码版本：<code class="notranslate">1.19.7+2026102201</code></li>
-<li>Bettbox custom-build commit：<code class="notranslate">8e0a97321a7e57df988d021ab3442fc2452c1192</code></li>
+<li>Bettbox custom-build commit：<code class="notranslate">b48e3b8dc54c9f57b39a80976d6683f831fa6e71</code></li>
 </ul>
 <p dir="auto">Release 仅包含本次 Action 生成的安装包，不包含私有自定义 Mihomo 源码。</p>
 <p dir="auto">Windows 与 macOS 安装包未做商业代码签名；Android 安装包使用 Bettbox 自定义版固定 Release 签名。</p>
-<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7%2B2090000213-r20261102091509-8e0a97321a7e-40f6454ffad0">查看完整发布页</a></footer></body></html>]]></description>
-      <sparkle:version>2090000213</sparkle:version>
-      <sparkle:shortVersionString>1.19.7+2090000213</sparkle:shortVersionString>
-      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.7+2090000213-r20261102091509-8e0a97321a7e-40f6454ffad0/Bettbox-1.19.7-macos-arm64.dmg" length="73002844" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="5BAFke6M9N1k1HgA9kBqcJvMN++2dzn6gMwZTgfyCH5JigJssBkfE4k6UqyHfD2kymVDeGU6jX61+afPcmq5Bw==" />
+<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7%2B2090000222-r20261102130048-b48e3b8dc54c-40f6454ffad0">查看完整发布页</a></footer></body></html>]]></description>
+      <sparkle:version>2090000222</sparkle:version>
+      <sparkle:shortVersionString>1.19.7+2090000222</sparkle:shortVersionString>
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.7+2090000222-r20261102130048-b48e3b8dc54c-40f6454ffad0/Bettbox-1.19.7-macos-arm64.dmg" length="72530584" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="Pn53Q6m2AviaAcG5x47b3NnmBmrl+ARDw7dVe6v+6Jist/r50MVPiku457bIjB8leg+ypcTAYSpgXcxsX0AVCQ==" />
     </item>
   </channel>
 </rss>
