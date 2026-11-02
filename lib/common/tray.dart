@@ -174,6 +174,11 @@ class Tray {
       }
       menuItems.add(MenuItem.separator());
       final menuGroups = groupsOverride ?? trayState.groups;
+      // BETTBOX-CUSTOM: 完整策略组列表（含隐藏组）用于解析选中目标与最终节点。
+      final allGroups = menuGroups.isEmpty
+          ? const <Group>[]
+          : globalState.appController.getAllGroups();
+      final selectionGroups = allGroups.isEmpty ? menuGroups : allGroups;
       for (final group in menuGroups) {
         List<MenuItem> subMenuItems = [];
 
@@ -205,11 +210,19 @@ class Tray {
             testUrl: group.testUrl,
           );
 
+          final delayText = _formatProxySublabel(delay);
+          final groupSelection = trayGroupSelectionLabel(
+            groupName: proxy.name,
+            groups: selectionGroups,
+            selectedMap: trayState.selectedMap,
+          );
           subMenuItems.add(
             MenuItem.checkbox(
               key: 'proxy-item:${proxy.name}',
               label: proxy.name,
-              sublabel: _formatProxySublabel(delay),
+              sublabel: groupSelection.isEmpty || delayText.isEmpty
+                  ? (groupSelection.isEmpty ? delayText : groupSelection)
+                  : '$groupSelection · $delayText',
               checked:
                   group.getCurrentSelectedName(
                     trayState.selectedMap[group.name] ?? '',
@@ -230,6 +243,12 @@ class Tray {
           MenuItem.submenu(
             key: 'group-item:${group.name}',
             label: group.name,
+            sublabel: trayGroupSelectionLabel(
+              groupName: group.name,
+              groups: selectionGroups,
+              selectedMap: trayState.selectedMap,
+              includeFinal: false,
+            ),
             submenu: Menu(items: subMenuItems),
           ),
         );

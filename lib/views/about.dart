@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/providers/config.dart';
 import 'package:bett_box/state.dart';
+import 'package:bett_box/views/app_permissions.dart';
 import 'package:bett_box/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -207,6 +208,21 @@ class AboutView extends StatelessWidget {
         ),
       ),
       const SizedBox(height: 12),
+      // BETTBOX-CUSTOM: Android 应用权限查看与申请入口。
+      if (system.isAndroid)
+        ...generateSection(
+          items: [
+            ListItem.open(
+              leading: const Icon(Icons.verified_user_outlined),
+              title: const Text('应用权限'),
+              subtitle: const Text('查看 Bettbox 所需权限的授权状态并申请'),
+              delegate: OpenDelegate(
+                title: '应用权限',
+                widget: const AppPermissionsView(),
+              ),
+            ),
+          ],
+        ),
       ..._buildContributorsSection(),
       ..._buildMoreSection(context),
     ];

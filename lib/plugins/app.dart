@@ -164,6 +164,25 @@ class App {
     await methodChannel.invokeMethod<void>('requestNotificationPermission');
   }
 
+  // BETTBOX-CUSTOM: 关于 → 应用权限页读取与申请 Android 权限。
+  Future<List<Map<String, Object?>>> getAppPermissionStates() async {
+    final result = await methodChannel.invokeListMethod<Object?>(
+      'getAppPermissionStates',
+    );
+    return [
+      for (final item in result ?? const <Object?>[])
+        if (item is Map) item.cast<String, Object?>(),
+    ];
+  }
+
+  Future<bool> requestAppPermission(String id) async {
+    final result = await methodChannel.invokeMethod<bool>(
+      'requestAppPermission',
+      {'id': id},
+    );
+    return result ?? false;
+  }
+
   Future<bool> startAppUpdateDownload({
     required String url,
     required String fileName,

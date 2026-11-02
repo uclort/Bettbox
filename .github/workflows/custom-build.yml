@@ -706,6 +706,7 @@ jobs:
           set -euo pipefail
           flutter test \
             test/common/tray_active_state_test.dart \
+            test/common/tray_selection_test.dart \
             test/controller/macos_tun_startup_test.dart \
             test/manager/clash_manager_test.dart \
             test/manager/proxy_manager_test.dart \
@@ -723,6 +724,8 @@ jobs:
         run: |
           set -euo pipefail
           flutter test \
+            test/common/tray_selection_test.dart \
+            test/views/app_permissions_test.dart \
             test/views/network_monitor_test.dart \
             test/widgets/macos_menu_bar_test.dart \
             test/widgets/app_update_dialog_test.dart

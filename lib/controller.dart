@@ -988,6 +988,11 @@ class AppController {
     return _ref.read(currentGroupsStateProvider.select((state) => state.value));
   }
 
+  // BETTBOX-CUSTOM: 托盘解析嵌套策略组最终节点时需要包含隐藏组的完整列表。
+  List<Group> getAllGroups() {
+    return _ref.read(groupsProvider);
+  }
+
   String getRealTestUrl(String? url) {
     return _ref.read(getRealTestUrlProvider(url));
   }

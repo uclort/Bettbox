@@ -137,9 +137,17 @@
 - macOS 与 Windows 共用模板图标：启用系统代理或虚拟网卡时高亮，未启用时使用 60% 中性灰渲染，配色和启停语义保持一致；Windows 启用态按系统明暗使用黑色或白色高对比前景，避免深色任务栏上仍显示成灰色。Windows 移除“托盘反转”设置，历史配置继续保留但不再影响托盘。
 - 托盘一级菜单提供显示窗口、网络面板、模式、策略组、系统代理、虚拟网卡和重启内核；“显示窗口 / 网络面板 / 系统代理 / 虚拟网卡 / 重启内核 / 退出”使用 `⌘M / ⌘D / ⌘S / ⌘E / ⌘R / ⌘Q`。
 - 二级菜单父项只展开子菜单；节点测速结果使用独立右对齐列。
+- 2026-11-02 策略组显示选中目标：一级策略组右侧显示当前直接选中项（如 Global → `Fallback`）；展开后，子项本身是策略组的在右侧显示其选中节点，若选中的仍是策略组则用括号补最终节点（如 `Other (FC-日本 1)`），与延迟以 ` · ` 拼接；单节点保持只显示延迟。解析使用含隐藏组的完整 `groupsProvider`（`AppController.getAllGroups`），沿 Selector 本地选择 / URLTest、Fallback 的 `now` / REMATCH 链路走到底并防循环。代码位于 `lib/common/tray_selection.dart` 与 `lib/common/tray.dart`，macOS/Windows 原生沿用现有 `sublabel` 渲染，未改原生代码；回归为 `test/common/tray_selection_test.dart`。
 - 首次安装特权工具后原位刷新托盘；从后台显示窗口或从托盘重启内核后主动同步最终运行状态。
 - 系统代理管理器只关闭当前 Bettbox 进程成功启用过的代理，避免误关 Surge 等其他软件的系统代理。
 - 代码位于 `lib/common/tray.dart`、`lib/common/utils.dart`、`lib/manager/tray_manager.dart`、`lib/providers/state.dart`、`plugins/tray_manager/macos/Classes/TrayIcon.swift`、`plugins/tray_manager/windows/tray_manager_plugin.cpp` 和 `plugins/proxy/lib/proxy.dart`；回归测试为 `test/common/tray_active_state_test.dart`、`test/plugins/tray_menu_open_state_test.dart`、`test/plugins/windows_tray_native_test.dart`、`test/plugins/windows_tray_menu_lifecycle_test.dart`、`plugins/tray_manager/windows/test` 与 `macos/RunnerTests/RunnerTests.swift`，安装包可用 `.custom-build/scripts/test-windows-tray-menu.ps1` 在交互式 Windows 会话做真实菜单探针；插件与原生测试显式使用 MSVC `/utf-8`，避免中文 Windows 代码页误解析 UTF-8 注释。
+
+### Android 应用权限与本地网络
+
+- 官方文档称 Android 17（API 37）本地网络保护只对 targetSdk ≥ 37 强制，但实测 Android 17 设备上 `targetSdk = 36` 的 Bettbox 该权限仍为未授予，连接同网段设备（如 `192.168.0.214:9090` 的 ProxyMan）被系统拦截：测速超时、HTTP 502，`pm grant` 后恢复。上游已在 Manifest 声明该权限但没有运行时申请；本次补充：系统 ≥ 37、Manifest 已声明且 `checkSelfPermission` 为未授权时申请，以实际检查结果为准，系统已隐式授予时不弹窗。
+- `ServicePlugin.init` 由单独申请通知改为 `AppPlugin.requestStartupPermissions()`，将通知与本地网络合并为一次系统申请，仍受原 `isBlockNotification` 会话内只申请一次的约束。
+- 关于页（仅 Android）新增「应用权限」入口，列出 VPN、本地网络、通知、忽略电池优化、读取应用列表、安装未知应用、相机（Manifest 声明时）以及安装时授予的网络访问、网络状态、前台服务、开机启动；显示已授权 / 未授权 / 当前系统无需，运行时权限直接弹窗并回传结果，特殊权限跳转对应系统设置，被永久拒绝时提示前往系统设置；页面回到前台自动刷新。
+- 原生通道 `getAppPermissionStates` / `requestAppPermission` 位于 `android/app/src/main/kotlin/com/appshub/bettbox/plugins/AppPlugin.kt`（请求码 1003），Dart 位于 `lib/plugins/app.dart`、`lib/views/app_permissions.dart` 与 `lib/views/about.dart`；文案为中文硬编码。回归为 `test/views/app_permissions_test.dart`，界面与真实授权流程需 Android 17 实机验收。
 
 ### 隐藏策略组
 

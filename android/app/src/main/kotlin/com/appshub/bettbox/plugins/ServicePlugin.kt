@@ -87,7 +87,8 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
                 result.success(true)
             }
             "init" -> {
-                GlobalState.getCurrentAppPlugin()?.requestNotificationsPermission()
+                // BETTBOX-CUSTOM: 通知与 Android 17 本地网络权限合并申请。
+                GlobalState.getCurrentAppPlugin()?.requestStartupPermissions()
                 GlobalState.initServiceEngine()
                 result.success(true)
             }

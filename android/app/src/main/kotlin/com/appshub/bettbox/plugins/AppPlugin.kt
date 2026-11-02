@@ -79,6 +79,11 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         private const val ICON_SIZE_DP = 48
         private const val VPN_PERMISSION_REQUEST_CODE = 1001
         private const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1002
+        // BETTBOX-CUSTOM: 权限页主动申请运行时权限，结果回传 Dart。
+        private const val RUNTIME_PERMISSION_REQUEST_CODE = 1003
+        // Android 17（API 37）新增本地网络权限，compileSdk 36 尚无常量，使用字面值。
+        private const val LOCAL_NETWORK_PERMISSION = "android.permission.ACCESS_LOCAL_NETWORK"
+        private const val LOCAL_NETWORK_MIN_SDK = 37
         private const val CACHE_MAX_FILES = 500
         private const val PNG_MAGIC_SIZE = 8
         private val activeChannels = CopyOnWriteArrayList<MethodChannel>()
@@ -143,6 +148,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     }
 
     private var isBlockNotification = false
+    private var pendingPermissionResult: Result? = null
     private var isActivityAttached = false
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
@@ -327,6 +333,12 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
             "openFcmDiagnostics" -> {
                 result.success(openFcmDiagnostics())
             }
+            "getAppPermissionStates" -> {
+                result.success(getAppPermissionStates())
+            }
+            "requestAppPermission" -> {
+                requestAppPermission(call.argument<String>("id").orEmpty(), result)
+            }
             else -> result.notImplemented()
         }
     }
@@ -496,6 +508,146 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         vpnCallBack?.invoke()
     }
 
+    // BETTBOX-CUSTOM: 启动时把通知与 Android 17 本地网络权限合并为一次系统申请。
+    // 以 checkSelfPermission 实际结果为准：实测 Android 17 上 targetSdk 36 仍可能未授予。
+    fun requestStartupPermissions() {
+        if (isBlockNotification) return
+        val activity = activityRef?.get() ?: return
+        val permissions = buildList {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                !isPermissionGranted(Manifest.permission.POST_NOTIFICATIONS)
+            ) {
+                add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            if (isLocalNetworkPermissionApplicable() && !isPermissionGranted(LOCAL_NETWORK_PERMISSION)) {
+                add(LOCAL_NETWORK_PERMISSION)
+            }
+        }
+        if (permissions.isEmpty()) return
+        ActivityCompat.requestPermissions(
+            activity,
+            permissions.toTypedArray(),
+            NOTIFICATION_PERMISSION_REQUEST_CODE,
+        )
+    }
+
+    private fun isPermissionGranted(permission: String): Boolean =
+        ContextCompat.checkSelfPermission(BettboxApplication.getAppContext(), permission) ==
+            PackageManager.PERMISSION_GRANTED
+
+    private fun isPermissionDeclared(permission: String): Boolean = runCatching {
+        val context = BettboxApplication.getAppContext()
+        val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.packageManager.getPackageInfo(
+                context.packageName,
+                PackageManager.PackageInfoFlags.of(PackageManager.GET_PERMISSIONS.toLong()),
+            )
+        } else {
+            context.packageManager.getPackageInfo(context.packageName, PackageManager.GET_PERMISSIONS)
+        }
+        info.requestedPermissions?.contains(permission) == true
+    }.getOrDefault(false)
+
+    private fun isLocalNetworkPermissionApplicable(): Boolean =
+        Build.VERSION.SDK_INT >= LOCAL_NETWORK_MIN_SDK && isPermissionDeclared(LOCAL_NETWORK_PERMISSION)
+
+    private fun canRequestPackageInstalls(): Boolean =
+        BettboxApplication.getAppContext().packageManager.canRequestPackageInstalls()
+
+    // kind: runtime 运行时弹窗；special 需跳转系统设置；install 安装即授予。
+    // applicable 为 false 表示当前系统版本不需要该权限。
+    private fun getAppPermissionStates(): List<Map<String, Any>> {
+        fun entry(id: String, kind: String, applicable: Boolean, granted: Boolean) = mapOf(
+            "id" to id,
+            "kind" to kind,
+            "applicable" to applicable,
+            "granted" to (granted || !applicable),
+        )
+        val sdk = Build.VERSION.SDK_INT
+        return buildList {
+            add(entry(
+                "vpn", "special", true,
+                runCatching { VpnService.prepare(BettboxApplication.getAppContext()) == null }.getOrDefault(false),
+            ))
+            add(entry(
+                "localNetwork", "runtime", isLocalNetworkPermissionApplicable(),
+                isPermissionGranted(LOCAL_NETWORK_PERMISSION),
+            ))
+            add(entry(
+                "notification", "runtime", sdk >= Build.VERSION_CODES.TIRAMISU,
+                isPermissionGranted(Manifest.permission.POST_NOTIFICATIONS),
+            ))
+            add(entry("batteryOptimization", "special", true, isIgnoringBatteryOptimizations()))
+            add(entry("packageList", "special", sdk >= Build.VERSION_CODES.R, hasPackageListPermission()))
+            add(entry("installPackages", "special", true, canRequestPackageInstalls()))
+            if (isPermissionDeclared(Manifest.permission.CAMERA)) {
+                add(entry("camera", "runtime", true, hasCameraPermission()))
+            }
+            add(entry("internet", "install", true, isPermissionGranted(Manifest.permission.INTERNET)))
+            add(entry(
+                "networkState", "install", true,
+                isPermissionGranted(Manifest.permission.ACCESS_NETWORK_STATE),
+            ))
+            add(entry(
+                "foregroundService", "install", true,
+                isPermissionGranted(Manifest.permission.FOREGROUND_SERVICE),
+            ))
+            add(entry(
+                "bootCompleted", "install", true,
+                isPermissionGranted(Manifest.permission.RECEIVE_BOOT_COMPLETED),
+            ))
+        }
+    }
+
+    private fun requestAppPermission(id: String, result: Result) {
+        when (id) {
+            "vpn" -> {
+                requestVpnPermission {}
+                result.success(true)
+            }
+            "localNetwork" -> requestRuntimePermission(LOCAL_NETWORK_PERMISSION, result)
+            "notification" -> requestRuntimePermission(Manifest.permission.POST_NOTIFICATIONS, result)
+            "camera" -> requestRuntimePermission(Manifest.permission.CAMERA, result)
+            "batteryOptimization" -> {
+                requestIgnoreBatteryOptimizations()
+                result.success(true)
+            }
+            "packageList" -> {
+                requestPackageListPermission()
+                result.success(true)
+            }
+            "installPackages" -> {
+                val context = BettboxApplication.getAppContext()
+                val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+                    data = Uri.parse("package:${context.packageName}")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                runCatching { context.startActivity(intent) }.onFailure { openAppSettings() }
+                result.success(true)
+            }
+            else -> {
+                openAppSettings()
+                result.success(true)
+            }
+        }
+    }
+
+    // 返回值：true 已授权；false 被拒绝（含“不再询问”时系统不弹窗直接拒绝）。
+    private fun requestRuntimePermission(permission: String, result: Result) {
+        if (isPermissionGranted(permission)) {
+            result.success(true)
+            return
+        }
+        val activity = activityRef?.get()
+        if (activity == null) {
+            result.success(false)
+            return
+        }
+        pendingPermissionResult?.success(false)
+        pendingPermissionResult = result
+        ActivityCompat.requestPermissions(activity, arrayOf(permission), RUNTIME_PERMISSION_REQUEST_CODE)
+    }
+
     fun requestNotificationsPermission() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
         if (isBlockNotification || activityRef?.get() == null) return
@@ -575,6 +727,8 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         activityRef = WeakReference(binding.activity)
     }
     override fun onDetachedFromActivity() {
+        pendingPermissionResult?.success(false)
+        pendingPermissionResult = null
         channel.invokeMethod("exit", null)
         activityRef = null
         cachedTaskId = null
@@ -593,6 +747,12 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     private fun onRequestPermissionsResultListener(requestCode: Int, permissions: Array<String>, grantResults: IntArray): Boolean {
         if (!isActivityAttached) return false
         if (requestCode == NOTIFICATION_PERMISSION_REQUEST_CODE) isBlockNotification = true
+        if (requestCode == RUNTIME_PERMISSION_REQUEST_CODE) {
+            val granted = grantResults.isNotEmpty() &&
+                grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+            pendingPermissionResult?.success(granted)
+            pendingPermissionResult = null
+        }
         return true
     }
 
