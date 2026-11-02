@@ -66,3 +66,10 @@ String _selectedNameOf(
   }
   return group.getCurrentSelectedName(selectedMap[groupName] ?? '');
 }
+
+/// 托盘右侧灰色说明：选中项与延迟之间留小间距，任一为空时只保留另一项。
+String joinTrayDetail(String selection, String delay) {
+  if (selection.isEmpty) return delay;
+  if (delay.isEmpty) return selection;
+  return '$selection  $delay';
+}

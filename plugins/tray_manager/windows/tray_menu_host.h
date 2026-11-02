@@ -34,6 +34,11 @@ class TrayMenuHost {
 
   HWND window() const { return window_; }
 
+  // BETTBOX-CUSTOM: 自绘菜单项的 WM_MEASUREITEM / WM_DRAWITEM，返回 true 表示已处理。
+  void SetOwnerDrawHandler(std::function<bool(UINT, LPARAM)> handler) {
+    owner_draw_ = std::move(handler);
+  }
+
   void SetPersistentCommandHandler(std::function<bool(UINT)> is_persistent,
                                    std::function<void(UINT)> on_click) {
     is_persistent_ = std::move(is_persistent);
@@ -135,6 +140,11 @@ class TrayMenuHost {
         }
       }
       host->handler_(window, message, wparam, lparam);
+      if ((message == WM_MEASUREITEM || message == WM_DRAWITEM) &&
+          wparam == 0 && host->owner_draw_ &&
+          host->owner_draw_(message, lparam)) {
+        return TRUE;
+      }
     }
     return DefWindowProcW(window, message, wparam, lparam);
   }
@@ -144,6 +154,7 @@ class TrayMenuHost {
   HMENU selected_menu_ = nullptr;
   UINT selected_command_ = 0;
   UINT selected_position_ = 0;
+  std::function<bool(UINT, LPARAM)> owner_draw_;
   std::function<bool(UINT)> is_persistent_;
   std::function<void(UINT)> on_persistent_click_;
   inline static thread_local TrayMenuHost* active_host_ = nullptr;

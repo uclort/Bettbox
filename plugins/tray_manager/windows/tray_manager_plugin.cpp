@@ -20,11 +20,13 @@
 #include <codecvt>
 #include <map>
 #include <memory>
+#include <vector>
 #include <set>
 #include <sstream>
 
 #include "tray_integer.h"
 #include "tray_menu_host.h"
+#include "tray_menu_owner_draw.h"
 
 #pragma comment(lib, "gdiplus.lib")
 
@@ -152,6 +154,9 @@ class TrayManagerPlugin : public flutter::Plugin {
   std::unique_ptr<tray_manager::TrayMenuHost> menu_host_;
   std::optional<flutter::EncodableMap> pending_menu_;
   std::set<UINT> persistent_commands_;
+  // BETTBOX-CUSTOM: 自绘菜单项数据，随菜单整体重建释放。
+  tray_manager::TrayMenuOwnerDraw owner_draw_;
+  std::vector<std::unique_ptr<tray_manager::TrayOwnerDrawItem>> owner_draw_items_;
 
   // The ID of the WindowProc delegate registration.
   int window_proc_id = -1;
@@ -236,6 +241,18 @@ TrayManagerPlugin::TrayManagerPlugin(flutter::PluginRegistrarWindows* registrar)
       [this](HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
         HandleWindowProc(hwnd, message, wparam, lparam);
       });
+  menu_host_->SetOwnerDrawHandler([this](UINT message, LPARAM lparam) {
+    if (message == WM_MEASUREITEM) {
+      auto* measure = reinterpret_cast<MEASUREITEMSTRUCT*>(lparam);
+      if (measure->CtlType != ODT_MENU || measure->itemData == 0) return false;
+      owner_draw_.Measure(menu_host_->window(), measure);
+      return true;
+    }
+    auto* draw = reinterpret_cast<DRAWITEMSTRUCT*>(lparam);
+    if (draw->CtlType != ODT_MENU || draw->itemData == 0) return false;
+    owner_draw_.Draw(menu_host_->window(), draw, g_darkModeLastIsDark);
+    return true;
+  });
   menu_host_->SetPersistentCommandHandler(
       [this](UINT command) { return persistent_commands_.count(command) != 0; },
       [](UINT command) {
@@ -283,7 +300,17 @@ void TrayManagerPlugin::_CreateMenu(HMENU menu, flutter::EncodableMap args) {
     std::string label =
         std::get<std::string>(item_map.at(flutter::EncodableValue("label")));
     auto* sublabel = std::get_if<std::string>(ValueOrNull(item_map, "sublabel"));
-    if (sublabel != nullptr && !sublabel->empty()) {
+    tray_manager::TrayOwnerDrawItem* owner_draw = nullptr;
+    if (key != nullptr && (key->rfind("proxy-item:", 0) == 0 ||
+                           key->rfind("group-item:", 0) == 0) &&
+        type != "separator") {
+      auto data = std::make_unique<tray_manager::TrayOwnerDrawItem>();
+      data->label = g_converter.from_bytes(label);
+      if (sublabel != nullptr) data->detail = g_converter.from_bytes(*sublabel);
+      data->submenu = type == "submenu";
+      owner_draw = data.get();
+      owner_draw_items_.push_back(std::move(data));
+    } else if (sublabel != nullptr && !sublabel->empty()) {
       label = label + "\t" + *sublabel;
     }
     auto* checked = std::get_if<bool>(ValueOrNull(item_map, "checked"));
@@ -318,7 +345,13 @@ void TrayManagerPlugin::_CreateMenu(HMENU menu, flutter::EncodableMap args) {
         SetMenuInfo(sub_menu, &submenu_info);
         item_id = reinterpret_cast<UINT_PTR>(sub_menu);
       }
-      AppendMenuW(menu, uFlags, item_id, g_converter.from_bytes(label).c_str());
+      if (owner_draw != nullptr) {
+        AppendMenuW(menu, uFlags | MF_OWNERDRAW, item_id,
+                    reinterpret_cast<LPCWSTR>(owner_draw));
+      } else {
+        AppendMenuW(menu, uFlags, item_id,
+                    g_converter.from_bytes(label).c_str());
+      }
     }
   }
 }
@@ -334,8 +367,9 @@ void TrayManagerPlugin::_UpdateMenuLabels(HMENU menu, flutter::EncodableMap args
   for (int i = 0; i < min_count; i++) {
     flutter::EncodableMap item_map =
         std::get<flutter::EncodableMap>(items[i]);
-    std::string label =
+    std::string raw_label =
         std::get<std::string>(item_map.at(flutter::EncodableValue("label")));
+    std::string label = raw_label;
     auto* sublabel = std::get_if<std::string>(ValueOrNull(item_map, "sublabel"));
     if (sublabel != nullptr && !sublabel->empty()) {
       label = label + "\t" + *sublabel;
@@ -344,7 +378,7 @@ void TrayManagerPlugin::_UpdateMenuLabels(HMENU menu, flutter::EncodableMap args
     bool disabled = std::get<bool>(item_map.at(flutter::EncodableValue("disabled")));
 
     MENUITEMINFO mii = { sizeof(MENUITEMINFO) };
-    mii.fMask = MIIM_ID | MIIM_SUBMENU;
+    mii.fMask = MIIM_ID | MIIM_SUBMENU | MIIM_FTYPE | MIIM_DATA;
     const UINT id = static_cast<UINT>(
         std::get<int>(item_map.at(flutter::EncodableValue("id"))));
     bool found = GetMenuItemInfo(menu, id, FALSE, &mii) != FALSE;
@@ -353,7 +387,7 @@ void TrayManagerPlugin::_UpdateMenuLabels(HMENU menu, flutter::EncodableMap args
       for (int position = 0; position < count; ++position) {
         MENUITEMINFO candidate{};
         candidate.cbSize = sizeof(candidate);
-        candidate.fMask = MIIM_SUBMENU;
+        candidate.fMask = MIIM_SUBMENU | MIIM_FTYPE | MIIM_DATA;
         if (!GetMenuItemInfo(menu, position, TRUE, &candidate) ||
             candidate.hSubMenu == nullptr) continue;
         MENUINFO info{};
@@ -366,6 +400,13 @@ void TrayManagerPlugin::_UpdateMenuLabels(HMENU menu, flutter::EncodableMap args
         }
       }
     }
+    if (found && (mii.fType & MFT_OWNERDRAW) != 0 && mii.dwItemData != 0) {
+      // BETTBOX-CUSTOM: 自绘项只更新数据，文字由 WM_DRAWITEM 重绘。
+      auto* data = reinterpret_cast<tray_manager::TrayOwnerDrawItem*>(mii.dwItemData);
+      data->label = g_converter.from_bytes(raw_label);
+      data->detail = sublabel != nullptr ? g_converter.from_bytes(*sublabel)
+                                         : std::wstring();
+    }
     if (found) {
       if (mii.hSubMenu != NULL) {
         auto submenu_it = item_map.find(flutter::EncodableValue("submenu"));
@@ -375,9 +416,12 @@ void TrayManagerPlugin::_UpdateMenuLabels(HMENU menu, flutter::EncodableMap args
       } else {
         std::wstring wlabel = g_converter.from_bytes(label);
         MENUITEMINFO update_mii = { sizeof(MENUITEMINFO) };
-        update_mii.fMask = MIIM_STRING | MIIM_STATE;
-        update_mii.dwTypeData = const_cast<LPWSTR>(wlabel.c_str());
-        update_mii.cch = static_cast<UINT>(wlabel.size());
+        const bool owner_drawn = (mii.fType & MFT_OWNERDRAW) != 0;
+        update_mii.fMask = owner_drawn ? MIIM_STATE : MIIM_STRING | MIIM_STATE;
+        if (!owner_drawn) {
+          update_mii.dwTypeData = const_cast<LPWSTR>(wlabel.c_str());
+          update_mii.cch = static_cast<UINT>(wlabel.size());
+        }
 
         UINT state = 0;
         if (disabled) state |= MFS_DISABLED;
@@ -717,6 +761,7 @@ void TrayManagerPlugin::SetContextMenu(
                            args.at(flutter::EncodableValue("menu"))));
   } else {
     persistent_commands_.clear();
+    owner_draw_items_.clear();
     _CreateMenu(hMenu, std::get<flutter::EncodableMap>(
                            args.at(flutter::EncodableValue("menu"))));
   }
@@ -768,6 +813,7 @@ bool TrayManagerPlugin::ShowContextMenu() {
                         std::make_unique<flutter::EncodableValue>());
   if (pending_menu_) {
     persistent_commands_.clear();
+    owner_draw_items_.clear();
     _CreateMenu(hMenu, std::get<flutter::EncodableMap>(
                           pending_menu_->at(flutter::EncodableValue("menu"))));
     pending_menu_.reset();

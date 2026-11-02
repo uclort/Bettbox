@@ -102,4 +102,11 @@ void main() {
       'LoopB',
     );
   });
+
+  test('右侧说明拼接选中项与延迟', () {
+    expect(joinTrayDetail('Fallback', '169ms'), 'Fallback  169ms');
+    expect(joinTrayDetail('', '169ms'), '169ms');
+    expect(joinTrayDetail('DIRECT', ''), 'DIRECT');
+    expect(joinTrayDetail('', ''), isEmpty);
+  });
 }

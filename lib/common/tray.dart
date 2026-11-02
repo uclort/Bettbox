@@ -220,9 +220,7 @@ class Tray {
             MenuItem.checkbox(
               key: 'proxy-item:${proxy.name}',
               label: proxy.name,
-              sublabel: groupSelection.isEmpty || delayText.isEmpty
-                  ? (groupSelection.isEmpty ? delayText : groupSelection)
-                  : '$groupSelection · $delayText',
+              sublabel: joinTrayDetail(groupSelection, delayText),
               checked:
                   group.getCurrentSelectedName(
                     trayState.selectedMap[group.name] ?? '',
@@ -243,11 +241,19 @@ class Tray {
           MenuItem.submenu(
             key: 'group-item:${group.name}',
             label: group.name,
-            sublabel: trayGroupSelectionLabel(
-              groupName: group.name,
-              groups: selectionGroups,
-              selectedMap: trayState.selectedMap,
-              includeFinal: false,
+            sublabel: joinTrayDetail(
+              trayGroupSelectionLabel(
+                groupName: group.name,
+                groups: selectionGroups,
+                selectedMap: trayState.selectedMap,
+                includeFinal: false,
+              ),
+              _formatProxySublabel(
+                globalState.appController.getTrayProxyDelay(
+                  proxyName: group.name,
+                  testUrl: group.testUrl,
+                ),
+              ),
             ),
             submenu: Menu(items: subMenuItems),
           ),

@@ -160,7 +160,6 @@ private final class AlignedTrayMenuItemView: NSView {
     private let checkmarkLabel = NSTextField(labelWithString: "")
     private let titleLabel = NSTextField(labelWithString: "")
     private let detailLabel = NSTextField(labelWithString: "")
-    private let detailWidth: CGFloat
     private var isDisabled = false
     private var isHovered = false
     private var isPressed = false
@@ -171,10 +170,8 @@ private final class AlignedTrayMenuItemView: NSView {
         detail: String,
         checked: Bool,
         disabled: Bool,
-        width: CGFloat,
-        detailWidth: CGFloat
+        width: CGFloat
     ) {
-        self.detailWidth = detailWidth
         let font = NSFont.menuFont(ofSize: NSFont.systemFontSize)
         super.init(frame: NSRect(x: 0, y: 0, width: width, height: 24))
         autoresizingMask = [.width]
@@ -239,19 +236,25 @@ private final class AlignedTrayMenuItemView: NSView {
             width: 16,
             height: contentHeight
         )
-        let titleX: CGFloat = 30
-        let resolvedDetailWidth = max(48, detailWidth)
-        let detailX = max(titleX, bounds.width - 14 - resolvedDetailWidth)
+        // BETTBOX-CUSTOM: 右侧说明按本行实际宽度右对齐，不再使用固定宽列。
+        let titleX = TrayMenuMetrics.titleX
+        let detailRight = bounds.width - TrayMenuMetrics.trailingInset
+        let detailWidth = TrayMenuMetrics.detailWidth(
+            detail: detailLabel.stringValue,
+            label: titleLabel.stringValue,
+            available: detailRight - titleX
+        )
+        let detailX = detailRight - detailWidth
         titleLabel.frame = NSRect(
             x: titleX,
             y: verticalInset,
-            width: max(0, detailX - titleX - 10),
+            width: max(0, detailX - titleX - TrayMenuMetrics.columnGap),
             height: contentHeight
         )
         detailLabel.frame = NSRect(
             x: detailX,
             y: verticalInset,
-            width: resolvedDetailWidth,
+            width: detailWidth,
             height: contentHeight
         )
     }
@@ -269,6 +272,7 @@ private final class AlignedTrayMenuItemView: NSView {
         checkmarkLabel.stringValue = checked ? "✓" : ""
         titleLabel.stringValue = label
         detailLabel.stringValue = detail
+        needsLayout = true
         updateAppearance()
     }
 
@@ -328,13 +332,32 @@ private final class AlignedTrayMenuItemView: NSView {
         } else {
             textColor = .controlTextColor
         }
-        for textLabel in [checkmarkLabel, titleLabel, detailLabel] {
+        // BETTBOX-CUSTOM: 右侧说明使用次级灰色；富文本必须带段落对齐，
+        // 否则会覆盖 NSTextField.alignment 变成左对齐。
+        let detailColor: NSColor
+        if isDisabled {
+            detailColor = .disabledControlTextColor
+        } else if isHighlighted {
+            detailColor = NSColor.selectedMenuItemTextColor.withAlphaComponent(0.8)
+        } else {
+            detailColor = .secondaryLabelColor
+        }
+        let labels: [(NSTextField, NSColor, NSTextAlignment)] = [
+            (checkmarkLabel, textColor, .center),
+            (titleLabel, textColor, .left),
+            (detailLabel, detailColor, .right),
+        ]
+        for (textLabel, color, alignment) in labels {
+            let paragraph = NSMutableParagraphStyle()
+            paragraph.alignment = alignment
+            paragraph.lineBreakMode = .byTruncatingTail
             textLabel.attributedStringValue = NSAttributedString(
                 string: textLabel.stringValue,
                 attributes: [
                     .font: textLabel.font
                         ?? NSFont.menuFont(ofSize: NSFont.systemFontSize),
-                    .foregroundColor: textColor,
+                    .foregroundColor: color,
+                    .paragraphStyle: paragraph,
                 ]
             )
         }
@@ -345,6 +368,186 @@ private final class AlignedTrayMenuItemView: NSView {
             return false
         }
         return bounds.contains(convert(event.locationInWindow, from: nil))
+    }
+}
+
+// BETTBOX-CUSTOM: 托盘自绘行统一尺寸：左侧名称，右侧灰色说明紧贴箭头或右边缘。
+enum TrayMenuMetrics {
+    static let titleX: CGFloat = 30
+    static let trailingInset: CGFloat = 14
+    static let columnGap: CGFloat = 16
+    static let chevronWidth: CGFloat = 8
+    static let chevronGap: CGFloat = 6
+    static let rowHeight: CGFloat = 24
+
+    static var font: NSFont { NSFont.menuFont(ofSize: NSFont.systemFontSize) }
+
+    static func textWidth(_ text: String) -> CGFloat {
+        guard !text.isEmpty else { return 0 }
+        // NSTextField 自带约 2pt 内边距，额外留出避免末字被截断。
+        return ceil((text as NSString).size(withAttributes: [.font: font]).width) + 4
+    }
+
+    /// 菜单宽度足够时完整显示说明；不足时说明至少保留 60%，其余截断名称。
+    static func detailWidth(detail: String, label: String, available: CGFloat) -> CGFloat {
+        let needed = textWidth(detail)
+        guard needed > 0, available > 0 else { return 0 }
+        let room = max(available * 0.6, available - columnGap - textWidth(label))
+        return min(needed, room)
+    }
+
+    static func detailRowWidth(label: String, detail: String) -> CGFloat {
+        let detailWidth = textWidth(detail)
+        return titleX + textWidth(label)
+            + (detailWidth > 0 ? columnGap + detailWidth : 0)
+            + trailingInset
+    }
+
+    static func submenuRowWidth(label: String, detail: String) -> CGFloat {
+        detailRowWidth(label: label, detail: detail) + chevronGap + chevronWidth
+    }
+}
+
+// BETTBOX-CUSTOM: 一级策略组行。原生子菜单项右侧会预留快捷键列，说明与箭头
+// 之间空白过大，因此自绘名称、灰色说明和箭头；子菜单展开仍由 NSMenu 负责。
+private final class SubmenuTrayMenuItemView: NSView {
+    private var label: String
+    private var detail: String
+
+    init(label: String, detail: String, width: CGFloat) {
+        self.label = label
+        self.detail = detail
+        super.init(
+            frame: NSRect(x: 0, y: 0, width: width, height: TrayMenuMetrics.rowHeight)
+        )
+        autoresizingMask = [.width]
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    func update(label: String, detail: String) {
+        guard label != self.label || detail != self.detail else { return }
+        self.label = label
+        self.detail = detail
+        needsDisplay = true
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        needsDisplay = true
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        let highlighted = enclosingMenuItem?.isHighlighted ?? false
+        if highlighted {
+            NSColor.selectedContentBackgroundColor.setFill()
+            NSBezierPath(
+                roundedRect: bounds.insetBy(dx: 4, dy: 1),
+                xRadius: 6,
+                yRadius: 6
+            ).fill()
+        }
+        let titleColor: NSColor = highlighted ? .selectedMenuItemTextColor : .labelColor
+        let detailColor: NSColor = highlighted
+            ? NSColor.selectedMenuItemTextColor.withAlphaComponent(0.8)
+            : .secondaryLabelColor
+
+        let chevronRect = NSRect(
+            x: bounds.width - TrayMenuMetrics.trailingInset - TrayMenuMetrics.chevronWidth,
+            y: bounds.midY - 6,
+            width: TrayMenuMetrics.chevronWidth,
+            height: 12
+        )
+        drawChevron(in: chevronRect, color: titleColor)
+
+        let detailRight = chevronRect.minX - TrayMenuMetrics.chevronGap
+        let titleX = TrayMenuMetrics.titleX
+        let detailWidth = TrayMenuMetrics.detailWidth(
+            detail: detail,
+            label: label,
+            available: detailRight - titleX
+        )
+        let detailX = detailRight - detailWidth
+        drawText(
+            detail,
+            in: NSRect(x: detailX, y: 0, width: detailWidth, height: bounds.height),
+            color: detailColor,
+            alignment: .right
+        )
+        let titleWidth = detailWidth > 0
+            ? detailX - TrayMenuMetrics.columnGap - titleX
+            : detailRight - titleX
+        drawText(
+            label,
+            in: NSRect(x: titleX, y: 0, width: max(0, titleWidth), height: bounds.height),
+            color: titleColor,
+            alignment: .left
+        )
+    }
+
+    private func drawText(
+        _ text: String,
+        in rect: NSRect,
+        color: NSColor,
+        alignment: NSTextAlignment
+    ) {
+        guard !text.isEmpty, rect.width > 0 else { return }
+        let font = TrayMenuMetrics.font
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.alignment = alignment
+        paragraph.lineBreakMode = .byTruncatingTail
+        let string = NSAttributedString(
+            string: text,
+            attributes: [
+                .font: font,
+                .foregroundColor: color,
+                .paragraphStyle: paragraph,
+            ]
+        )
+        let lineHeight = ceil(string.size().height)
+        let textRect = NSRect(
+            x: rect.minX,
+            y: rect.minY + floor((rect.height - lineHeight) / 2),
+            width: rect.width,
+            height: lineHeight
+        )
+        string.draw(
+            with: textRect,
+            options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine]
+        )
+    }
+
+    private func drawChevron(in rect: NSRect, color: NSColor) {
+        let configuration = NSImage.SymbolConfiguration(pointSize: 12, weight: .semibold)
+            .applying(NSImage.SymbolConfiguration(paletteColors: [color]))
+        if let image = NSImage(
+            systemSymbolName: "chevron.right",
+            accessibilityDescription: nil
+        )?.withSymbolConfiguration(configuration) {
+            let size = image.size
+            let scale = min(1, rect.width / size.width, rect.height / size.height)
+            let drawSize = NSSize(width: size.width * scale, height: size.height * scale)
+            image.draw(
+                in: NSRect(
+                    x: rect.midX - drawSize.width / 2,
+                    y: rect.midY - drawSize.height / 2,
+                    width: drawSize.width,
+                    height: drawSize.height
+                )
+            )
+            return
+        }
+        let path = NSBezierPath()
+        path.move(to: NSPoint(x: rect.minX + 1, y: rect.maxY - 1))
+        path.line(to: NSPoint(x: rect.maxX - 1, y: rect.midY))
+        path.line(to: NSPoint(x: rect.minX + 1, y: rect.minY + 1))
+        path.lineWidth = 1.6
+        path.lineCapStyle = .round
+        path.lineJoinStyle = .round
+        color.setStroke()
+        path.stroke()
     }
 }
 
@@ -383,13 +586,8 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
         menuItem.keyEquivalentModifierMask = [.command]
     }
 
-    private func preferredMenuLayout(
-        _ items: [NSDictionary]
-    ) -> (width: CGFloat, detailWidth: CGFloat) {
-        let font = NSFont.menuFont(ofSize: NSFont.systemFontSize)
-        var maximumLabelWidth = CGFloat.zero
-        var maximumDetailWidth = CGFloat.zero
-        var hasAlignedItems = false
+    private func preferredMenuWidth(_ items: [NSDictionary]) -> CGFloat {
+        var width = CGFloat(220)
         for item in items {
             let itemDict = item as? [String: Any] ?? [:]
             let type = itemDict["type"] as? String ?? ""
@@ -399,35 +597,22 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
             let key = itemDict["key"] as? String ?? ""
             let label = itemDict["label"] as? String ?? ""
             let sublabel = itemDict["sublabel"] as? String ?? ""
-            let isCheckbox = type == "checkbox"
-            let title = menuItemTitle(label, sublabel, forceRightColumn: isCheckbox)
-            let widthText = key.hasPrefix("proxy-item:") ? label : title
-            let labelWidth = (widthText as NSString).size(
-                withAttributes: [.font: font]
-            ).width
-            maximumLabelWidth = max(maximumLabelWidth, ceil(labelWidth))
+            let rowWidth: CGFloat
             if key.hasPrefix("proxy-item:") {
-                hasAlignedItems = true
-                let detailTextWidth = (sublabel as NSString).size(
-                    withAttributes: [.font: font]
-                ).width
-                maximumDetailWidth = max(
-                    maximumDetailWidth,
-                    ceil(detailTextWidth)
-                )
+                rowWidth = TrayMenuMetrics.detailRowWidth(label: label, detail: sublabel)
+            } else if key.hasPrefix("group-item:") {
+                rowWidth = TrayMenuMetrics.submenuRowWidth(label: label, detail: sublabel)
+            } else {
+                let title = menuItemTitle(label, sublabel, forceRightColumn: type == "checkbox")
+                rowWidth = TrayMenuMetrics.textWidth(title) + 56
             }
+            width = max(width, ceil(rowWidth))
         }
-        let detailWidth = hasAlignedItems
-            ? max(48, maximumDetailWidth)
-            : CGFloat.zero
-        let horizontalSpacing: CGFloat = hasAlignedItems ? 84 : 56
-        return (
-            width: max(
-                220,
-                maximumLabelWidth + detailWidth + horizontalSpacing
-            ),
-            detailWidth: detailWidth
-        )
+        return width
+    }
+
+    private static func isCustomDrawnKey(_ key: String) -> Bool {
+        key.hasPrefix("proxy-item:") || key.hasPrefix("group-item:")
     }
 
     private func maximumTextWidth(_ items: [NSDictionary]) -> CGFloat {
@@ -435,7 +620,8 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
         return items.reduce(CGFloat.zero) { width, item in
             let itemDict = item as? [String: Any] ?? [:]
             let type = itemDict["type"] as? String ?? ""
-            guard type != "separator" else {
+            let key = itemDict["key"] as? String ?? ""
+            guard type != "separator", !TrayMenu.isCustomDrawnKey(key) else {
                 return width
             }
             let label = itemDict["label"] as? String ?? ""
@@ -488,8 +674,7 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
         autoenablesItems = false
 
         let items: [NSDictionary] = args["items"] as! [NSDictionary];
-        let menuLayout = preferredMenuLayout(items)
-        let menuWidth = menuLayout.width
+        let menuWidth = preferredMenuWidth(items)
         minimumWidth = menuWidth
         let maxTextWidth = maximumTextWidth(items)
         for item in items {
@@ -552,8 +737,7 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
                     detail: sublabel,
                     checked: checked ?? false,
                     disabled: disabled,
-                    width: menuWidth,
-                    detailWidth: menuLayout.detailWidth
+                    width: menuWidth
                 )
                 alignedView.onClick = { [weak self] in
                     guard
@@ -568,6 +752,12 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
                 menuItem.view = alignedView
                 menuItem.action = nil
                 menuItem.target = nil
+            } else if key.hasPrefix("group-item:") && type == "submenu" {
+                menuItem.view = SubmenuTrayMenuItemView(
+                    label: label,
+                    detail: sublabel,
+                    width: menuWidth
+                )
             }
 
             switch (type) {
@@ -671,6 +861,8 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
                     disabled: disabled
                 )
                 menuItem.action = nil
+            } else if let submenuView = menuItem.view as? SubmenuTrayMenuItemView {
+                submenuView.update(label: label, detail: sublabel)
             }
 
             if let checkedValue = checked {
