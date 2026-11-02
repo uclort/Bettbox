@@ -6,9 +6,9 @@
     <description>Bettbox 自定义版本更新源</description>
     <language>zh-CN</language>
     <item>
-      <title>Bettbox 1.19.7+2090000211</title>
-      <pubDate>Mon, 02 Nov 2026 08:44:06 +0000</pubDate>
-      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000211-r20261102082547-d591f841574d-40f6454ffad0</link>
+      <title>Bettbox 1.19.7+2090000212</title>
+      <pubDate>Mon, 02 Nov 2026 09:07:19 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000212-r20261102084911-739811b9c9c2-40f6454ffad0</link>
       <description><![CDATA[<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https:;">
@@ -20,14 +20,14 @@ pre { white-space: pre-wrap; } code { font-size: .92em; }
 img,table { max-width: 100%; } table { border-collapse: collapse; } td,th { border: 1px solid #888; padding: 6px; }
 a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; padding-top: 12px; }
 </style></head><body><p dir="auto">基于上游 Bettbox <code class="notranslate">main@1fb8806fdf82</code> 构建的自定义版本。</p>
-<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.7+2090000211</code></strong></p>
+<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.7+2090000212</code></strong></p>
 <h2 dir="auto">本次变更（相较上一自定义 Release）</h2>
 <ul dir="auto">
-<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000210-r20261102074954-2929e10dfe5f-40f6454ffad0"><code class="notranslate">custom-v1.19.7+2090000210-r20261102074954-2929e10dfe5f-40f6454ffad0</code></a> → <code class="notranslate">custom-v1.19.7+2090000211-r20261102082547-d591f841574d-40f6454ffad0</code></li>
+<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000211-r20261102082547-d591f841574d-40f6454ffad0"><code class="notranslate">custom-v1.19.7+2090000211-r20261102082547-d591f841574d-40f6454ffad0</code></a> → <code class="notranslate">custom-v1.19.7+2090000212-r20261102084911-739811b9c9c2-40f6454ffad0</code></li>
 </ul>
 <h3 dir="auto">2026-11-02 托盘显示策略组选中目标、Android 应用权限页</h3>
 <ul dir="auto">
-<li>托盘策略组左侧为组名，右侧以灰色显示当前选中项和延迟，紧贴箭头；展开后节点行右侧灰色显示延迟，策略组子项显示其选中节点与延迟，选中的仍是策略组时以 <code class="notranslate">组名 (最终节点)</code> 显示。macOS 与 Windows 效果一致。</li>
+<li>托盘策略组左侧为组名，右侧以灰色显示当前选中项和延迟，紧贴箭头；展开后节点行右侧灰色显示延迟，策略组子项显示其选中节点与延迟，选中的仍是策略组时以 <code class="notranslate">组名 (最终节点)</code> 显示。名称与右侧说明分为两列，中间留固定间隔，不再上下交错。macOS 与 Windows 效果一致。</li>
 <li>关于页新增「应用权限」（Android）：列出 Bettbox 所需全部权限与授权状态，可直接申请或跳转系统设置。</li>
 <li>补充 Android 17 本地网络权限（ACCESS_LOCAL_NETWORK）运行时申请，与通知权限合并为一次系统弹窗；修复未授权时无法连接同一网段设备（如局域网 HTTP 代理）、测速超时和 502。</li>
 </ul>
@@ -181,7 +181,7 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>托盘一级菜单提供显示窗口、网络面板、模式、策略组、系统代理、虚拟网卡和重启内核；“显示窗口 / 网络面板 / 系统代理 / 虚拟网卡 / 重启内核 / 退出”使用 <code class="notranslate">⌘M / ⌘D / ⌘S / ⌘E / ⌘R / ⌘Q</code>。</li>
 <li>二级菜单父项只展开子菜单；节点测速结果使用独立右对齐列。</li>
 <li>2026-11-02 策略组显示选中目标：一级策略组行左侧为组名，右侧灰色显示当前直接选中项与最终节点延迟（如 <code class="notranslate">Fallback  169ms</code>），再接箭头；展开后，节点行右侧灰色显示延迟，子项本身是策略组时显示其选中节点与延迟，若选中的仍是策略组则用括号补最终节点（如 <code class="notranslate">Other (FC-日本 1)  123ms</code>）。选中项与延迟以两个空格分隔（<code class="notranslate">joinTrayDetail</code>）。解析使用含隐藏组的完整 <code class="notranslate">groupsProvider</code>（<code class="notranslate">AppController.getAllGroups</code>），沿 Selector 本地选择 / URLTest、Fallback 的 <code class="notranslate">now</code> / REMATCH 链路走到底并防循环。</li>
-<li>托盘自绘行：macOS 的 <code class="notranslate">proxy-item:</code> 行（<code class="notranslate">AlignedTrayMenuItemView</code>）右侧说明按本行宽度右对齐、使用 <code class="notranslate">secondaryLabelColor</code>，富文本带段落对齐，避免覆盖 <code class="notranslate">NSTextField.alignment</code> 变成左对齐；<code class="notranslate">group-item:</code> 子菜单行改用 <code class="notranslate">SubmenuTrayMenuItemView</code> 自绘名称、灰色说明和 <code class="notranslate">chevron.right</code>，因为原生子菜单项会为快捷键列留出空白，子菜单展开仍由 NSMenu 处理。菜单宽度按每行「名称 + 说明」的最大值计算（<code class="notranslate">TrayMenuMetrics</code>）。Windows 对同样两类 key 使用 <code class="notranslate">MF_OWNERDRAW</code>（<code class="notranslate">plugins/tray_manager/windows/tray_menu_owner_draw.h</code>）：主题度量对齐文字起点，正文色名称 + 灰色右对齐说明，自绘勾选与箭头并 <code class="notranslate">ExcludeClipRect</code> 屏蔽系统经典箭头，浅色高亮使用 <code class="notranslate">MENU_POPUPITEM/MPI_HOT</code>，深色使用圆角高亮；菜单打开期间刷新只更新自绘数据并重绘。代码位于 <code class="notranslate">lib/common/tray_selection.dart</code>、<code class="notranslate">lib/common/tray.dart</code>、<code class="notranslate">plugins/tray_manager/macos/Classes/TrayMenu.swift</code>、<code class="notranslate">plugins/tray_manager/windows/tray_manager_plugin.cpp</code>、<code class="notranslate">tray_menu_host.h</code> 与 <code class="notranslate">tray_menu_owner_draw.h</code>；回归为 <code class="notranslate">test/common/tray_selection_test.dart</code>，macOS 已离线渲染核对布局，子菜单悬停展开与 Windows 自绘效果需实机验收。</li>
+<li>托盘自绘行：macOS 的 <code class="notranslate">proxy-item:</code> 行（<code class="notranslate">AlignedTrayMenuItemView</code>）右侧说明按本行宽度右对齐、使用 <code class="notranslate">secondaryLabelColor</code>，富文本带段落对齐，避免覆盖 <code class="notranslate">NSTextField.alignment</code> 变成左对齐；<code class="notranslate">group-item:</code> 子菜单行改用 <code class="notranslate">SubmenuTrayMenuItemView</code> 自绘名称、灰色说明和 <code class="notranslate">chevron.right</code>，因为原生子菜单项会为快捷键列留出空白，子菜单展开仍由 NSMenu 处理。自绘行按整张菜单分两列：左列宽为最长名称、右列宽为最长说明，中间固定 28pt 间隔，任何一行的灰色说明都不会伸进其他行的名称区域（macOS <code class="notranslate">preferredMenuWidth</code>，Windows 同层自绘项共享 <code class="notranslate">TrayOwnerDrawColumn</code> 测量）。Windows 对同样两类 key 使用 <code class="notranslate">MF_OWNERDRAW</code>（<code class="notranslate">plugins/tray_manager/windows/tray_menu_owner_draw.h</code>）：主题度量对齐文字起点，正文色名称 + 灰色右对齐说明，自绘勾选与箭头并 <code class="notranslate">ExcludeClipRect</code> 屏蔽系统经典箭头，浅色高亮使用 <code class="notranslate">MENU_POPUPITEM/MPI_HOT</code>，深色使用圆角高亮；菜单打开期间刷新只更新自绘数据并重绘。代码位于 <code class="notranslate">lib/common/tray_selection.dart</code>、<code class="notranslate">lib/common/tray.dart</code>、<code class="notranslate">plugins/tray_manager/macos/Classes/TrayMenu.swift</code>、<code class="notranslate">plugins/tray_manager/windows/tray_manager_plugin.cpp</code>、<code class="notranslate">tray_menu_host.h</code> 与 <code class="notranslate">tray_menu_owner_draw.h</code>；回归为 <code class="notranslate">test/common/tray_selection_test.dart</code>，macOS 已离线渲染核对布局，子菜单悬停展开与 Windows 自绘效果需实机验收。</li>
 <li>首次安装特权工具后原位刷新托盘；从后台显示窗口或从托盘重启内核后主动同步最终运行状态。</li>
 <li>系统代理管理器只关闭当前 Bettbox 进程成功启用过的代理，避免误关 Surge 等其他软件的系统代理。</li>
 <li>代码位于 <code class="notranslate">lib/common/tray.dart</code>、<code class="notranslate">lib/common/utils.dart</code>、<code class="notranslate">lib/manager/tray_manager.dart</code>、<code class="notranslate">lib/providers/state.dart</code>、<code class="notranslate">plugins/tray_manager/macos/Classes/TrayIcon.swift</code>、<code class="notranslate">plugins/tray_manager/windows/tray_manager_plugin.cpp</code> 和 <code class="notranslate">plugins/proxy/lib/proxy.dart</code>；回归测试为 <code class="notranslate">test/common/tray_active_state_test.dart</code>、<code class="notranslate">test/plugins/tray_menu_open_state_test.dart</code>、<code class="notranslate">test/plugins/windows_tray_native_test.dart</code>、<code class="notranslate">test/plugins/windows_tray_menu_lifecycle_test.dart</code>、<code class="notranslate">plugins/tray_manager/windows/test</code> 与 <code class="notranslate">macos/RunnerTests/RunnerTests.swift</code>，安装包可用 <code class="notranslate">.custom-build/scripts/test-windows-tray-menu.ps1</code> 在交互式 Windows 会话做真实菜单探针；插件与原生测试显式使用 MSVC <code class="notranslate">/utf-8</code>，避免中文 Windows 代码页误解析 UTF-8 注释。</li>
@@ -259,16 +259,16 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <h2 dir="auto">构建信息</h2>
 <ul dir="auto">
 <li>上游 Bettbox main 基线：<code class="notranslate">main@1fb8806fdf82</code></li>
-<li>最终安装版本：<code class="notranslate">1.19.7+2090000211</code></li>
+<li>最终安装版本：<code class="notranslate">1.19.7+2090000212</code></li>
 <li>上游源码版本：<code class="notranslate">1.19.7+2026102201</code></li>
-<li>Bettbox custom-build commit：<code class="notranslate">d591f841574d8d86ec2ace0fabe58cafa0b73a7a</code></li>
+<li>Bettbox custom-build commit：<code class="notranslate">739811b9c9c20df51e0d49e124e844c41953fe14</code></li>
 </ul>
 <p dir="auto">Release 仅包含本次 Action 生成的安装包，不包含私有自定义 Mihomo 源码。</p>
 <p dir="auto">Windows 与 macOS 安装包未做商业代码签名；Android 安装包使用 Bettbox 自定义版固定 Release 签名。</p>
-<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7%2B2090000211-r20261102082547-d591f841574d-40f6454ffad0">查看完整发布页</a></footer></body></html>]]></description>
-      <sparkle:version>2090000211</sparkle:version>
-      <sparkle:shortVersionString>1.19.7+2090000211</sparkle:shortVersionString>
-      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.7+2090000211-r20261102082547-d591f841574d-40f6454ffad0/Bettbox-1.19.7-macos-amd64.dmg" length="74924905" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="V7/26RAItqEE0eSFl+dSMP4FwZkP88etfXk+eCBdon1ZJqnITnQt+AraCHhIyJru1SlNZbBBwscC3OSzBJyvBA==" />
+<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7%2B2090000212-r20261102084911-739811b9c9c2-40f6454ffad0">查看完整发布页</a></footer></body></html>]]></description>
+      <sparkle:version>2090000212</sparkle:version>
+      <sparkle:shortVersionString>1.19.7+2090000212</sparkle:shortVersionString>
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.7+2090000212-r20261102084911-739811b9c9c2-40f6454ffad0/Bettbox-1.19.7-macos-amd64.dmg" length="74924436" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="RMi9HBOuZ0gxfgNG05Pi88d942l4S/W6KVUdsNm3+nY2ipy151YnEe7wN2Yn6B8yx47S9h6fK53T38YLC+eMDw==" />
     </item>
   </channel>
 </rss>
