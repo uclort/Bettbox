@@ -78,11 +78,10 @@ dependency_overrides:
     path: plugins/auto_updater_macos
   flutter_rust_bridge: 2.13.0
   # Fix compile failure: https://github.com/leanflutter/hotkey_manager/pull/66
+  # BETTBOX-CUSTOM: gepbird/hotkey_manager 的 fix-build-failure 分支已删除，
+  # 提交 1b31e3c 无法再被 git clone 获取，改为仓库内置该提交的源码。
   hotkey_manager_linux:
-    git:
-      url: https://github.com/gepbird/hotkey_manager.git
-      path: packages/hotkey_manager_linux
-      ref: fix-build-failure
+    path: plugins/hotkey_manager_linux
 dev_dependencies:
   flutter_test:
     sdk: flutter

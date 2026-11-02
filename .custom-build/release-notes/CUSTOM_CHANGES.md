@@ -206,6 +206,7 @@
 - 默认全平台构建发布 Android ARM64、Windows x64、Windows ARM64、macOS Apple Silicon 和 macOS Intel 共 5 个安装包；也可选择仅 macOS Apple Silicon 或仅 Android arm64-v8a，Android 构建同步静态更新源。
 - 内核同步兼容新版 Mihomo 将版本号改为构建时注入的模式；源码版本为空时按 Bettbox 上游核心树继续同步，仍执行 Snell v6 补丁与 Go 回归。
 - 自定义应用代码变化但未同步完整总账和发布增量时拒绝发布。
+- 2026-11-02 `hotkey_manager_linux` 改为仓库内置 `plugins/hotkey_manager_linux`（路径依赖）：上游 Bettbox 引用的 `gepbird/hotkey_manager` 分支 `fix-build-failure` 已删除，锁定提交 `1b31e3ca4ab017ee72f54a7065b2073a88403d61` 不在 `main` 上，无 pub 缓存的 Runner 执行 `flutter pub get` 报 `Could not find a file named "packages/hotkey_manager_linux/pubspec.yaml"`。内置源码取自该提交，与本机 pub 缓存逐字一致，仅删除引用未安装 lint 包的 `analysis_options.yaml`。融合上游时保留 `pubspec.yaml` 的路径覆写，除非上游改用可获取的来源。
 
 ### 已删除的历史自定义功能
 
