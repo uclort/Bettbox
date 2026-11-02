@@ -23,9 +23,33 @@ func normalizeTailscaleDomain(domain string) string {
 	return strings.TrimSuffix(domain, ".")
 }
 
+// BETTBOX-CUSTOM: Tailscale 控制面、登录、日志与 DERP 域名。tsnet（如 Rex 内嵌节点）与 Tailscale 客户端
+// 会把连接绑定到物理网卡绕过 TUN，拿到 Fake-IP 时请求从物理网卡发出成为黑洞，登录卡在 fetch control key。
+// 这些域名只返回真实 IP，不改 DNS 服务器：Tailscale 未连接时 100.100.100.100 不可用，不能交给 MagicDNS。
+var tailscaleServiceDomains = []string{"tailscale.com", "tailscale.io"}
+
+func addTailscaleRealIPDomain(raw *config.RawConfig, domain string) {
+	pattern := "+." + domain
+	switch raw.DNS.FakeIPFilterMode {
+	case C.FilterBlackList:
+		if !containsString(raw.DNS.FakeIPFilter, pattern) {
+			raw.DNS.FakeIPFilter = append(raw.DNS.FakeIPFilter, pattern)
+		}
+	case C.FilterRule:
+		rule := "DOMAIN-SUFFIX," + domain + ",real-ip"
+		if !containsString(raw.DNS.FakeIPFilter, rule) {
+			raw.DNS.FakeIPFilter = append([]string{rule}, raw.DNS.FakeIPFilter...)
+		}
+	}
+	// FilterWhiteList 下未列出的域名本来就返回真实 IP，无需处理。
+}
+
 func patchTailscaleDns(raw *config.RawConfig, tailscale *PatchTailscale) {
 	if tailscale == nil {
 		return
+	}
+	for _, domain := range tailscaleServiceDomains {
+		addTailscaleRealIPDomain(raw, domain)
 	}
 	server := strings.TrimSpace(tailscale.DnsServer)
 	for _, item := range tailscale.DnsDomains {
@@ -34,18 +58,7 @@ func patchTailscaleDns(raw *config.RawConfig, tailscale *PatchTailscale) {
 			continue
 		}
 		pattern := "+." + domain
-		switch raw.DNS.FakeIPFilterMode {
-		case C.FilterBlackList:
-			if !containsString(raw.DNS.FakeIPFilter, pattern) {
-				raw.DNS.FakeIPFilter = append(raw.DNS.FakeIPFilter, pattern)
-			}
-		case C.FilterRule:
-			rule := "DOMAIN-SUFFIX," + domain + ",real-ip"
-			if !containsString(raw.DNS.FakeIPFilter, rule) {
-				raw.DNS.FakeIPFilter = append([]string{rule}, raw.DNS.FakeIPFilter...)
-			}
-		}
-		// FilterWhiteList 下未列出的域名本来就返回真实 IP，无需处理。
+		addTailscaleRealIPDomain(raw, domain)
 		if server == "" {
 			continue
 		}

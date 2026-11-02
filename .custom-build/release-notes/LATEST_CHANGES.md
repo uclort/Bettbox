@@ -5,6 +5,7 @@
 - 修复 macOS 按住 Option 打开托盘（显示隐藏策略组）时，点击延迟测试没有加载动画、延迟不刷新的问题。
 - Windows 支持按住 Alt 点击托盘图标临时显示隐藏策略组（对应 macOS 的 Option）。
 - Windows 托盘菜单新增字母快捷键：菜单打开时按 M 显示窗口、D 网络面板、S 系统代理、E 虚拟网卡、R 重启内核、Q 退出，与 macOS 的 ⌘ 快捷键字母一致。
+- Tailscale 共存开启后，`tailscale.com` / `tailscale.io`（控制面、登录、DERP）固定返回真实 IP，DNS 服务器与分流规则不变；修复开启虚拟网卡时 Rex 等内嵌 Tailscale（tsnet）的应用点「Sign in」一直无反应。请勿把 `tailscale.com` 填进 MagicDNS 域名，MagicDNS 无法解析它，浏览器会报 NXDOMAIN。
 - 关于页新增「应用权限」（Android）：列出 Bettbox 所需全部权限与授权状态，可直接申请或跳转系统设置。
 - 补充 Android 17 本地网络权限（ACCESS_LOCAL_NETWORK）运行时申请，与通知权限合并为一次系统弹窗；修复未授权时无法连接同一网段设备（如局域网 HTTP 代理）、测速超时和 502。
 

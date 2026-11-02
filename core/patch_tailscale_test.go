@@ -48,7 +48,7 @@ func TestPatchTailscaleDnsUsesProfileDns(t *testing.T) {
 	if _, err := applyPatch(rawCfg, params); err != nil {
 		t.Fatal(err)
 	}
-	if got := fmt.Sprint(rawCfg.DNS.FakeIPFilter); got != "[+.lan +.ts.net +.example.ts]" {
+	if got := fmt.Sprint(rawCfg.DNS.FakeIPFilter); got != "[+.lan +.tailscale.com +.tailscale.io +.ts.net +.example.ts]" {
 		t.Fatalf("unexpected fake-ip-filter: %s", got)
 	}
 	if value, _ := rawCfg.DNS.NameServerPolicy.Get("+.ts.net"); fmt.Sprint(value) != "10.0.0.53" {
@@ -56,6 +56,10 @@ func TestPatchTailscaleDnsUsesProfileDns(t *testing.T) {
 	}
 	if value, _ := rawCfg.DNS.NameServerPolicy.Get("+.example.ts"); value != "100.100.100.100" {
 		t.Fatalf("missing tailscale policy, got %v", value)
+	}
+	// Tailscale 服务域名只返回真实 IP，不能交给 MagicDNS（未连接时不可用）。
+	if _, exists := rawCfg.DNS.NameServerPolicy.Get("+.tailscale.com"); exists {
+		t.Fatal("tailscale service domains must not use magic dns policy")
 	}
 }
 
@@ -70,7 +74,7 @@ func TestPatchTailscaleDnsRuleMode(t *testing.T) {
 	if _, err := applyPatch(rawCfg, params); err != nil {
 		t.Fatal(err)
 	}
-	if got := fmt.Sprint(rawCfg.DNS.FakeIPFilter); got != "[DOMAIN-SUFFIX,ts.net,real-ip MATCH,fake-ip]" {
+	if got := fmt.Sprint(rawCfg.DNS.FakeIPFilter); got != "[DOMAIN-SUFFIX,ts.net,real-ip DOMAIN-SUFFIX,tailscale.io,real-ip DOMAIN-SUFFIX,tailscale.com,real-ip MATCH,fake-ip]" {
 		t.Fatalf("unexpected fake-ip-filter: %s", got)
 	}
 	if rawCfg.DNS.NameServerPolicy != nil && rawCfg.DNS.NameServerPolicy.Len() != 0 {
