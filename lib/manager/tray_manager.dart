@@ -36,7 +36,9 @@ class _TrayContainerState extends ConsumerState<TrayManager> with TrayListener {
   }
 
   bool get _shouldTemporarilyShowHiddenItems {
-    if (!system.isMacOS || !trayManager.isOptionKeyPressed) {
+    // BETTBOX-CUSTOM: macOS 按住 Option、Windows 按住 Alt 点击托盘临时显示隐藏组。
+    if (!(system.isMacOS || system.isWindows) ||
+        !trayManager.isOptionKeyPressed) {
       return false;
     }
     return !ref.read(
@@ -75,6 +77,11 @@ class _TrayContainerState extends ConsumerState<TrayManager> with TrayListener {
   @override
   void onTrayIconMouseDown() {
     unawaited(_handleTrayIconClick(isRightClick: false));
+  }
+
+  @override
+  void onTrayMenuClose() {
+    unawaited(globalState.appController.handleTrayMenuClosed());
   }
 
   @override

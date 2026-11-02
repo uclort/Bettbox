@@ -17,6 +17,7 @@
 #include <flutter/standard_method_codec.h>
 
 #include <algorithm>
+#include <cctype>
 #include <codecvt>
 #include <map>
 #include <memory>
@@ -118,6 +119,20 @@ const flutter::EncodableValue* ValueOrNull(const flutter::EncodableMap& map,
     return nullptr;
   }
   return &(it->second);
+}
+
+// BETTBOX-CUSTOM: macOS 的 `shortcut:command-m` 在 Windows 转为菜单助记键，
+// 菜单打开时直接按字母触发，例如 “显示窗口(&M)”。
+std::string WithMnemonic(const std::string& label,
+                         const flutter::EncodableMap& item_map) {
+  const auto* shortcut =
+      std::get_if<std::string>(ValueOrNull(item_map, "shortcut"));
+  if (shortcut == nullptr || shortcut->empty()) return label;
+  const char letter = shortcut->back();
+  if (!std::isalnum(static_cast<unsigned char>(letter))) return label;
+  return label + "(&" +
+         static_cast<char>(std::toupper(static_cast<unsigned char>(letter))) +
+         ")";
 }
 std::unique_ptr<
     flutter::MethodChannel<flutter::EncodableValue>,
@@ -299,8 +314,9 @@ void TrayManagerPlugin::_CreateMenu(HMENU menu, flutter::EncodableMap args) {
     }
     std::string type =
         std::get<std::string>(item_map.at(flutter::EncodableValue("type")));
-    std::string label =
-        std::get<std::string>(item_map.at(flutter::EncodableValue("label")));
+    std::string label = WithMnemonic(
+        std::get<std::string>(item_map.at(flutter::EncodableValue("label"))),
+        item_map);
     auto* sublabel = std::get_if<std::string>(ValueOrNull(item_map, "sublabel"));
     tray_manager::TrayOwnerDrawItem* owner_draw = nullptr;
     if (key != nullptr && (key->rfind("proxy-item:", 0) == 0 ||
@@ -373,7 +389,7 @@ void TrayManagerPlugin::_UpdateMenuLabels(HMENU menu, flutter::EncodableMap args
         std::get<flutter::EncodableMap>(items[i]);
     std::string raw_label =
         std::get<std::string>(item_map.at(flutter::EncodableValue("label")));
-    std::string label = raw_label;
+    std::string label = WithMnemonic(raw_label, item_map);
     auto* sublabel = std::get_if<std::string>(ValueOrNull(item_map, "sublabel"));
     if (sublabel != nullptr && !sublabel->empty()) {
       label = label + "\t" + *sublabel;
@@ -456,22 +472,29 @@ std::optional<LRESULT> TrayManagerPlugin::HandleWindowProc(HWND hWnd,
     }
     tray_icon_setted = false;
   } else if (message == WM_MYMESSAGE) {
+    // BETTBOX-CUSTOM: 按住 Alt 点击托盘时不弹缓存菜单，交给 Dart 决定是否临时
+    // 显示隐藏策略组（对应 macOS 的 Option）；参数名沿用 optionKeyPressed。
+    const bool alt_pressed = (GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
+    auto click_arguments = [alt_pressed]() {
+      flutter::EncodableMap args;
+      args[flutter::EncodableValue("optionKeyPressed")] =
+          flutter::EncodableValue(alt_pressed);
+      return std::make_unique<flutter::EncodableValue>(args);
+    };
     switch (lParam) {
       case WM_LBUTTONUP:
-        if (left_click_shows_menu_) {
+        if (left_click_shows_menu_ && !alt_pressed) {
           ShowContextMenu();
           break;
         }
-        channel->InvokeMethod("onTrayIconMouseDown",
-                              std::make_unique<flutter::EncodableValue>());
+        channel->InvokeMethod("onTrayIconMouseDown", click_arguments());
         break;
       case WM_RBUTTONUP:
-        if (right_click_shows_menu_) {
+        if (right_click_shows_menu_ && !alt_pressed) {
           ShowContextMenu();
           break;
         }
-        channel->InvokeMethod("onTrayIconRightMouseDown",
-                              std::make_unique<flutter::EncodableValue>());
+        channel->InvokeMethod("onTrayIconRightMouseDown", click_arguments());
         break;
       default:
         break;

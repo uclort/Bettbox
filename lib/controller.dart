@@ -2635,6 +2635,17 @@ class AppController {
     showHiddenItems: true,
   );
 
+  /// BETTBOX-CUSTOM: 含隐藏组的临时菜单完全关闭后恢复普通菜单。Windows 会缓存
+  /// 原生菜单供下次直接弹出，不恢复会让普通点击也显示隐藏组；macOS 子菜单关闭也会
+  /// 触发此回调，因此只在整棵菜单关闭后处理。
+  Future<void> handleTrayMenuClosed() async {
+    if (!_trayMenuIncludesHiddenItems || trayManager.isMenuOpen) return;
+    _trayMenuIncludesHiddenItems = false;
+    if (system.isWindows) {
+      await updateTray(false, false, true);
+    }
+  }
+
   Future<void> showTrayMenu({bool includeHiddenItems = false}) async {
     final trayState = _ref.read(trayStateProvider);
     _trayMenuIncludesHiddenItems = includeHiddenItems;

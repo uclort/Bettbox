@@ -57,7 +57,7 @@ void main() {
 
     expect(handleBlock, isNotNull);
     expect(handleBlock, contains('case WM_RBUTTONUP:'));
-    expect(handleBlock, contains('if (right_click_shows_menu_)'));
+    expect(handleBlock, contains('if (right_click_shows_menu_ && !alt_pressed)'));
     expect(handleBlock, contains('ShowContextMenu();'));
     expect(popupBlock, isNotNull);
     expect(source, contains('"setNativeMenuClickBehavior"'));
@@ -68,6 +68,30 @@ void main() {
     expect(source, contains('nid.hWnd = menu_host_->window();'));
     expect(popupBlock, contains('static_cast<int>(command)'));
     expect(popupBlock, isNot(contains('ShowWindow(')));
+  });
+
+  test('Windows 按住 Alt 点击托盘交给 Dart 临时显示隐藏策略组', () {
+    final handleBlock = RegExp(
+      r'std::optional<LRESULT> TrayManagerPlugin::HandleWindowProc\(HWND hWnd,[\s\S]*?'
+      r'void TrayManagerPlugin::Destroy',
+      multiLine: true,
+    ).firstMatch(source)?.group(0);
+    expect(handleBlock, isNotNull);
+    expect(handleBlock, contains('GetAsyncKeyState(VK_MENU) & 0x8000'));
+    expect(handleBlock, contains('if (left_click_shows_menu_ && !alt_pressed)'));
+    expect(handleBlock, contains('"optionKeyPressed"'));
+    final trayManagerSource = File(
+      'lib/manager/tray_manager.dart',
+    ).readAsStringSync();
+    expect(trayManagerSource, contains('system.isMacOS || system.isWindows'));
+    expect(trayManagerSource, contains('handleTrayMenuClosed()'));
+    expect(controllerSource, contains('Future<void> handleTrayMenuClosed()'));
+  });
+
+  test('Windows 托盘菜单把 shortcut 转为助记键', () {
+    expect(source, contains('std::string WithMnemonic('));
+    expect(source, contains('WithMnemonic(raw_label, item_map)'));
+    expect(source, contains('return label + "(&" +'));
   });
 
   test('Windows 网速同时接受 32 位和 64 位编码且失败不阻断菜单', () {

@@ -135,7 +135,7 @@
 - Windows Shell 回调和菜单改由独立隐藏消息窗口承载，不依赖 Flutter 主窗口可见性；菜单使用 `TrackPopupMenuEx + TPM_RETURNCMD` 同步返回命令，显示期间冻结原生结构和 Dart 回调 ID，关闭后再应用最新状态。
 - Windows 仅 `persistent-delay-test` 测速项通过 `WH_MSGFILTER` 截获鼠标/键盘激活并保持原生菜单跟踪，不以关闭后重弹模拟；普通节点与其他操作仍遵循 Windows 默认关闭行为。测速动画和节点结果按稳定 key 复用 ID、按原生命令 ID 原位刷新，结构与点击回调冻结至关闭后应用，避免测速排序变动后点错节点。代码位于 `plugins/tray_manager/windows/tray_menu_host.h`、`tray_manager_plugin.cpp`、插件 Dart `setContextMenu` 与 `lib/common/tray.dart`；原生 `tray_menu_host_test.cpp` 覆盖真实子菜单内鼠标/回车测速、结果刷新和普通项关闭，Dart 生命周期回归覆盖排序后结果与 ID 对应关系。
 - macOS 与 Windows 共用模板图标：启用系统代理或虚拟网卡时高亮，未启用时使用 60% 中性灰渲染，配色和启停语义保持一致；Windows 启用态按系统明暗使用黑色或白色高对比前景，避免深色任务栏上仍显示成灰色。Windows 移除“托盘反转”设置，历史配置继续保留但不再影响托盘。
-- 托盘一级菜单提供显示窗口、网络面板、模式、策略组、系统代理、虚拟网卡和重启内核；“显示窗口 / 网络面板 / 系统代理 / 虚拟网卡 / 重启内核 / 退出”使用 `⌘M / ⌘D / ⌘S / ⌘E / ⌘R / ⌘Q`。
+- 托盘一级菜单提供显示窗口、网络面板、模式、策略组、系统代理、虚拟网卡和重启内核；“显示窗口 / 网络面板 / 系统代理 / 虚拟网卡 / 重启内核 / 退出”使用 `⌘M / ⌘D / ⌘S / ⌘E / ⌘R / ⌘Q`。Windows 原生菜单把同一 `shortcut:command-x` key 转为助记键 `名称(&X)`（`tray_manager_plugin.cpp` 的 `WithMnemonic`，创建与原位更新都应用），菜单打开时直接按字母触发；Windows 弹出菜单不支持 Ctrl 组合键，因此不显示 `Ctrl+X` 文字。
 - 二级菜单父项只展开子菜单；节点测速结果使用独立右对齐列。
 - 2026-11-02 策略组显示选中目标：一级策略组行左侧为组名，右侧灰色显示当前直接选中项与最终节点延迟（如 `Fallback  169ms`），再接箭头；展开后，节点行右侧灰色显示延迟，子项本身是策略组时显示其选中节点与延迟，若选中的仍是策略组则用括号补最终节点（如 `Other (FC-日本 1)  123ms`）。选中项与延迟以两个空格分隔（`joinTrayDetail`）。解析使用含隐藏组的完整 `groupsProvider`（`AppController.getAllGroups`），沿 Selector 本地选择 / URLTest、Fallback 的 `now` / REMATCH 链路走到底并防循环。
 - 托盘自绘行：macOS 的 `proxy-item:` 行（`AlignedTrayMenuItemView`）右侧说明按本行宽度右对齐、使用 `secondaryLabelColor`，富文本带段落对齐，避免覆盖 `NSTextField.alignment` 变成左对齐；`group-item:` 子菜单行改用 `SubmenuTrayMenuItemView` 自绘名称、灰色说明和 `chevron.right`，因为原生子菜单项会为快捷键列留出空白，子菜单展开仍由 NSMenu 处理。自绘行按整张菜单分两列：左列宽为最长名称、右列宽为最长说明，中间固定 28pt 间隔，任何一行的灰色说明都不会伸进其他行的名称区域（macOS `preferredMenuWidth`，Windows 同层自绘项共享 `TrayOwnerDrawColumn` 测量）。Windows 对同样两类 key 使用 `MF_OWNERDRAW`（`plugins/tray_manager/windows/tray_menu_owner_draw.h`）：主题度量对齐文字起点，正文色名称 + 灰色右对齐说明，自绘勾选与箭头并 `ExcludeClipRect` 屏蔽系统经典箭头，浅色高亮使用 `MENU_POPUPITEM/MPI_HOT`，深色使用圆角高亮；菜单打开期间刷新只更新自绘数据并重绘。代码位于 `lib/common/tray_selection.dart`、`lib/common/tray.dart`、`plugins/tray_manager/macos/Classes/TrayMenu.swift`、`plugins/tray_manager/windows/tray_manager_plugin.cpp`、`tray_menu_host.h` 与 `tray_menu_owner_draw.h`；回归为 `test/common/tray_selection_test.dart`，macOS 已离线渲染核对布局，子菜单悬停展开与 Windows 自绘效果需实机验收。
@@ -154,7 +154,7 @@
 ### 隐藏策略组
 
 - 代理页“显示隐藏项”按配置原始顺序显示隐藏策略组，托盘同步遵循该设置。
-- 设置关闭时，macOS 可按住 Option 点击托盘图标临时显示隐藏策略组；Option 状态同时读取点击事件和当前键盘修饰键，避免菜单栏事件丢失修饰键。Option 菜单打开期间，`AppController.updateTray` 依据 `_trayMenuIncludesHiddenItems` 与 `trayManager.isMenuOpen` 继续传入含隐藏组的 `groupsOverride`（`Tray.update` 与排队刷新均携带），否则测速动画等刷新的菜单项数量与已打开菜单不一致，macOS `TrayMenu.update` 会整体跳过，表现为测速无动画、延迟不刷新。
+- 设置关闭时，macOS 可按住 Option、Windows 可按住 Alt 点击托盘图标临时显示隐藏策略组；Windows 原生 `HandleWindowProc` 用 `GetAsyncKeyState(VK_MENU)` 检测 Alt，按下时不弹缓存菜单，改为带 `optionKeyPressed: true` 通知 Dart（`_shouldTemporarilyShowHiddenItems` 放行 macOS 与 Windows）；整棵菜单关闭后 `AppController.handleTrayMenuClosed` 清除临时标记，Windows 立即重建普通菜单，避免缓存菜单残留隐藏组。回归为 `test/plugins/windows_tray_native_test.dart`。macOS Option 状态同时读取点击事件和当前键盘修饰键，避免菜单栏事件丢失修饰键。Option 菜单打开期间，`AppController.updateTray` 依据 `_trayMenuIncludesHiddenItems` 与 `trayManager.isMenuOpen` 继续传入含隐藏组的 `groupsOverride`（`Tray.update` 与排队刷新均携带），否则测速动画等刷新的菜单项数量与已打开菜单不一致，macOS `TrayMenu.update` 会整体跳过，表现为测速无动画、延迟不刷新。
 
 ### Inline Provider 内容查看
 
