@@ -2614,22 +2614,32 @@ class AppController {
     bool force = false,
   ]) async {
     var trayState = _ref.read(trayStateProvider);
+    // BETTBOX-CUSTOM: Option 临时显示隐藏组的菜单打开期间，刷新（如测速动画）
+    // 必须沿用含隐藏组的列表；否则菜单项数量不一致，macOS 原位更新会整体跳过。
+    final keepHiddenGroups =
+        _trayMenuIncludesHiddenItems && trayManager.isMenuOpen;
     await tray.update(
       trayState: trayState,
       focus: focus,
       silent: silent,
       force: force,
+      groupsOverride: keepHiddenGroups ? _trayGroupsWithHidden(trayState) : null,
     );
   }
 
+  bool _trayMenuIncludesHiddenItems = false;
+
+  List<Group> _trayGroupsWithHidden(TrayState trayState) => getVisibleGroups(
+    mode: trayState.mode,
+    groups: _ref.read(groupsProvider),
+    showHiddenItems: true,
+  );
+
   Future<void> showTrayMenu({bool includeHiddenItems = false}) async {
     final trayState = _ref.read(trayStateProvider);
+    _trayMenuIncludesHiddenItems = includeHiddenItems;
     final groups = includeHiddenItems
-        ? getVisibleGroups(
-            mode: trayState.mode,
-            groups: _ref.read(groupsProvider),
-            showHiddenItems: true,
-          )
+        ? _trayGroupsWithHidden(trayState)
         : trayState.groups;
     await tray.showContextMenu(trayState: trayState, groups: groups);
   }

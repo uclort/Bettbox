@@ -154,7 +154,7 @@
 ### 隐藏策略组
 
 - 代理页“显示隐藏项”按配置原始顺序显示隐藏策略组，托盘同步遵循该设置。
-- 设置关闭时，macOS 可按住 Option 点击托盘图标临时显示隐藏策略组；Option 状态同时读取点击事件和当前键盘修饰键，避免菜单栏事件丢失修饰键。
+- 设置关闭时，macOS 可按住 Option 点击托盘图标临时显示隐藏策略组；Option 状态同时读取点击事件和当前键盘修饰键，避免菜单栏事件丢失修饰键。Option 菜单打开期间，`AppController.updateTray` 依据 `_trayMenuIncludesHiddenItems` 与 `trayManager.isMenuOpen` 继续传入含隐藏组的 `groupsOverride`（`Tray.update` 与排队刷新均携带），否则测速动画等刷新的菜单项数量与已打开菜单不一致，macOS `TrayMenu.update` 会整体跳过，表现为测速无动画、延迟不刷新。
 
 ### Inline Provider 内容查看
 

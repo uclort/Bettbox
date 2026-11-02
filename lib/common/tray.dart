@@ -19,6 +19,7 @@ class Tray {
   bool _isUpdating = false;
   bool _pendingFocus = false;
   bool _pendingSilent = false;
+  List<Group>? _pendingGroupsOverride;
 
   static const _debounceDelay = Duration(milliseconds: 300);
 
@@ -88,6 +89,7 @@ class Tray {
     bool focus = false,
     bool silent = false,
     bool force = false,
+    List<Group>? groupsOverride,
   }) async {
     if (system.isAndroid) {
       return;
@@ -99,18 +101,33 @@ class Tray {
       _pendingState = trayState;
       _pendingFocus = focus;
       _pendingSilent = silent;
+      _pendingGroupsOverride = groupsOverride;
       return;
     }
 
     if (force || focus) {
-      await _doUpdate(trayState: trayState, focus: focus, silent: silent);
+      await _doUpdate(
+        trayState: trayState,
+        focus: focus,
+        silent: silent,
+        groupsOverride: groupsOverride,
+      );
     } else if (silent) {
       _debounceTimer = Timer(const Duration(milliseconds: 50), () async {
-        await _doUpdate(trayState: trayState, focus: focus, silent: silent);
+        await _doUpdate(
+          trayState: trayState,
+          focus: focus,
+          silent: silent,
+          groupsOverride: groupsOverride,
+        );
       });
     } else {
       _debounceTimer = Timer(_debounceDelay, () async {
-        await _doUpdate(trayState: trayState, focus: focus);
+        await _doUpdate(
+          trayState: trayState,
+          focus: focus,
+          groupsOverride: groupsOverride,
+        );
       });
     }
   }
@@ -386,14 +403,17 @@ class Tray {
         final pending = _pendingState;
         final pendingFocus = _pendingFocus;
         final pendingSilent = _pendingSilent;
+        // BETTBOX-CUSTOM: 排队的刷新优先使用自己携带的分组（含 Option 隐藏组）。
+        final pendingGroups = _pendingGroupsOverride ?? groupsOverride;
         _pendingState = null;
         _pendingFocus = false;
         _pendingSilent = false;
+        _pendingGroupsOverride = null;
         await _doUpdate(
           trayState: pending!,
           focus: pendingFocus,
           silent: pendingSilent,
-          groupsOverride: groupsOverride,
+          groupsOverride: pendingGroups,
           prepareContextMenu: prepareContextMenu,
         );
       }
