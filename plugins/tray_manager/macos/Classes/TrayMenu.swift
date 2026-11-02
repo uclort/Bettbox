@@ -375,7 +375,7 @@ private final class AlignedTrayMenuItemView: NSView {
 enum TrayMenuMetrics {
     static let titleX: CGFloat = 30
     static let trailingInset: CGFloat = 14
-    static let columnGap: CGFloat = 16
+    static let columnGap: CGFloat = 28
     static let chevronWidth: CGFloat = 8
     static let chevronGap: CGFloat = 6
     static let rowHeight: CGFloat = 24
@@ -394,17 +394,6 @@ enum TrayMenuMetrics {
         guard needed > 0, available > 0 else { return 0 }
         let room = max(available * 0.6, available - columnGap - textWidth(label))
         return min(needed, room)
-    }
-
-    static func detailRowWidth(label: String, detail: String) -> CGFloat {
-        let detailWidth = textWidth(detail)
-        return titleX + textWidth(label)
-            + (detailWidth > 0 ? columnGap + detailWidth : 0)
-            + trailingInset
-    }
-
-    static func submenuRowWidth(label: String, detail: String) -> CGFloat {
-        detailRowWidth(label: label, detail: detail) + chevronGap + chevronWidth
     }
 }
 
@@ -587,7 +576,13 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
     }
 
     private func preferredMenuWidth(_ items: [NSDictionary]) -> CGFloat {
+        // BETTBOX-CUSTOM: 自绘行按整张菜单分两列：左列宽 = 最长名称，右列宽 = 最长说明，
+        // 中间固定留 columnGap，保证任何一行的灰色说明都不会伸进其他行的名称区域。
         var width = CGFloat(220)
+        var maxLabel = CGFloat.zero
+        var maxDetail = CGFloat.zero
+        var hasSubmenuRow = false
+        var hasCustomRow = false
         for item in items {
             let itemDict = item as? [String: Any] ?? [:]
             let type = itemDict["type"] as? String ?? ""
@@ -597,16 +592,25 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
             let key = itemDict["key"] as? String ?? ""
             let label = itemDict["label"] as? String ?? ""
             let sublabel = itemDict["sublabel"] as? String ?? ""
-            let rowWidth: CGFloat
-            if key.hasPrefix("proxy-item:") {
-                rowWidth = TrayMenuMetrics.detailRowWidth(label: label, detail: sublabel)
-            } else if key.hasPrefix("group-item:") {
-                rowWidth = TrayMenuMetrics.submenuRowWidth(label: label, detail: sublabel)
-            } else {
-                let title = menuItemTitle(label, sublabel, forceRightColumn: type == "checkbox")
-                rowWidth = TrayMenuMetrics.textWidth(title) + 56
+            if TrayMenu.isCustomDrawnKey(key) {
+                hasCustomRow = true
+                hasSubmenuRow = hasSubmenuRow || key.hasPrefix("group-item:")
+                maxLabel = max(maxLabel, TrayMenuMetrics.textWidth(label))
+                maxDetail = max(maxDetail, TrayMenuMetrics.textWidth(sublabel))
+                continue
             }
-            width = max(width, ceil(rowWidth))
+            let title = menuItemTitle(label, sublabel, forceRightColumn: type == "checkbox")
+            width = max(width, ceil(TrayMenuMetrics.textWidth(title) + 56))
+        }
+        if hasCustomRow {
+            var columns = TrayMenuMetrics.titleX + maxLabel + TrayMenuMetrics.trailingInset
+            if maxDetail > 0 {
+                columns += TrayMenuMetrics.columnGap + maxDetail
+            }
+            if hasSubmenuRow {
+                columns += TrayMenuMetrics.chevronGap + TrayMenuMetrics.chevronWidth
+            }
+            width = max(width, ceil(columns))
         }
         return width
     }

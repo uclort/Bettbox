@@ -286,6 +286,8 @@ void TrayManagerPlugin::_CreateMenu(HMENU menu, flutter::EncodableMap args) {
     // always remove at 0 because they shift every time
     DeleteMenu(menu, 0, MF_BYPOSITION);
   }
+  // BETTBOX-CUSTOM: 本层菜单的自绘项共用一份列信息，用于统一左右两列宽度。
+  auto owner_draw_column = std::make_shared<tray_manager::TrayOwnerDrawColumn>();
 
   for (flutter::EncodableValue item_value : items) {
     flutter::EncodableMap item_map =
@@ -308,6 +310,8 @@ void TrayManagerPlugin::_CreateMenu(HMENU menu, flutter::EncodableMap args) {
       data->label = g_converter.from_bytes(label);
       if (sublabel != nullptr) data->detail = g_converter.from_bytes(*sublabel);
       data->submenu = type == "submenu";
+      data->column = owner_draw_column;
+      owner_draw_column->items.push_back(data.get());
       owner_draw = data.get();
       owner_draw_items_.push_back(std::move(data));
     } else if (sublabel != nullptr && !sublabel->empty()) {

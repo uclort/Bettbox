@@ -7,7 +7,9 @@
 #include <vssym32.h>
 
 #include <algorithm>
+#include <memory>
 #include <string>
+#include <vector>
 
 #pragma comment(lib, "uxtheme.lib")
 
@@ -16,10 +18,19 @@ namespace tray_manager {
 // BETTBOX-CUSTOM: 策略组与节点行使用自绘菜单项：左侧名称为正文色，右侧选中项与
 // 延迟为灰色并右对齐；子菜单行自绘箭头，说明紧贴箭头。原生菜单的 Tab 列无法单独
 // 设置颜色，且会与快捷键列对齐留下大段空白。
+struct TrayOwnerDrawItem;
+
+// 同一个弹出菜单内的全部自绘项。测量时按两列计算：左列 = 最长名称，右列 =
+// 最长说明，中间固定间隔，保证任何一行的说明都不会伸进其他行的名称区域。
+struct TrayOwnerDrawColumn {
+  std::vector<TrayOwnerDrawItem*> items;
+};
+
 struct TrayOwnerDrawItem {
   std::wstring label;
   std::wstring detail;
   bool submenu = false;
+  std::shared_ptr<TrayOwnerDrawColumn> column;
 };
 
 class TrayMenuOwnerDraw {
@@ -35,8 +46,16 @@ class TrayMenuOwnerDraw {
 
     HDC dc = GetDC(host);
     HGDIOBJ old_font = SelectObject(dc, text_font_);
-    const int label_width = TextWidth(dc, item->label);
-    const int detail_width = TextWidth(dc, item->detail);
+    int label_width = TextWidth(dc, item->label);
+    int detail_width = TextWidth(dc, item->detail);
+    bool has_submenu = item->submenu;
+    if (item->column != nullptr) {
+      for (const TrayOwnerDrawItem* sibling : item->column->items) {
+        label_width = (std::max)(label_width, TextWidth(dc, sibling->label));
+        detail_width = (std::max)(detail_width, TextWidth(dc, sibling->detail));
+        has_submenu = has_submenu || sibling->submenu;
+      }
+    }
     TEXTMETRICW metrics{};
     GetTextMetricsW(dc, &metrics);
     SelectObject(dc, old_font);
@@ -44,7 +63,7 @@ class TrayMenuOwnerDraw {
 
     int width = layout.text_left + label_width + layout.trailing;
     if (detail_width > 0) width += layout.column_gap + detail_width;
-    if (item->submenu) width += layout.chevron_gap + layout.chevron_width;
+    if (has_submenu) width += layout.chevron_gap + layout.chevron_width;
     // 系统会在 itemWidth 基础上再追加勾选列宽度，这里提前扣除。
     width -= GetSystemMetricsForDpi(SM_CXMENUCHECK, dpi) - 1;
     measure->itemWidth = static_cast<UINT>((std::max)(width, 0));
@@ -210,7 +229,7 @@ class TrayMenuOwnerDraw {
 
   // 与原生菜单项对齐：文字起点 = 项边距 + 勾选背景（含边距）+ 文字边距。
   Layout LayoutFor(HWND host, UINT dpi) const {
-    Layout layout{Scale(32, dpi), Scale(12, dpi), Scale(16, dpi),
+    Layout layout{Scale(32, dpi), Scale(12, dpi), Scale(28, dpi),
                   Scale(12, dpi), Scale(4, dpi), Scale(24, dpi)};
     HTHEME theme = OpenThemeData(host, L"MENU");
     if (theme == nullptr) return layout;
