@@ -199,6 +199,7 @@ class Tray {
 
         subMenuItems.add(MenuItem.separator());
 
+        final selectable = isTrayGroupManuallySelectable(group);
         final proxies = globalState.appController.getSortProxies(
           proxies: group.all,
           sortType: globalState.config.proxiesStyle.sortType,
@@ -226,7 +227,10 @@ class Tray {
                     trayState.selectedMap[group.name] ?? '',
                   ) ==
                   proxy.name,
+              // BETTBOX-CUSTOM: 非 Selector 组节点置灰，原生侧不响应点击也不关闭菜单。
+              disabled: !selectable,
               onClick: (_) {
+                if (!selectable) return;
                 final appController = globalState.appController;
                 appController.updateCurrentSelectedMap(group.name, proxy.name);
                 appController.changeProxy(

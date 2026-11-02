@@ -1,3 +1,4 @@
+import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/models.dart';
 
 // BETTBOX-CUSTOM: 托盘策略组右侧展示当前选中目标。
@@ -66,6 +67,11 @@ String _selectedNameOf(
   }
   return group.getCurrentSelectedName(selectedMap[groupName] ?? '');
 }
+
+// BETTBOX-CUSTOM: 托盘只允许手动选择 Selector 组的节点；Fallback、URLTest、
+// LoadBalance、Relay 等由内核自动决定的组，节点行置灰且点击不响应、不关闭菜单。
+bool isTrayGroupManuallySelectable(Group group) =>
+    group.type == GroupType.Selector;
 
 /// 托盘右侧灰色说明：选中项与延迟之间留小间距，任一为空时只保留另一项。
 String joinTrayDetail(String selection, String delay) {

@@ -324,9 +324,10 @@ private final class AlignedTrayMenuItemView: NSView {
     private func updateAppearance() {
         let isHighlighted = !isDisabled && isHovered
         highlightView.isHidden = !isHighlighted
+        // BETTBOX-CUSTOM: 不可手动选择的节点（Fallback 等）名称与右侧延迟同为次级灰色。
         let textColor: NSColor
         if isDisabled {
-            textColor = .disabledControlTextColor
+            textColor = .secondaryLabelColor
         } else if isHighlighted {
             textColor = .selectedMenuItemTextColor
         } else {
@@ -336,7 +337,7 @@ private final class AlignedTrayMenuItemView: NSView {
         // 否则会覆盖 NSTextField.alignment 变成左对齐。
         let detailColor: NSColor
         if isDisabled {
-            detailColor = .disabledControlTextColor
+            detailColor = .secondaryLabelColor
         } else if isHighlighted {
             detailColor = NSColor.selectedMenuItemTextColor.withAlphaComponent(0.8)
         } else {

@@ -122,7 +122,8 @@ class TrayMenuOwnerDraw {
     COLORREF text_color;
     COLORREF detail_color;
     if (disabled) {
-      text_color = dark ? RGB(110, 110, 110) : RGB(160, 160, 160);
+      // BETTBOX-CUSTOM: 不可手动选择的节点名称与右侧延迟使用同一灰色。
+      text_color = dark ? RGB(160, 160, 160) : RGB(112, 112, 112);
       detail_color = text_color;
     } else if (dark) {
       text_color = RGB(255, 255, 255);

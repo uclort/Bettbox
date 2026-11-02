@@ -109,4 +109,14 @@ void main() {
     expect(joinTrayDetail('DIRECT', ''), 'DIRECT');
     expect(joinTrayDetail('', ''), isEmpty);
   });
+
+  test('只有 Selector 组的节点可在托盘手动选择', () {
+    for (final type in GroupType.values) {
+      expect(
+        isTrayGroupManuallySelectable(Group(type: type, name: type.name)),
+        type == GroupType.Selector,
+        reason: type.name,
+      );
+    }
+  });
 }
