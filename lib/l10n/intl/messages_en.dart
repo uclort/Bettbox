@@ -2028,18 +2028,20 @@ class MessageLookup extends MessageLookupByLibrary {
     "systemProxy": MessageLookupByLibrary.simpleMessage("System Proxy"),
     "systemProxyDesc": MessageLookupByLibrary.simpleMessage("Set system proxy"),
     "tab": MessageLookupByLibrary.simpleMessage("Tab"),
+    "tailscaleGuideMobileDesc": MessageLookupByLibrary.simpleMessage(
+      "How the built-in node works and why the Tailscale App cannot run alongside",
+    ),
+    "tailscaleGuideMobileContent": MessageLookupByLibrary.simpleMessage(
+      "Built-in Tailscale Node\n\nThe Bettbox core joins your Tailnet as a separate device (named \"<hostname>-bettbox\" by default), and Tailnet domains and ranges are forwarded to it by rules. All traffic on this device already passes through the Bettbox VPN, so no extra setup is needed.\n\nWhy there is no Tailscale App coexistence\n\nThe system allows only one VPN at a time. Once Bettbox starts, the Tailscale App's VPN is disconnected, and vice versa. To reach your Tailnet while Bettbox is running, use the built-in node.\n\nLimits\n\n• Outbound only: this device can reach the Tailnet, but other devices cannot reach this device through the built-in node.\n• If you need this device to be reachable, stop Bettbox and use the Tailscale App instead.\n\nSign-in\n\nWithout an Auth Key, tap \"Sign in to Tailscale\" and authorize in the browser. The login is stored locally and survives config reloads. With a tagged Auth Key the device shows up as the tag instead of your account, and services that only allow your account may reject it.",
+    ),
     "tailscaleNode": MessageLookupByLibrary.simpleMessage(
       "Built-in Tailscale Node",
     ),
     "tailscaleNodeDesc": MessageLookupByLibrary.simpleMessage(
       "The core joins your Tailnet as its own device, no Tailscale App needed",
     ),
-    "tailscaleNodeStatus": MessageLookupByLibrary.simpleMessage(
-      "Node Status",
-    ),
-    "tailscaleNodeRunning": MessageLookupByLibrary.simpleMessage(
-      "Connected",
-    ),
+    "tailscaleNodeStatus": MessageLookupByLibrary.simpleMessage("Node Status"),
+    "tailscaleNodeRunning": MessageLookupByLibrary.simpleMessage("Connected"),
     "tailscaleNodeNeedsLogin": MessageLookupByLibrary.simpleMessage(
       "Not signed in",
     ),
@@ -2052,9 +2054,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tailscaleNodeLogin": MessageLookupByLibrary.simpleMessage(
       "Sign in to Tailscale",
     ),
-    "tailscaleNodeLogout": MessageLookupByLibrary.simpleMessage(
-      "Sign out",
-    ),
+    "tailscaleNodeLogout": MessageLookupByLibrary.simpleMessage("Sign out"),
     "tailscaleNodeLogoutTip": MessageLookupByLibrary.simpleMessage(
       "This device will leave the Tailnet until you sign in again",
     ),
@@ -2064,15 +2064,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "tailscaleNodeHostnameDesc": MessageLookupByLibrary.simpleMessage(
       "Leave empty to use \"<hostname>-bettbox\"",
     ),
-    "tailscaleNodeAuthKey": MessageLookupByLibrary.simpleMessage(
-      "Auth Key",
-    ),
+    "tailscaleNodeAuthKey": MessageLookupByLibrary.simpleMessage("Auth Key"),
     "tailscaleNodeAuthKeyDesc": MessageLookupByLibrary.simpleMessage(
       "Optional. Leave empty to sign in with the browser; avoid tagged keys",
     ),
-    "tailscaleNodeExitNode": MessageLookupByLibrary.simpleMessage(
-      "Exit Node",
-    ),
+    "tailscaleNodeExitNode": MessageLookupByLibrary.simpleMessage("Exit Node"),
     "tailscaleNodeExitNodeDesc": MessageLookupByLibrary.simpleMessage(
       "Optional. Name or IP of an exit node; only affects traffic routed to this node",
     ),
@@ -2085,9 +2081,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tailscaleNodeOverride": MessageLookupByLibrary.simpleMessage(
       "Built-in node is on and takes precedence; App mode routing is paused",
     ),
-    "tailscaleGuide": MessageLookupByLibrary.simpleMessage(
-      "Tailscale Guide",
-    ),
+    "tailscaleGuide": MessageLookupByLibrary.simpleMessage("Tailscale Guide"),
     "tailscaleGuideDesc": MessageLookupByLibrary.simpleMessage(
       "Differences between the two modes and when the Tailscale App is needed",
     ),

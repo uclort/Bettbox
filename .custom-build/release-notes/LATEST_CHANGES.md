@@ -2,7 +2,7 @@
 
 - 网络设置新增「Tailscale」分组。新开关「内置 Tailscale 节点」（默认关闭）：Bettbox 内核作为一台独立设备加入 Tailnet，`*.ts.net` 与 `100.64.0.0/10` 自动转给它，不需要安装或运行 Tailscale App。需要开启虚拟网卡或系统代理；只负责本机访问 Tailnet，不能让其他设备访问本机。
 - 齿轮内可查看节点状态（设备名、Tailnet IP、账号），点「登录 Tailscale」在浏览器授权，登录状态保存在本机，重载配置无需重新登录；也可填 Auth Key、设备名、出口节点，或关闭子网路由。
-- 原「Tailscale 共存」改名「Tailscale App 共存」，仍需 App 保持运行。两个都开时以内置节点为准。新增「Tailscale 接入说明」，介绍两种方式的区别、同时开启的效果，以及什么时候需要 Tailscale App。
+- 原「Tailscale 共存」改名「Tailscale App 共存」，仍需 App 保持运行。两个都开时以内置节点为准。新增「Tailscale 接入说明」，介绍两种方式的区别、同时开启的效果，以及什么时候需要 Tailscale App。Android 只显示内置节点，接入说明也换成 Android 版本：系统同一时间只允许一个 VPN，所以没有 App 共存。
 - 内置节点不会出现在 include-all 策略组里，不参与测速和自动选择。
 
 ### 2026-11-02 托盘显示策略组选中目标、Android 应用权限页

@@ -1502,66 +1502,48 @@ class MessageLookup extends MessageLookupByLibrary {
     "systemProxy": MessageLookupByLibrary.simpleMessage("系統代理"),
     "systemProxyDesc": MessageLookupByLibrary.simpleMessage("設定系統代理"),
     "tab": MessageLookupByLibrary.simpleMessage("分頁"),
-    "tailscaleNode": MessageLookupByLibrary.simpleMessage(
-      "內建 Tailscale 節點",
+    "tailscaleGuideMobileDesc": MessageLookupByLibrary.simpleMessage(
+      "內建節點的用法，以及為何無法與 Tailscale App 同時使用",
     ),
+    "tailscaleGuideMobileContent": MessageLookupByLibrary.simpleMessage(
+      "內建 Tailscale 節點\n\nBettbox 核心作為一台獨立裝置（預設名稱「本機名稱-bettbox」）加入 Tailnet，Tailnet 網域與網段透過規則轉給它。本機流量本來就經過 Bettbox 的 VPN，不需要額外設定。\n\n為何沒有 Tailscale App 共存\n\n系統同一時間只允許一個 VPN 執行。Bettbox 啟動後，Tailscale App 的 VPN 會被中斷，反之亦然。Bettbox 執行時想存取 Tailnet，請使用內建節點。\n\n限制\n\n• 只負責本機存取 Tailnet，其他裝置無法透過內建節點存取本機。\n• 若本機需要被其他裝置存取，只能停用 Bettbox，改用 Tailscale App。\n\n登入\n\n未填 Auth Key 時，點「登入 Tailscale」在瀏覽器授權即可。登入狀態儲存在本機，重新載入設定不需要重新登入。使用帶 tag 的 Auth Key 時，裝置以 tag 身分出現，只允許你本人帳號的服務可能拒絕存取。",
+    ),
+    "tailscaleNode": MessageLookupByLibrary.simpleMessage("內建 Tailscale 節點"),
     "tailscaleNodeDesc": MessageLookupByLibrary.simpleMessage(
       "核心作為獨立裝置加入 Tailnet，無需 Tailscale App",
     ),
-    "tailscaleNodeStatus": MessageLookupByLibrary.simpleMessage(
-      "節點狀態",
-    ),
-    "tailscaleNodeRunning": MessageLookupByLibrary.simpleMessage(
-      "已連線",
-    ),
-    "tailscaleNodeNeedsLogin": MessageLookupByLibrary.simpleMessage(
-      "未登入",
-    ),
-    "tailscaleNodeStarting": MessageLookupByLibrary.simpleMessage(
-      "正在連線…",
-    ),
+    "tailscaleNodeStatus": MessageLookupByLibrary.simpleMessage("節點狀態"),
+    "tailscaleNodeRunning": MessageLookupByLibrary.simpleMessage("已連線"),
+    "tailscaleNodeNeedsLogin": MessageLookupByLibrary.simpleMessage("未登入"),
+    "tailscaleNodeStarting": MessageLookupByLibrary.simpleMessage("正在連線…"),
     "tailscaleNodeNotLoaded": MessageLookupByLibrary.simpleMessage(
       "節點尚未載入，請確認核心已啟動，設定生效後再重新整理",
     ),
-    "tailscaleNodeLogin": MessageLookupByLibrary.simpleMessage(
-      "登入 Tailscale",
-    ),
-    "tailscaleNodeLogout": MessageLookupByLibrary.simpleMessage(
-      "登出",
-    ),
+    "tailscaleNodeLogin": MessageLookupByLibrary.simpleMessage("登入 Tailscale"),
+    "tailscaleNodeLogout": MessageLookupByLibrary.simpleMessage("登出"),
     "tailscaleNodeLogoutTip": MessageLookupByLibrary.simpleMessage(
       "登出後此裝置會離開 Tailnet，需要重新登入",
     ),
-    "tailscaleNodeHostname": MessageLookupByLibrary.simpleMessage(
-      "裝置名稱",
-    ),
+    "tailscaleNodeHostname": MessageLookupByLibrary.simpleMessage("裝置名稱"),
     "tailscaleNodeHostnameDesc": MessageLookupByLibrary.simpleMessage(
       "留空使用「本機名稱-bettbox」",
     ),
-    "tailscaleNodeAuthKey": MessageLookupByLibrary.simpleMessage(
-      "Auth Key",
-    ),
+    "tailscaleNodeAuthKey": MessageLookupByLibrary.simpleMessage("Auth Key"),
     "tailscaleNodeAuthKeyDesc": MessageLookupByLibrary.simpleMessage(
       "選填，留空則以瀏覽器登入；不建議使用帶 tag 的 key",
     ),
-    "tailscaleNodeExitNode": MessageLookupByLibrary.simpleMessage(
-      "出口節點",
-    ),
+    "tailscaleNodeExitNode": MessageLookupByLibrary.simpleMessage("出口節點"),
     "tailscaleNodeExitNodeDesc": MessageLookupByLibrary.simpleMessage(
       "選填，填寫出口節點名稱或 IP；只影響路由到本節點的流量",
     ),
-    "tailscaleNodeAcceptRoutes": MessageLookupByLibrary.simpleMessage(
-      "接受子網路由",
-    ),
+    "tailscaleNodeAcceptRoutes": MessageLookupByLibrary.simpleMessage("接受子網路由"),
     "tailscaleNodeAcceptRoutesDesc": MessageLookupByLibrary.simpleMessage(
       "使用 Tailnet 中發佈的子網路由，對應網段需加入 Tailnet 網段",
     ),
     "tailscaleNodeOverride": MessageLookupByLibrary.simpleMessage(
       "已開啟內建節點，以內建節點為準，App 共存的路由暫不生效",
     ),
-    "tailscaleGuide": MessageLookupByLibrary.simpleMessage(
-      "Tailscale 接入說明",
-    ),
+    "tailscaleGuide": MessageLookupByLibrary.simpleMessage("Tailscale 接入說明"),
     "tailscaleGuideDesc": MessageLookupByLibrary.simpleMessage(
       "兩種方式的差異，以及何時需要 Tailscale App",
     ),
@@ -1578,9 +1560,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tailscaleCoexistDesc": MessageLookupByLibrary.simpleMessage(
       "Tailnet 流量交由 Tailscale App 處理，需保持 App 執行",
     ),
-    "tailscaleDnsDomains": MessageLookupByLibrary.simpleMessage(
-      "Tailnet 網域",
-    ),
+    "tailscaleDnsDomains": MessageLookupByLibrary.simpleMessage("Tailnet 網域"),
     "tailscaleDnsDomainsDesc": MessageLookupByLibrary.simpleMessage(
       "回傳真實 IP；App 共存使用下方伺服器解析，內建節點由節點自行解析",
     ),
@@ -1588,9 +1568,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tailscaleDnsServerDesc": MessageLookupByLibrary.simpleMessage(
       "留空則使用目前設定的 DNS",
     ),
-    "tailscaleRouteExclude": MessageLookupByLibrary.simpleMessage(
-      "Tailnet 網段",
-    ),
+    "tailscaleRouteExclude": MessageLookupByLibrary.simpleMessage("Tailnet 網段"),
     "tailscaleRouteExcludeDesc": MessageLookupByLibrary.simpleMessage(
       "App 共存時不經過虛擬網卡交由 App；內建節點時轉給節點",
     ),

@@ -1122,16 +1122,24 @@ class TailscaleGuideItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 移动端只有内置节点（系统只允许一个 VPN，无法与 Tailscale App 共存），说明随平台切换。
+    final isDesktop = system.isDesktop;
     return ListItem.next(
       title: Text(appLocalizations.tailscaleGuide),
-      subtitle: Text(appLocalizations.tailscaleGuideDesc),
+      subtitle: Text(
+        isDesktop
+            ? appLocalizations.tailscaleGuideDesc
+            : appLocalizations.tailscaleGuideMobileDesc,
+      ),
       delegate: NextDelegate(
         blur: false,
         title: appLocalizations.tailscaleGuide,
         widget: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: SelectableText(
-            appLocalizations.tailscaleGuideContent,
+            isDesktop
+                ? appLocalizations.tailscaleGuideContent
+                : appLocalizations.tailscaleGuideMobileContent,
             style: context.textTheme.bodyMedium?.copyWith(height: 1.6),
           ),
         ),
