@@ -1,6 +1,9 @@
 param(
   [string]$ProcessName = "Bettbox",
-  [int]$TimeoutMilliseconds = 3000
+  [int]$TimeoutMilliseconds = 3000,
+  [switch]$AltClick,
+  [switch]$ExternalAlt,
+  [int]$HoldAltMilliseconds = 1500
 )
 
 $ErrorActionPreference = "Stop"
@@ -40,6 +43,20 @@ public static class TrayProbe {
   private static extern bool PostMessage(IntPtr window, uint message, IntPtr wparam, IntPtr lparam);
   [DllImport("user32.dll")]
   private static extern bool SetCursorPos(int x, int y);
+  [DllImport("user32.dll")]
+  private static extern void keybd_event(byte virtualKey, byte scanCode, uint flags, UIntPtr extraInfo);
+  [DllImport("user32.dll")]
+  private static extern short GetAsyncKeyState(int virtualKey);
+
+  private static void SetAlt(bool down) {
+    const byte VK_MENU = 0x12;
+    const uint KEYEVENTF_KEYUP = 0x0002;
+    keybd_event(VK_MENU, 0, down ? 0 : KEYEVENTF_KEYUP, UIntPtr.Zero);
+  }
+
+  private static bool IsMenuVisible(uint processId) {
+    return Enumerate(processId, "#32768").Exists(window => window.Visible);
+  }
 
   private static List<WindowInfo> Enumerate(uint processId, string className) {
     var windows = new List<WindowInfo>();
@@ -111,6 +128,85 @@ public static class TrayProbe {
       PostMessage(owner.Handle, 0x001F, IntPtr.Zero, IntPtr.Zero);
     }
   }
+
+  // BETTBOX-CUSTOM: hold Alt to simulate a tray click; distinguish "closes only
+  // after Alt is released" from "closes while Alt is still held".
+  public static string ProbeAltClickMenu(
+      uint processId, int holdMilliseconds, int timeoutMilliseconds) {
+    var owners = ProcessWindows(processId);
+    if (owners.Count == 0) return "no-window";
+    var host = owners.Find(window => window.ClassName == "BettboxTrayMenuHost");
+    if (host != null) owners = new List<WindowInfo> { host };
+    SetCursorPos(400, 400);
+    SetAlt(true);
+    Thread.Sleep(60);
+    // The injected Alt must be visible to GetAsyncKeyState, otherwise the app
+    // opens the cached native menu instead of the hidden-groups menu.
+    bool altDown = (GetAsyncKeyState(0x12) & 0x8000) != 0;
+    foreach (var owner in owners) {
+      PostMessage(owner.Handle, 0x0401, IntPtr.Zero, new IntPtr(0x0205));
+    }
+    int waited = 0;
+    while (waited < timeoutMilliseconds && !IsMenuVisible(processId)) {
+      Thread.Sleep(50);
+      waited += 50;
+    }
+    if (!IsMenuVisible(processId)) {
+      SetAlt(false);
+      return "menu-not-shown|altDown=" + altDown + "|appearMs=" + waited;
+    }
+    int held = 0;
+    while (held < holdMilliseconds) {
+      Thread.Sleep(50);
+      held += 50;
+      if (!IsMenuVisible(processId)) {
+        SetAlt(false);
+        return "closed-while-alt-held|altDown=" + altDown + "|appearMs=" +
+            waited + "|closedAtMs=" + held;
+      }
+    }
+    SetAlt(false);
+    Thread.Sleep(300);
+    return (IsMenuVisible(processId)
+        ? "still-open-after-alt-release"
+        : "closed-on-alt-release") + "|altDown=" + altDown + "|appearMs=" +
+        waited + "|holdMs=" + held;
+  }
+
+  // BETTBOX-CUSTOM: Alt is injected by the host (press Option on the Mac while
+  // the Parallels window is frontmost), so this mode only posts the tray click
+  // and reports when the menu disappears.
+  public static string MonitorMenuAfterClick(
+      uint processId, int monitorMilliseconds) {
+    var owners = ProcessWindows(processId);
+    if (owners.Count == 0) return "no-window";
+    var host = owners.Find(window => window.ClassName == "BettboxTrayMenuHost");
+    if (host != null) owners = new List<WindowInfo> { host };
+    bool altDown = (GetAsyncKeyState(0x12) & 0x8000) != 0;
+    SetCursorPos(400, 400);
+    foreach (var owner in owners) {
+      PostMessage(owner.Handle, 0x0401, IntPtr.Zero, new IntPtr(0x0205));
+    }
+    int waited = 0;
+    while (waited < 3000 && !IsMenuVisible(processId)) {
+      Thread.Sleep(25);
+      waited += 25;
+    }
+    if (!IsMenuVisible(processId)) {
+      return "menu-not-shown|altDown=" + altDown;
+    }
+    int held = 0;
+    while (held < monitorMilliseconds) {
+      Thread.Sleep(25);
+      held += 25;
+      if (!IsMenuVisible(processId)) {
+        return "menu-closed|altDown=" + altDown + "|appearMs=" + waited +
+            "|closedAtMs=" + held;
+      }
+    }
+    return "menu-still-open|altDown=" + altDown + "|appearMs=" + waited +
+        "|monitorMs=" + held;
+  }
 }
 '@
 
@@ -135,6 +231,40 @@ foreach ($root in @($env:APPDATA, $env:LOCALAPPDATA)) {
 $windows = [TrayProbe]::ProcessWindows([uint32]$process.Id)
 if ($windows.Count -eq 0) {
   throw "$ProcessName 没有可接收托盘消息的顶层窗口"
+}
+
+if ($ExternalAlt) {
+  $altResult = [TrayProbe]::MonitorMenuAfterClick(
+    [uint32]$process.Id,
+    $HoldAltMilliseconds
+  )
+  [TrayProbe]::CloseMenu([uint32]$process.Id)
+  [pscustomobject]@{
+    ProcessId = $process.Id
+    ProductVersion = $process.MainModule.FileVersionInfo.ProductVersion
+    Configuration = $configuration
+    ExternalAlt = $altResult
+  } | ConvertTo-Json -Depth 4
+  exit 0
+}
+
+if ($AltClick) {
+  $altResult = [TrayProbe]::ProbeAltClickMenu(
+    [uint32]$process.Id,
+    $HoldAltMilliseconds,
+    $TimeoutMilliseconds
+  )
+  [TrayProbe]::CloseMenu([uint32]$process.Id)
+  [pscustomobject]@{
+    ProcessId = $process.Id
+    ProductVersion = $process.MainModule.FileVersionInfo.ProductVersion
+    Configuration = $configuration
+    AltClick = $altResult
+  } | ConvertTo-Json -Depth 4
+  if ($altResult -notlike "still-open-after-alt-release*") {
+    throw "按住 Alt 打开托盘菜单后未保持打开：$altResult"
+  }
+  exit 0
 }
 
 $visible = [TrayProbe]::ShowRightClickMenu(

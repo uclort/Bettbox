@@ -86,6 +86,10 @@ void main() {
     expect(trayManagerSource, contains('system.isMacOS || system.isWindows'));
     expect(trayManagerSource, contains('handleTrayMenuClosed()'));
     expect(controllerSource, contains('Future<void> handleTrayMenuClosed()'));
+    // 松开 Alt 会被 Windows 当成退出菜单模式，菜单循环必须吞掉 VK_MENU 按键。
+    expect(menuHostSource, contains('IsMenuModifierKeyMessage'));
+    expect(menuHostSource, contains('message.wParam == VK_MENU'));
+    expect(menuHostSource, contains('IsMenuModifierKeyMessage(*message)'));
   });
 
   test('Windows 托盘菜单把 shortcut 转为助记键', () {

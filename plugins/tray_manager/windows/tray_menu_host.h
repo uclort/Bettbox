@@ -8,6 +8,21 @@
 
 namespace tray_manager {
 
+// BETTBOX-CUSTOM: Windows 在菜单跟踪期间把 Alt 的按键消息当作“退出菜单模式”，
+// 按住 Alt（Parallels 里的 Option）打开托盘菜单后松开 Alt，菜单会被立即取消。
+// 菜单循环里吞掉 VK_MENU 的按键消息，让松开 Option 后菜单仍保持打开，与 macOS 一致。
+inline bool IsMenuModifierKeyMessage(const MSG& message) {
+  switch (message.message) {
+    case WM_KEYDOWN:
+    case WM_KEYUP:
+    case WM_SYSKEYDOWN:
+    case WM_SYSKEYUP:
+      return message.wParam == VK_MENU;
+    default:
+      return false;
+  }
+}
+
 // BETTBOX-CUSTOM: 独立托盘窗口不受 Flutter 主窗口隐藏、焦点转移影响。
 class TrayMenuHost {
  public:
@@ -83,6 +98,12 @@ class TrayMenuHost {
   static LRESULT CALLBACK MenuMessageFilter(int code, WPARAM wparam,
                                             LPARAM lparam) {
     auto* host = active_host_;
+    if (code == MSGF_MENU) {
+      const auto* message = reinterpret_cast<MSG*>(lparam);
+      if (message != nullptr && IsMenuModifierKeyMessage(*message)) {
+        return 1;
+      }
+    }
     if (code == MSGF_MENU && host != nullptr && host->selected_command_ != 0 &&
         host->is_persistent_ &&
         host->is_persistent_(host->selected_command_)) {

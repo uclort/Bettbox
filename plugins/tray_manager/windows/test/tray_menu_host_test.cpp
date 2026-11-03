@@ -19,6 +19,24 @@ BOOL CALLBACK FindVisibleMenu(HWND window, LPARAM) {
 }  // namespace
 
 int main() {
+  // BETTBOX-CUSTOM: 菜单跟踪期间吞掉 Alt 按键，避免松开 Alt 关闭托盘菜单。
+  MSG alt_up{};
+  alt_up.message = WM_SYSKEYUP;
+  alt_up.wParam = VK_MENU;
+  assert(tray_manager::IsMenuModifierKeyMessage(alt_up));
+  MSG alt_down{};
+  alt_down.message = WM_SYSKEYDOWN;
+  alt_down.wParam = VK_MENU;
+  assert(tray_manager::IsMenuModifierKeyMessage(alt_down));
+  MSG enter{};
+  enter.message = WM_KEYDOWN;
+  enter.wParam = VK_RETURN;
+  assert(!tray_manager::IsMenuModifierKeyMessage(enter));
+  MSG alt_click{};
+  alt_click.message = WM_LBUTTONUP;
+  alt_click.wParam = VK_MENU;
+  assert(!tray_manager::IsMenuModifierKeyMessage(alt_click));
+
   tray_manager::TrayMenuHost host([](HWND window, UINT message,
                                     WPARAM, LPARAM) {
     if (message == WM_TIMER) {

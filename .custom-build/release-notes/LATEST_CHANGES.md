@@ -19,6 +19,7 @@
 - Fallback、URLTest 等自动选择的策略组，托盘子菜单中的节点改为灰色（与右侧延迟同色），点击无反应且不会关闭菜单；只有手动选择（Selector）组的节点可点选。
 - 修复 macOS 按住 Option 打开托盘（显示隐藏策略组）时，点击延迟测试没有加载动画、延迟不刷新的问题。
 - Windows 支持按住 Alt 点击托盘图标临时显示隐藏策略组（对应 macOS 的 Option）。
+- 修复 Windows 按住 Alt（Parallels 里的 Option）打开托盘菜单后，松开 Alt 菜单立即自动关闭：菜单跟踪期间吞掉 Alt 按键消息，与 macOS 松开 Option 菜单仍保持打开一致。
 - Windows 托盘菜单新增字母快捷键：菜单打开时按 M 显示窗口、D 网络面板、S 系统代理、E 虚拟网卡、R 重启内核、Q 退出，与 macOS 的 ⌘ 快捷键字母一致。
 - Tailscale 共存开启后，`tailscale.com` / `tailscale.io`（控制面、登录、DERP）固定返回真实 IP，DNS 服务器与分流规则不变；修复开启虚拟网卡时 Rex 等内嵌 Tailscale（tsnet）的应用点「Sign in」一直无反应。请勿把 `tailscale.com` 填进 MagicDNS 域名，MagicDNS 无法解析它，浏览器会报 NXDOMAIN。
 - 关于页新增「应用权限」（Android）：列出 Bettbox 所需全部权限与授权状态，可直接申请或跳转系统设置。
