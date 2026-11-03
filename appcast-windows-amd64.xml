@@ -6,9 +6,9 @@
     <description>Bettbox 自定义版本更新源</description>
     <language>zh-CN</language>
     <item>
-      <title>Bettbox 1.19.7+2090000224</title>
-      <pubDate>Tue, 03 Nov 2026 02:26:05 +0000</pubDate>
-      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000224-r20261103020747-927b6de1bcfd-96a31a81cfce</link>
+      <title>Bettbox 1.19.7+2090000225</title>
+      <pubDate>Tue, 03 Nov 2026 03:25:10 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000225-r20261103030645-003230dbf86b-641aedd217de</link>
       <description><![CDATA[<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https:;">
@@ -20,16 +20,19 @@ pre { white-space: pre-wrap; } code { font-size: .92em; }
 img,table { max-width: 100%; } table { border-collapse: collapse; } td,th { border: 1px solid #888; padding: 6px; }
 a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; padding-top: 12px; }
 </style></head><body><p dir="auto">基于上游 Bettbox <code class="notranslate">main@1fb8806fdf82</code> 构建的自定义版本。</p>
-<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.7+2090000224</code></strong></p>
+<p dir="auto"><strong>最终安装版本：<code class="notranslate">1.19.7+2090000225</code></strong></p>
 <h2 dir="auto">本次变更（相较上一自定义 Release）</h2>
 <ul dir="auto">
-<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000223-r20261103013115-2be9470de0b9-96a31a81cfce"><code class="notranslate">custom-v1.19.7+2090000223-r20261103013115-2be9470de0b9-96a31a81cfce</code></a> → <code class="notranslate">custom-v1.19.7+2090000224-r20261103020747-927b6de1bcfd-96a31a81cfce</code></li>
+<li>对比范围：<a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000224-r20261103020747-927b6de1bcfd-96a31a81cfce"><code class="notranslate">custom-v1.19.7+2090000224-r20261103020747-927b6de1bcfd-96a31a81cfce</code></a> → <code class="notranslate">custom-v1.19.7+2090000225-r20261103030645-003230dbf86b-641aedd217de</code></li>
+<li>自定义 Mihomo 源码：<code class="notranslate">c0eebc591a0e</code> → <code class="notranslate">e64c7b530ac2</code></li>
 </ul>
 <h3 dir="auto">2026-11-03 内置 Tailscale 节点</h3>
 <ul dir="auto">
 <li>网络设置新增「Tailscale」分组。新开关「内置 Tailscale 节点」（默认关闭）：Bettbox 内核作为一台独立设备加入 Tailnet，<code class="notranslate">*.ts.net</code> 与 <code class="notranslate">100.64.0.0/10</code> 自动转给它，不需要安装或运行 Tailscale App。需要开启虚拟网卡或系统代理；只负责本机访问 Tailnet，不能让其他设备访问本机。</li>
 <li>齿轮内可查看节点状态（设备名、Tailnet IP、账号），点「登录 Tailscale」在浏览器授权，登录状态保存在本机，重载配置无需重新登录；也可填 Auth Key、设备名、出口节点，或关闭子网路由。</li>
 <li>原「Tailscale 共存」改名「Tailscale App 共存」，仍需 App 保持运行。两个都开时以内置节点为准。新增「Tailscale 接入说明」，介绍两种方式的区别、同时开启的效果，以及什么时候需要 Tailscale App。Android 只显示内置节点，接入说明也换成 Android 版本：系统同一时间只允许一个 VPN，所以没有 App 共存。</li>
+<li>内置节点设置页新增「设备」列表：显示 Tailnet 中所有设备的在线状态、IP、系统，以及当前是直连还是经 DERP 中继，点按复制 IP，页面打开时自动刷新。</li>
+<li>修复切换开关或重载配置后，内置节点在 Tailscale 后台显示「Duplicate node key」、状态一直停在「正在连接」：新节点启动前会先关掉旧节点。</li>
 <li>内置节点不会出现在 include-all 策略组里，不参与测速和自动选择。</li>
 </ul>
 <h3 dir="auto">2026-11-02 托盘显示策略组选中目标、Android 应用权限页</h3>
@@ -169,7 +172,9 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>2026-11-03 内置 Tailscale 节点（<code class="notranslate">TailscaleProps.nodeEnable</code>，默认关闭）：内核注入 mihomo <code class="notranslate">type: tailscale</code> 出站 <code class="notranslate">Bettbox-Tailscale</code>（常量 <code class="notranslate">tailscaleNodeName</code>，<code class="notranslate">state-dir: tailscale/bettbox</code> 固定在内核 home，重载/换订阅不丢登录；<code class="notranslate">udp: true</code>；可选 <code class="notranslate">hostname</code>（留空为「本机名-bettbox」，<code class="notranslate">effectiveNodeHostname</code>）、<code class="notranslate">auth-key</code>、<code class="notranslate">exit-node</code>、<code class="notranslate">accept-routes</code>（默认开））。订阅里已有同名代理时尊重订阅定义；<code class="notranslate">include-all</code>/<code class="notranslate">include-all-proxies</code> 策略组追加 <code class="notranslate">exclude-filter: ^Bettbox-Tailscale$</code>，避免被健康检查或自动选中。前置规则把 Tailnet 域名与网段指向该节点；<code class="notranslate">nameserver-policy</code> 对 Tailnet 域名<strong>强制覆盖</strong>为 <code class="notranslate">tailscale://Bettbox-Tailscale</code>（订阅通常指向 <code class="notranslate">100.100.100.100</code>，App 未运行时不可用）。<code class="notranslate">tailscale.com</code>/<code class="notranslate">tailscale.io</code> 真实 IP 规则两种方式都生效。</li>
 <li>两个开关的关系：<code class="notranslate">appActive = enable &amp;&amp; isDesktop</code>，<code class="notranslate">nodeActive = nodeEnable</code>，<code class="notranslate">appRouting = appActive &amp;&amp; !nodeActive</code>。同时开启时以内置节点为准：不并入 TUN <code class="notranslate">route-exclude-address</code>、不追加系统代理例外、规则指向节点；App 共存的 MagicDNS 服务器与代理例外暂不生效（开关副标题提示）。<code class="notranslate">routeExcludeAddress</code>（UI 改名「Tailnet 网段」）与 <code class="notranslate">dnsDomains</code>（「Tailnet 域名」）为两种方式共用。内置节点只出不进，本机被其他设备访问仍需 App 或应用自带 tsnet（如 Rex Server）。</li>
 <li>浏览器登录：mihomo tsnet 未填 auth-key 时会 <code class="notranslate">StartLoginInteractive</code>，但登录链接只写 Debug 日志。新增 <code class="notranslate">core/Clash.Meta/adapter/outbound/tailscale_status.go</code>（<code class="notranslate">Status</code> 按需启动节点，NeedsLogin 时补发交互式登录并最多等 8 秒取 <code class="notranslate">AuthURL</code>；<code class="notranslate">Logout</code>）与 <code class="notranslate">tailscale_status_type.go</code>（<code class="notranslate">TailscaleStatus</code>、<code class="notranslate">TailscaleNode</code>、<code class="notranslate">AsTailscaleNode</code> 解开 <code class="notranslate">autoCloseProxyAdapter</code>，无构建标签以便未带 <code class="notranslate">with_gvisor</code> 时编译）；内核方法 <code class="notranslate">getTailscaleStatus</code> / <code class="notranslate">tailscaleLogout</code>（<code class="notranslate">core/tailscale_node.go</code>、<code class="notranslate">core/action.go</code>、<code class="notranslate">core/constant.go</code>），Dart 侧 <code class="notranslate">ActionMethod</code>、<code class="notranslate">ClashInterface</code>、<code class="notranslate">clashCore.getTailscaleStatus()</code>。设置页「内置 Tailscale 节点」齿轮内显示状态（设备 DNS 名、IP、账号）、「登录 Tailscale」打开浏览器后每 3 秒轮询直到连接，支持退出登录。</li>
-<li>网络设置新增「Tailscale」分组：App 共存（桌面端）、内置节点、「Tailscale 接入说明」（桌面端 <code class="notranslate">tailscaleGuideContent</code> 说明两种方式、同时开启与 App 依赖；Android 端用 <code class="notranslate">tailscaleGuideMobileContent</code>，只讲内置节点，并说明系统只允许一个 VPN、无法与 Tailscale App 共存。Android 内核同样带 <code class="notranslate">with_gvisor</code>，内置节点可用）。新增文案只补了 en / zh_CN / zh_TC，其他语言回退英文。融合上游 mihomo 时必须保留 <code class="notranslate">tailscale_status*.go</code>，并确认 <code class="notranslate">autoCloseProxyAdapter</code> 字段名、<code class="notranslate">ensureStarted</code>、<code class="notranslate">server.LocalClient()</code> 未变。</li>
+<li>2026-11-03 同一 state-dir 单实例（<code class="notranslate">core/Clash.Meta/adapter/outbound/tailscale_instance.go</code>）：配置重载后旧出站要等 GC 触发 <code class="notranslate">autoCloseProxyAdapter</code> 的 finalizer 才关闭，期间新出站用同一 node key 启动，管理后台显示 <strong>Duplicate node key</strong>，新节点卡在 Starting。<code class="notranslate">Tailscale.start()</code> 在 <code class="notranslate">server.Start()</code> 前调用 <code class="notranslate">claimStateDir()</code> 关掉同目录的旧实例；<code class="notranslate">Close()</code> 改为 <code class="notranslate">closeOnce</code> 幂等并 <code class="notranslate">releaseStateDir()</code>（只释放自己持有的目录）。融合上游 <code class="notranslate">tailscale.go</code> 时必须保留这三处 <code class="notranslate">BETTBOX-CUSTOM</code>。回归 <code class="notranslate">tailscale_instance_test.go</code>。</li>
+<li>2026-11-03 设备列表：<code class="notranslate">Status</code> 改用 <code class="notranslate">lc.Status</code>（含 peers），Running 时返回 <code class="notranslate">peers</code>（<code class="notranslate">TailscalePeer</code>：host-name、dns-name、os、ips、online、active、exit-node、cur-addr、relay，在线优先按名称排序）。Dart <code class="notranslate">TailscalePeer</code>，设置页底部「设备 (在线/总数)」列表，显示在线状态、IP、系统、直连地址或 DERP 中继，点按复制 IP；页面打开期间每 5 秒自动刷新。</li>
+<li>网络设置新增「Tailscale」分组：App 共存（桌面端）、内置节点、「Tailscale 接入说明」（桌面端 <code class="notranslate">tailscaleGuideContent</code> 说明两种方式、同时开启与 App 依赖；Android 端用 <code class="notranslate">tailscaleGuideMobileContent</code>，只讲内置节点，并说明系统只允许一个 VPN、无法与 Tailscale App 共存。Android 内核同样带 <code class="notranslate">with_gvisor</code>，内置节点可用）。新增文案只补了 en / zh_CN / zh_TC，其他语言回退英文。融合上游 mihomo 时必须保留 <code class="notranslate">tailscale_status*.go</code>、<code class="notranslate">tailscale_instance*.go</code>，并确认 <code class="notranslate">autoCloseProxyAdapter</code> 字段名、<code class="notranslate">ensureStarted</code>、<code class="notranslate">server.LocalClient()</code> 未变。</li>
 <li>验证：<code class="notranslate">go test -tags with_gvisor -run 'Tailscale|RouteExclude' .</code>（<code class="notranslate">core/patch_tailscale_test.go</code>、<code class="notranslate">core/patch_tailscale_gvisor_test.go</code> 用 mihomo 完整解析补丁后配置）；2026-11-03 本机开着 TUN 实测临时节点 2 秒内进入 NeedsLogin 并返回 <code class="notranslate">https://login.tailscale.com/a/…</code>（未授权、临时目录已清理）；Dart 回归 <code class="notranslate">test/models/tailscale_props_test.dart</code> 已加入 macOS / Windows CI。</li>
 <li>代码落点：<code class="notranslate">lib/models/config.dart</code>（<code class="notranslate">TailscaleProps</code>、<code class="notranslate">TailscaleNodeStatus</code>、<code class="notranslate">realBypassDomain</code>）、<code class="notranslate">lib/state.dart</code>（<code class="notranslate">buildPatchParams</code>、<code class="notranslate">getCoreState</code>）、<code class="notranslate">lib/providers/state.dart</code>（<code class="notranslate">updateParams</code>、<code class="notranslate">coreState</code>、<code class="notranslate">proxyState</code>）、<code class="notranslate">lib/views/config/network.dart</code>（<code class="notranslate">TailscaleItem</code>、<code class="notranslate">TailscaleNodeItem</code>、<code class="notranslate">TailscaleGuideItem</code>）、<code class="notranslate">lib/clash/{interface,core}.dart</code>、<code class="notranslate">lib/enum/enum.dart</code>、<code class="notranslate">arb/intl_*.arb</code>；<code class="notranslate">core/patch.go</code>、<code class="notranslate">core/patch_tailscale.go</code>、<code class="notranslate">core/tailscale_node.go</code>、<code class="notranslate">core/common.go</code>；<code class="notranslate">core/Clash.Meta/listener/sing_tun/server.go</code>、<code class="notranslate">core/Clash.Meta/adapter/outbound/tailscale_status*.go</code>。</li>
 <li>回归：<code class="notranslate">test/models/tailscale_props_test.dart</code>、<code class="notranslate">core/patch_tailscale_test.go</code>、<code class="notranslate">core/Clash.Meta/listener/sing_tun/route_exclude_test.go</code>；实机验证 <code class="notranslate">dig +short wiki.gwm.cn</code> 为 Fake-IP、<code class="notranslate">dscacheutil -q host -a name &lt;设备&gt;.&lt;tailnet&gt;.ts.net</code> 为 100.x、<code class="notranslate">tailscale ping</code> 正常。</li>
@@ -279,16 +284,16 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <h2 dir="auto">构建信息</h2>
 <ul dir="auto">
 <li>上游 Bettbox main 基线：<code class="notranslate">main@1fb8806fdf82</code></li>
-<li>最终安装版本：<code class="notranslate">1.19.7+2090000224</code></li>
+<li>最终安装版本：<code class="notranslate">1.19.7+2090000225</code></li>
 <li>上游源码版本：<code class="notranslate">1.19.7+2026102201</code></li>
-<li>Bettbox custom-build commit：<code class="notranslate">927b6de1bcfde16c45b2ceb24abe366f04ca4b20</code></li>
+<li>Bettbox custom-build commit：<code class="notranslate">003230dbf86b161dbb7236d841d4d61eab7aca26</code></li>
 </ul>
 <p dir="auto">Release 仅包含本次 Action 生成的安装包，不包含私有自定义 Mihomo 源码。</p>
 <p dir="auto">Windows 与 macOS 安装包未做商业代码签名；Android 安装包使用 Bettbox 自定义版固定 Release 签名。</p>
-<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7%2B2090000224-r20261103020747-927b6de1bcfd-96a31a81cfce">查看完整发布页</a></footer></body></html>]]></description>
-      <sparkle:version>2090000224</sparkle:version>
-      <sparkle:shortVersionString>1.19.7+2090000224</sparkle:shortVersionString>
-      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.7+2090000224-r20261103020747-927b6de1bcfd-96a31a81cfce/Bettbox-1.19.7-windows-amd64-setup.exe" length="44597329" type="application/octet-stream" sparkle:os="windows" sparkle:dsaSignature="MDwCHFwp2GX4YJRevZKg/uFY8v39EpWn3Va1bZ1O35sCHGtxJBBD5L/RwZ2jP0tdE//QXW1J5Vv2ulmXsTs=" />
+<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7%2B2090000225-r20261103030645-003230dbf86b-641aedd217de">查看完整发布页</a></footer></body></html>]]></description>
+      <sparkle:version>2090000225</sparkle:version>
+      <sparkle:shortVersionString>1.19.7+2090000225</sparkle:shortVersionString>
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.7+2090000225-r20261103030645-003230dbf86b-641aedd217de/Bettbox-1.19.7-windows-amd64-setup.exe" length="44594182" type="application/octet-stream" sparkle:os="windows" sparkle:dsaSignature="MDwCHHKRjoV4fkRwO4jCVd9YBK5b4kZGa7e2f8AxOqsCHA5H2bmBAen3AyN8y1twfF4OX0RGDAm0zSD59y4=" />
     </item>
   </channel>
 </rss>
