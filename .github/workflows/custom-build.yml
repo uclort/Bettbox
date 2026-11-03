@@ -224,10 +224,21 @@ jobs:
             exit 1
           fi
 
-          release_identity="${upstream_sha:0:12}-${kernel_sha:0:12}"
+          git fetch --force --tags origin
           existing_release=""
           while IFS= read -r candidate; do
-            if [[ "${candidate}" == *"-${release_identity}" ]]; then
+            candidate_commit="$(
+              git rev-parse --verify "${candidate}^{commit}" 2>/dev/null || true
+            )"
+            if [[ "${candidate_commit}" != "${upstream_sha}" ]]; then
+              continue
+            fi
+            candidate_kernel="$(
+              git show \
+                "${candidate}:.custom-build/metadata/custom-mihomo-commit" \
+                2>/dev/null | tr -d '[:space:]' || true
+            )"
+            if [[ "${candidate_kernel}" == "${kernel_sha}" ]]; then
               existing_release="${candidate}"
               break
             fi
@@ -247,14 +258,13 @@ jobs:
             } >> "${GITHUB_STEP_SUMMARY}"
             exit 0
           fi
-          build_id="$(date -u +%Y%m%d%H%M%S)"
           build_number="$((2090000000 + GITHUB_RUN_NUMBER))"
           if [[ "${build_number}" -gt 2100000000 ]]; then
             echo "自定义构建编号超过 Android versionCode 上限。" >&2
             exit 1
           fi
           final_app_version="${app_version%%+*}+${build_number}"
-          release_tag="custom-v${final_app_version}-r${build_id}-${release_identity}"
+          release_tag="custom-v${final_app_version}"
 
           {
             echo "ready=true"
@@ -299,7 +309,7 @@ jobs:
           python3 .custom-build/scripts/test-winsparkle-patch.py
           for file in \
             .custom-build/release-notes/CUSTOM_CHANGES.md \
-            .custom-build/release-notes/RELEASE_SUMMARY \
+            .custom-build/release-notes/RELEASE_HIGHLIGHTS.md \
             .custom-build/release-notes/LATEST_CHANGES.md; do
             if [[ ! -s "${file}" ]]; then
               echo "Release 说明缺失或为空：${file}" >&2
@@ -705,6 +715,7 @@ jobs:
         run: |
           set -euo pipefail
           flutter test \
+            test/common/custom_update_test.dart \
             test/common/tray_active_state_test.dart \
             test/common/tray_selection_test.dart \
             test/controller/macos_tun_startup_test.dart \
@@ -1278,6 +1289,7 @@ jobs:
           FINAL_APP_VERSION: ${{ needs.inspect.outputs.final_app_version }}
           BETTBOX_RELEASE: ${{ needs.inspect.outputs.bettbox_release }}
           UPSTREAM_SHA: ${{ needs.inspect.outputs.upstream_sha }}
+          KERNEL_SHA: ${{ needs.inspect.outputs.kernel_sha }}
           MACOS_ARM64_ONLY: ${{ inputs.macos_arm64_only || false }}
           ANDROID_ONLY: ${{ inputs.android_only || false }}
         run: |
@@ -1313,115 +1325,21 @@ jobs:
             exit 1
           fi
 
-          release_summary="$(
-            tr -d '\r\n' < .custom-build/release-notes/RELEASE_SUMMARY
-          )"
-          if [[ -z "${release_summary}" ]]; then
-            echo "错误：Bettbox 自定义 Release 精简说明为空。" >&2
+          highlights_file=".custom-build/release-notes/RELEASE_HIGHLIGHTS.md"
+          if [[ ! -s "${highlights_file}" ]]; then
+            echo "错误：Bettbox 自定义 Release 分类说明为空。" >&2
             exit 1
           fi
 
-          git fetch --force --tags origin
-          previous_release="$(
-            gh release list \
-              --repo "${GITHUB_REPOSITORY}" \
-              --limit 100 \
-              --json tagName,publishedAt \
-              --jq 'map(select(.tagName | startswith("custom-v"))) | sort_by(.publishedAt) | reverse | .[0].tagName // ""'
-          )"
-
-          incremental_notes="${RUNNER_TEMP}/incremental-release-notes.md"
-          {
-            echo "## 本次变更（相较上一自定义 Release）"
-            echo
-            if [[ -n "${previous_release}" ]] &&
-               git rev-parse --verify "${previous_release}^{commit}" >/dev/null 2>&1; then
-              previous_upstream="$(
-                git show \
-                  "${previous_release}:.custom-build/metadata/bettbox-release" \
-                  2>/dev/null | tr -d '[:space:]' || true
-              )"
-              previous_base="$(
-                git show \
-                  "${previous_release}:.custom-build/metadata/bettbox-base-commit" \
-                  2>/dev/null | tr -d '[:space:]' || true
-              )"
-              current_base="$(
-                tr -d '[:space:]' \
-                  < .custom-build/metadata/bettbox-base-commit
-              )"
-              previous_kernel="$(
-                git show \
-                  "${previous_release}:.custom-build/metadata/custom-mihomo-commit" \
-                  2>/dev/null | tr -d '[:space:]' || true
-              )"
-              current_kernel="$(
-                tr -d '[:space:]' \
-                  < .custom-build/metadata/custom-mihomo-commit
-              )"
-              latest_changes=".custom-build/release-notes/LATEST_CHANGES.md"
-              previous_changes="${RUNNER_TEMP}/previous-latest-changes.md"
-              git show "${previous_release}:${latest_changes}" \
-                > "${previous_changes}" 2>/dev/null || : > "${previous_changes}"
-
-              echo "- 对比范围：[\`${previous_release}\`](https://github.com/${GITHUB_REPOSITORY}/releases/tag/${previous_release}) → \`${RELEASE_TAG}\`"
-              if [[ -n "${previous_upstream}" &&
-                    "${previous_upstream}" != "${BETTBOX_RELEASE}" ]]; then
-                echo "- 上游基线：\`${previous_upstream}\` → \`${BETTBOX_RELEASE}\`"
-                if [[ -n "${previous_base}" ]] &&
-                   git rev-parse --verify "${previous_base}^{commit}" >/dev/null 2>&1; then
-                  echo
-                  echo "### 上游同步"
-                  echo
-                  git log \
-                    --reverse \
-                    --no-merges \
-                    --format='- %s (`%h`)' \
-                    "${previous_base}..${current_base}"
-                fi
-              fi
-              if [[ -n "${previous_kernel}" &&
-                    "${previous_kernel}" != "${current_kernel}" ]]; then
-                echo "- 自定义 Mihomo 源码：\`${previous_kernel:0:12}\` → \`${current_kernel:0:12}\`"
-              fi
-
-              if ! cmp -s "${previous_changes}" "${latest_changes}"; then
-                echo
-                cat "${latest_changes}"
-              elif [[ "${previous_upstream}" == "${BETTBOX_RELEASE}" &&
-                      "${previous_kernel}" == "${current_kernel}" ]]; then
-                echo "- 无新的应用或内核功能变更。"
-              else
-                echo
-                echo "### 自定义应用"
-                echo
-                echo "- 本次无新的自定义应用功能变化。"
-              fi
-            else
-              echo "- 首个自定义 Release。"
-            fi
-          } > "${incremental_notes}"
-
           notes_file="${RUNNER_TEMP}/release-notes.md"
           {
-            echo "基于上游 Bettbox \`${BETTBOX_RELEASE}\` 构建的自定义版本。"
+            echo "基于上游 Bettbox \`${SOURCE_APP_VERSION}\`（\`${BETTBOX_RELEASE}\`）构建。"
             echo
-            echo "**最终安装版本：\`${FINAL_APP_VERSION}\`**"
+            cat "${highlights_file}"
             echo
-            cat "${incremental_notes}"
+            echo "---"
             echo
-            cat .custom-build/release-notes/CUSTOM_CHANGES.md
-            echo
-            echo "## 构建信息"
-            echo
-            echo "- 上游 Bettbox main 基线：\`${BETTBOX_RELEASE}\`"
-            echo "- 最终安装版本：\`${FINAL_APP_VERSION}\`"
-            echo "- 上游源码版本：\`${SOURCE_APP_VERSION}\`"
-            echo "- Bettbox custom-build commit：\`${UPSTREAM_SHA}\`"
-            echo
-            echo "Release 仅包含本次 Action 生成的安装包，不包含私有自定义 Mihomo 源码。"
-            echo
-            echo "Windows 与 macOS 安装包未做商业代码签名；Android 安装包使用 Bettbox 自定义版固定 Release 签名。"
+            echo "构建版本 \`${FINAL_APP_VERSION}\`，提交 \`${UPSTREAM_SHA:0:12}\`，自定义内核 \`${KERNEL_SHA:0:12}\`。Windows 与 macOS 安装包未做商业代码签名；Android 使用 Bettbox 自定义版固定 Release 签名。"
           } > "${notes_file}"
 
           if ! git ls-remote --exit-code --tags origin \
@@ -1433,7 +1351,7 @@ jobs:
           gh release create "${RELEASE_TAG}" "${assets[@]}" \
             --repo "${GITHUB_REPOSITORY}" \
             --verify-tag \
-            --title "Bettbox ${FINAL_APP_VERSION} · ${BETTBOX_RELEASE} · ${release_summary}" \
+            --title "Bettbox ${FINAL_APP_VERSION}" \
             --notes-file "${notes_file}"
 
       - name: 更新应用内更新源

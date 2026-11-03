@@ -217,6 +217,9 @@
 - 默认全平台构建发布 Android ARM64、Windows x64、Windows ARM64、macOS Apple Silicon 和 macOS Intel 共 5 个安装包；也可选择仅 macOS Apple Silicon 或仅 Android arm64-v8a，Android 构建同步静态更新源。
 - 内核同步兼容新版 Mihomo 将版本号改为构建时注入的模式；源码版本为空时按 Bettbox 上游核心树继续同步，仍执行 Snell v6 补丁与 Go 回归。
 - 自定义应用代码变化但未同步完整总账和发布增量时拒绝发布。
+- 2026-11-03 Release 命名与正文精简：tag 与标题只保留版本号（`custom-v1.19.7+2090000225`、`Bettbox 1.19.7+2090000225`），正文为一句上游基线 + `.custom-build/release-notes/RELEASE_HIGHLIGHTS.md` 的分类总览（新增 / 优化 / 修复 / 移除 / 兼容性变更 / 内核）+ 一行构建信息。原 `RELEASE_SUMMARY` 已删除；不再把上游逐条提交和 `CUSTOM_CHANGES.md` 全文写进 Release。功能变化时需同时更新 `RELEASE_HIGHLIGHTS.md` 与 `LATEST_CHANGES.md`。
+- 2026-11-03 Release 去重：不再依赖 tag 后缀里的构建时间与源码提交，改为遍历已有 Release，比较 tag 指向提交的 `.custom-build/metadata/custom-mihomo-commit` 与当前内核一致时跳过；因此 tag 可以只保留版本号。
+- 2026-11-03 应用内更新比较改用 `+` 后的构建号（`lib/common/request.dart` 的 `customBuildNumberFrom`），兼容旧格式 tag；回归 `test/common/custom_update_test.dart`，并加入 Windows 构建回归列表。`render-release-notes.py` 与 appcast / Android 更新源生成逻辑未改，仍以 `RELEASE_TAG` 生成链接，因此自更新查询不受命名变化影响。
 - 2026-11-02 `hotkey_manager_linux` 改为仓库内置 `plugins/hotkey_manager_linux`（路径依赖）：上游 Bettbox 引用的 `gepbird/hotkey_manager` 分支 `fix-build-failure` 已删除，锁定提交 `1b31e3ca4ab017ee72f54a7065b2073a88403d61` 不在 `main` 上，无 pub 缓存的 Runner 执行 `flutter pub get` 报 `Could not find a file named "packages/hotkey_manager_linux/pubspec.yaml"`。内置源码取自该提交，与本机 pub 缓存逐字一致，仅删除引用未安装 lint 包的 `analysis_options.yaml`。融合上游时保留 `pubspec.yaml` 的路径覆写，除非上游改用可获取的来源。
 
 ### 已删除的历史自定义功能

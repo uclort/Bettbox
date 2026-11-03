@@ -325,16 +325,15 @@ class Request {
     if (latestTag.isEmpty || latestTag == currentCustomReleaseTag) {
       return null;
     }
-    final buildIdPattern = RegExp(r'-r(\d{14})-');
-    final latestBuildId = int.tryParse(
-      buildIdPattern.firstMatch(latestTag)?.group(1) ?? '',
-    );
-    final currentBuildId = int.tryParse(
-      buildIdPattern.firstMatch(currentCustomReleaseTag)?.group(1) ?? '',
-    );
-    if (latestBuildId != null &&
-        currentBuildId != null &&
-        latestBuildId <= currentBuildId) {
+    // 自定义 Release 的 tag 与版本号形如 `custom-v1.19.7+2090000225`，
+    // `+` 后是把 Android versionCode 与构建序号合并的构建号。
+    final latestBuild =
+        customBuildNumberFrom(latest['version']) ??
+        customBuildNumberFrom(latestTag);
+    final currentBuild = int.tryParse(globalState.packageInfo.buildNumber);
+    if (latestBuild != null &&
+        currentBuild != null &&
+        latestBuild <= currentBuild) {
       return null;
     }
     return latest;
@@ -741,3 +740,9 @@ class Request {
 }
 
 final request = Request();
+
+/// 自定义 Release 的版本或 tag 形如 `1.19.7+2090000225`，`+` 后是构建号。
+int? customBuildNumberFrom(Object? value) {
+  final match = RegExp(r'\+(\d+)').firstMatch(value?.toString() ?? '');
+  return int.tryParse(match?.group(1) ?? '');
+}
