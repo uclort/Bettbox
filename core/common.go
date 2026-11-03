@@ -507,6 +507,7 @@ func setupConfig(params *SetupParams) (string, error) {
 	currentRawConfig = prepared.rawCfg
 	currentProfileRouteExclude = prepared.profileRouteExclude
 	hub.ApplyConfig(currentConfig)
+	warmupTailscaleNodes() // BETTBOX-CUSTOM: 内置 Tailscale 节点配置生效即启动
 	resetGroupShapes()
 	selectedMap := params.SelectedMap
 	if prepared.global != "" {

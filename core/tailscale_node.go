@@ -28,6 +28,16 @@ func findTailscaleNode(name string) (outbound.TailscaleNode, error) {
 	return node, nil
 }
 
+// warmupTailscaleNodes 在配置生效后后台启动内置 Tailscale 节点。只在真正应用配置时调用，
+// 校验配置不会启动节点，避免抢占正在运行实例的 state-dir。
+func warmupTailscaleNodes() {
+	for _, proxy := range tunnel.Proxies() {
+		if node, ok := outbound.AsTailscaleNode(proxy.Adapter()); ok {
+			node.Warmup()
+		}
+	}
+}
+
 func handleGetTailscaleStatus(name string) string {
 	var status outbound.TailscaleStatus
 	if node, err := findTailscaleNode(name); err != nil {

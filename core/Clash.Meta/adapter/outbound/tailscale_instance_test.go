@@ -41,3 +41,77 @@ func TestTailscaleClaimStateDirClosesPrevious(t *testing.T) {
 		t.Fatal("closing the old instance must not release the new owner")
 	}
 }
+
+// BETTBOX-CUSTOM: 参数不变的重载复用运行中的实例，旧配置释放引用不关闭；参数变化才换新实例。
+func TestTailscaleReuseAcrossReload(t *testing.T) {
+	accept := true
+	option := TailscaleOption{Name: "ts", StateDir: "tailscale-reuse-test/a", Hostname: "mac-bettbox", AcceptRoutes: &accept}
+	newNode := func(opt TailscaleOption) *Tailscale {
+		node, err := NewTailscale(opt)
+		if err != nil {
+			t.Fatalf("NewTailscale: %v", err)
+		}
+		return node
+	}
+
+	running := newNode(option)
+	t.Cleanup(func() { _ = running.shutdown() })
+	running.claimStateDir() // 模拟已启动
+
+	sameAccept := true
+	same := option
+	same.AcceptRoutes = &sameAccept // 指针不同、值相同也应复用
+	reloaded := newNode(same)
+	if reloaded != running {
+		t.Fatal("reload with identical options should reuse the running instance")
+	}
+
+	if err := running.Close(); err != nil { // 旧配置被回收
+		t.Fatalf("Close: %v", err)
+	}
+	if running.ctx.Err() != nil {
+		t.Fatal("releasing the old config reference must keep the shared instance running")
+	}
+
+	changed := option
+	changed.Hostname = "renamed"
+	replaced := newNode(changed)
+	t.Cleanup(func() { _ = replaced.shutdown() })
+	if replaced == running {
+		t.Fatal("changed options must create a new instance")
+	}
+	replaced.claimStateDir()
+	if running.ctx.Err() == nil {
+		t.Fatal("new instance with changed options must close the previous one even if still referenced")
+	}
+
+	if again := newNode(option); again == running {
+		t.Fatal("closed instance must not be reused")
+	} else {
+		_ = again.shutdown()
+	}
+}
+
+// 未被复用的实例最后一次 Close 真正关闭。
+func TestTailscaleCloseReleasesLastRef(t *testing.T) {
+	node, err := NewTailscale(TailscaleOption{Name: "ts", StateDir: "tailscale-reuse-test/b"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	node.claimStateDir()
+	reused, _ := NewTailscale(TailscaleOption{Name: "ts", StateDir: "tailscale-reuse-test/b"})
+	if reused != node {
+		t.Fatal("expected reuse")
+	}
+	_ = node.Close()
+	_ = reused.Close()
+	if node.ctx.Err() == nil {
+		t.Fatal("instance should close after the last reference is released")
+	}
+	tailscaleStateDirMu.Lock()
+	_, owned := tailscaleStateDirOwner[node.option.StateDir]
+	tailscaleStateDirMu.Unlock()
+	if owned {
+		t.Fatal("closed instance must release the state dir")
+	}
+}

@@ -35,6 +35,8 @@ type TailscalePeer struct {
 type TailscaleNode interface {
 	Status(ctx context.Context) TailscaleStatus
 	Logout(ctx context.Context) error
+	// Warmup 后台启动节点，配置生效后调用，不阻塞。
+	Warmup()
 }
 
 // AsTailscaleNode 解开 parser 外层的 autoCloseProxyAdapter，取出内置 Tailscale 节点。

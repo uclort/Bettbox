@@ -51,6 +51,8 @@ type Tailscale struct {
 	// BETTBOX-CUSTOM: Close 可能被 state-dir 互斥与 finalizer 各调用一次。
 	closeOnce sync.Once
 	closeErr  error
+	// BETTBOX-CUSTOM: 跨配置重载复用时的引用计数，受 tailscaleStateDirMu 保护。
+	refs int
 
 	unregisterDNSResolver func()
 }
@@ -126,6 +128,11 @@ func NewTailscale(option TailscaleOption) (*Tailscale, error) {
 	if !C.Path.IsSafePath(option.StateDir) {
 		return nil, C.Path.ErrNotSafePath(option.StateDir)
 	}
+	// BETTBOX-CUSTOM: 参数未变时复用正在运行的实例，配置重载不打断 Tailnet。
+	if prev := reuseTailscale(option); prev != nil {
+		log.Debugln("[Tailscale](%s) reusing running instance", option.Name)
+		return prev, nil
+	}
 
 	addr := option.ControlURL
 	if addr == "" {
@@ -147,6 +154,7 @@ func NewTailscale(option TailscaleOption) (*Tailscale, error) {
 		ctx:           ctx,
 		cancel:        cancel,
 		backendInitCh: make(chan struct{}),
+		refs:          1,
 	}
 	outbound.dialer = option.NewDialer(outbound.DialOptions())
 	outbound.server = &tsnet.Server{
@@ -469,7 +477,16 @@ func (t *Tailscale) IsL3Protocol(metadata *C.Metadata) bool {
 	return true
 }
 
+// Close 释放一次引用；复用中的实例要等最后一个引用释放才真正关闭。BETTBOX-CUSTOM
 func (t *Tailscale) Close() error {
+	if !t.releaseRef() {
+		return nil
+	}
+	return t.shutdown()
+}
+
+// shutdown 无视引用计数立即关闭，用于参数变化时让出 state-dir。
+func (t *Tailscale) shutdown() error {
 	t.closeOnce.Do(func() { // BETTBOX-CUSTOM
 		t.cancel()
 		if t.unregisterDNSResolver != nil {
