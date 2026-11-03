@@ -2028,23 +2028,89 @@ class MessageLookup extends MessageLookupByLibrary {
     "systemProxy": MessageLookupByLibrary.simpleMessage("System Proxy"),
     "systemProxyDesc": MessageLookupByLibrary.simpleMessage("Set system proxy"),
     "tab": MessageLookupByLibrary.simpleMessage("Tab"),
+    "tailscaleNode": MessageLookupByLibrary.simpleMessage(
+      "Built-in Tailscale Node",
+    ),
+    "tailscaleNodeDesc": MessageLookupByLibrary.simpleMessage(
+      "The core joins your Tailnet as its own device, no Tailscale App needed",
+    ),
+    "tailscaleNodeStatus": MessageLookupByLibrary.simpleMessage(
+      "Node Status",
+    ),
+    "tailscaleNodeRunning": MessageLookupByLibrary.simpleMessage(
+      "Connected",
+    ),
+    "tailscaleNodeNeedsLogin": MessageLookupByLibrary.simpleMessage(
+      "Not signed in",
+    ),
+    "tailscaleNodeStarting": MessageLookupByLibrary.simpleMessage(
+      "Connecting…",
+    ),
+    "tailscaleNodeNotLoaded": MessageLookupByLibrary.simpleMessage(
+      "Node not loaded yet. Make sure the core is running and refresh after the config is applied",
+    ),
+    "tailscaleNodeLogin": MessageLookupByLibrary.simpleMessage(
+      "Sign in to Tailscale",
+    ),
+    "tailscaleNodeLogout": MessageLookupByLibrary.simpleMessage(
+      "Sign out",
+    ),
+    "tailscaleNodeLogoutTip": MessageLookupByLibrary.simpleMessage(
+      "This device will leave the Tailnet until you sign in again",
+    ),
+    "tailscaleNodeHostname": MessageLookupByLibrary.simpleMessage(
+      "Device Name",
+    ),
+    "tailscaleNodeHostnameDesc": MessageLookupByLibrary.simpleMessage(
+      "Leave empty to use \"<hostname>-bettbox\"",
+    ),
+    "tailscaleNodeAuthKey": MessageLookupByLibrary.simpleMessage(
+      "Auth Key",
+    ),
+    "tailscaleNodeAuthKeyDesc": MessageLookupByLibrary.simpleMessage(
+      "Optional. Leave empty to sign in with the browser; avoid tagged keys",
+    ),
+    "tailscaleNodeExitNode": MessageLookupByLibrary.simpleMessage(
+      "Exit Node",
+    ),
+    "tailscaleNodeExitNodeDesc": MessageLookupByLibrary.simpleMessage(
+      "Optional. Name or IP of an exit node; only affects traffic routed to this node",
+    ),
+    "tailscaleNodeAcceptRoutes": MessageLookupByLibrary.simpleMessage(
+      "Accept Subnet Routes",
+    ),
+    "tailscaleNodeAcceptRoutesDesc": MessageLookupByLibrary.simpleMessage(
+      "Use subnet routes advertised in the Tailnet; add those ranges to Tailnet Ranges",
+    ),
+    "tailscaleNodeOverride": MessageLookupByLibrary.simpleMessage(
+      "Built-in node is on and takes precedence; App mode routing is paused",
+    ),
+    "tailscaleGuide": MessageLookupByLibrary.simpleMessage(
+      "Tailscale Guide",
+    ),
+    "tailscaleGuideDesc": MessageLookupByLibrary.simpleMessage(
+      "Differences between the two modes and when the Tailscale App is needed",
+    ),
+    "tailscaleGuideContent": MessageLookupByLibrary.simpleMessage(
+      "Two ways to reach your Tailnet\n\n• Tailscale App Coexistence: Tailnet traffic bypasses Bettbox and is handled by the Tailscale App installed on this device. The App must keep running; once it quits, the Tailnet is unreachable. Pick this if you already use the App and other devices also need to reach this one (ssh, file sharing, etc.).\n\n• Built-in Tailscale Node: the Bettbox core joins your Tailnet as a separate device (named \"<hostname>-bettbox\" by default), and Tailnet domains and ranges are forwarded to it by rules. No Tailscale App is needed, but TUN or the system proxy must be on. It is outbound only: other devices cannot reach this device through it.\n\nBoth on\n\nThe built-in node takes precedence: Tailnet ranges no longer bypass TUN, and the App mode MagicDNS server and proxy exceptions are ignored. If the App is still running, the system may route direct 100.x traffic to the App, while traffic passing through the core uses the built-in node. Usually you only need one of them.\n\nDo I need the Tailscale App?\n\n• App Coexistence only: yes.\n• Built-in node only: no.\n• Other devices need to reach this one (ssh, file sharing, etc.): yes, unless the app ships its own Tailscale (e.g. Rex Server). The built-in node does not accept incoming connections.\n• TUN is off and the program ignores the system proxy (e.g. ssh in a terminal): the built-in node cannot take over; use the App.\n\nSign-in\n\nWithout an Auth Key, tap \"Sign in to Tailscale\" and authorize in the browser. The login is stored locally and survives config reloads. With a tagged Auth Key the device shows up as the tag instead of your account, and services that only allow your account may reject it.",
+    ),
     "tailscaleBypassDomain": MessageLookupByLibrary.simpleMessage(
       "System Proxy Exceptions",
     ),
     "tailscaleBypassDomainDesc": MessageLookupByLibrary.simpleMessage(
-      "Appended to the system proxy bypass list while enabled",
+      "Appended to the system proxy bypass list in App mode",
     ),
     "tailscaleCoexist": MessageLookupByLibrary.simpleMessage(
-      "Tailscale Coexistence",
+      "Tailscale App Coexistence",
     ),
     "tailscaleCoexistDesc": MessageLookupByLibrary.simpleMessage(
-      "Keep Tailnet ranges out of TUN and resolve MagicDNS names via Tailscale",
+      "Hand Tailnet traffic to the Tailscale App; keep the App running",
     ),
     "tailscaleDnsDomains": MessageLookupByLibrary.simpleMessage(
-      "MagicDNS Domains",
+      "Tailnet Domains",
     ),
     "tailscaleDnsDomainsDesc": MessageLookupByLibrary.simpleMessage(
-      "Return real IPs and resolve with the DNS server below",
+      "Return real IPs; resolved by the server below in App mode, or by the built-in node",
     ),
     "tailscaleDnsServer": MessageLookupByLibrary.simpleMessage(
       "MagicDNS Server",
@@ -2053,10 +2119,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "Leave empty to use the configured DNS",
     ),
     "tailscaleRouteExclude": MessageLookupByLibrary.simpleMessage(
-      "Excluded Ranges",
+      "Tailnet Ranges",
     ),
     "tailscaleRouteExcludeDesc": MessageLookupByLibrary.simpleMessage(
-      "These ranges bypass TUN; the core reaches them via system routing (Tailscale)",
+      "App mode: bypass TUN and go through the App; built-in node: forwarded to the node",
     ),
     "tcpConcurrent": MessageLookupByLibrary.simpleMessage("TCP Concurrent"),
     "tcpConcurrentDesc": MessageLookupByLibrary.simpleMessage(

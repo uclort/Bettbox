@@ -710,6 +710,7 @@ jobs:
             test/controller/macos_tun_startup_test.dart \
             test/manager/clash_manager_test.dart \
             test/manager/proxy_manager_test.dart \
+            test/models/tailscale_props_test.dart \
             test/models/tray_speed_config_test.dart \
             test/models/vpn_props_test.dart \
             test/plugins/tray_menu_open_state_test.dart \
@@ -725,6 +726,7 @@ jobs:
           set -euo pipefail
           flutter test \
             test/common/tray_selection_test.dart \
+            test/models/tailscale_props_test.dart \
             test/views/app_permissions_test.dart \
             test/views/network_monitor_test.dart \
             test/widgets/macos_menu_bar_test.dart \

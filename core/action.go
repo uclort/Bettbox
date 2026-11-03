@@ -151,6 +151,14 @@ func handleAction(action *Action, result ActionResult) {
 	case stopIperfServerMethod:
 		result.success(toolbox.HandleStopIperfServer())
 		return
+	case getTailscaleStatusMethod: // BETTBOX-CUSTOM: 内置 Tailscale 节点状态与登录链接
+		name, _ := action.Data.(string)
+		result.success(handleGetTailscaleStatus(name))
+		return
+	case tailscaleLogoutMethod: // BETTBOX-CUSTOM: 内置 Tailscale 节点退出登录
+		name, _ := action.Data.(string)
+		result.success(handleTailscaleLogout(name))
+		return
 	case startIperfClientMethod:
 		result.success(toolbox.HandleStartIperfClient(action.Data.(string)))
 		return

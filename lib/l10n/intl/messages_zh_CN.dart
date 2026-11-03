@@ -1490,25 +1490,97 @@ class MessageLookup extends MessageLookupByLibrary {
     "systemProxy": MessageLookupByLibrary.simpleMessage("系统代理"),
     "systemProxyDesc": MessageLookupByLibrary.simpleMessage("设置系统代理"),
     "tab": MessageLookupByLibrary.simpleMessage("标签页"),
+    "tailscaleNode": MessageLookupByLibrary.simpleMessage(
+      "内置 Tailscale 节点",
+    ),
+    "tailscaleNodeDesc": MessageLookupByLibrary.simpleMessage(
+      "内核作为独立设备接入 Tailnet，无需 Tailscale App",
+    ),
+    "tailscaleNodeStatus": MessageLookupByLibrary.simpleMessage(
+      "节点状态",
+    ),
+    "tailscaleNodeRunning": MessageLookupByLibrary.simpleMessage(
+      "已连接",
+    ),
+    "tailscaleNodeNeedsLogin": MessageLookupByLibrary.simpleMessage(
+      "未登录",
+    ),
+    "tailscaleNodeStarting": MessageLookupByLibrary.simpleMessage(
+      "正在连接…",
+    ),
+    "tailscaleNodeNotLoaded": MessageLookupByLibrary.simpleMessage(
+      "节点尚未加载，请确认内核已启动，配置生效后再刷新",
+    ),
+    "tailscaleNodeLogin": MessageLookupByLibrary.simpleMessage(
+      "登录 Tailscale",
+    ),
+    "tailscaleNodeLogout": MessageLookupByLibrary.simpleMessage(
+      "退出登录",
+    ),
+    "tailscaleNodeLogoutTip": MessageLookupByLibrary.simpleMessage(
+      "退出后该设备会断开 Tailnet，需要重新登录",
+    ),
+    "tailscaleNodeHostname": MessageLookupByLibrary.simpleMessage(
+      "设备名",
+    ),
+    "tailscaleNodeHostnameDesc": MessageLookupByLibrary.simpleMessage(
+      "留空使用「本机名-bettbox」",
+    ),
+    "tailscaleNodeAuthKey": MessageLookupByLibrary.simpleMessage(
+      "Auth Key",
+    ),
+    "tailscaleNodeAuthKeyDesc": MessageLookupByLibrary.simpleMessage(
+      "可选，留空则用浏览器登录；不建议使用带 tag 的 key",
+    ),
+    "tailscaleNodeExitNode": MessageLookupByLibrary.simpleMessage(
+      "出口节点",
+    ),
+    "tailscaleNodeExitNodeDesc": MessageLookupByLibrary.simpleMessage(
+      "可选，填写出口节点名称或 IP；只影响路由到本节点的流量",
+    ),
+    "tailscaleNodeAcceptRoutes": MessageLookupByLibrary.simpleMessage(
+      "接受子网路由",
+    ),
+    "tailscaleNodeAcceptRoutesDesc": MessageLookupByLibrary.simpleMessage(
+      "使用 Tailnet 中发布的子网路由，相应网段需加入 Tailnet 网段",
+    ),
+    "tailscaleNodeOverride": MessageLookupByLibrary.simpleMessage(
+      "已开启内置节点，以内置节点为准，App 共存的路由暂不生效",
+    ),
+    "tailscaleGuide": MessageLookupByLibrary.simpleMessage(
+      "Tailscale 接入说明",
+    ),
+    "tailscaleGuideDesc": MessageLookupByLibrary.simpleMessage(
+      "两种方式的区别，以及什么时候需要 Tailscale App",
+    ),
+    "tailscaleGuideContent": MessageLookupByLibrary.simpleMessage(
+      "两种接入方式\n\n• Tailscale App 共存：Tailnet 流量绕过 Bettbox，交给本机安装的 Tailscale App。App 必须保持运行，退出后无法访问 Tailnet。适合已经在用 App、并且本机还需要被其他设备访问（ssh、文件共享等）的场景。\n\n• 内置 Tailscale 节点：Bettbox 内核作为一台独立设备（默认名「本机名-bettbox」）加入 Tailnet，Tailnet 域名和网段通过规则转给它。不需要 Tailscale App，但需要开启虚拟网卡或系统代理。它只负责本机访问 Tailnet，其他设备无法通过它访问本机。\n\n同时开启\n\n以内置节点为准：Tailnet 网段不再绕过虚拟网卡，App 共存的 MagicDNS 服务器和系统代理例外不生效。如果 App 仍在运行，系统可能把直连的 100.x 流量交给 App，经过内核的流量走内置节点。一般只需开一个。\n\n什么时候需要 Tailscale App\n\n• 只开 App 共存：需要。\n• 只开内置节点：不需要。\n• 本机需要被其他设备访问（ssh、文件共享等）：需要，除非应用自带 Tailscale（如 Rex Server）。内置节点不接受入站连接。\n• 未开虚拟网卡，且程序不走系统代理（如终端里的 ssh）：内置节点无法接管，需要 App。\n\n登录\n\n未填 Auth Key 时，点「登录 Tailscale」在浏览器里授权即可。登录状态保存在本机，重载配置不需要重新登录。使用带 tag 的 Auth Key 时，设备以 tag 身份出现，只允许你本人账号的服务可能拒绝访问。",
+    ),
     "tailscaleBypassDomain": MessageLookupByLibrary.simpleMessage("系统代理例外"),
     "tailscaleBypassDomainDesc": MessageLookupByLibrary.simpleMessage(
-      "开启共存时追加到系统代理排除列表",
+      "App 共存时追加到系统代理排除列表",
     ),
-    "tailscaleCoexist": MessageLookupByLibrary.simpleMessage("Tailscale 共存"),
+    "tailscaleCoexist": MessageLookupByLibrary.simpleMessage(
+      "Tailscale App 共存",
+    ),
     "tailscaleCoexistDesc": MessageLookupByLibrary.simpleMessage(
-      "Tailnet 网段不进虚拟网卡，MagicDNS 域名交给 Tailscale 解析",
+      "Tailnet 流量交给 Tailscale App，需保持 App 运行",
     ),
-    "tailscaleDnsDomains": MessageLookupByLibrary.simpleMessage("MagicDNS 域名"),
+    "tailscaleDnsDomains": MessageLookupByLibrary.simpleMessage(
+      "Tailnet 域名",
+    ),
     "tailscaleDnsDomainsDesc": MessageLookupByLibrary.simpleMessage(
-      "返回真实 IP，并使用下方 DNS 服务器解析",
+      "返回真实 IP；App 共存用下方服务器解析，内置节点由节点自身解析",
     ),
     "tailscaleDnsServer": MessageLookupByLibrary.simpleMessage("MagicDNS 服务器"),
     "tailscaleDnsServerDesc": MessageLookupByLibrary.simpleMessage(
       "留空则使用当前配置的 DNS",
     ),
-    "tailscaleRouteExclude": MessageLookupByLibrary.simpleMessage("排除网段"),
+    "tailscaleRouteExclude": MessageLookupByLibrary.simpleMessage(
+      "Tailnet 网段",
+    ),
     "tailscaleRouteExcludeDesc": MessageLookupByLibrary.simpleMessage(
-      "这些网段不经过虚拟网卡，内核访问时按系统路由走 Tailscale",
+      "App 共存时不进虚拟网卡交给 App；内置节点时转给节点",
     ),
     "tcpConcurrent": MessageLookupByLibrary.simpleMessage("TCP并发"),
     "tcpConcurrentDesc": MessageLookupByLibrary.simpleMessage("开启后允许 TCP 并发连接"),

@@ -374,6 +374,8 @@ const _$ActionMethodEnumMap = {
   ActionMethod.ageCrypt: 'ageCrypt',
   ActionMethod.startIperfServer: 'startIperfServer',
   ActionMethod.stopIperfServer: 'stopIperfServer',
+  ActionMethod.getTailscaleStatus: 'getTailscaleStatus',
+  ActionMethod.tailscaleLogout: 'tailscaleLogout',
   ActionMethod.startIperfClient: 'startIperfClient',
   ActionMethod.cancelIperfClient: 'cancelIperfClient',
   ActionMethod.startLocalPing: 'startLocalPing',

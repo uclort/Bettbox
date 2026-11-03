@@ -168,6 +168,8 @@ const (
 	cancelStunTestMethod                 Method = "cancelStunTest"
 	startIperfServerMethod               Method = "startIperfServer"
 	stopIperfServerMethod                Method = "stopIperfServer"
+	getTailscaleStatusMethod             Method = "getTailscaleStatus" // BETTBOX-CUSTOM
+	tailscaleLogoutMethod                Method = "tailscaleLogout"    // BETTBOX-CUSTOM
 	startIperfClientMethod               Method = "startIperfClient"
 	cancelIperfClientMethod              Method = "cancelIperfClient"
 	startLocalPingMethod                 Method = "startLocalPing"

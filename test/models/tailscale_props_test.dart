@@ -64,4 +64,85 @@ void main() {
     );
     expect(restored.tailscale.enable, isTrue);
   });
+
+  // BETTBOX-CUSTOM: 内置 Tailscale 节点：Tailnet 进 TUN 交给节点，不加系统代理例外。
+  test('内置节点把 Tailnet 规则指向节点并下发节点参数', () {
+    const props = NetworkProps(
+      tailscale: TailscaleProps(
+        nodeEnable: true,
+        nodeHostname: 'mac-bettbox',
+        nodeAuthKey: ' tskey-auth-x ',
+        nodeExitNode: 'oracle',
+      ),
+    );
+    const tun = Tun(routeExcludeAddress: ['172.16.0.0/12']);
+    expect(props.tailscale.applyToTun(tun), tun);
+    expect(props.realBypassDomain, props.bypassDomain);
+    expect(props.tailscale.prependRules, [
+      'DOMAIN-SUFFIX,ts.net,$tailscaleNodeName',
+      'IP-CIDR,100.64.0.0/10,$tailscaleNodeName,no-resolve',
+      'IP-CIDR6,fd7a:115c:a1e0::/48,$tailscaleNodeName,no-resolve',
+    ]);
+    expect(props.tailscale.patchJson?['node'], {
+      'name': tailscaleNodeName,
+      'hostname': 'mac-bettbox',
+      'auth-key': 'tskey-auth-x',
+      'exit-node': 'oracle',
+      'accept-routes': true,
+    });
+  });
+
+  test('两个开关同时开启时以内置节点为准', () {
+    const props = NetworkProps(
+      tailscale: TailscaleProps(enable: true, nodeEnable: true),
+    );
+    expect(props.tailscale.appRouting, isFalse);
+    const tun = Tun(routeExcludeAddress: ['172.16.0.0/12']);
+    expect(props.tailscale.applyToTun(tun), tun);
+    expect(props.realBypassDomain, props.bypassDomain);
+    expect(
+      props.tailscale.prependRules.first,
+      'DOMAIN-SUFFIX,ts.net,$tailscaleNodeName',
+    );
+  });
+
+  test('设备名留空时使用本机名-bettbox 且只含合法字符', () {
+    final hostname = const TailscaleProps().effectiveNodeHostname;
+    expect(hostname, endsWith('-bettbox'));
+    expect(RegExp(r'^[a-z0-9-]+$').hasMatch(hostname), isTrue);
+  });
+
+  test('恢复默认保留两个开关与 auth key', () {
+    const props = TailscaleProps(
+      enable: true,
+      nodeEnable: true,
+      nodeAuthKey: 'k',
+      nodeHostname: 'x',
+      nodeAcceptRoutes: false,
+    );
+    expect(
+      props.reset(),
+      defaultTailscaleProps.copyWith(
+        enable: true,
+        nodeEnable: true,
+        nodeAuthKey: 'k',
+      ),
+    );
+  });
+
+  test('节点状态解析', () {
+    final status = TailscaleNodeStatus.fromJson({
+      'state': 'NeedsLogin',
+      'auth-url': 'https://login.tailscale.com/a/x',
+    });
+    expect(status.needsLogin, isTrue);
+    expect(status.running, isFalse);
+    final running = TailscaleNodeStatus.fromJson({
+      'state': 'Running',
+      'dns-name': 'mac-bettbox.tail.ts.net',
+      'ips': ['100.1.2.3'],
+    });
+    expect(running.running, isTrue);
+    expect(running.ips, ['100.1.2.3']);
+  });
 }

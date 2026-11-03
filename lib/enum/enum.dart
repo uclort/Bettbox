@@ -294,6 +294,8 @@ enum ActionMethod {
   ageCrypt,
   startIperfServer,
   stopIperfServer,
+  getTailscaleStatus,
+  tailscaleLogout,
   startIperfClient,
   cancelIperfClient,
   startLocalPing,

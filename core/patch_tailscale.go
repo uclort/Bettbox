@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/netip"
+	"regexp"
 	"strings"
 
 	"github.com/metacubex/mihomo/common/orderedmap"
@@ -11,8 +12,69 @@ import (
 
 // BETTBOX-CUSTOM: Tailscale 共存。DNS 段可能来自订阅（未开启覆写 DNS），只能在内核合并阶段补充。
 type PatchTailscale struct {
-	DnsDomains []string `json:"dns-domains"`
-	DnsServer  string   `json:"dns-server"`
+	DnsDomains []string            `json:"dns-domains"`
+	DnsServer  string              `json:"dns-server"`
+	Node       *PatchTailscaleNode `json:"node"`
+}
+
+// BETTBOX-CUSTOM: 内置 Tailscale 节点（mihomo type: tailscale），不依赖 Tailscale App 访问 Tailnet。
+type PatchTailscaleNode struct {
+	Name         string `json:"name"`
+	Hostname     string `json:"hostname"`
+	AuthKey      string `json:"auth-key"`
+	ExitNode     string `json:"exit-node"`
+	AcceptRoutes bool   `json:"accept-routes"`
+}
+
+// 状态目录固定在内核 home 下，切换订阅或重载配置不会丢失登录状态。
+const tailscaleNodeStateDir = "tailscale/bettbox"
+
+func patchTailscaleNode(raw *config.RawConfig, node *PatchTailscaleNode) {
+	if node == nil || node.Name == "" {
+		return
+	}
+	exists := false
+	for _, proxy := range raw.Proxy {
+		if name, _ := proxy["name"].(string); name == node.Name {
+			exists = true // 订阅里已有同名节点时尊重订阅定义
+			break
+		}
+	}
+	if !exists {
+		proxy := map[string]any{
+			"name":          node.Name,
+			"type":          "tailscale",
+			"state-dir":     tailscaleNodeStateDir,
+			"udp":           true,
+			"accept-routes": node.AcceptRoutes,
+		}
+		if hostname := strings.TrimSpace(node.Hostname); hostname != "" {
+			proxy["hostname"] = hostname
+		}
+		if authKey := strings.TrimSpace(node.AuthKey); authKey != "" {
+			proxy["auth-key"] = authKey
+		}
+		if exitNode := strings.TrimSpace(node.ExitNode); exitNode != "" {
+			proxy["exit-node"] = exitNode
+		}
+		raw.Proxy = append(raw.Proxy, proxy)
+	}
+	// include-all 策略组会把它当普通节点做健康检查甚至自动选中，这里排除，只由前置规则引用。
+	filter := "^" + regexp.QuoteMeta(node.Name) + "$"
+	for _, group := range raw.ProxyGroup {
+		if group == nil {
+			continue
+		}
+		includeAll, _ := group["include-all"].(bool)
+		includeAllProxies, _ := group["include-all-proxies"].(bool)
+		if !includeAll && !includeAllProxies {
+			continue
+		}
+		if existing, _ := group["exclude-filter"].(string); strings.Contains(existing, filter) {
+			continue
+		}
+		combineExcludeFilter(group, filter)
+	}
 }
 
 func normalizeTailscaleDomain(domain string) string {
@@ -52,6 +114,13 @@ func patchTailscaleDns(raw *config.RawConfig, tailscale *PatchTailscale) {
 		addTailscaleRealIPDomain(raw, domain)
 	}
 	server := strings.TrimSpace(tailscale.DnsServer)
+	// 内置节点模式：MagicDNS 交给节点自身解析，并覆盖订阅里同域名的 nameserver-policy
+	// （订阅通常指向 100.100.100.100，App 未运行时不可用）。
+	override := false
+	if node := tailscale.Node; node != nil && node.Name != "" {
+		server = "tailscale://" + node.Name
+		override = true
+	}
 	for _, item := range tailscale.DnsDomains {
 		domain := normalizeTailscaleDomain(item)
 		if domain == "" {
@@ -65,7 +134,7 @@ func patchTailscaleDns(raw *config.RawConfig, tailscale *PatchTailscale) {
 		if raw.DNS.NameServerPolicy == nil {
 			raw.DNS.NameServerPolicy = orderedmap.New[string, any]()
 		}
-		if _, exists := raw.DNS.NameServerPolicy.Get(pattern); !exists {
+		if _, exists := raw.DNS.NameServerPolicy.Get(pattern); override || !exists {
 			raw.DNS.NameServerPolicy.Set(pattern, server)
 		}
 	}

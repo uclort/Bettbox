@@ -99,6 +99,11 @@ mixin ClashInterface {
 
   FutureOr<bool> stopIperfServer();
 
+  // BETTBOX-CUSTOM: 内置 Tailscale 节点状态 / 退出登录。
+  Future<String> getTailscaleStatus(String proxyName);
+
+  Future<String> tailscaleLogout(String proxyName);
+
   Future<String> startIperfClient(String params, Duration timeout);
 
   FutureOr<bool> cancelIperfClient();
@@ -662,6 +667,24 @@ abstract class ClashHandlerInterface with ClashInterface {
     return invoke<bool>(
       method: ActionMethod.stopIperfServer,
       timeout: const Duration(seconds: 15),
+    );
+  }
+
+  @override
+  Future<String> getTailscaleStatus(String proxyName) {
+    return invoke<String>(
+      method: ActionMethod.getTailscaleStatus,
+      data: proxyName,
+      timeout: const Duration(seconds: 40),
+    );
+  }
+
+  @override
+  Future<String> tailscaleLogout(String proxyName) {
+    return invoke<String>(
+      method: ActionMethod.tailscaleLogout,
+      data: proxyName,
+      timeout: const Duration(seconds: 40),
     );
   }
 

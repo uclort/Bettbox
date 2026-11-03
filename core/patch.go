@@ -103,6 +103,9 @@ func applyPatch(raw *config.RawConfig, params *PatchParams) (string, error) {
 		return "", err
 	}
 	patchTailscaleDns(raw, params.Tailscale) // BETTBOX-CUSTOM: Tailscale 共存
+	if params.Tailscale != nil {
+		patchTailscaleNode(raw, params.Tailscale.Node) // BETTBOX-CUSTOM: 内置 Tailscale 节点
+	}
 	if hasPatchValue(params.Ntp) {
 		raw.NTP = defaults.NTP
 		if err := yaml.Unmarshal(params.Ntp, &raw.NTP); err != nil {

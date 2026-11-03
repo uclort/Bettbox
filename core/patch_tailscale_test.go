@@ -91,3 +91,60 @@ func TestPatchWithoutTailscaleKeepsDns(t *testing.T) {
 		t.Fatalf("unexpected fake-ip-filter: %s", got)
 	}
 }
+
+const tailscaleNodeProfile = tailscaleProfile + `proxies:
+  - {name: hk, type: socks5, server: 127.0.0.1, port: 1080}
+proxy-groups:
+  - {name: auto, type: url-test, include-all: true, exclude-filter: "过期"}
+  - {name: manual, type: select, proxies: [hk]}
+`
+
+// BETTBOX-CUSTOM: 内置 Tailscale 节点注入、MagicDNS 交给节点解析、排除出 include-all 策略组。
+func TestPatchTailscaleNode(t *testing.T) {
+	rawCfg := parsePatchProfile(t, tailscaleNodeProfile)
+	params := patchParams(t, `{"tailscale":{"dns-domains":["ts.net"],"dns-server":"100.100.100.100","node":{"name":"Bettbox-Tailscale","hostname":"m1-bettbox","auth-key":" ","exit-node":"","accept-routes":true}}}`)
+	if _, err := applyPatch(rawCfg, params); err != nil {
+		t.Fatal(err)
+	}
+	node := rawCfg.Proxy[len(rawCfg.Proxy)-1]
+	if node["name"] != "Bettbox-Tailscale" || node["type"] != "tailscale" || node["hostname"] != "m1-bettbox" ||
+		node["state-dir"] != tailscaleNodeStateDir || node["accept-routes"] != true {
+		t.Fatalf("unexpected node: %v", node)
+	}
+	if _, ok := node["auth-key"]; ok {
+		t.Fatal("blank auth-key must be omitted for browser login")
+	}
+	if value, _ := rawCfg.DNS.NameServerPolicy.Get("+.ts.net"); value != "tailscale://Bettbox-Tailscale" {
+		t.Fatalf("node mode must override MagicDNS policy, got %v", value)
+	}
+	if got := rawCfg.ProxyGroup[0]["exclude-filter"]; got != "过期|^Bettbox-Tailscale$" {
+		t.Fatalf("include-all group must exclude node, got %v", got)
+	}
+	if _, ok := rawCfg.ProxyGroup[1]["exclude-filter"]; ok {
+		t.Fatal("explicit group must not be touched")
+	}
+	// 重复打补丁（热更新）不重复注入
+	patchTailscaleNode(rawCfg, params.Tailscale.Node)
+	count := 0
+	for _, proxy := range rawCfg.Proxy {
+		if proxy["name"] == "Bettbox-Tailscale" {
+			count++
+		}
+	}
+	if count != 1 || rawCfg.ProxyGroup[0]["exclude-filter"] != "过期|^Bettbox-Tailscale$" {
+		t.Fatalf("patch must be idempotent: count=%d filter=%v", count, rawCfg.ProxyGroup[0]["exclude-filter"])
+	}
+}
+
+func TestPatchTailscaleNodeKeepsProfileProxy(t *testing.T) {
+	rawCfg := parsePatchProfile(t, tailscaleProfile+`proxies:
+  - {name: Bettbox-Tailscale, type: tailscale, hostname: from-profile}
+`)
+	params := patchParams(t, `{"tailscale":{"dns-domains":["ts.net"],"node":{"name":"Bettbox-Tailscale","hostname":"gui"}}}`)
+	if _, err := applyPatch(rawCfg, params); err != nil {
+		t.Fatal(err)
+	}
+	if len(rawCfg.Proxy) != 1 || rawCfg.Proxy[0]["hostname"] != "from-profile" {
+		t.Fatalf("profile proxy must be kept: %v", rawCfg.Proxy)
+	}
+}

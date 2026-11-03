@@ -1,5 +1,7 @@
 // ignore_for_file: invalid_annotation_target
 
+import 'dart:io' show Platform;
+
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/enum/enum.dart';
 import 'package:material_ui/material_ui.dart';
@@ -48,6 +50,9 @@ const defaultTailscaleDnsDomains = ['ts.net'];
 const defaultTailscaleDnsServer = '100.100.100.100';
 const defaultTailscaleBypassDomain = ['*.ts.net', '100.64.0.0/10'];
 const defaultTailscaleProps = TailscaleProps();
+
+// BETTBOX-CUSTOM: 内置 Tailscale 节点在内核中的名称，前置规则与 tailscale:// DNS 都引用它。
+const tailscaleNodeName = 'Bettbox-Tailscale';
 
 const defaultAppSettingProps = AppSettingProps();
 const defaultVpnProps = VpnProps();
@@ -386,8 +391,10 @@ abstract class NetworkProps with _$NetworkProps {
       json == null ? const NetworkProps() : _$NetworkPropsFromJson(json);
 }
 
-// BETTBOX-CUSTOM: Tailscale 共存（桌面端）。开启后 Tailnet 网段不进 TUN、MagicDNS 域名
-// 返回真实 IP 并交给 Tailscale DNS 解析、系统代理绕过 Tailnet。
+// BETTBOX-CUSTOM: Tailscale 接入，两种方式：
+// - App 共存（enable，桌面端）：Tailnet 网段不进 TUN、MagicDNS 交给 100.100.100.100、系统代理绕过，流量由 Tailscale App 承载。
+// - 内置节点（nodeEnable）：内核注入 mihomo type: tailscale 节点，Tailnet 域名与网段经前置规则转给它，不依赖 App。
+// 两者同时开启时以内置节点为准；routeExcludeAddress / dnsDomains 作为两种方式共用的 Tailnet 网段与域名。
 @freezed
 abstract class TailscaleProps with _$TailscaleProps {
   const factory TailscaleProps({
@@ -397,6 +404,11 @@ abstract class TailscaleProps with _$TailscaleProps {
     @Default(defaultTailscaleDnsDomains) List<String> dnsDomains,
     @Default(defaultTailscaleDnsServer) String dnsServer,
     @Default(defaultTailscaleBypassDomain) List<String> bypassDomain,
+    @Default(false) bool nodeEnable,
+    @Default('') String nodeHostname,
+    @Default('') String nodeAuthKey,
+    @Default('') String nodeExitNode,
+    @Default(true) bool nodeAcceptRoutes,
   }) = _TailscaleProps;
 
   factory TailscaleProps.fromJson(Map<String, Object?> json) =>
@@ -404,11 +416,38 @@ abstract class TailscaleProps with _$TailscaleProps {
 }
 
 extension TailscalePropsExt on TailscaleProps {
-  bool get active => enable && system.isDesktop;
+  bool get appActive => enable && system.isDesktop;
+
+  bool get nodeActive => nodeEnable;
+
+  /// 任一方式开启：内核补充 Tailscale 服务域名真实 IP、Tailnet 域名 DNS 与前置规则。
+  bool get active => appActive || nodeActive;
+
+  /// 仅 App 共存生效时才让 Tailnet 绕开 TUN；内置节点需要 TUN 把 100.x 流量交给内核。
+  bool get appRouting => appActive && !nodeActive;
+
+  /// 内置节点在 Tailnet 中的设备名，留空时用「本机名-bettbox」。
+  String get effectiveNodeHostname {
+    final custom = nodeHostname.trim();
+    if (custom.isNotEmpty) return custom;
+    var host = 'bettbox';
+    try {
+      host = Platform.localHostname;
+    } catch (_) {}
+    if (host.endsWith('.local')) host = host.substring(0, host.length - 6);
+    if (system.isAndroid || host.isEmpty || host == 'localhost') {
+      host = system.isAndroid ? 'android' : 'desktop';
+    }
+    final sanitized = host
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9-]+'), '-')
+        .replaceAll(RegExp(r'^-+|-+$'), '');
+    return '${sanitized.isEmpty ? 'device' : sanitized}-bettbox';
+  }
 
   /// 把 Tailnet 网段并入 TUN 排除路由（桌面端 TUN 的 route-exclude-address）。
   Tun applyToTun(Tun tun) {
-    if (!active) return tun;
+    if (!appRouting) return tun;
     final addresses = {
       ...tun.routeExcludeAddress,
       for (final address in routeExcludeAddress)
@@ -418,20 +457,73 @@ extension TailscalePropsExt on TailscaleProps {
   }
 
   Map<String, dynamic>? get patchJson => active
-      ? {'dns-domains': dnsDomains, 'dns-server': dnsServer.trim()}
+      ? {
+          'dns-domains': dnsDomains,
+          'dns-server': dnsServer.trim(),
+          if (nodeActive)
+            'node': {
+              'name': tailscaleNodeName,
+              'hostname': effectiveNodeHostname,
+              'auth-key': nodeAuthKey.trim(),
+              'exit-node': nodeExitNode.trim(),
+              'accept-routes': nodeAcceptRoutes,
+            },
+        }
       : null;
 
-  /// 恢复默认值，保留开关状态。
-  TailscaleProps reset() => defaultTailscaleProps.copyWith(enable: enable);
+  /// 恢复默认值，保留开关状态与 auth key。
+  TailscaleProps reset() => defaultTailscaleProps.copyWith(
+    enable: enable,
+    nodeEnable: nodeEnable,
+    nodeAuthKey: nodeAuthKey,
+  );
 
-  List<String> get prependRules => [
-    for (final domain in dnsDomains)
-      if (normalizeTailscaleDomain(domain) case final d when d.isNotEmpty)
-        'DOMAIN-SUFFIX,$d,DIRECT',
-    for (final address in routeExcludeAddress)
-      if (address.trim().isNotEmpty)
-        '${address.contains(':') ? 'IP-CIDR6' : 'IP-CIDR'},${address.trim()},DIRECT,no-resolve',
-  ];
+  /// App 共存：Tailnet 直连（由系统路由交给 App）；内置节点：转给内核里的 Tailscale 节点。
+  List<String> get prependRules {
+    final target = nodeActive ? tailscaleNodeName : 'DIRECT';
+    return [
+      for (final domain in dnsDomains)
+        if (normalizeTailscaleDomain(domain) case final d when d.isNotEmpty)
+          'DOMAIN-SUFFIX,$d,$target',
+      for (final address in routeExcludeAddress)
+        if (address.trim().isNotEmpty)
+          '${address.contains(':') ? 'IP-CIDR6' : 'IP-CIDR'},${address.trim()},$target,no-resolve',
+    ];
+  }
+}
+
+// BETTBOX-CUSTOM: 内核返回的内置 Tailscale 节点状态。
+class TailscaleNodeStatus {
+  const TailscaleNodeStatus({
+    this.state = '',
+    this.authUrl = '',
+    this.dnsName = '',
+    this.loginName = '',
+    this.ips = const [],
+    this.error = '',
+  });
+
+  factory TailscaleNodeStatus.fromJson(Map<String, dynamic> json) {
+    return TailscaleNodeStatus(
+      state: json['state'] as String? ?? '',
+      authUrl: json['auth-url'] as String? ?? '',
+      dnsName: json['dns-name'] as String? ?? '',
+      loginName: json['login-name'] as String? ?? '',
+      ips: (json['ips'] as List?)?.whereType<String>().toList() ?? const [],
+      error: json['error'] as String? ?? '',
+    );
+  }
+
+  final String state;
+  final String authUrl;
+  final String dnsName;
+  final String loginName;
+  final List<String> ips;
+  final String error;
+
+  bool get running => state == 'Running';
+
+  bool get needsLogin => state == 'NeedsLogin' && authUrl.isNotEmpty;
 }
 
 String normalizeTailscaleDomain(String domain) {
@@ -446,7 +538,7 @@ String normalizeTailscaleDomain(String domain) {
 extension NetworkPropsExt on NetworkProps {
   /// 系统代理实际绕过列表：开启 Tailscale 共存时追加 Tailnet 例外。
   List<String> get realBypassDomain {
-    if (!tailscale.active) return bypassDomain;
+    if (!tailscale.appRouting) return bypassDomain;
     return {...bypassDomain, ...tailscale.bypassDomain}.toList();
   }
 

@@ -1768,7 +1768,7 @@ $TailscalePropsCopyWith<$Res> get tailscale {
 /// @nodoc
 mixin _$TailscaleProps {
 
- bool get enable; List<String> get routeExcludeAddress; List<String> get dnsDomains; String get dnsServer; List<String> get bypassDomain;
+ bool get enable; List<String> get routeExcludeAddress; List<String> get dnsDomains; String get dnsServer; List<String> get bypassDomain; bool get nodeEnable; String get nodeHostname; String get nodeAuthKey; String get nodeExitNode; bool get nodeAcceptRoutes;
 /// Create a copy of TailscaleProps
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1782,20 +1782,20 @@ $TailscalePropsCopyWith<TailscaleProps> get copyWith => _$TailscalePropsCopyWith
 @override
 bool operator ==(Object other) {
   final _this = this as TailscaleProps;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TailscaleProps&&(identical(other.enable, _this.enable) || other.enable == _this.enable)&&const DeepCollectionEquality().equals(other.routeExcludeAddress, _this.routeExcludeAddress)&&const DeepCollectionEquality().equals(other.dnsDomains, _this.dnsDomains)&&(identical(other.dnsServer, _this.dnsServer) || other.dnsServer == _this.dnsServer)&&const DeepCollectionEquality().equals(other.bypassDomain, _this.bypassDomain));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TailscaleProps&&(identical(other.enable, _this.enable) || other.enable == _this.enable)&&const DeepCollectionEquality().equals(other.routeExcludeAddress, _this.routeExcludeAddress)&&const DeepCollectionEquality().equals(other.dnsDomains, _this.dnsDomains)&&(identical(other.dnsServer, _this.dnsServer) || other.dnsServer == _this.dnsServer)&&const DeepCollectionEquality().equals(other.bypassDomain, _this.bypassDomain)&&(identical(other.nodeEnable, _this.nodeEnable) || other.nodeEnable == _this.nodeEnable)&&(identical(other.nodeHostname, _this.nodeHostname) || other.nodeHostname == _this.nodeHostname)&&(identical(other.nodeAuthKey, _this.nodeAuthKey) || other.nodeAuthKey == _this.nodeAuthKey)&&(identical(other.nodeExitNode, _this.nodeExitNode) || other.nodeExitNode == _this.nodeExitNode)&&(identical(other.nodeAcceptRoutes, _this.nodeAcceptRoutes) || other.nodeAcceptRoutes == _this.nodeAcceptRoutes));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as TailscaleProps;
-  return Object.hash(runtimeType,_this.enable,const DeepCollectionEquality().hash(_this.routeExcludeAddress),const DeepCollectionEquality().hash(_this.dnsDomains),_this.dnsServer,const DeepCollectionEquality().hash(_this.bypassDomain));
+  return Object.hash(runtimeType,_this.enable,const DeepCollectionEquality().hash(_this.routeExcludeAddress),const DeepCollectionEquality().hash(_this.dnsDomains),_this.dnsServer,const DeepCollectionEquality().hash(_this.bypassDomain),_this.nodeEnable,_this.nodeHostname,_this.nodeAuthKey,_this.nodeExitNode,_this.nodeAcceptRoutes);
 }
 
 @override
 String toString() {
   final _this = this as TailscaleProps;
-  return 'TailscaleProps(enable: ${_this.enable}, routeExcludeAddress: ${_this.routeExcludeAddress}, dnsDomains: ${_this.dnsDomains}, dnsServer: ${_this.dnsServer}, bypassDomain: ${_this.bypassDomain})';
+  return 'TailscaleProps(enable: ${_this.enable}, routeExcludeAddress: ${_this.routeExcludeAddress}, dnsDomains: ${_this.dnsDomains}, dnsServer: ${_this.dnsServer}, bypassDomain: ${_this.bypassDomain}, nodeEnable: ${_this.nodeEnable}, nodeHostname: ${_this.nodeHostname}, nodeAuthKey: ${_this.nodeAuthKey}, nodeExitNode: ${_this.nodeExitNode}, nodeAcceptRoutes: ${_this.nodeAcceptRoutes})';
 }
 
 
@@ -1806,7 +1806,7 @@ abstract mixin class $TailscalePropsCopyWith<$Res>  {
   factory $TailscalePropsCopyWith(TailscaleProps value, $Res Function(TailscaleProps) _then) = _$TailscalePropsCopyWithImpl;
 @useResult
 $Res call({
- bool enable, List<String> routeExcludeAddress, List<String> dnsDomains, String dnsServer, List<String> bypassDomain
+ bool enable, List<String> routeExcludeAddress, List<String> dnsDomains, String dnsServer, List<String> bypassDomain, bool nodeEnable, String nodeHostname, String nodeAuthKey, String nodeExitNode, bool nodeAcceptRoutes
 });
 
 
@@ -1823,14 +1823,19 @@ class _$TailscalePropsCopyWithImpl<$Res>
 
 /// Create a copy of TailscaleProps
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? enable = null,Object? routeExcludeAddress = null,Object? dnsDomains = null,Object? dnsServer = null,Object? bypassDomain = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? enable = null,Object? routeExcludeAddress = null,Object? dnsDomains = null,Object? dnsServer = null,Object? bypassDomain = null,Object? nodeEnable = null,Object? nodeHostname = null,Object? nodeAuthKey = null,Object? nodeExitNode = null,Object? nodeAcceptRoutes = null,}) {
   return _then(TailscaleProps(
 enable: null == enable ? _self.enable : enable // ignore: cast_nullable_to_non_nullable
 as bool,routeExcludeAddress: null == routeExcludeAddress ? _self.routeExcludeAddress : routeExcludeAddress // ignore: cast_nullable_to_non_nullable
 as List<String>,dnsDomains: null == dnsDomains ? _self.dnsDomains : dnsDomains // ignore: cast_nullable_to_non_nullable
 as List<String>,dnsServer: null == dnsServer ? _self.dnsServer : dnsServer // ignore: cast_nullable_to_non_nullable
 as String,bypassDomain: null == bypassDomain ? _self.bypassDomain : bypassDomain // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<String>,nodeEnable: null == nodeEnable ? _self.nodeEnable : nodeEnable // ignore: cast_nullable_to_non_nullable
+as bool,nodeHostname: null == nodeHostname ? _self.nodeHostname : nodeHostname // ignore: cast_nullable_to_non_nullable
+as String,nodeAuthKey: null == nodeAuthKey ? _self.nodeAuthKey : nodeAuthKey // ignore: cast_nullable_to_non_nullable
+as String,nodeExitNode: null == nodeExitNode ? _self.nodeExitNode : nodeExitNode // ignore: cast_nullable_to_non_nullable
+as String,nodeAcceptRoutes: null == nodeAcceptRoutes ? _self.nodeAcceptRoutes : nodeAcceptRoutes // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -1915,10 +1920,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool enable,  List<String> routeExcludeAddress,  List<String> dnsDomains,  String dnsServer,  List<String> bypassDomain)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool enable,  List<String> routeExcludeAddress,  List<String> dnsDomains,  String dnsServer,  List<String> bypassDomain,  bool nodeEnable,  String nodeHostname,  String nodeAuthKey,  String nodeExitNode,  bool nodeAcceptRoutes)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TailscaleProps() when $default != null:
-return $default(_that.enable,_that.routeExcludeAddress,_that.dnsDomains,_that.dnsServer,_that.bypassDomain);case _:
+return $default(_that.enable,_that.routeExcludeAddress,_that.dnsDomains,_that.dnsServer,_that.bypassDomain,_that.nodeEnable,_that.nodeHostname,_that.nodeAuthKey,_that.nodeExitNode,_that.nodeAcceptRoutes);case _:
   return orElse();
 
 }
@@ -1936,10 +1941,10 @@ return $default(_that.enable,_that.routeExcludeAddress,_that.dnsDomains,_that.dn
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool enable,  List<String> routeExcludeAddress,  List<String> dnsDomains,  String dnsServer,  List<String> bypassDomain)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool enable,  List<String> routeExcludeAddress,  List<String> dnsDomains,  String dnsServer,  List<String> bypassDomain,  bool nodeEnable,  String nodeHostname,  String nodeAuthKey,  String nodeExitNode,  bool nodeAcceptRoutes)  $default,) {final _that = this;
 switch (_that) {
 case _TailscaleProps():
-return $default(_that.enable,_that.routeExcludeAddress,_that.dnsDomains,_that.dnsServer,_that.bypassDomain);case _:
+return $default(_that.enable,_that.routeExcludeAddress,_that.dnsDomains,_that.dnsServer,_that.bypassDomain,_that.nodeEnable,_that.nodeHostname,_that.nodeAuthKey,_that.nodeExitNode,_that.nodeAcceptRoutes);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1956,10 +1961,10 @@ return $default(_that.enable,_that.routeExcludeAddress,_that.dnsDomains,_that.dn
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool enable,  List<String> routeExcludeAddress,  List<String> dnsDomains,  String dnsServer,  List<String> bypassDomain)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool enable,  List<String> routeExcludeAddress,  List<String> dnsDomains,  String dnsServer,  List<String> bypassDomain,  bool nodeEnable,  String nodeHostname,  String nodeAuthKey,  String nodeExitNode,  bool nodeAcceptRoutes)?  $default,) {final _that = this;
 switch (_that) {
 case _TailscaleProps() when $default != null:
-return $default(_that.enable,_that.routeExcludeAddress,_that.dnsDomains,_that.dnsServer,_that.bypassDomain);case _:
+return $default(_that.enable,_that.routeExcludeAddress,_that.dnsDomains,_that.dnsServer,_that.bypassDomain,_that.nodeEnable,_that.nodeHostname,_that.nodeAuthKey,_that.nodeExitNode,_that.nodeAcceptRoutes);case _:
   return null;
 
 }
@@ -1971,7 +1976,7 @@ return $default(_that.enable,_that.routeExcludeAddress,_that.dnsDomains,_that.dn
 @JsonSerializable()
 
 class _TailscaleProps implements TailscaleProps {
-  const _TailscaleProps({this.enable = false,  List<String> routeExcludeAddress = defaultTailscaleRouteExcludeAddress,  List<String> dnsDomains = defaultTailscaleDnsDomains, this.dnsServer = defaultTailscaleDnsServer,  List<String> bypassDomain = defaultTailscaleBypassDomain}): _routeExcludeAddress = routeExcludeAddress,_dnsDomains = dnsDomains,_bypassDomain = bypassDomain;
+  const _TailscaleProps({this.enable = false,  List<String> routeExcludeAddress = defaultTailscaleRouteExcludeAddress,  List<String> dnsDomains = defaultTailscaleDnsDomains, this.dnsServer = defaultTailscaleDnsServer,  List<String> bypassDomain = defaultTailscaleBypassDomain, this.nodeEnable = false, this.nodeHostname = '', this.nodeAuthKey = '', this.nodeExitNode = '', this.nodeAcceptRoutes = true}): _routeExcludeAddress = routeExcludeAddress,_dnsDomains = dnsDomains,_bypassDomain = bypassDomain;
   factory _TailscaleProps.fromJson(Map<String, dynamic> json) => _$TailscalePropsFromJson(json);
 
 @override@JsonKey() final  bool enable;
@@ -1997,6 +2002,11 @@ class _TailscaleProps implements TailscaleProps {
   return EqualUnmodifiableListView(_bypassDomain);
 }
 
+@override@JsonKey() final  bool nodeEnable;
+@override@JsonKey() final  String nodeHostname;
+@override@JsonKey() final  String nodeAuthKey;
+@override@JsonKey() final  String nodeExitNode;
+@override@JsonKey() final  bool nodeAcceptRoutes;
 
 /// Create a copy of TailscaleProps
 /// with the given fields replaced by the non-null parameter values.
@@ -2011,18 +2021,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _TailscaleProps&&(identical(other.enable, enable) || other.enable == enable)&&const DeepCollectionEquality().equals(other.routeExcludeAddress, _routeExcludeAddress)&&const DeepCollectionEquality().equals(other.dnsDomains, _dnsDomains)&&(identical(other.dnsServer, dnsServer) || other.dnsServer == dnsServer)&&const DeepCollectionEquality().equals(other.bypassDomain, _bypassDomain));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _TailscaleProps&&(identical(other.enable, enable) || other.enable == enable)&&const DeepCollectionEquality().equals(other.routeExcludeAddress, _routeExcludeAddress)&&const DeepCollectionEquality().equals(other.dnsDomains, _dnsDomains)&&(identical(other.dnsServer, dnsServer) || other.dnsServer == dnsServer)&&const DeepCollectionEquality().equals(other.bypassDomain, _bypassDomain)&&(identical(other.nodeEnable, nodeEnable) || other.nodeEnable == nodeEnable)&&(identical(other.nodeHostname, nodeHostname) || other.nodeHostname == nodeHostname)&&(identical(other.nodeAuthKey, nodeAuthKey) || other.nodeAuthKey == nodeAuthKey)&&(identical(other.nodeExitNode, nodeExitNode) || other.nodeExitNode == nodeExitNode)&&(identical(other.nodeAcceptRoutes, nodeAcceptRoutes) || other.nodeAcceptRoutes == nodeAcceptRoutes));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,enable,const DeepCollectionEquality().hash(_routeExcludeAddress),const DeepCollectionEquality().hash(_dnsDomains),dnsServer,const DeepCollectionEquality().hash(_bypassDomain));
+    return Object.hash(runtimeType,enable,const DeepCollectionEquality().hash(_routeExcludeAddress),const DeepCollectionEquality().hash(_dnsDomains),dnsServer,const DeepCollectionEquality().hash(_bypassDomain),nodeEnable,nodeHostname,nodeAuthKey,nodeExitNode,nodeAcceptRoutes);
 }
 
 @override
 String toString() {
-    return 'TailscaleProps(enable: $enable, routeExcludeAddress: $routeExcludeAddress, dnsDomains: $dnsDomains, dnsServer: $dnsServer, bypassDomain: $bypassDomain)';
+    return 'TailscaleProps(enable: $enable, routeExcludeAddress: $routeExcludeAddress, dnsDomains: $dnsDomains, dnsServer: $dnsServer, bypassDomain: $bypassDomain, nodeEnable: $nodeEnable, nodeHostname: $nodeHostname, nodeAuthKey: $nodeAuthKey, nodeExitNode: $nodeExitNode, nodeAcceptRoutes: $nodeAcceptRoutes)';
 }
 
 
@@ -2033,7 +2043,7 @@ abstract mixin class _$TailscalePropsCopyWith<$Res> implements $TailscalePropsCo
   factory _$TailscalePropsCopyWith(_TailscaleProps value, $Res Function(_TailscaleProps) _then) = __$TailscalePropsCopyWithImpl;
 @override @useResult
 $Res call({
- bool enable, List<String> routeExcludeAddress, List<String> dnsDomains, String dnsServer, List<String> bypassDomain
+ bool enable, List<String> routeExcludeAddress, List<String> dnsDomains, String dnsServer, List<String> bypassDomain, bool nodeEnable, String nodeHostname, String nodeAuthKey, String nodeExitNode, bool nodeAcceptRoutes
 });
 
 
@@ -2050,14 +2060,19 @@ class __$TailscalePropsCopyWithImpl<$Res>
 
 /// Create a copy of TailscaleProps
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? enable = null,Object? routeExcludeAddress = null,Object? dnsDomains = null,Object? dnsServer = null,Object? bypassDomain = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? enable = null,Object? routeExcludeAddress = null,Object? dnsDomains = null,Object? dnsServer = null,Object? bypassDomain = null,Object? nodeEnable = null,Object? nodeHostname = null,Object? nodeAuthKey = null,Object? nodeExitNode = null,Object? nodeAcceptRoutes = null,}) {
   return _then(_TailscaleProps(
 enable: null == enable ? _self.enable : enable // ignore: cast_nullable_to_non_nullable
 as bool,routeExcludeAddress: null == routeExcludeAddress ? _self._routeExcludeAddress : routeExcludeAddress // ignore: cast_nullable_to_non_nullable
 as List<String>,dnsDomains: null == dnsDomains ? _self._dnsDomains : dnsDomains // ignore: cast_nullable_to_non_nullable
 as List<String>,dnsServer: null == dnsServer ? _self.dnsServer : dnsServer // ignore: cast_nullable_to_non_nullable
 as String,bypassDomain: null == bypassDomain ? _self._bypassDomain : bypassDomain // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<String>,nodeEnable: null == nodeEnable ? _self.nodeEnable : nodeEnable // ignore: cast_nullable_to_non_nullable
+as bool,nodeHostname: null == nodeHostname ? _self.nodeHostname : nodeHostname // ignore: cast_nullable_to_non_nullable
+as String,nodeAuthKey: null == nodeAuthKey ? _self.nodeAuthKey : nodeAuthKey // ignore: cast_nullable_to_non_nullable
+as String,nodeExitNode: null == nodeExitNode ? _self.nodeExitNode : nodeExitNode // ignore: cast_nullable_to_non_nullable
+as String,nodeAcceptRoutes: null == nodeAcceptRoutes ? _self.nodeAcceptRoutes : nodeAcceptRoutes // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

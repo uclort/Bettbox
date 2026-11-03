@@ -572,6 +572,27 @@ class ClashCore {
     await clashInterface.stopIperfServer();
   }
 
+  // BETTBOX-CUSTOM: 内置 Tailscale 节点状态，未登录时附带浏览器登录链接。
+  Future<TailscaleNodeStatus> getTailscaleStatus() async {
+    try {
+      final value = await clashInterface.getTailscaleStatus(tailscaleNodeName);
+      final decoded = value.isEmpty ? null : json.decode(value);
+      if (decoded is! Map) return const TailscaleNodeStatus(error: 'empty');
+      return TailscaleNodeStatus.fromJson(Map<String, dynamic>.from(decoded));
+    } catch (e) {
+      return TailscaleNodeStatus(error: e.toString());
+    }
+  }
+
+  /// 返回错误信息，成功为空字符串。
+  Future<String> tailscaleLogout() async {
+    try {
+      return await clashInterface.tailscaleLogout(tailscaleNodeName);
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
   Future<IperfState?> startIperfClient({
     required List<String> hosts,
     required int port,

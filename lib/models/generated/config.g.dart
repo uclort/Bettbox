@@ -489,6 +489,11 @@ _TailscaleProps _$TailscalePropsFromJson(Map<String, dynamic> json) =>
               ?.map((e) => e as String)
               .toList() ??
           defaultTailscaleBypassDomain,
+      nodeEnable: json['nodeEnable'] as bool? ?? false,
+      nodeHostname: json['nodeHostname'] as String? ?? '',
+      nodeAuthKey: json['nodeAuthKey'] as String? ?? '',
+      nodeExitNode: json['nodeExitNode'] as String? ?? '',
+      nodeAcceptRoutes: json['nodeAcceptRoutes'] as bool? ?? true,
     );
 
 Map<String, dynamic> _$TailscalePropsToJson(_TailscaleProps instance) =>
@@ -498,6 +503,11 @@ Map<String, dynamic> _$TailscalePropsToJson(_TailscaleProps instance) =>
       'dnsDomains': instance.dnsDomains,
       'dnsServer': instance.dnsServer,
       'bypassDomain': instance.bypassDomain,
+      'nodeEnable': instance.nodeEnable,
+      'nodeHostname': instance.nodeHostname,
+      'nodeAuthKey': instance.nodeAuthKey,
+      'nodeExitNode': instance.nodeExitNode,
+      'nodeAcceptRoutes': instance.nodeAcceptRoutes,
     };
 
 _ProxiesStyle _$ProxiesStyleFromJson(Map<String, dynamic> json) =>
