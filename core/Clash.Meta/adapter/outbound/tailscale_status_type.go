@@ -15,6 +15,21 @@ type TailscaleStatus struct {
 	LoginName string   `json:"login-name,omitempty"`
 	IPs       []string `json:"ips,omitempty"`
 	Error     string   `json:"error,omitempty"`
+
+	Peers []TailscalePeer `json:"peers,omitempty"`
+}
+
+// TailscalePeer 是 Tailnet 中其他设备的概要，供 GUI 展示设备列表。
+type TailscalePeer struct {
+	HostName string   `json:"host-name"`
+	DNSName  string   `json:"dns-name,omitempty"`
+	OS       string   `json:"os,omitempty"`
+	IPs      []string `json:"ips,omitempty"`
+	Online   bool     `json:"online"`
+	Active   bool     `json:"active,omitempty"`
+	ExitNode bool     `json:"exit-node,omitempty"`
+	CurAddr  string   `json:"cur-addr,omitempty"`
+	Relay    string   `json:"relay,omitempty"`
 }
 
 type TailscaleNode interface {

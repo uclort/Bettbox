@@ -4,10 +4,12 @@ package outbound
 
 import (
 	"context"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/metacubex/tailscale/ipn"
+	"github.com/metacubex/tailscale/ipn/ipnstate"
 )
 
 const tailscaleAuthURLWait = 8 * time.Second
@@ -24,7 +26,7 @@ func (t *Tailscale) Status(ctx context.Context) TailscaleStatus {
 	deadline := time.Now().Add(tailscaleAuthURLWait)
 	requested := false
 	for {
-		st, err := lc.StatusWithoutPeers(ctx)
+		st, err := lc.Status(ctx)
 		if err != nil {
 			return TailscaleStatus{State: ipn.NoState.String(), Error: err.Error()}
 		}
@@ -37,6 +39,9 @@ func (t *Tailscale) Status(ctx context.Context) TailscaleStatus {
 			if profile, ok := st.User[st.Self.UserID]; ok {
 				status.LoginName = profile.LoginName
 			}
+		}
+		if st.BackendState == ipn.Running.String() {
+			status.Peers = tailscalePeers(st)
 		}
 		if st.BackendState != ipn.NeedsLogin.String() || status.AuthURL != "" || time.Now().After(deadline) {
 			return status
@@ -67,4 +72,32 @@ func (t *Tailscale) Logout(ctx context.Context) error {
 		return err
 	}
 	return lc.Logout(ctx)
+}
+
+// tailscalePeers 在线设备优先，同状态按名称排序。
+func tailscalePeers(st *ipnstate.Status) []TailscalePeer {
+	peers := make([]TailscalePeer, 0, len(st.Peer))
+	for _, p := range st.Peer {
+		peer := TailscalePeer{
+			HostName: p.HostName,
+			DNSName:  strings.TrimSuffix(p.DNSName, "."),
+			OS:       p.OS,
+			Online:   p.Online,
+			Active:   p.Active,
+			ExitNode: p.ExitNode,
+			CurAddr:  p.CurAddr,
+			Relay:    p.Relay,
+		}
+		for _, ip := range p.TailscaleIPs {
+			peer.IPs = append(peer.IPs, ip.String())
+		}
+		peers = append(peers, peer)
+	}
+	sort.SliceStable(peers, func(i, j int) bool {
+		if peers[i].Online != peers[j].Online {
+			return peers[i].Online
+		}
+		return peers[i].DNSName < peers[j].DNSName
+	})
+	return peers
 }

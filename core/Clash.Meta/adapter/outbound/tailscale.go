@@ -48,6 +48,10 @@ type Tailscale struct {
 
 	serverStarted bool
 
+	// BETTBOX-CUSTOM: Close 可能被 state-dir 互斥与 finalizer 各调用一次。
+	closeOnce sync.Once
+	closeErr  error
+
 	unregisterDNSResolver func()
 }
 
@@ -185,6 +189,7 @@ func NewTailscale(option TailscaleOption) (*Tailscale, error) {
 
 func (t *Tailscale) start() error {
 	t.startOnce.Do(func() {
+		t.claimStateDir() // BETTBOX-CUSTOM
 		if err := t.server.Start(); err != nil {
 			t.startErr = err
 			t.setBackendInitialized(err)
@@ -465,15 +470,18 @@ func (t *Tailscale) IsL3Protocol(metadata *C.Metadata) bool {
 }
 
 func (t *Tailscale) Close() error {
-	t.cancel()
-	if t.unregisterDNSResolver != nil {
-		t.unregisterDNSResolver()
-	}
-	t.startOnce.Do(func() {
-		t.startErr = errors.New("tailscale outbound closed")
+	t.closeOnce.Do(func() { // BETTBOX-CUSTOM
+		t.cancel()
+		if t.unregisterDNSResolver != nil {
+			t.unregisterDNSResolver()
+		}
+		t.startOnce.Do(func() {
+			t.startErr = errors.New("tailscale outbound closed")
+		})
+		if t.server != nil && t.serverStarted { // tsnet.Server.Close() must not be called before or concurrently with Start.
+			t.closeErr = t.server.Close()
+		}
+		t.releaseStateDir() // BETTBOX-CUSTOM
 	})
-	if t.server != nil && t.serverStarted { // tsnet.Server.Close() must not be called before or concurrently with Start.
-		return t.server.Close()
-	}
-	return nil
+	return t.closeErr
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/services.dart';
 
 import 'package:bett_box/clash/clash.dart';
 import 'package:bett_box/common/common.dart';
@@ -928,6 +929,7 @@ class _TailscaleNodeSettingsState
   TailscaleNodeStatus? _status;
   bool _loading = false;
   Timer? _loginPoll;
+  Timer? _autoRefresh;
   int _pollCount = 0;
 
   @override
@@ -935,12 +937,17 @@ class _TailscaleNodeSettingsState
     super.initState();
     if (ref.read(networkSettingProvider).tailscale.nodeEnable) {
       _refresh();
+      // 页面打开期间定时刷新设备在线状态。
+      _autoRefresh = Timer.periodic(const Duration(seconds: 5), (_) {
+        if (_status?.running == true) _refresh(silent: true);
+      });
     }
   }
 
   @override
   void dispose() {
     _loginPoll?.cancel();
+    _autoRefresh?.cancel();
     super.dispose();
   }
 
@@ -1113,7 +1120,57 @@ class _TailscaleNodeSettingsState
         ),
       ),
       ..._tailnetSharedEntries(),
+      if (props.nodeEnable && status != null && status.peers.isNotEmpty) ...[
+        ListHeader(
+          title:
+              '${appLocalizations.tailscaleNodeDevices} (${status.peers.where((peer) => peer.online).length}/${status.peers.length})',
+        ),
+        for (final peer in status.peers) _TailscalePeerItem(peer: peer),
+      ],
     ]);
+  }
+}
+
+class _TailscalePeerItem extends StatelessWidget {
+  const _TailscalePeerItem({required this.peer});
+
+  final TailscalePeer peer;
+
+  String get _subtitle {
+    return [
+      peer.online
+          ? appLocalizations.tailscaleNodeOnline
+          : appLocalizations.tailscaleNodeOffline,
+      if (peer.exitNode) appLocalizations.tailscaleNodeExitNode,
+      if (peer.ips.isNotEmpty) peer.ips.first,
+      if (peer.os.isNotEmpty) peer.os,
+      if (peer.online && peer.active)
+        peer.curAddr.isNotEmpty
+            ? '${appLocalizations.tailscaleNodeDirect} ${peer.curAddr}'
+            : peer.relay.isNotEmpty
+            ? '${appLocalizations.tailscaleNodeRelay} ${peer.relay}'
+            : null,
+    ].whereType<String>().join(' · ');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return ListItem(
+      leading: Icon(
+        Icons.circle,
+        size: 10,
+        color: peer.online ? Colors.green : colorScheme.outline,
+      ),
+      title: Text(peer.displayName),
+      subtitle: Text(_subtitle),
+      onTap: peer.ips.isEmpty
+          ? null
+          : () {
+              Clipboard.setData(ClipboardData(text: peer.ips.first));
+              globalState.showNotifier(appLocalizations.copySuccess);
+            },
+    );
   }
 }
 

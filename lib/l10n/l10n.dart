@@ -10074,6 +10074,56 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Devices`
+  String get tailscaleNodeDevices {
+    return Intl.message(
+      'Devices',
+      name: 'tailscaleNodeDevices',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Online`
+  String get tailscaleNodeOnline {
+    return Intl.message(
+      'Online',
+      name: 'tailscaleNodeOnline',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Offline`
+  String get tailscaleNodeOffline {
+    return Intl.message(
+      'Offline',
+      name: 'tailscaleNodeOffline',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Direct`
+  String get tailscaleNodeDirect {
+    return Intl.message(
+      'Direct',
+      name: 'tailscaleNodeDirect',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Relay`
+  String get tailscaleNodeRelay {
+    return Intl.message(
+      'Relay',
+      name: 'tailscaleNodeRelay',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

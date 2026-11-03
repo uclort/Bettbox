@@ -501,6 +501,7 @@ class TailscaleNodeStatus {
     this.loginName = '',
     this.ips = const [],
     this.error = '',
+    this.peers = const [],
   });
 
   factory TailscaleNodeStatus.fromJson(Map<String, dynamic> json) {
@@ -511,6 +512,12 @@ class TailscaleNodeStatus {
       loginName: json['login-name'] as String? ?? '',
       ips: (json['ips'] as List?)?.whereType<String>().toList() ?? const [],
       error: json['error'] as String? ?? '',
+      peers:
+          (json['peers'] as List?)
+              ?.whereType<Map<String, dynamic>>()
+              .map(TailscalePeer.fromJson)
+              .toList() ??
+          const [],
     );
   }
 
@@ -520,10 +527,56 @@ class TailscaleNodeStatus {
   final String loginName;
   final List<String> ips;
   final String error;
+  final List<TailscalePeer> peers;
 
   bool get running => state == 'Running';
 
   bool get needsLogin => state == 'NeedsLogin' && authUrl.isNotEmpty;
+}
+
+/// Tailnet 中的其他设备（内核 `TailscalePeer`）。
+class TailscalePeer {
+  const TailscalePeer({
+    this.hostName = '',
+    this.dnsName = '',
+    this.os = '',
+    this.ips = const [],
+    this.online = false,
+    this.active = false,
+    this.exitNode = false,
+    this.curAddr = '',
+    this.relay = '',
+  });
+
+  factory TailscalePeer.fromJson(Map<String, dynamic> json) {
+    return TailscalePeer(
+      hostName: json['host-name'] as String? ?? '',
+      dnsName: json['dns-name'] as String? ?? '',
+      os: json['os'] as String? ?? '',
+      ips: (json['ips'] as List?)?.whereType<String>().toList() ?? const [],
+      online: json['online'] as bool? ?? false,
+      active: json['active'] as bool? ?? false,
+      exitNode: json['exit-node'] as bool? ?? false,
+      curAddr: json['cur-addr'] as String? ?? '',
+      relay: json['relay'] as String? ?? '',
+    );
+  }
+
+  final String hostName;
+  final String dnsName;
+  final String os;
+  final List<String> ips;
+  final bool online;
+  final bool active;
+  final bool exitNode;
+  final String curAddr;
+  final String relay;
+
+  /// 优先显示 MagicDNS 名（去掉 tailnet 后缀），与管理后台一致。
+  String get displayName {
+    final short = dnsName.split('.').first;
+    return short.isNotEmpty ? short : hostName;
+  }
 }
 
 String normalizeTailscaleDomain(String domain) {

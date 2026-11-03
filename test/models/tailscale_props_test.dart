@@ -144,5 +144,29 @@ void main() {
     });
     expect(running.running, isTrue);
     expect(running.ips, ['100.1.2.3']);
+    expect(running.peers, isEmpty);
+  });
+
+  test('解析 Tailnet 设备列表', () {
+    final status = TailscaleNodeStatus.fromJson({
+      'state': 'Running',
+      'peers': [
+        {
+          'host-name': 'M1-13',
+          'dns-name': 'm1-13-rex.tailc7e14e.ts.net',
+          'ips': ['100.86.107.101'],
+          'online': true,
+          'active': true,
+          'cur-addr': '1.2.3.4:41641',
+        },
+        {'host-name': 'iPhone', 'online': false},
+      ],
+    });
+    expect(status.peers, hasLength(2));
+    expect(status.peers.first.displayName, 'm1-13-rex');
+    expect(status.peers.first.online, isTrue);
+    expect(status.peers.first.curAddr, '1.2.3.4:41641');
+    expect(status.peers.last.displayName, 'iPhone');
+    expect(status.peers.last.ips, isEmpty);
   });
 }
