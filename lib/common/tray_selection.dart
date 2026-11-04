@@ -8,74 +8,84 @@ import 'package:bett_box/models/models.dart';
 // `Fallback → Other → FC-香港 6`。
 const trayProxyChainSeparator = ' → ';
 
-// BETTBOX-CUSTOM: 文本内的「已固定」标记。链路上有自动组被固定时插入：完整链路
-// 中紧跟被固定的组名（`Fallback🔒 → Other → 节点`），只显示最终节点时放在节点名前
-// （`Fallback (🔒节点)`）。macOS / Windows 原生绘制时替换为单色锁图标，Windows
-// 悬浮提示是纯文本，直接显示该字符；设置页预览同样替换为锁图标。
+// BETTBOX-CUSTOM: 文本内的「已固定」标记。规则：被固定的自动组带锁，它固定到的
+// 目标（节点或策略组）也带锁；其余（包括被隐藏的中间层）不带。锁统一放在名称前，
+// 避免前后混放时两把锁隔着箭头挨在一起。例如 URLTest 固定到 A 时完整链路为
+// `Fallback → Other → 🔒URLTest → 🔒A`，隐藏中间链路为 `Fallback (🔒A)`；
+// Fallback 固定到 Other 时为 `🔒Fallback → 🔒Other → URLTest → A`，隐藏中间链路
+// 只剩 `🔒Fallback` 与动态选出的 `A`（不带锁）。macOS / Windows 原生绘制时替换为
+// 单色锁图标，Windows 悬浮提示是纯文本，直接显示该字符；设置页预览同样替换为图标。
 const trayLockMark = '🔒';
 
-/// [markSelfPin]：[groupName] 自身被固定时是否也写进文本。一级菜单行的组名后已有
-/// 锁，传 false；子菜单里的策略组行、托盘显示策略组（未显示组名时）传 true。
+/// 右侧说明：[groupName] 是行自身（一级菜单行组名后已画锁，这里只标它固定的目标）。
 String trayGroupSelectionLabel({
   required String groupName,
   required List<Group> groups,
   required SelectedMap selectedMap,
   bool showChain = false,
-  bool markSelfPin = false,
 }) {
   final selected = _selectedNameOf(groupName, groups, selectedMap);
   if (selected.isEmpty) {
     return '';
   }
-  final selfPinned =
-      markSelfPin && _isPinnedName(groupName, groups, selectedMap);
-  if (!_isGroupLike(selected, groups)) {
-    return selfPinned ? '$trayLockMark$selected' : selected;
-  }
-  final chain = resolveTrayProxyChain(
-    proxyName: selected,
-    groups: groups,
-    selectedMap: selectedMap,
-  );
+  final chain = _isGroupLike(selected, groups)
+      ? resolveTrayProxyChain(
+          proxyName: selected,
+          groups: groups,
+          selectedMap: selectedMap,
+        )
+      : [selected];
+  final locks = _chainLocks(groupName, chain, groups, selectedMap);
+  String at(int i) => _withLock(chain[i], locks[i]);
   if (chain.length < 2) {
-    return selfPinned ? '$trayLockMark$selected' : selected;
+    return at(0);
   }
   if (showChain) {
-    return _markedChain(chain, groups, selectedMap, leadingLock: selfPinned);
+    return [
+      for (var i = 0; i < chain.length; i++) at(i),
+    ].join(trayProxyChainSeparator);
   }
-  final nodeLocked =
-      selfPinned || _chainHasPinnedGroup(chain, groups, selectedMap);
-  return '$selected (${nodeLocked ? trayLockMark : ''}${chain.last})';
+  return '${at(0)} (${at(chain.length - 1)})';
 }
 
-/// 完整链路：被固定的组名后紧跟锁；[leadingLock] 表示起点之前（行自身）被固定。
-String _markedChain(
-  List<String> chain,
+/// 名称带锁：被固定的策略组本身。用于子菜单里作为节点出现的策略组行名称。
+String trayLockedGroupName(
+  String name,
   List<Group> groups,
-  SelectedMap selectedMap, {
-  required bool leadingLock,
-}) {
-  final parts = <String>[
-    for (var i = 0; i < chain.length; i++)
-      i < chain.length - 1 && _isPinnedName(chain[i], groups, selectedMap)
-          ? '${chain[i]}$trayLockMark'
-          : chain[i],
-  ];
-  final text = parts.join(trayProxyChainSeparator);
-  return leadingLock ? '$trayLockMark$text' : text;
-}
+  SelectedMap selectedMap,
+) => _withLock(name, _isPinnedName(name, groups, selectedMap));
 
-/// 链路中（不含末端节点）是否有被固定的自动组。
-bool _chainHasPinnedGroup(
+/// [chain] 每一项是否带锁：自身是被固定的自动组，或是上一级固定的目标；
+/// chain[0] 的上一级是 [parent]。
+List<bool> _chainLocks(
+  String parent,
   List<String> chain,
   List<Group> groups,
   SelectedMap selectedMap,
 ) {
-  for (var i = 0; i < chain.length - 1; i++) {
-    if (_isPinnedName(chain[i], groups, selectedMap)) return true;
+  final locks = <bool>[];
+  var previous = parent;
+  for (final name in chain) {
+    locks.add(
+      _isPinnedName(name, groups, selectedMap) ||
+          _isPinTarget(previous, name, groups, selectedMap),
+    );
+    previous = name;
   }
-  return false;
+  return locks;
 }
+
+bool _isPinTarget(
+  String groupName,
+  String name,
+  List<Group> groups,
+  SelectedMap selectedMap,
+) =>
+    _isPinnedName(groupName, groups, selectedMap) &&
+    selectedMap[groupName] == name;
+
+String _withLock(String name, bool locked) =>
+    locked ? '$trayLockMark$name' : name;
 
 bool _isPinnedName(String name, List<Group> groups, SelectedMap selectedMap) {
   final group = groups.getGroup(name);
@@ -173,9 +183,8 @@ String _trayStatusBaseLabel({
   required bool showChain,
 }) {
   final selected = _selectedNameOf(groupName, groups, selectedMap);
-  // BETTBOX-CUSTOM: 策略组自身被固定时，显示组名则锁跟在组名后，否则带进后半段。
-  final selfPinned = _isPinnedName(groupName, groups, selectedMap);
-  final carrySelfLock = selfPinned && !showName;
+  // BETTBOX-CUSTOM: 锁规则与托盘菜单一致（锁在名称前）：组名被固定则带锁，节点 / 链路中被固定的
+  // 组与固定目标带锁；只显示节点时，节点是固定目标才带锁。
   var detail = '';
   if ((showChain || showNode) && selected.isNotEmpty) {
     final chain = resolveTrayProxyChain(
@@ -184,22 +193,17 @@ String _trayStatusBaseLabel({
       selectedMap: selectedMap,
     );
     if (chain.isNotEmpty) {
-      if (showChain) {
-        detail = _markedChain(
-          chain,
-          groups,
-          selectedMap,
-          leadingLock: carrySelfLock,
-        );
-      } else {
-        final nodeLocked =
-            carrySelfLock || _chainHasPinnedGroup(chain, groups, selectedMap);
-        detail = '${nodeLocked ? trayLockMark : ''}${chain.last}';
-      }
+      final locks = _chainLocks(groupName, chain, groups, selectedMap);
+      detail = showChain
+          ? [
+              for (var i = 0; i < chain.length; i++)
+                _withLock(chain[i], locks[i]),
+            ].join(trayProxyChainSeparator)
+          : _withLock(chain.last, locks.last);
     }
   }
   return [
-    if (showName) selfPinned ? '$groupName$trayLockMark' : groupName,
+    if (showName) trayLockedGroupName(groupName, groups, selectedMap),
     if (detail.isNotEmpty) detail,
   ].join(trayStatusNameSeparator);
 }

@@ -53,7 +53,7 @@ class TrayMenuOwnerDraw {
       const int lock = target->locked && target->submenu
                            ? Layout::lock_gap + Layout::lock_width
                            : 0;
-      return TextWidth(dc, target->label) + Scale(lock, dpi);
+      return MarkedTextWidth(dc, target->label, dpi) + Scale(lock, dpi);
     };
     int label_width = item_label_width(item);
     int detail_width = MarkedTextWidth(dc, item->detail, dpi);
@@ -168,7 +168,7 @@ class TrayMenuOwnerDraw {
     const int available = (std::max)(0, right - label_left);
     int detail_width = MarkedTextWidth(dc, item->detail, dpi);
     if (detail_width > 0) {
-      const int label_width = TextWidth(dc, item->label);
+      const int label_width = MarkedTextWidth(dc, item->label, dpi);
       const int room = (std::max)(available * 6 / 10,
                                   available - layout.column_gap - label_width);
       detail_width = (std::min)(detail_width, room);
@@ -183,11 +183,9 @@ class TrayMenuOwnerDraw {
     }
     RECT label_rect{label_left, rect.top, (std::max)(label_left, label_right),
                     rect.bottom};
-    SetTextColor(dc, text_color);
-    DrawTextW(dc, item->label.c_str(), static_cast<int>(item->label.size()),
-              &label_rect,
-              DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX |
-                  DT_END_ELLIPSIS);
+    // BETTBOX-CUSTOM: 子菜单中作为节点出现的策略组被固定时，名称里带锁标记。
+    DrawMarkedText(dc, item->label, label_rect, text_color, dpi,
+                   /*align_right=*/false);
     if (lock_after_label) {
       const int label_drawn = (std::min)(
           TextWidth(dc, item->label),
@@ -289,22 +287,26 @@ class TrayMenuOwnerDraw {
     return width;
   }
 
-  // 右对齐绘制说明；放不下时从左侧开始，末段以省略号截断。
+  // 绘制含锁标记的文字（默认右对齐，用于说明；名称传 align_right = false）；
+  // 放不下时从左侧开始，末段以省略号截断。
   void DrawMarkedText(HDC dc, const std::wstring& text, RECT rect,
-                      COLORREF color, UINT dpi) const {
+                      COLORREF color, UINT dpi,
+                      bool align_right = true) const {
     SetTextColor(dc, color);
     const UINT flags =
         DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS;
     if (text.find(kLockMark) == std::wstring::npos) {
       DrawTextW(dc, text.c_str(), static_cast<int>(text.size()), &rect,
-                DT_RIGHT | flags);
+                (align_right ? DT_RIGHT : DT_LEFT) | flags);
       return;
     }
     const std::vector<std::wstring> parts = SplitLockMark(text);
     const int lock_width = Scale(Layout::inline_lock_width, dpi);
     const int right = static_cast<int>(rect.right);
     const int room = right - static_cast<int>(rect.left);
-    int x = right - (std::min)(MarkedTextWidth(dc, text, dpi), room);
+    int x = align_right
+                ? right - (std::min)(MarkedTextWidth(dc, text, dpi), room)
+                : static_cast<int>(rect.left);
     for (size_t i = 0; i < parts.size(); ++i) {
       if (i > 0) {
         if (x + lock_width > right) break;

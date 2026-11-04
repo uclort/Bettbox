@@ -255,19 +255,22 @@ class Tray {
           );
 
           final delayText = _formatProxySublabel(delay);
-          // 节点本身是策略组时，它被固定也要在右侧说明里标出。
           final groupSelection = trayGroupSelectionLabel(
             groupName: proxy.name,
             groups: selectionGroups,
             selectedMap: trayState.selectedMap,
             showChain: showProxyChain,
-            markSelfPin: true,
           );
           final locked = pinnedProxy.isNotEmpty && pinnedProxy == proxy.name;
           subMenuItems.add(
             MenuItem.checkbox(
               key: 'proxy-item:${proxy.name}',
-              label: proxy.name,
+              // BETTBOX-CUSTOM: 作为节点出现的策略组被固定时，名称后带锁。
+              label: trayLockedGroupName(
+                proxy.name,
+                selectionGroups,
+                trayState.selectedMap,
+              ),
               sublabel: joinTrayDetail(groupSelection, delayText),
               // BETTBOX-CUSTOM: 固定的节点勾选列画锁代替对号。
               icon: locked ? trayMenuLockedIcon : null,

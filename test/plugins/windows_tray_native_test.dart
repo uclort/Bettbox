@@ -155,7 +155,7 @@ void main() {
     final trayDart = File('lib/common/tray.dart').readAsStringSync();
     expect(trayDart, contains('trayNextSelection('));
     expect(trayDart, contains('appLocalizations.trayPinHintAuto'));
-    expect(trayDart, contains('markSelfPin: true'));
+    expect(trayDart, contains('trayLockedGroupName('));
   });
 
   test('Windows 托盘菜单把 shortcut 转为助记键', () {

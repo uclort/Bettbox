@@ -288,94 +288,139 @@ void main() {
     );
   });
 
-  group('链路中被固定的自动组带锁标记', () {
-    // Fallback 被固定到 Other，Global 选中 Fallback。
-    const pinned = {'Fallback': 'Other'};
+  group('被固定的组与它固定的目标带锁，中间动态层不带', () {
+    // Fallback 被固定到 Other（Other 是 Selector，内部动态选出 FC-日本 1）。
+    const pinnedToGroup = {'Fallback': 'Other'};
+    // URLTest 固定到节点 A，内核 now 即为 A。
+    final nested = <Group>[
+      const Group(
+        type: GroupType.Selector,
+        name: 'Global',
+        now: 'Auto',
+        all: [Proxy(name: 'Auto', type: 'URLTest')],
+      ),
+      const Group(
+        type: GroupType.URLTest,
+        name: 'Auto',
+        now: 'A',
+        all: [
+          Proxy(name: 'A', type: 'Trojan'),
+          Proxy(name: 'B', type: 'Trojan'),
+        ],
+      ),
+    ];
+    const pinnedToNode = {'Auto': 'A'};
 
-    test('隐藏中间链路时锁放在最终节点前', () {
+    String label(
+      String groupName,
+      List<Group> source,
+      SelectedMap selectedMap, {
+      bool showChain = false,
+    }) => trayGroupSelectionLabel(
+      groupName: groupName,
+      groups: source,
+      selectedMap: selectedMap,
+      showChain: showChain,
+    );
+
+    String status(
+      String groupName,
+      List<Group> source,
+      SelectedMap selectedMap, {
+      bool showName = false,
+      bool showNode = false,
+      bool showChain = false,
+    }) => trayStatusGroupLabel(
+      groupName: groupName,
+      groups: source,
+      selectedMap: selectedMap,
+      showName: showName,
+      showNode: showNode,
+      showChain: showChain,
+    );
+
+    test('固定到节点：组与节点的锁都在名称前', () {
       expect(
-        trayGroupSelectionLabel(
-          groupName: 'Global',
-          groups: groups,
-          selectedMap: pinned,
-        ),
-        'Fallback (${trayLockMark}FC-日本 1)',
+        label('Global', nested, pinnedToNode),
+        '${trayLockMark}Auto (${trayLockMark}A)',
       );
+      expect(
+        label('Global', nested, pinnedToNode, showChain: true),
+        '${trayLockMark}Auto → ${trayLockMark}A',
+      );
+      // 一级菜单 Auto 行组名后已画锁（原生绘制），说明只标固定的目标。
+      expect(label('Auto', nested, pinnedToNode), '${trayLockMark}A');
     });
 
-    test('完整链路时锁紧跟被固定的组名', () {
+    test('固定到策略组：组与目标组带锁，动态选出的节点不带', () {
       expect(
-        trayGroupSelectionLabel(
-          groupName: 'Global',
-          groups: groups,
-          selectedMap: pinned,
-          showChain: true,
-        ),
-        'Fallback$trayLockMark → Other → FC-日本 1',
+        label('Global', groups, pinnedToGroup),
+        '${trayLockMark}Fallback (FC-日本 1)',
       );
-    });
-
-    test('行自身被固定：一级菜单不重复，子菜单行写进说明', () {
-      String label({bool markSelfPin = false, bool showChain = false}) =>
-          trayGroupSelectionLabel(
-            groupName: 'Fallback',
-            groups: groups,
-            selectedMap: pinned,
-            markSelfPin: markSelfPin,
-            showChain: showChain,
-          );
-      expect(label(), 'Other (FC-日本 1)');
-      expect(label(markSelfPin: true), 'Other (${trayLockMark}FC-日本 1)');
       expect(
-        label(markSelfPin: true, showChain: true),
-        '${trayLockMark}Other → FC-日本 1',
+        label('Global', groups, pinnedToGroup, showChain: true),
+        '${trayLockMark}Fallback → ${trayLockMark}Other → FC-日本 1',
+      );
+      expect(
+        label('Fallback', groups, pinnedToGroup),
+        '${trayLockMark}Other (FC-日本 1)',
       );
     });
 
     test('未固定时不带锁', () {
       expect(
-        trayGroupSelectionLabel(
-          groupName: 'Global',
-          groups: groups,
-          selectedMap: const {},
-          showChain: true,
-        ),
+        label('Global', groups, const {}, showChain: true),
+        isNot(contains(trayLockMark)),
+      );
+      expect(
+        label('Global', nested, const {}, showChain: true),
         isNot(contains(trayLockMark)),
       );
     });
 
-    test('托盘显示策略组：组名、节点、链路各自对应位置加锁', () {
-      String status(
-        String groupName, {
-        bool showName = false,
-        bool showNode = false,
-        bool showChain = false,
-      }) => trayStatusGroupLabel(
-        groupName: groupName,
-        groups: groups,
-        selectedMap: pinned,
-        showName: showName,
-        showNode: showNode,
-        showChain: showChain,
+    test('子菜单中作为节点出现的策略组被固定时名称带锁', () {
+      expect(
+        trayLockedGroupName('Fallback', groups, pinnedToGroup),
+        '${trayLockMark}Fallback',
       );
       expect(
-        status('Global', showName: true, showNode: true),
-        'Global · ${trayLockMark}FC-日本 1',
+        trayLockedGroupName('FC-香港 6', groups, pinnedToGroup),
+        'FC-香港 6',
+      );
+      expect(trayLockedGroupName('Other', groups, pinnedToGroup), 'Other');
+    });
+
+    test('托盘显示策略组：组名与节点分别按规则带锁', () {
+      expect(
+        status('Global', nested, pinnedToNode, showName: true, showNode: true),
+        'Global · ${trayLockMark}A',
       );
       expect(
-        status('Global', showChain: true),
-        'Fallback$trayLockMark → Other → FC-日本 1',
+        status('Auto', nested, pinnedToNode, showName: true, showNode: true),
+        '${trayLockMark}Auto · ${trayLockMark}A',
       );
       expect(
-        status('Fallback', showName: true, showNode: true),
-        'Fallback$trayLockMark · FC-日本 1',
+        status(
+          'Fallback',
+          groups,
+          pinnedToGroup,
+          showName: true,
+          showNode: true,
+        ),
+        '${trayLockMark}Fallback · FC-日本 1',
       );
-      expect(status('Fallback', showNode: true), '${trayLockMark}FC-日本 1');
       expect(
-        status('Fallback', showChain: true),
-        '${trayLockMark}Other → FC-日本 1',
+        status('Global', groups, pinnedToGroup, showNode: true),
+        'FC-日本 1',
       );
-      expect(status('Fallback', showName: true), 'Fallback$trayLockMark');
+      expect(
+        status('Global', groups, pinnedToGroup, showChain: true),
+        '${trayLockMark}Fallback → ${trayLockMark}Other → FC-日本 1',
+      );
+      expect(
+        status('Fallback', groups, pinnedToGroup, showName: true),
+        '${trayLockMark}Fallback',
+      );
     });
   });
 }
