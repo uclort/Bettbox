@@ -6,9 +6,9 @@
     <description>Bettbox 自定义版本更新源</description>
     <language>zh-CN</language>
     <item>
-      <title>Bettbox 1.19.7+2090000231</title>
-      <pubDate>Wed, 04 Nov 2026 03:30:02 +0000</pubDate>
-      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000231</link>
+      <title>Bettbox 1.19.7+2090000232</title>
+      <pubDate>Wed, 04 Nov 2026 03:54:24 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000232</link>
       <description><![CDATA[<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https:;">
@@ -53,11 +53,11 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>自定义 Mihomo 内核：Snell v6、direct proxy 跟随接口 DNS、Tailscale 出站状态接口</li>
 </ul>
 <hr>
-<p dir="auto">构建版本 <code class="notranslate">1.19.7+2090000231</code>，提交 <code class="notranslate">6e13b592a270</code>，自定义内核 <code class="notranslate">1955dfade575</code>。Windows 与 macOS 安装包未做商业代码签名；Android 使用 Bettbox 自定义版固定 Release 签名。</p>
-<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7%2B2090000231">查看完整发布页</a></footer></body></html>]]></description>
-      <sparkle:version>2090000231</sparkle:version>
-      <sparkle:shortVersionString>1.19.7+2090000231</sparkle:shortVersionString>
-      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.7+2090000231/Bettbox-1.19.7-windows-arm64-setup.exe" length="41869208" type="application/octet-stream" sparkle:os="windows" sparkle:dsaSignature="MD0CHQCX1/aV4zGQA1uMb3alu2JaVmwtaUpys+xFzjUiAhwME8c/QhuHVl3SuuWrsLOrHJ6frRYNcyk6wLkH" />
+<p dir="auto">构建版本 <code class="notranslate">1.19.7+2090000232</code>，提交 <code class="notranslate">c36fea38c59b</code>，自定义内核 <code class="notranslate">1955dfade575</code>。Windows 与 macOS 安装包未做商业代码签名；Android 使用 Bettbox 自定义版固定 Release 签名。</p>
+<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7%2B2090000232">查看完整发布页</a></footer></body></html>]]></description>
+      <sparkle:version>2090000232</sparkle:version>
+      <sparkle:shortVersionString>1.19.7+2090000232</sparkle:shortVersionString>
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.7+2090000232/Bettbox-1.19.7-windows-arm64-setup.exe" length="41866610" type="application/octet-stream" sparkle:os="windows" sparkle:dsaSignature="MDwCHGUWs+4yKOCzOCP0AK1k/j9MyAFXEnQkTZF7Qi4CHCBeKTYrI6bH/Kj4ErREpsLKNyeEpjAW/MaaNTk=" />
     </item>
   </channel>
 </rss>
