@@ -6,9 +6,9 @@
     <description>Bettbox 自定义版本更新源</description>
     <language>zh-CN</language>
     <item>
-      <title>Bettbox 1.19.7+2090000232</title>
-      <pubDate>Wed, 04 Nov 2026 03:54:24 +0000</pubDate>
-      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000232</link>
+      <title>Bettbox 1.19.7+2090000233</title>
+      <pubDate>Wed, 04 Nov 2026 06:05:12 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000233</link>
       <description><![CDATA[<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https:;">
@@ -22,8 +22,9 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 </style></head><body><p dir="auto">基于上游 Bettbox <code class="notranslate">1.19.7+2026102201</code>（<code class="notranslate">main@1fb8806fdf82</code>）构建。</p>
 <h2 dir="auto">新增</h2>
 <ul dir="auto">
-<li>内置 Tailscale 节点：内核作为独立设备加入 Tailnet，支持浏览器登录、设备列表与出口节点；桌面端另有「Tailscale App 共存」开关</li>
-<li>托盘策略组菜单显示选中节点与延迟，支持 Option / Alt 显示隐藏组，Windows 增加字母快捷键</li>
+<li>内置 Tailscale 节点：内核作为独立设备加入 Tailnet，支持浏览器登录或 Auth Key 两种接入方式、设备列表与出口节点；桌面端另有「Tailscale App 共存」开关；设置入口位于「内核配置 → Tailscale」</li>
+<li>托盘策略组菜单显示选中节点与延迟，一级菜单也补充实际节点，可选显示完整节点链路；支持 Option / Alt 显示隐藏组，Windows 增加字母快捷键</li>
+<li>托盘显示策略组：在菜单栏图标旁（Windows 为悬浮提示）显示指定策略组的名称、节点、完整链路或节点延迟（如 <code class="notranslate">节点 (86ms)</code>），可放在网速前或后，设置页可实时预览效果</li>
 <li>侧边栏图标、面板标题等界面自定义，隐藏策略组，Inline Provider 内容查看</li>
 <li>Android 应用权限页，本地网络权限运行时申请</li>
 <li>应用内更新：Android 下载并安装，桌面端使用自定义更新源</li>
@@ -33,12 +34,15 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>测速时保持托盘子菜单打开，菜单不再跳动</li>
 <li>macOS 网络切换、睡眠唤醒后自动恢复 TUN、DNS 与系统代理</li>
 <li>内核重启与配置切换串行执行，避免启动竞态</li>
+<li>内置 Tailscale 节点在更新订阅、重载配置时不再重启，Tailnet 连接不中断；配置生效后提前启动</li>
+<li>开启内置 Tailscale 节点后，订阅中让 Tailnet 绕开节点的配置（TUN 排除网段、MagicDNS 服务器、hosts 等）在运行时自动忽略，不修改订阅</li>
 </ul>
 <h2 dir="auto">修复</h2>
 <ul dir="auto">
 <li>macOS 静默启动时窗口闪现</li>
 <li>Tailscale 共存时控制面域名返回真实 IP，Rex 等内嵌 tsnet 的应用登录不再无响应</li>
-<li>内置 Tailscale 节点重载配置后出现重复设备（Duplicate node key）</li>
+<li>内置 Tailscale 节点重载配置后出现重复设备（Duplicate node key）；退出后重新登录设备名变成系统主机名</li>
+<li>Windows 按住 Alt 打开托盘菜单后，松开 Alt 菜单立即关闭</li>
 </ul>
 <h2 dir="auto">移除</h2>
 <ul dir="auto">
@@ -53,11 +57,11 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>自定义 Mihomo 内核：Snell v6、direct proxy 跟随接口 DNS、Tailscale 出站状态接口</li>
 </ul>
 <hr>
-<p dir="auto">构建版本 <code class="notranslate">1.19.7+2090000232</code>，提交 <code class="notranslate">c36fea38c59b</code>，自定义内核 <code class="notranslate">1955dfade575</code>。Windows 与 macOS 安装包未做商业代码签名；Android 使用 Bettbox 自定义版固定 Release 签名。</p>
-<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7%2B2090000232">查看完整发布页</a></footer></body></html>]]></description>
-      <sparkle:version>2090000232</sparkle:version>
-      <sparkle:shortVersionString>1.19.7+2090000232</sparkle:shortVersionString>
-      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.7+2090000232/Bettbox-1.19.7-windows-amd64-setup.exe" length="44627490" type="application/octet-stream" sparkle:os="windows" sparkle:dsaSignature="MDwCHGK9OkdiwDpux8kmWMLoRSaSOMv+6qC+aMGo+MACHC9ZpDt0g9mm/qvU/XaVwzeLzyPzYcrgIvscUZo=" />
+<p dir="auto">构建版本 <code class="notranslate">1.19.7+2090000233</code>，提交 <code class="notranslate">033c7f6fbbda</code>，自定义内核 <code class="notranslate">1955dfade575</code>。Windows 与 macOS 安装包未做商业代码签名；Android 使用 Bettbox 自定义版固定 Release 签名。</p>
+<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7%2B2090000233">查看完整发布页</a></footer></body></html>]]></description>
+      <sparkle:version>2090000233</sparkle:version>
+      <sparkle:shortVersionString>1.19.7+2090000233</sparkle:shortVersionString>
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.7+2090000233/Bettbox-1.19.7-windows-amd64-setup.exe" length="44636263" type="application/octet-stream" sparkle:os="windows" sparkle:dsaSignature="MD0CHQCKuQtNIlLujJYdtRfSrOKLkM7FJP63uxmCvyMXAhwXRn3eohznG9DH79uk5HkkC0TpnIwVV5/FztOy" />
     </item>
   </channel>
 </rss>
