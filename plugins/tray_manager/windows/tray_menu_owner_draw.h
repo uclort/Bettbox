@@ -186,7 +186,8 @@ class TrayMenuOwnerDraw {
                   DT_END_ELLIPSIS);
     if (item->locked) {
       const int label_drawn = (std::min)(
-          TextWidth(dc, item->label), label_rect.right - label_rect.left);
+          TextWidth(dc, item->label),
+          static_cast<int>(label_rect.right - label_rect.left));
       RECT lock_rect{label_left + label_drawn + Scale(Layout::lock_gap, dpi),
                      rect.top,
                      label_left + label_drawn + Scale(Layout::lock_gap, dpi) +
