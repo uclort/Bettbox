@@ -1685,6 +1685,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "tailscaleCoexistDesc": MessageLookupByLibrary.simpleMessage(
       "Tailnet の範囲を TUN から除外し、MagicDNS 名を Tailscale で解決",
     ),
+    "tailscaleDesc": MessageLookupByLibrary.simpleMessage(
+      "Tailnet 接続：Tailscale App との共存または内蔵ノード",
+    ),
     "tailscaleDnsDomains": MessageLookupByLibrary.simpleMessage(
       "MagicDNS ドメイン",
     ),
@@ -1752,6 +1755,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayIconInvert": MessageLookupByLibrary.simpleMessage("トレイアイコン反転"),
     "trayIconInvertDesc": MessageLookupByLibrary.simpleMessage(
       "現在のトレイアイコンの色を反転設定",
+    ),
+    "trayShowProxyChain": MessageLookupByLibrary.simpleMessage(
+      "トレイに完全なプロキシチェーンを表示",
+    ),
+    "trayShowProxyChainDesc": MessageLookupByLibrary.simpleMessage(
+      "トレイのプロキシグループ右側に選択チェーンを段階的に表示します（例：Fallback → Other → ノード）。オフの場合は選択項目と括弧内の最終ノードのみ表示",
     ),
     "tryManualRefresh": MessageLookupByLibrary.simpleMessage(
       "手動で再読み込みをお試しください",

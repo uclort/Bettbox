@@ -2028,6 +2028,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "systemProxy": MessageLookupByLibrary.simpleMessage("System Proxy"),
     "systemProxyDesc": MessageLookupByLibrary.simpleMessage("Set system proxy"),
     "tab": MessageLookupByLibrary.simpleMessage("Tab"),
+    "tailscaleDesc": MessageLookupByLibrary.simpleMessage(
+      "Tailnet access: Tailscale App coexistence or built-in node",
+    ),
     "tailscaleGuideMobileDesc": MessageLookupByLibrary.simpleMessage(
       "How the built-in node works and why the Tailscale App cannot run alongside",
     ),
@@ -2220,6 +2223,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayIconInvert": MessageLookupByLibrary.simpleMessage("Invert Tray Icon"),
     "trayIconInvertDesc": MessageLookupByLibrary.simpleMessage(
       "Invert the current tray icon color",
+    ),
+    "trayShowProxyChain": MessageLookupByLibrary.simpleMessage(
+      "Tray Full Proxy Chain",
+    ),
+    "trayShowProxyChainDesc": MessageLookupByLibrary.simpleMessage(
+      "Show every level of the selected chain in the tray, e.g. Fallback → Other → node. When off, only the selection and its final node are shown",
     ),
     "tryManualRefresh": MessageLookupByLibrary.simpleMessage(
       "Please try manual refresh",

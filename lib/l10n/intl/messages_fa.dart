@@ -2065,6 +2065,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "tailscaleCoexistDesc": MessageLookupByLibrary.simpleMessage(
       "محدوده‌های Tailnet از TUN مستثنا و نام‌های MagicDNS با Tailscale حل می‌شوند",
     ),
+    "tailscaleDesc": MessageLookupByLibrary.simpleMessage(
+      "دسترسی به Tailnet: همزیستی با Tailscale App یا گره داخلی",
+    ),
     "tailscaleDnsDomains": MessageLookupByLibrary.simpleMessage(
       "دامنه‌های MagicDNS",
     ),
@@ -2148,6 +2151,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "trayIconInvertDesc": MessageLookupByLibrary.simpleMessage(
       "معکوس کردن رنگ آیکون تسک‌بار",
+    ),
+    "trayShowProxyChain": MessageLookupByLibrary.simpleMessage(
+      "نمایش کامل زنجیره پروکسی در سینی",
+    ),
+    "trayShowProxyChainDesc": MessageLookupByLibrary.simpleMessage(
+      "نمایش مرحله‌به‌مرحله زنجیره انتخاب در سینی، مانند Fallback → Other → گره. در حالت خاموش فقط مورد انتخاب‌شده و گره نهایی نمایش داده می‌شود",
     ),
     "tryManualRefresh": MessageLookupByLibrary.simpleMessage(
       "لطفاً به صورت دستی بروزرسانی کنید",

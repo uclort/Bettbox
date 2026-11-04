@@ -196,6 +196,7 @@ class Tray {
           ? const <Group>[]
           : globalState.appController.getAllGroups();
       final selectionGroups = allGroups.isEmpty ? menuGroups : allGroups;
+      final showProxyChain = globalState.config.appSetting.trayShowProxyChain;
       for (final group in menuGroups) {
         List<MenuItem> subMenuItems = [];
 
@@ -233,6 +234,7 @@ class Tray {
             groupName: proxy.name,
             groups: selectionGroups,
             selectedMap: trayState.selectedMap,
+            showChain: showProxyChain,
           );
           subMenuItems.add(
             MenuItem.checkbox(
@@ -267,7 +269,7 @@ class Tray {
                 groupName: group.name,
                 groups: selectionGroups,
                 selectedMap: trayState.selectedMap,
-                includeFinal: false,
+                showChain: showProxyChain,
               ),
               _formatProxySublabel(
                 globalState.appController.getTrayProxyDelay(

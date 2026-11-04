@@ -34,15 +34,14 @@ void main() {
     const Group(type: GroupType.Selector, name: 'LoopB', now: 'LoopA'),
   ];
 
-  test('一级菜单只显示直接选中的策略组', () {
+  test('一级菜单选中策略组时括号补充最终节点', () {
     expect(
       trayGroupSelectionLabel(
         groupName: 'Global',
         groups: groups,
         selectedMap: const {},
-        includeFinal: false,
       ),
-      'Fallback',
+      'Fallback (FC-日本 1)',
     );
   });
 
@@ -100,6 +99,50 @@ void main() {
         selectedMap: const {},
       ),
       'LoopB',
+    );
+  });
+
+  test('开启完整链路时逐级显示到最终节点', () {
+    expect(
+      trayGroupSelectionLabel(
+        groupName: 'Global',
+        groups: groups,
+        selectedMap: const {},
+        showChain: true,
+      ),
+      'Fallback → Other → FC-日本 1',
+    );
+    expect(
+      trayGroupSelectionLabel(
+        groupName: 'Global',
+        groups: groups,
+        selectedMap: const {'Other': 'FC-香港 6'},
+        showChain: true,
+      ),
+      'Fallback → Other → FC-香港 6',
+    );
+  });
+
+  test('开启完整链路时直接选中节点仍只显示节点名', () {
+    expect(
+      trayGroupSelectionLabel(
+        groupName: 'Other',
+        groups: groups,
+        selectedMap: const {},
+        showChain: true,
+      ),
+      'FC-日本 1',
+    );
+  });
+
+  test('完整链路遇到循环引用时截断', () {
+    expect(
+      resolveTrayProxyChain(
+        proxyName: 'LoopA',
+        groups: groups,
+        selectedMap: const {},
+      ),
+      ['LoopA', 'LoopB'],
     );
   });
 

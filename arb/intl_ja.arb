@@ -1161,5 +1161,8 @@
   "tailscaleDnsServer": "MagicDNS サーバー",
   "tailscaleDnsServerDesc": "空欄の場合は現在の DNS を使用",
   "tailscaleBypassDomain": "システムプロキシ例外",
-  "tailscaleBypassDomainDesc": "有効時にシステムプロキシの除外リストへ追加"
+  "tailscaleBypassDomainDesc": "有効時にシステムプロキシの除外リストへ追加",
+  "trayShowProxyChain": "トレイに完全なプロキシチェーンを表示",
+  "trayShowProxyChainDesc": "トレイのプロキシグループ右側に選択チェーンを段階的に表示します（例：Fallback → Other → ノード）。オフの場合は選択項目と括弧内の最終ノードのみ表示",
+  "tailscaleDesc": "Tailnet 接続：Tailscale App との共存または内蔵ノード"
 }

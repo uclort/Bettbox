@@ -1202,5 +1202,8 @@
   "tailscaleNodeOnline": "在线",
   "tailscaleNodeOffline": "离线",
   "tailscaleNodeDirect": "直连",
-  "tailscaleNodeRelay": "中继"
+  "tailscaleNodeRelay": "中继",
+  "trayShowProxyChain": "托盘显示完整节点链路",
+  "trayShowProxyChainDesc": "托盘策略组右侧逐级显示选中链路，如 Fallback → Other → 节点；关闭时只显示选中项和括号中的最终节点",
+  "tailscaleDesc": "接入 Tailnet：Tailscale App 共存或内置节点"
 }

@@ -1161,5 +1161,8 @@
   "tailscaleDnsServer": "MagicDNS 서버",
   "tailscaleDnsServerDesc": "비워 두면 현재 DNS 사용",
   "tailscaleBypassDomain": "시스템 프록시 예외",
-  "tailscaleBypassDomainDesc": "활성화 시 시스템 프록시 제외 목록에 추가"
+  "tailscaleBypassDomainDesc": "활성화 시 시스템 프록시 제외 목록에 추가",
+  "trayShowProxyChain": "트레이에 전체 프록시 체인 표시",
+  "trayShowProxyChainDesc": "트레이 프록시 그룹 오른쪽에 선택 체인을 단계별로 표시합니다(예: Fallback → Other → 노드). 끄면 선택 항목과 괄호 안의 최종 노드만 표시",
+  "tailscaleDesc": "Tailnet 연결: Tailscale App 공존 또는 내장 노드"
 }

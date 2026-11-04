@@ -2112,6 +2112,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "tailscaleCoexistDesc": MessageLookupByLibrary.simpleMessage(
       "Исключить сети Tailnet из TUN и разрешать имена MagicDNS через Tailscale",
     ),
+    "tailscaleDesc": MessageLookupByLibrary.simpleMessage(
+      "Доступ к Tailnet: совместная работа с Tailscale App или встроенный узел",
+    ),
     "tailscaleDnsDomains": MessageLookupByLibrary.simpleMessage(
       "Домены MagicDNS",
     ),
@@ -2199,6 +2202,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "trayIconInvertDesc": MessageLookupByLibrary.simpleMessage(
       "Инвертировать цвет текущего значка в трее",
+    ),
+    "trayShowProxyChain": MessageLookupByLibrary.simpleMessage(
+      "Полная цепочка прокси в трее",
+    ),
+    "trayShowProxyChainDesc": MessageLookupByLibrary.simpleMessage(
+      "Показывать в трее всю цепочку выбора, например Fallback → Other → узел. Если выключено, показываются только выбор и конечный узел",
     ),
     "tryManualRefresh": MessageLookupByLibrary.simpleMessage(
       "Обновите вручную",

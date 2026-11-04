@@ -28,6 +28,15 @@ class _TrayContainerState extends ConsumerState<TrayManager> with TrayListener {
         globalState.appController.updateTray();
       }
     });
+    // BETTBOX-CUSTOM: 完整节点链路开关不在 TrayState 中，切换后单独重建托盘菜单。
+    ref.listenManual(
+      appSettingProvider.select((state) => state.trayShowProxyChain),
+      (prev, next) {
+        if (prev != next) {
+          globalState.appController.updateTray();
+        }
+      },
+    );
   }
 
   @override

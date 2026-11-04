@@ -1165,5 +1165,8 @@
   "tailscaleDnsServer": "DNS-сервер MagicDNS",
   "tailscaleDnsServerDesc": "Оставьте пустым для текущего DNS",
   "tailscaleBypassDomain": "Исключения системного прокси",
-  "tailscaleBypassDomainDesc": "Добавляются в список исключений системного прокси"
+  "tailscaleBypassDomainDesc": "Добавляются в список исключений системного прокси",
+  "trayShowProxyChain": "Полная цепочка прокси в трее",
+  "trayShowProxyChainDesc": "Показывать в трее всю цепочку выбора, например Fallback → Other → узел. Если выключено, показываются только выбор и конечный узел",
+  "tailscaleDesc": "Доступ к Tailnet: совместная работа с Tailscale App или встроенный узел"
 }

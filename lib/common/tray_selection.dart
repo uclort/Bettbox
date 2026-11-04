@@ -1,28 +1,35 @@
 import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/models.dart';
 
-// BETTBOX-CUSTOM: 托盘策略组右侧展示当前选中目标。
-// 一级菜单只显示直接选中项（`includeFinal: false`）；二级菜单中选中项仍是
-// 策略组时，用括号补充沿链路解析出的最终节点，例如 `Other (FC-香港 6)`。
+// BETTBOX-CUSTOM: 托盘策略组右侧展示当前选中目标，一级与二级菜单规则一致。
+// 默认（`showChain: false`）：选中项仍是策略组时，用括号补充沿链路解析出的最终
+// 节点，例如 `Fallback (FC-香港 6)`。开启「托盘显示完整节点链路」
+// （`AppSettingProps.trayShowProxyChain`）后改为逐级列出，例如
+// `Fallback → Other → FC-香港 6`。
+const trayProxyChainSeparator = ' → ';
+
 String trayGroupSelectionLabel({
   required String groupName,
   required List<Group> groups,
   required SelectedMap selectedMap,
-  bool includeFinal = true,
+  bool showChain = false,
 }) {
   final selected = _selectedNameOf(groupName, groups, selectedMap);
-  if (!includeFinal || selected.isEmpty || !_isGroupLike(selected, groups)) {
+  if (selected.isEmpty || !_isGroupLike(selected, groups)) {
     return selected;
   }
-  final finalName = resolveTrayFinalProxyName(
+  final chain = resolveTrayProxyChain(
     proxyName: selected,
     groups: groups,
     selectedMap: selectedMap,
   );
-  if (finalName.isEmpty || finalName == selected) {
+  if (chain.length < 2) {
     return selected;
   }
-  return '$selected ($finalName)';
+  if (showChain) {
+    return chain.join(trayProxyChainSeparator);
+  }
+  return '$selected (${chain.last})';
 }
 
 /// 沿策略组选择链解析最终节点；遇到循环引用时停在最后一个未重复的名称。
@@ -31,9 +38,25 @@ String resolveTrayFinalProxyName({
   required List<Group> groups,
   required SelectedMap selectedMap,
 }) {
+  final chain = resolveTrayProxyChain(
+    proxyName: proxyName,
+    groups: groups,
+    selectedMap: selectedMap,
+  );
+  return chain.isEmpty ? '' : chain.last;
+}
+
+/// 从 [proxyName] 开始逐级记录选择链（含起点），遇到循环引用时停止。
+List<String> resolveTrayProxyChain({
+  required String proxyName,
+  required List<Group> groups,
+  required SelectedMap selectedMap,
+}) {
+  final chain = <String>[];
   var current = proxyName;
   final visited = <String>{};
   while (current.isNotEmpty && visited.add(current)) {
+    chain.add(current);
     final String next;
     if (groups.getGroup(current) != null) {
       next = _selectedNameOf(current, groups, selectedMap);
@@ -45,7 +68,7 @@ String resolveTrayFinalProxyName({
     }
     current = next;
   }
-  return current;
+  return chain;
 }
 
 bool _isGroupLike(String name, List<Group> groups) {

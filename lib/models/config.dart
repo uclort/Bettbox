@@ -228,6 +228,8 @@ abstract class AppSettingProps with _$AppSettingProps {
     String? startSwitchOffLabel,
     @Default(true) bool enableNavBarHapticFeedback,
     @Default(true) bool autoCheckUpdate,
+    // BETTBOX-CUSTOM: 托盘策略组右侧逐级显示完整节点链路，默认只补最终节点。
+    @Default(false) bool trayShowProxyChain,
     @Default(false) bool showLabel,
     @Default(false) bool disclaimerAccepted,
     @Default(true) bool minimizeOnExit,

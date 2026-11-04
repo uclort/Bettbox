@@ -1161,5 +1161,8 @@
   "tailscaleDnsServer": "سرور MagicDNS",
   "tailscaleDnsServerDesc": "خالی بگذارید تا DNS فعلی استفاده شود",
   "tailscaleBypassDomain": "استثناهای پروکسی سیستم",
-  "tailscaleBypassDomainDesc": "هنگام فعال بودن به فهرست استثنای پروکسی سیستم افزوده می‌شود"
+  "tailscaleBypassDomainDesc": "هنگام فعال بودن به فهرست استثنای پروکسی سیستم افزوده می‌شود",
+  "trayShowProxyChain": "نمایش کامل زنجیره پروکسی در سینی",
+  "trayShowProxyChainDesc": "نمایش مرحله‌به‌مرحله زنجیره انتخاب در سینی، مانند Fallback → Other → گره. در حالت خاموش فقط مورد انتخاب‌شده و گره نهایی نمایش داده می‌شود",
+  "tailscaleDesc": "دسترسی به Tailnet: همزیستی با Tailscale App یا گره داخلی"
 }

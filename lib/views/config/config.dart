@@ -8,6 +8,7 @@ import 'package:bett_box/views/config/general.dart';
 import 'package:bett_box/views/config/network.dart';
 import 'package:bett_box/views/config/ntp.dart';
 import 'package:bett_box/views/config/sniffer.dart';
+import 'package:bett_box/views/config/tailscale.dart';
 import 'package:bett_box/views/config/tunnel.dart';
 import 'package:bett_box/views/config/experimental.dart';
 import 'package:bett_box/widgets/widgets.dart';
@@ -76,6 +77,17 @@ class _ConfigViewState extends State<ConfigView> {
             ),
           ],
           builder: (_) => const NetworkListView(),
+        ),
+      ),
+      // BETTBOX-CUSTOM: Tailscale 从「网络」移出，作为内核配置下的独立二级页面。
+      ListItem.next(
+        title: const Text('Tailscale'),
+        subtitle: Text(appLocalizations.tailscaleDesc),
+        leading: const Icon(Icons.lan_outlined),
+        delegate: NextDelegate(
+          title: 'Tailscale',
+          builder: (_) => const TailscaleListView(),
+          blur: false,
         ),
       ),
       ListItem.next(

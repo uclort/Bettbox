@@ -1679,6 +1679,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "tailscaleCoexistDesc": MessageLookupByLibrary.simpleMessage(
       "Tailnet 대역을 TUN에서 제외하고 MagicDNS 이름을 Tailscale로 확인",
     ),
+    "tailscaleDesc": MessageLookupByLibrary.simpleMessage(
+      "Tailnet 연결: Tailscale App 공존 또는 내장 노드",
+    ),
     "tailscaleDnsDomains": MessageLookupByLibrary.simpleMessage("MagicDNS 도메인"),
     "tailscaleDnsDomainsDesc": MessageLookupByLibrary.simpleMessage(
       "실제 IP를 반환하고 아래 DNS 서버로 확인",
@@ -1744,6 +1747,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayIconInvert": MessageLookupByLibrary.simpleMessage("트레이 아이콘 반전"),
     "trayIconInvertDesc": MessageLookupByLibrary.simpleMessage(
       "현재 트레이 아이콘 색상 반전 설정",
+    ),
+    "trayShowProxyChain": MessageLookupByLibrary.simpleMessage(
+      "트레이에 전체 프록시 체인 표시",
+    ),
+    "trayShowProxyChainDesc": MessageLookupByLibrary.simpleMessage(
+      "트레이 프록시 그룹 오른쪽에 선택 체인을 단계별로 표시합니다(예: Fallback → Other → 노드). 끄면 선택 항목과 괄호 안의 최종 노드만 표시",
     ),
     "tryManualRefresh": MessageLookupByLibrary.simpleMessage(
       "수동 새로고침을 시도해 보세요",

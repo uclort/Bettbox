@@ -15,6 +15,7 @@ import 'package:bett_box/views/config/dns.dart';
 import 'package:bett_box/views/config/experimental.dart';
 import 'package:bett_box/views/config/general.dart';
 import 'package:bett_box/views/config/network.dart';
+import 'package:bett_box/views/config/tailscale.dart';
 import 'package:bett_box/views/config/ntp.dart';
 import 'package:bett_box/views/config/sniffer.dart';
 import 'package:bett_box/views/config/tunnel.dart';
@@ -639,6 +640,17 @@ class _ToolViewState extends ConsumerState<ToolsView> {
           const ApplicationSettingView(),
         ),
       ),
+      if (system.isMacOS || system.isWindows)
+        _SearchItem(
+          title: appLocalizations.trayShowProxyChain,
+          subtitle: appLocalizations.trayShowProxyChainDesc,
+          category: appCategory,
+          onTap: (context, _) => _pushPage(
+            context,
+            appLocalizations.application,
+            const ApplicationSettingView(),
+          ),
+        ),
     ]);
 
     items.addAll([
@@ -1046,6 +1058,33 @@ class _ToolViewState extends ConsumerState<ToolsView> {
           appLocalizations.network,
           const NetworkListView(),
         ),
+      ),
+    ]);
+
+    // BETTBOX-CUSTOM: Tailscale 独立页面（内核配置 → Tailscale）。
+    final tailscaleCategory = '$configCategory/Tailscale';
+    items.addAll([
+      if (system.isDesktop)
+        _SearchItem(
+        title: appLocalizations.tailscaleCoexist,
+        subtitle: appLocalizations.tailscaleCoexistDesc,
+        category: tailscaleCategory,
+        onTap: (context, _) =>
+            _pushPage(context, 'Tailscale', const TailscaleListView()),
+      ),
+      _SearchItem(
+        title: appLocalizations.tailscaleNode,
+        subtitle: appLocalizations.tailscaleNodeDesc,
+        category: tailscaleCategory,
+        onTap: (context, _) =>
+            _pushPage(context, 'Tailscale', const TailscaleListView()),
+      ),
+      _SearchItem(
+        title: appLocalizations.tailscaleGuide,
+        subtitle: appLocalizations.tailscaleGuideDesc,
+        category: tailscaleCategory,
+        onTap: (context, _) =>
+            _pushPage(context, 'Tailscale', const TailscaleListView()),
       ),
     ]);
 

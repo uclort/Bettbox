@@ -1201,5 +1201,8 @@
   "tailscaleNodeOnline": "Online",
   "tailscaleNodeOffline": "Offline",
   "tailscaleNodeDirect": "Direct",
-  "tailscaleNodeRelay": "Relay"
+  "tailscaleNodeRelay": "Relay",
+  "trayShowProxyChain": "Tray Full Proxy Chain",
+  "trayShowProxyChainDesc": "Show every level of the selected chain in the tray, e.g. Fallback → Other → node. When off, only the selection and its final node are shown",
+  "tailscaleDesc": "Tailnet access: Tailscale App coexistence or built-in node"
 }

@@ -1490,6 +1490,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "systemProxy": MessageLookupByLibrary.simpleMessage("系统代理"),
     "systemProxyDesc": MessageLookupByLibrary.simpleMessage("设置系统代理"),
     "tab": MessageLookupByLibrary.simpleMessage("标签页"),
+    "tailscaleDesc": MessageLookupByLibrary.simpleMessage(
+      "接入 Tailnet：Tailscale App 共存或内置节点",
+    ),
     "tailscaleGuideMobileDesc": MessageLookupByLibrary.simpleMessage(
       "内置节点的用法，以及为什么不能和 Tailscale App 同时使用",
     ),
@@ -1646,6 +1649,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayIconInvert": MessageLookupByLibrary.simpleMessage("托盘反转"),
     "trayIconInvertDesc": MessageLookupByLibrary.simpleMessage(
       "针对当前托盘图标颜色取反设置",
+    ),
+    "trayShowProxyChain": MessageLookupByLibrary.simpleMessage(
+      "托盘显示完整节点链路",
+    ),
+    "trayShowProxyChainDesc": MessageLookupByLibrary.simpleMessage(
+      "托盘策略组右侧逐级显示选中链路，如 Fallback → Other → 节点；关闭时只显示选中项和括号中的最终节点",
     ),
     "tryManualRefresh": MessageLookupByLibrary.simpleMessage("请尝试手动刷新"),
     "tun": MessageLookupByLibrary.simpleMessage("虚拟网卡"),

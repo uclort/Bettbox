@@ -10244,6 +10244,36 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Tray Full Proxy Chain`
+  String get trayShowProxyChain {
+    return Intl.message(
+      "Tray Full Proxy Chain",
+      name: 'trayShowProxyChain',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show every level of the selected chain in the tray, e.g. Fallback → Other → node. When off, only the selection and its final node are shown`
+  String get trayShowProxyChainDesc {
+    return Intl.message(
+      "Show every level of the selected chain in the tray, e.g. Fallback → Other → node. When off, only the selection and its final node are shown",
+      name: 'trayShowProxyChainDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Tailnet access: Tailscale App coexistence or built-in node`
+  String get tailscaleDesc {
+    return Intl.message(
+      "Tailnet access: Tailscale App coexistence or built-in node",
+      name: 'tailscaleDesc',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {
