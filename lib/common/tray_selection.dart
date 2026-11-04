@@ -17,7 +17,7 @@ const trayProxyChainSeparator = ' → ';
 // 单色锁图标，Windows 悬浮提示是纯文本，直接显示该字符；设置页预览同样替换为图标。
 const trayLockMark = '🔒';
 
-/// 右侧说明：[groupName] 是行自身（一级菜单行组名后已画锁，这里只标它固定的目标）。
+/// 右侧说明：[groupName] 是行自身（一级菜单行组名前已由原生画锁，这里只标它固定的目标）。
 String trayGroupSelectionLabel({
   required String groupName,
   required List<Group> groups,
@@ -209,9 +209,9 @@ String _trayStatusBaseLabel({
 }
 
 // BETTBOX-CUSTOM: 托盘菜单中「已锁定」标记。URLTest / Fallback 这类自动组被手动
-// 指定节点后内核会一直用它（fixed），菜单里在组名后画一把锁，与策略组卡片的锁一致。
+// 指定节点后内核会一直用它（fixed），菜单里在组名前画一把锁，与策略组卡片的锁一致。
 // 借用 MenuItem.icon 把标记传给原生层，两端据此自绘锁图标：策略组行（submenu）
-// 画在名称后，节点行（checkbox）画在勾选列、代替对号。
+// 画在名称前的勾选列，节点行（checkbox）画在勾选列、代替对号。
 const trayMenuLockedIcon = 'lock';
 
 bool isTrayGroupPinned(Group group, SelectedMap selectedMap) =>

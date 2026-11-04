@@ -265,7 +265,7 @@ class Tray {
           subMenuItems.add(
             MenuItem.checkbox(
               key: 'proxy-item:${proxy.name}',
-              // BETTBOX-CUSTOM: 作为节点出现的策略组被固定时，名称后带锁。
+              // BETTBOX-CUSTOM: 作为节点出现的策略组被固定时，名称前带锁。
               label: trayLockedGroupName(
                 proxy.name,
                 selectionGroups,
@@ -309,7 +309,7 @@ class Tray {
           MenuItem.submenu(
             key: 'group-item:${group.name}',
             label: group.name,
-            // BETTBOX-CUSTOM: 被固定的自动组在名称后显示锁，避免误以为按顺序选择。
+            // BETTBOX-CUSTOM: 被固定的自动组在名称前显示锁，避免误以为按顺序选择。
             icon: isTrayGroupPinned(group, trayState.selectedMap)
                 ? trayMenuLockedIcon
                 : null,

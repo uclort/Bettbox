@@ -348,7 +348,7 @@ void main() {
         label('Global', nested, pinnedToNode, showChain: true),
         '${trayLockMark}Auto → ${trayLockMark}A',
       );
-      // 一级菜单 Auto 行组名后已画锁（原生绘制），说明只标固定的目标。
+      // 一级菜单 Auto 行组名前已画锁（原生绘制），说明只标固定的目标。
       expect(label('Auto', nested, pinnedToNode), '${trayLockMark}A');
     });
 

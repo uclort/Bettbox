@@ -137,7 +137,7 @@ void main() {
     final ownerDrawSource = File(
       'plugins/tray_manager/windows/tray_menu_owner_draw.h',
     ).readAsStringSync();
-    expect(ownerDrawSource, contains('item->locked && !item->submenu'));
+    expect(ownerDrawSource, contains('item->locked && item->submenu'));
     expect(ownerDrawSource, contains(r'kLockMark[] = L"\xD83D\xDD12"'));
     expect(ownerDrawSource, contains('DrawMarkedText(dc, item->detail'));
 

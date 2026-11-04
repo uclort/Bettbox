@@ -237,9 +237,9 @@ private final class AlignedTrayMenuItemView: NSView {
         let verticalInset: CGFloat = 3
         let contentHeight = max(0, bounds.height - verticalInset * 2)
         checkmarkLabel.frame = NSRect(
-            x: 8,
+            x: TrayMenuMetrics.checkColumnX,
             y: verticalInset,
-            width: 16,
+            width: TrayMenuMetrics.checkColumnWidth,
             height: contentHeight
         )
         // BETTBOX-CUSTOM: 右侧说明按本行实际宽度右对齐，不再使用固定宽列。
@@ -469,9 +469,11 @@ enum TrayMenuMetrics {
     static let chevronWidth: CGFloat = 8
     static let chevronGap: CGFloat = 6
     static let rowHeight: CGFloat = 24
-    // BETTBOX-CUSTOM: 锁定标记（自动组被手动指定节点）紧跟在名称之后。
+    // BETTBOX-CUSTOM: 锁定标记（自动组被手动指定节点）画在名称前的勾选列，
+    // 与 AlignedTrayMenuItemView.checkmarkLabel 的位置一致。
     static let lockWidth: CGFloat = 10
-    static let lockGap: CGFloat = 4
+    static let checkColumnX: CGFloat = 8
+    static let checkColumnWidth: CGFloat = 16
 
     static var font: NSFont { NSFont.menuFont(ofSize: NSFont.systemFontSize) }
 
@@ -498,7 +500,7 @@ enum TrayMenuMetrics {
 private final class SubmenuTrayMenuItemView: NSView {
     private var label: String
     private var detail: String
-    // BETTBOX-CUSTOM: URLTest / Fallback 被固定到某个节点时，名称后绘制锁。
+    // BETTBOX-CUSTOM: URLTest / Fallback 被固定到某个节点时，名称前（勾选列）绘制锁。
     private var locked: Bool
 
     init(label: String, detail: String, locked: Bool, width: CGFloat) {
@@ -569,24 +571,18 @@ private final class SubmenuTrayMenuItemView: NSView {
         let titleWidth = detailWidth > 0
             ? detailX - TrayMenuMetrics.columnGap - titleX
             : detailRight - titleX
-        // 锁定标记占用名称右侧空间，避免长组名覆盖锁图标。
-        let lockReserve = locked
-            ? TrayMenuMetrics.lockGap + TrayMenuMetrics.lockWidth
-            : 0
-        let labelWidth = max(0, titleWidth - lockReserve)
         drawText(
             label,
-            in: NSRect(x: titleX, y: 0, width: labelWidth, height: bounds.height),
+            in: NSRect(x: titleX, y: 0, width: max(0, titleWidth), height: bounds.height),
             color: titleColor,
             alignment: .left
         )
         if locked {
-            let drawnWidth = min(
-                labelWidth,
-                ceil((label as NSString).size(withAttributes: [.font: TrayMenuMetrics.font]).width)
-            )
+            // BETTBOX-CUSTOM: 锁统一放在名称前：画在左侧勾选列（与节点行的锁同列），
+            // 组名仍与其他行对齐。
             let lockRect = NSRect(
-                x: titleX + drawnWidth + TrayMenuMetrics.lockGap,
+                x: TrayMenuMetrics.checkColumnX
+                    + (TrayMenuMetrics.checkColumnWidth - TrayMenuMetrics.lockWidth) / 2,
                 y: bounds.midY - TrayMenuMetrics.lockWidth / 2,
                 width: TrayMenuMetrics.lockWidth,
                 height: TrayMenuMetrics.lockWidth

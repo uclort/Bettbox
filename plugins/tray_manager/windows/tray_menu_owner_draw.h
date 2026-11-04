@@ -31,7 +31,7 @@ struct TrayOwnerDrawItem {
   std::wstring detail;
   bool submenu = false;
   // BETTBOX-CUSTOM: URLTest / Fallback 被固定时绘制锁：策略组行（submenu）画在
-  // 名称后；节点行画在勾选列，代替对号。
+  // 名称前的勾选列；节点行同样画在勾选列，代替对号。
   bool locked = false;
   std::shared_ptr<TrayOwnerDrawColumn> column;
 };
@@ -49,11 +49,9 @@ class TrayMenuOwnerDraw {
 
     HDC dc = GetDC(host);
     HGDIOBJ old_font = SelectObject(dc, text_font_);
+    // 锁画在名称前的勾选列，不占名称宽度。
     auto item_label_width = [&](const TrayOwnerDrawItem* target) {
-      const int lock = target->locked && target->submenu
-                           ? Layout::lock_gap + Layout::lock_width
-                           : 0;
-      return MarkedTextWidth(dc, target->label, dpi) + Scale(lock, dpi);
+      return MarkedTextWidth(dc, target->label, dpi);
     };
     int label_width = item_label_width(item);
     int detail_width = MarkedTextWidth(dc, item->detail, dpi);
@@ -148,7 +146,11 @@ class TrayMenuOwnerDraw {
 
     RECT check_rect{rect.left, rect.top, rect.left + layout.text_left,
                     rect.bottom};
-    if (item->locked && !item->submenu) {
+    if (item->locked && item->submenu) {
+      // BETTBOX-CUSTOM: 锁统一放在名称前：策略组行画在勾选列，组名仍与其他行对齐；
+      // 与右侧说明同色（不可点击文字的灰色），不抢视觉。
+      DrawGlyph(dc, lock_font_, L"\xE72E", check_rect, detail_color);
+    } else if (item->locked) {
       // BETTBOX-CUSTOM: 自动组固定的节点在勾选列画锁代替对号，与窗口卡片一致。
       DrawGlyph(dc, icon_font_, L"\xE72E", check_rect, text_color);
     } else if (checked) {
@@ -176,28 +178,11 @@ class TrayMenuOwnerDraw {
       DrawMarkedText(dc, item->detail, detail_rect, detail_color, dpi);
       right = detail_rect.left - layout.column_gap;
     }
-    const bool lock_after_label = item->locked && item->submenu;
-    int label_right = right;
-    if (lock_after_label) {
-      label_right -= Scale(Layout::lock_gap + Layout::lock_width, dpi);
-    }
-    RECT label_rect{label_left, rect.top, (std::max)(label_left, label_right),
+    RECT label_rect{label_left, rect.top, (std::max)(label_left, right),
                     rect.bottom};
     // BETTBOX-CUSTOM: 子菜单中作为节点出现的策略组被固定时，名称里带锁标记。
     DrawMarkedText(dc, item->label, label_rect, text_color, dpi,
                    /*align_right=*/false);
-    if (lock_after_label) {
-      const int label_drawn = (std::min)(
-          TextWidth(dc, item->label),
-          static_cast<int>(label_rect.right - label_rect.left));
-      RECT lock_rect{label_left + label_drawn + Scale(Layout::lock_gap, dpi),
-                     rect.top,
-                     label_left + label_drawn + Scale(Layout::lock_gap, dpi) +
-                         Scale(Layout::lock_width, dpi),
-                     rect.bottom};
-      // BETTBOX-CUSTOM: 锁与右侧说明同色（不可点击文字的灰色），不抢视觉。
-      DrawGlyph(dc, lock_font_, L"\xE72E", lock_rect, detail_color);
-    }
 
     SelectObject(dc, old_font);
     SetTextColor(dc, previous_color);
@@ -215,10 +200,7 @@ class TrayMenuOwnerDraw {
     int chevron_width;
     int chevron_gap;
     int item_height;
-    // BETTBOX-CUSTOM: 名称后锁定标记的图标宽度与间距（96 DPI 基准）。
-    static constexpr int lock_width = 12;
-    static constexpr int lock_gap = 4;
-    // 说明文字中锁标记占位（含两侧留白）。
+    // BETTBOX-CUSTOM: 说明文字中锁标记占位（含两侧留白，96 DPI 基准）。
     static constexpr int inline_lock_width = 14;
   };
 
@@ -258,7 +240,7 @@ class TrayMenuOwnerDraw {
   }
 
   // BETTBOX-CUSTOM: Dart 侧在说明文字里用 🔒（trayLockMark，UTF-16 代理对）标记
-  // 被固定的策略组 / 节点，绘制时替换为与名称后相同的 MDL2 锁字形。
+  // 被固定的策略组 / 节点，绘制时替换为与策略组行相同的 MDL2 锁字形。
   static constexpr wchar_t kLockMark[] = L"\xD83D\xDD12";
   static constexpr size_t kLockMarkLength = 2;
 
