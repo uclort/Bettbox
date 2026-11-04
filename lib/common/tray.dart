@@ -43,6 +43,12 @@ class Tray {
   int? _lastDisplayedUpload;
   int? _lastDisplayedDownload;
   bool? _lastDisplayedActive;
+  // BETTBOX-CUSTOM: 托盘图标旁的策略组标签（空串表示不显示），与网速共用标题。
+  String _statusLabel = '';
+  bool _statusLabelBeforeSpeed = false;
+  String? _lastDisplayedLabel;
+  bool? _lastDisplayedLabelBefore;
+  bool? _lastDisplayedShowSpeed;
 
   // macOS 与 Windows 共用模板图标和状态渲染；Linux 仍使用普通彩色图标。
   bool get _supportsTrayTemplate => system.isMacOS || system.isWindows;
@@ -144,6 +150,9 @@ class Tray {
 
     try {
       _traySpeedEnabled = trayState.enableTraySpeed;
+      _statusLabel = _resolveStatusLabel(trayState);
+      _statusLabelBeforeSpeed =
+          globalState.config.appSetting.trayStatusBeforeSpeed;
       _trayTrafficActive =
           trayState.isStart && (trayState.systemProxy || trayState.tunEnable);
       if (system.isWindows) {
@@ -430,11 +439,31 @@ class Tray {
     await _setSpeedTitle(_lastTraffic);
   }
 
+  /// BETTBOX-CUSTOM: 按「增强工具 → 托盘显示策略组」解析标签；未开启、策略组
+  /// 不存在或三项都未勾选时为空。解析使用含隐藏组的完整列表。
+  String _resolveStatusLabel(TrayState trayState) {
+    if (!_supportsTrayTemplate) return '';
+    final setting = globalState.config.appSetting;
+    if (!setting.trayStatusGroupEnable ||
+        setting.trayStatusGroupName.isEmpty) {
+      return '';
+    }
+    final allGroups = globalState.appController.getAllGroups();
+    return trayStatusGroupLabel(
+      groupName: setting.trayStatusGroupName,
+      groups: allGroups.isEmpty ? trayState.groups : allGroups,
+      selectedMap: trayState.selectedMap,
+      showName: setting.trayStatusShowName,
+      showNode: setting.trayStatusShowNode,
+      showChain: setting.trayStatusShowChain,
+    );
+  }
+
   Future<void> _syncSpeedTitle() async {
     if (!_supportsTrayTemplate) {
       return;
     }
-    if (!_traySpeedEnabled) {
+    if (!_traySpeedEnabled && _statusLabel.isEmpty) {
       if (!_isSpeedTitleVisible) {
         return;
       }
@@ -460,18 +489,36 @@ class Tray {
   Future<void> _setSpeedTitle(Traffic traffic) async {
     final upload = traffic.up.value;
     final download = traffic.down.value;
+    final label = _statusLabel;
+    final labelBefore = _statusLabelBeforeSpeed;
+    final showSpeed = _traySpeedEnabled;
     if (_isSpeedTitleVisible &&
         _lastDisplayedUpload == upload &&
         _lastDisplayedDownload == download &&
-        _lastDisplayedActive == _trayTrafficActive) {
+        _lastDisplayedActive == _trayTrafficActive &&
+        _lastDisplayedLabel == label &&
+        _lastDisplayedLabelBefore == labelBefore &&
+        _lastDisplayedShowSpeed == showSpeed) {
       return;
     }
     try {
-      await trayManager.setSpeedTitle(
-        upload: upload,
-        download: download,
-        active: _trayTrafficActive,
-      );
+      if (label.isEmpty) {
+        await trayManager.setSpeedTitle(
+          upload: upload,
+          download: download,
+          active: _trayTrafficActive,
+        );
+      } else {
+        // BETTBOX-CUSTOM: 有策略组标签时改走组合标题；网速关闭时标签占用网速位置。
+        await trayManager.setStatusTitle(
+          label: label,
+          labelBeforeSpeed: labelBefore,
+          showSpeed: showSpeed,
+          upload: upload,
+          download: download,
+          active: _trayTrafficActive,
+        );
+      }
     } on PlatformException catch (error) {
       // BETTBOX-CUSTOM: 网速属于装饰能力，失败不能阻断原生菜单初始化。
       commonPrint.log('更新托盘网速失败：$error');
@@ -481,6 +528,9 @@ class Tray {
     _lastDisplayedUpload = upload;
     _lastDisplayedDownload = download;
     _lastDisplayedActive = _trayTrafficActive;
+    _lastDisplayedLabel = label;
+    _lastDisplayedLabelBefore = labelBefore;
+    _lastDisplayedShowSpeed = showSpeed;
   }
 
   Future<void> showContextMenu({

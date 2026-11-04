@@ -1667,6 +1667,48 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayShowProxyChainDesc": MessageLookupByLibrary.simpleMessage(
       "托盤策略組右側逐級顯示選中鏈路，如 Fallback → Other → 節點；關閉時只顯示選中項和括號中的最終節點",
     ),
+    "trayStatusAfterSpeed": MessageLookupByLibrary.simpleMessage(
+      "網速後",
+    ),
+    "trayStatusBeforeSpeed": MessageLookupByLibrary.simpleMessage(
+      "網速前",
+    ),
+    "trayStatusGroup": MessageLookupByLibrary.simpleMessage(
+      "托盤顯示策略組",
+    ),
+    "trayStatusGroupDesc": MessageLookupByLibrary.simpleMessage(
+      "在托盤圖示旁顯示指定策略組的當前選擇（Windows 顯示在懸浮提示中）",
+    ),
+    "trayStatusGroupHidden": MessageLookupByLibrary.simpleMessage(
+      "（隱藏）",
+    ),
+    "trayStatusGroupMissing": MessageLookupByLibrary.simpleMessage(
+      "當前配置中不存在",
+    ),
+    "trayStatusGroupName": MessageLookupByLibrary.simpleMessage(
+      "顯示的策略組",
+    ),
+    "trayStatusGroupNotSelected": MessageLookupByLibrary.simpleMessage(
+      "未選擇",
+    ),
+    "trayStatusPosition": MessageLookupByLibrary.simpleMessage(
+      "顯示位置",
+    ),
+    "trayStatusShowChain": MessageLookupByLibrary.simpleMessage(
+      "顯示完整鏈路",
+    ),
+    "trayStatusShowChainDesc": MessageLookupByLibrary.simpleMessage(
+      "逐級顯示到最終節點，如 Fallback → Other → 節點",
+    ),
+    "trayStatusShowName": MessageLookupByLibrary.simpleMessage(
+      "顯示策略組名稱",
+    ),
+    "trayStatusShowNode": MessageLookupByLibrary.simpleMessage(
+      "顯示具體節點",
+    ),
+    "trayStatusShowNodeDesc": MessageLookupByLibrary.simpleMessage(
+      "沿選擇鏈顯示最終使用的節點",
+    ),
     "tryManualRefresh": MessageLookupByLibrary.simpleMessage("請嘗試手動重新整理"),
     "tun": MessageLookupByLibrary.simpleMessage("虛擬網卡"),
     "tunDesc": MessageLookupByLibrary.simpleMessage("使用 TUN 接管設備流量"),

@@ -162,6 +162,9 @@ class TrayManagerPlugin : public flutter::Plugin {
   std::string tray_icon_path_;
   std::wstring base_tooltip_;
   std::wstring speed_title_;
+  // BETTBOX-CUSTOM: 指定策略组标签，与网速一起写入 tooltip，顺序由前/后设置决定。
+  std::wstring status_label_;
+  bool status_label_before_speed_ = false;
   bool tray_icon_active_ = true;
   bool tray_icon_dark_ = false;
   bool left_click_shows_menu_ = false;
@@ -203,6 +206,9 @@ class TrayManagerPlugin : public flutter::Plugin {
       const flutter::MethodCall<flutter::EncodableValue>& method_call,
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
   void TrayManagerPlugin::ClearSpeedTitle(
+      const flutter::MethodCall<flutter::EncodableValue>& method_call,
+      std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
+  void TrayManagerPlugin::SetStatusTitle(
       const flutter::MethodCall<flutter::EncodableValue>& method_call,
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
   void TrayManagerPlugin::SetContextMenu(
@@ -608,11 +614,21 @@ void TrayManagerPlugin::_ApplyIcon() {
 
 void TrayManagerPlugin::_UpdateToolTip() {
   std::wstring tooltip = base_tooltip_;
-  if (!speed_title_.empty()) {
+  auto append_line = [&tooltip](const std::wstring& line) {
+    if (line.empty()) {
+      return;
+    }
     if (!tooltip.empty()) {
       tooltip += L"\n";
     }
-    tooltip += speed_title_;
+    tooltip += line;
+  };
+  if (status_label_before_speed_) {
+    append_line(status_label_);
+    append_line(speed_title_);
+  } else {
+    append_line(speed_title_);
+    append_line(status_label_);
   }
 
   nid.uFlags |= NIF_TIP;
@@ -735,6 +751,7 @@ void TrayManagerPlugin::SetSpeedTitle(
   speed_title_ =
       L"↑ " + NormalizeSpeedNumber(static_cast<uint64_t>(*upload)) +
       L"\n↓ " + NormalizeSpeedNumber(static_cast<uint64_t>(*download));
+  status_label_.clear();
   _UpdateToolTip();
   result->Success(flutter::EncodableValue(true));
 }
@@ -743,6 +760,37 @@ void TrayManagerPlugin::ClearSpeedTitle(
     const flutter::MethodCall<flutter::EncodableValue>& method_call,
     std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
   speed_title_.clear();
+  status_label_.clear();
+  _UpdateToolTip();
+  result->Success(flutter::EncodableValue(true));
+}
+
+void TrayManagerPlugin::SetStatusTitle(
+    const flutter::MethodCall<flutter::EncodableValue>& method_call,
+    std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
+  const auto& args = std::get<flutter::EncodableMap>(*method_call.arguments());
+  const auto* label = std::get_if<std::string>(ValueOrNull(args, "label"));
+  const auto* before =
+      std::get_if<bool>(ValueOrNull(args, "labelBeforeSpeed"));
+  const auto* show_speed = std::get_if<bool>(ValueOrNull(args, "showSpeed"));
+  const auto upload = tray_manager::ReadInteger(ValueOrNull(args, "upload"));
+  const auto download = tray_manager::ReadInteger(ValueOrNull(args, "download"));
+  if (label == nullptr || before == nullptr || show_speed == nullptr ||
+      !upload || !download || *upload < 0 || *download < 0) {
+    result->Error("bad_args", "invalid status title arguments");
+    return;
+  }
+
+  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+  status_label_ = converter.from_bytes(*label);
+  status_label_before_speed_ = *before;
+  if (*show_speed) {
+    speed_title_ =
+        L"↑ " + NormalizeSpeedNumber(static_cast<uint64_t>(*upload)) +
+        L"\n↓ " + NormalizeSpeedNumber(static_cast<uint64_t>(*download));
+  } else {
+    speed_title_.clear();
+  }
   _UpdateToolTip();
   result->Success(flutter::EncodableValue(true));
 }
@@ -903,6 +951,8 @@ void TrayManagerPlugin::HandleMethodCall(
     SetSpeedTitle(method_call, std::move(result));
   } else if (method_call.method_name().compare("clearSpeedTitle") == 0) {
     ClearSpeedTitle(method_call, std::move(result));
+  } else if (method_call.method_name().compare("setStatusTitle") == 0) {
+    SetStatusTitle(method_call, std::move(result));
   } else if (method_call.method_name().compare("setToolTip") == 0) {
     SetToolTip(method_call, std::move(result));
   } else if (method_call.method_name().compare("setContextMenu") == 0) {

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/enum/enum.dart';
+import 'package:bett_box/providers/app.dart';
 import 'package:bett_box/providers/config.dart';
 import 'package:bett_box/providers/state.dart';
 import 'package:bett_box/state.dart';
@@ -28,15 +29,34 @@ class _TrayContainerState extends ConsumerState<TrayManager> with TrayListener {
         globalState.appController.updateTray();
       }
     });
-    // BETTBOX-CUSTOM: 完整节点链路开关不在 TrayState 中，切换后单独重建托盘菜单。
+    // BETTBOX-CUSTOM: 完整节点链路与「托盘显示策略组」设置不在 TrayState 中，
+    // 变化后单独刷新托盘；显示策略组开启时，隐藏组的 now 变化也要刷新标签。
     ref.listenManual(
-      appSettingProvider.select((state) => state.trayShowProxyChain),
+      appSettingProvider.select(
+        (state) => (
+          state.trayShowProxyChain,
+          state.trayStatusGroupEnable,
+          state.trayStatusGroupName,
+          state.trayStatusShowName,
+          state.trayStatusShowNode,
+          state.trayStatusShowChain,
+          state.trayStatusBeforeSpeed,
+        ),
+      ),
       (prev, next) {
         if (prev != next) {
           globalState.appController.updateTray();
         }
       },
     );
+    ref.listenManual(groupsProvider, (prev, next) {
+      if (prev != next &&
+          ref.read(
+            appSettingProvider.select((state) => state.trayStatusGroupEnable),
+          )) {
+        globalState.appController.updateTray();
+      }
+    });
   }
 
   @override

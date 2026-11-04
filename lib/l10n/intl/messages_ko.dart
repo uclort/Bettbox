@@ -1754,6 +1754,48 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayShowProxyChainDesc": MessageLookupByLibrary.simpleMessage(
       "트레이 프록시 그룹 오른쪽에 선택 체인을 단계별로 표시합니다(예: Fallback → Other → 노드). 끄면 선택 항목과 괄호 안의 최종 노드만 표시",
     ),
+    "trayStatusAfterSpeed": MessageLookupByLibrary.simpleMessage(
+      "속도 뒤",
+    ),
+    "trayStatusBeforeSpeed": MessageLookupByLibrary.simpleMessage(
+      "속도 앞",
+    ),
+    "trayStatusGroup": MessageLookupByLibrary.simpleMessage(
+      "트레이에 프록시 그룹 표시",
+    ),
+    "trayStatusGroupDesc": MessageLookupByLibrary.simpleMessage(
+      "지정한 프록시 그룹의 현재 선택을 트레이 아이콘 옆에 표시합니다(Windows는 마우스 오버 툴팁)",
+    ),
+    "trayStatusGroupHidden": MessageLookupByLibrary.simpleMessage(
+      "(숨김)",
+    ),
+    "trayStatusGroupMissing": MessageLookupByLibrary.simpleMessage(
+      "현재 프로필에 없음",
+    ),
+    "trayStatusGroupName": MessageLookupByLibrary.simpleMessage(
+      "표시할 그룹",
+    ),
+    "trayStatusGroupNotSelected": MessageLookupByLibrary.simpleMessage(
+      "선택 안 됨",
+    ),
+    "trayStatusPosition": MessageLookupByLibrary.simpleMessage(
+      "표시 위치",
+    ),
+    "trayStatusShowChain": MessageLookupByLibrary.simpleMessage(
+      "전체 체인 표시",
+    ),
+    "trayStatusShowChainDesc": MessageLookupByLibrary.simpleMessage(
+      "최종 노드까지 단계별 표시(예: Fallback → Other → 노드)",
+    ),
+    "trayStatusShowName": MessageLookupByLibrary.simpleMessage(
+      "그룹 이름 표시",
+    ),
+    "trayStatusShowNode": MessageLookupByLibrary.simpleMessage(
+      "노드 표시",
+    ),
+    "trayStatusShowNodeDesc": MessageLookupByLibrary.simpleMessage(
+      "선택 체인의 최종 노드 표시",
+    ),
     "tryManualRefresh": MessageLookupByLibrary.simpleMessage(
       "수동 새로고침을 시도해 보세요",
     ),

@@ -10274,6 +10274,146 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Tray Proxy Group`
+  String get trayStatusGroup {
+    return Intl.message(
+      "Tray Proxy Group",
+      name: 'trayStatusGroup',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show the current selection of a chosen proxy group next to the tray icon (in the hover tooltip on Windows)`
+  String get trayStatusGroupDesc {
+    return Intl.message(
+      "Show the current selection of a chosen proxy group next to the tray icon (in the hover tooltip on Windows)",
+      name: 'trayStatusGroupDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Proxy group`
+  String get trayStatusGroupName {
+    return Intl.message(
+      "Proxy group",
+      name: 'trayStatusGroupName',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Not selected`
+  String get trayStatusGroupNotSelected {
+    return Intl.message(
+      "Not selected",
+      name: 'trayStatusGroupNotSelected',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Not in current profile`
+  String get trayStatusGroupMissing {
+    return Intl.message(
+      "Not in current profile",
+      name: 'trayStatusGroupMissing',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `(hidden)`
+  String get trayStatusGroupHidden {
+    return Intl.message(
+      "(hidden)",
+      name: 'trayStatusGroupHidden',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show group name`
+  String get trayStatusShowName {
+    return Intl.message(
+      "Show group name",
+      name: 'trayStatusShowName',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show node`
+  String get trayStatusShowNode {
+    return Intl.message(
+      "Show node",
+      name: 'trayStatusShowNode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The node finally used along the selection chain`
+  String get trayStatusShowNodeDesc {
+    return Intl.message(
+      "The node finally used along the selection chain",
+      name: 'trayStatusShowNodeDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show full chain`
+  String get trayStatusShowChain {
+    return Intl.message(
+      "Show full chain",
+      name: 'trayStatusShowChain',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Every level down to the final node, e.g. Fallback → Other → node`
+  String get trayStatusShowChainDesc {
+    return Intl.message(
+      "Every level down to the final node, e.g. Fallback → Other → node",
+      name: 'trayStatusShowChainDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Position`
+  String get trayStatusPosition {
+    return Intl.message(
+      "Position",
+      name: 'trayStatusPosition',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `After speed`
+  String get trayStatusAfterSpeed {
+    return Intl.message(
+      "After speed",
+      name: 'trayStatusAfterSpeed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Before speed`
+  String get trayStatusBeforeSpeed {
+    return Intl.message(
+      "Before speed",
+      name: 'trayStatusBeforeSpeed',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

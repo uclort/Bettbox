@@ -1204,5 +1204,19 @@
   "tailscaleNodeRelay": "Relay",
   "trayShowProxyChain": "Tray Full Proxy Chain",
   "trayShowProxyChainDesc": "Show every level of the selected chain in the tray, e.g. Fallback → Other → node. When off, only the selection and its final node are shown",
-  "tailscaleDesc": "Tailnet access: Tailscale App coexistence or built-in node"
+  "tailscaleDesc": "Tailnet access: Tailscale App coexistence or built-in node",
+  "trayStatusGroup": "Tray Proxy Group",
+  "trayStatusGroupDesc": "Show the current selection of a chosen proxy group next to the tray icon (in the hover tooltip on Windows)",
+  "trayStatusGroupName": "Proxy group",
+  "trayStatusGroupNotSelected": "Not selected",
+  "trayStatusGroupMissing": "Not in current profile",
+  "trayStatusGroupHidden": "(hidden)",
+  "trayStatusShowName": "Show group name",
+  "trayStatusShowNode": "Show node",
+  "trayStatusShowNodeDesc": "The node finally used along the selection chain",
+  "trayStatusShowChain": "Show full chain",
+  "trayStatusShowChainDesc": "Every level down to the final node, e.g. Fallback → Other → node",
+  "trayStatusPosition": "Position",
+  "trayStatusAfterSpeed": "After speed",
+  "trayStatusBeforeSpeed": "Before speed"
 }

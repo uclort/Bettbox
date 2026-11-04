@@ -1164,5 +1164,19 @@
   "tailscaleBypassDomainDesc": "هنگام فعال بودن به فهرست استثنای پروکسی سیستم افزوده می‌شود",
   "trayShowProxyChain": "نمایش کامل زنجیره پروکسی در سینی",
   "trayShowProxyChainDesc": "نمایش مرحله‌به‌مرحله زنجیره انتخاب در سینی، مانند Fallback → Other → گره. در حالت خاموش فقط مورد انتخاب‌شده و گره نهایی نمایش داده می‌شود",
-  "tailscaleDesc": "دسترسی به Tailnet: همزیستی با Tailscale App یا گره داخلی"
+  "tailscaleDesc": "دسترسی به Tailnet: همزیستی با Tailscale App یا گره داخلی",
+  "trayStatusGroup": "نمایش گروه پروکسی در سینی",
+  "trayStatusGroupDesc": "نمایش انتخاب فعلی گروه پروکسی مشخص‌شده کنار آیکون سینی (در ویندوز در راهنمای شناور)",
+  "trayStatusGroupName": "گروه نمایش داده‌شده",
+  "trayStatusGroupNotSelected": "انتخاب نشده",
+  "trayStatusGroupMissing": "در پروفایل فعلی وجود ندارد",
+  "trayStatusGroupHidden": "(پنهان)",
+  "trayStatusShowName": "نمایش نام گروه",
+  "trayStatusShowNode": "نمایش گره",
+  "trayStatusShowNodeDesc": "گره نهایی زنجیره انتخاب",
+  "trayStatusShowChain": "نمایش کامل زنجیره",
+  "trayStatusShowChainDesc": "همه سطوح تا گره نهایی، مانند Fallback → Other → گره",
+  "trayStatusPosition": "موقعیت",
+  "trayStatusAfterSpeed": "بعد از سرعت",
+  "trayStatusBeforeSpeed": "قبل از سرعت"
 }

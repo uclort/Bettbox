@@ -2230,6 +2230,48 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayShowProxyChainDesc": MessageLookupByLibrary.simpleMessage(
       "Show every level of the selected chain in the tray, e.g. Fallback → Other → node. When off, only the selection and its final node are shown",
     ),
+    "trayStatusAfterSpeed": MessageLookupByLibrary.simpleMessage(
+      "After speed",
+    ),
+    "trayStatusBeforeSpeed": MessageLookupByLibrary.simpleMessage(
+      "Before speed",
+    ),
+    "trayStatusGroup": MessageLookupByLibrary.simpleMessage(
+      "Tray Proxy Group",
+    ),
+    "trayStatusGroupDesc": MessageLookupByLibrary.simpleMessage(
+      "Show the current selection of a chosen proxy group next to the tray icon (in the hover tooltip on Windows)",
+    ),
+    "trayStatusGroupHidden": MessageLookupByLibrary.simpleMessage(
+      "(hidden)",
+    ),
+    "trayStatusGroupMissing": MessageLookupByLibrary.simpleMessage(
+      "Not in current profile",
+    ),
+    "trayStatusGroupName": MessageLookupByLibrary.simpleMessage(
+      "Proxy group",
+    ),
+    "trayStatusGroupNotSelected": MessageLookupByLibrary.simpleMessage(
+      "Not selected",
+    ),
+    "trayStatusPosition": MessageLookupByLibrary.simpleMessage(
+      "Position",
+    ),
+    "trayStatusShowChain": MessageLookupByLibrary.simpleMessage(
+      "Show full chain",
+    ),
+    "trayStatusShowChainDesc": MessageLookupByLibrary.simpleMessage(
+      "Every level down to the final node, e.g. Fallback → Other → node",
+    ),
+    "trayStatusShowName": MessageLookupByLibrary.simpleMessage(
+      "Show group name",
+    ),
+    "trayStatusShowNode": MessageLookupByLibrary.simpleMessage(
+      "Show node",
+    ),
+    "trayStatusShowNodeDesc": MessageLookupByLibrary.simpleMessage(
+      "The node finally used along the selection chain",
+    ),
     "tryManualRefresh": MessageLookupByLibrary.simpleMessage(
       "Please try manual refresh",
     ),

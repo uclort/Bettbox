@@ -1762,6 +1762,48 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayShowProxyChainDesc": MessageLookupByLibrary.simpleMessage(
       "トレイのプロキシグループ右側に選択チェーンを段階的に表示します（例：Fallback → Other → ノード）。オフの場合は選択項目と括弧内の最終ノードのみ表示",
     ),
+    "trayStatusAfterSpeed": MessageLookupByLibrary.simpleMessage(
+      "速度の後",
+    ),
+    "trayStatusBeforeSpeed": MessageLookupByLibrary.simpleMessage(
+      "速度の前",
+    ),
+    "trayStatusGroup": MessageLookupByLibrary.simpleMessage(
+      "トレイにプロキシグループを表示",
+    ),
+    "trayStatusGroupDesc": MessageLookupByLibrary.simpleMessage(
+      "指定したプロキシグループの現在の選択をトレイアイコンの横に表示します（Windows ではホバー時のツールチップ）",
+    ),
+    "trayStatusGroupHidden": MessageLookupByLibrary.simpleMessage(
+      "（非表示）",
+    ),
+    "trayStatusGroupMissing": MessageLookupByLibrary.simpleMessage(
+      "現在のプロファイルにありません",
+    ),
+    "trayStatusGroupName": MessageLookupByLibrary.simpleMessage(
+      "表示するグループ",
+    ),
+    "trayStatusGroupNotSelected": MessageLookupByLibrary.simpleMessage(
+      "未選択",
+    ),
+    "trayStatusPosition": MessageLookupByLibrary.simpleMessage(
+      "表示位置",
+    ),
+    "trayStatusShowChain": MessageLookupByLibrary.simpleMessage(
+      "完全なチェーンを表示",
+    ),
+    "trayStatusShowChainDesc": MessageLookupByLibrary.simpleMessage(
+      "最終ノードまで段階的に表示（例：Fallback → Other → ノード）",
+    ),
+    "trayStatusShowName": MessageLookupByLibrary.simpleMessage(
+      "グループ名を表示",
+    ),
+    "trayStatusShowNode": MessageLookupByLibrary.simpleMessage(
+      "ノードを表示",
+    ),
+    "trayStatusShowNodeDesc": MessageLookupByLibrary.simpleMessage(
+      "選択チェーンの最終ノードを表示",
+    ),
     "tryManualRefresh": MessageLookupByLibrary.simpleMessage(
       "手動で再読み込みをお試しください",
     ),

@@ -1164,5 +1164,19 @@
   "tailscaleBypassDomainDesc": "활성화 시 시스템 프록시 제외 목록에 추가",
   "trayShowProxyChain": "트레이에 전체 프록시 체인 표시",
   "trayShowProxyChainDesc": "트레이 프록시 그룹 오른쪽에 선택 체인을 단계별로 표시합니다(예: Fallback → Other → 노드). 끄면 선택 항목과 괄호 안의 최종 노드만 표시",
-  "tailscaleDesc": "Tailnet 연결: Tailscale App 공존 또는 내장 노드"
+  "tailscaleDesc": "Tailnet 연결: Tailscale App 공존 또는 내장 노드",
+  "trayStatusGroup": "트레이에 프록시 그룹 표시",
+  "trayStatusGroupDesc": "지정한 프록시 그룹의 현재 선택을 트레이 아이콘 옆에 표시합니다(Windows는 마우스 오버 툴팁)",
+  "trayStatusGroupName": "표시할 그룹",
+  "trayStatusGroupNotSelected": "선택 안 됨",
+  "trayStatusGroupMissing": "현재 프로필에 없음",
+  "trayStatusGroupHidden": "(숨김)",
+  "trayStatusShowName": "그룹 이름 표시",
+  "trayStatusShowNode": "노드 표시",
+  "trayStatusShowNodeDesc": "선택 체인의 최종 노드 표시",
+  "trayStatusShowChain": "전체 체인 표시",
+  "trayStatusShowChainDesc": "최종 노드까지 단계별 표시(예: Fallback → Other → 노드)",
+  "trayStatusPosition": "표시 위치",
+  "trayStatusAfterSpeed": "속도 뒤",
+  "trayStatusBeforeSpeed": "속도 앞"
 }

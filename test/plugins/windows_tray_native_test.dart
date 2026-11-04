@@ -27,6 +27,24 @@ void main() {
     expect(setSpeedBlock, contains('_UpdateToolTip();'));
   });
 
+  test('Windows 策略组标签与网速一起写入 tooltip 并按设置排序', () {
+    final statusBlock = RegExp(
+      r'^void TrayManagerPlugin::SetStatusTitle[\s\S]*?^}',
+      multiLine: true,
+    ).firstMatch(source)?.group(0);
+    expect(statusBlock, isNotNull);
+    expect(statusBlock, contains('status_label_before_speed_ = *before;'));
+    expect(statusBlock, contains('speed_title_.clear();'));
+    expect(statusBlock, contains('_UpdateToolTip();'));
+    expect(source, contains('compare("setStatusTitle") == 0'));
+
+    final tooltipBlock = RegExp(
+      r'^void TrayManagerPlugin::_UpdateToolTip\(\)[\s\S]*?^}',
+      multiLine: true,
+    ).firstMatch(source)?.group(0);
+    expect(tooltipBlock, contains('if (status_label_before_speed_)'));
+  });
+
   test('Windows 启用图标按系统明暗使用高对比前景色', () {
     expect(source, contains('bool tray_icon_dark_ = false;'));
     expect(source, contains('*brightness == "dark"'));

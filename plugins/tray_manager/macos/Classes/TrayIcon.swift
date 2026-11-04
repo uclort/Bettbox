@@ -9,7 +9,7 @@ import Cocoa
 
 public class TrayIcon: NSView {
     static let inactiveColor = NSColor(srgbRed: 0.60, green: 0.60, blue: 0.60, alpha: 1)
-    private static let speedFontSize: CGFloat = 9.5
+    static let speedFontSize: CGFloat = 9.5
     private static let speedLineHeight: CGFloat = 10
     private static let speedPadding: CGFloat = 12
     private static let speedMinimumWidth: CGFloat = 66
@@ -35,6 +35,15 @@ public class TrayIcon: NSView {
     private var isActive = true
     private var lastSpeedTitle: String?
     private var lastSpeedActive: Bool?
+    // BETTBOX-CUSTOM: 策略组标签（可与网速组合）。非 nil 时整块内容（图标 + 标签 +
+    // 网速）绘制为一张按当前外观实时着色的图片，nil 时沿用原图标与网速标题。
+    private var statusContent: StatusContent?
+
+    struct StatusContent: Equatable {
+        let label: String
+        let labelBeforeSpeed: Bool
+        let speedLines: [String]?
+    }
     
     public init() {
         super.init(frame: NSRect.zero)
@@ -75,6 +84,7 @@ public class TrayIcon: NSView {
     }
     
     public func setTitle(_ title: String) {
+        exitStatusContent()
         if let button = statusItem?.button {
             button.title  = title
             syncClickTargetFrame(button)
@@ -95,6 +105,7 @@ public class TrayIcon: NSView {
         download: UInt64,
         active: Bool
     ) {
+        exitStatusContent()
         let uploadText = formatSpeed(upload)
         let downloadText = formatSpeed(download)
         let title = "  \(leftPad(uploadText, width: 6))\n  \(leftPad(downloadText, width: 6))"
@@ -157,6 +168,7 @@ public class TrayIcon: NSView {
     }
 
     public func clearSpeedTitle() {
+        exitStatusContent()
         lastSpeedTitle = nil
         lastSpeedActive = nil
         statusItem?.length = NSStatusItem.variableLength
@@ -166,6 +178,156 @@ public class TrayIcon: NSView {
             button.needsDisplay = true
             syncClickTargetFrame(button)
         }
+    }
+
+    /// BETTBOX-CUSTOM: 图标旁显示策略组标签；[showSpeed] 为 false 时标签占用网速位置。
+    public func setStatusTitle(
+        label: String,
+        labelBeforeSpeed: Bool,
+        showSpeed: Bool,
+        upload: UInt64,
+        download: UInt64
+    ) {
+        let content = StatusContent(
+            label: label,
+            labelBeforeSpeed: labelBeforeSpeed,
+            speedLines: showSpeed
+                ? [
+                    leftPad(formatSpeed(upload), width: 6),
+                    leftPad(formatSpeed(download), width: 6),
+                ]
+                : nil
+        )
+        if statusContent == content {
+            return
+        }
+        statusContent = content
+        // 回到纯网速模式时必须重新绘制标题，不能命中旧缓存。
+        lastSpeedTitle = nil
+        lastSpeedActive = nil
+        guard let statusItem, let button = statusItem.button else {
+            return
+        }
+        statusItem.length = NSStatusItem.variableLength
+        button.title = ""
+        button.attributedTitle = NSAttributedString(string: "")
+        updateImageAppearance(button)
+        button.needsDisplay = true
+        syncClickTargetFrame(button)
+    }
+
+    private func exitStatusContent() {
+        guard statusContent != nil else {
+            return
+        }
+        statusContent = nil
+        if let button = statusItem?.button {
+            updateImageAppearance(button)
+            syncClickTargetFrame(button)
+        }
+    }
+
+    static let statusGap: CGFloat = 4
+    static let statusSpeedLineHeight: CGFloat = 10
+
+    /// 组合图标、标签与两行网速。绘制回调在状态栏按钮绘制时执行，
+    /// `labelColor` 随菜单栏明暗实时解析；未接管流量时图标为灰色。
+    static func composeStatusImage(
+        icon: NSImage?,
+        iconActive: Bool,
+        content: StatusContent,
+        barHeight: CGFloat
+    ) -> NSImage {
+        let labelFont = NSFont.menuBarFont(ofSize: 0)
+        let speedFont = NSFont.monospacedSystemFont(
+            ofSize: speedFontSize,
+            weight: .regular
+        )
+        let labelSize = (content.label as NSString).size(
+            withAttributes: [.font: labelFont]
+        )
+        let speedLineSizes = (content.speedLines ?? []).map {
+            ($0 as NSString).size(withAttributes: [.font: speedFont])
+        }
+        let speedWidth = ceil(speedLineSizes.map(\.width).max() ?? 0)
+        let iconSize = icon?.size ?? .zero
+        let labelWidth = ceil(labelSize.width)
+
+        var segments: [(kind: Int, width: CGFloat)] = [(0, labelWidth)]
+        if content.speedLines != nil {
+            if content.labelBeforeSpeed {
+                segments.append((1, speedWidth))
+            } else {
+                segments.insert((1, speedWidth), at: 0)
+            }
+        }
+        var totalWidth = iconSize.width
+        for segment in segments {
+            totalWidth += (totalWidth > 0 ? statusGap : 0) + segment.width
+        }
+        totalWidth = ceil(totalWidth + 2)
+
+        let image = NSImage(
+            size: NSSize(width: totalWidth, height: barHeight),
+            flipped: false
+        ) { _ in
+            let textColor = NSColor.labelColor
+            var x: CGFloat = 0
+            if let icon {
+                let iconRect = NSRect(
+                    x: 0,
+                    y: floor((barHeight - iconSize.height) / 2),
+                    width: iconSize.width,
+                    height: iconSize.height
+                )
+                icon.draw(in: iconRect)
+                (iconActive ? textColor : inactiveColor).set()
+                iconRect.fill(using: .sourceAtop)
+                x = iconSize.width
+            }
+            for segment in segments {
+                if x > 0 {
+                    x += statusGap
+                }
+                if segment.kind == 0 {
+                    (content.label as NSString).draw(
+                        at: NSPoint(
+                            x: x,
+                            y: (barHeight - labelSize.height) / 2
+                        ),
+                        withAttributes: [
+                            .font: labelFont,
+                            .foregroundColor: textColor,
+                        ]
+                    )
+                } else if let lines = content.speedLines {
+                    let blockBottom =
+                        (barHeight - statusSpeedLineHeight * 2) / 2
+                    for (index, line) in lines.enumerated() {
+                        let size = speedLineSizes[index]
+                        // 第一行（上传）在上，右对齐。
+                        let lineBottom = blockBottom +
+                            statusSpeedLineHeight * CGFloat(lines.count - 1 - index)
+                        (line as NSString).draw(
+                            at: NSPoint(
+                                x: x + segment.width - size.width,
+                                y: lineBottom +
+                                    (statusSpeedLineHeight - size.height) / 2
+                            ),
+                            withAttributes: [
+                                .font: speedFont,
+                                .foregroundColor: textColor,
+                            ]
+                        )
+                    }
+                }
+                x += segment.width
+            }
+            return true
+        }
+        image.cacheMode = .never
+        image.isTemplate = false
+        return image
     }
 
     private func formatSpeed(_ bytesPerSecond: UInt64) -> String {
@@ -200,6 +362,19 @@ public class TrayIcon: NSView {
     }
 
     private func updateImageAppearance(_ button: NSStatusBarButton) {
+        if let statusContent {
+            button.appearsDisabled = false
+            button.contentTintColor = nil
+            button.image = Self.composeStatusImage(
+                icon: sourceImage,
+                iconActive: isActive,
+                content: statusContent,
+                barHeight: button.bounds.height > 0
+                    ? button.bounds.height
+                    : NSStatusBar.system.thickness
+            )
+            return
+        }
         guard let sourceImage else {
             return
         }

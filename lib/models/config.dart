@@ -230,6 +230,14 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(true) bool autoCheckUpdate,
     // BETTBOX-CUSTOM: 托盘策略组右侧逐级显示完整节点链路，默认只补最终节点。
     @Default(false) bool trayShowProxyChain,
+    // BETTBOX-CUSTOM: 托盘图标旁显示指定策略组（可含隐藏组）的名称 / 节点 / 链路，
+    // 位置可在网速前或后；网速关闭时占用网速的位置。
+    @Default(false) bool trayStatusGroupEnable,
+    @Default('') String trayStatusGroupName,
+    @Default(false) bool trayStatusShowName,
+    @Default(true) bool trayStatusShowNode,
+    @Default(false) bool trayStatusShowChain,
+    @Default(false) bool trayStatusBeforeSpeed,
     @Default(false) bool showLabel,
     @Default(false) bool disclaimerAccepted,
     @Default(true) bool minimizeOnExit,

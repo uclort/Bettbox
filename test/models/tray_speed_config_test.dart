@@ -19,4 +19,40 @@ void main() {
       expect(restored.enableTraySpeed, isTrue);
     });
   });
+
+  // BETTBOX-CUSTOM: 托盘完整节点链路与托盘显示策略组。
+  group('AppSettingProps 托盘策略组显示', () {
+    test('默认值', () {
+      const props = AppSettingProps();
+      expect(props.trayShowProxyChain, isFalse);
+      expect(props.trayStatusGroupEnable, isFalse);
+      expect(props.trayStatusGroupName, isEmpty);
+      expect(props.trayStatusShowName, isFalse);
+      expect(props.trayStatusShowNode, isTrue);
+      expect(props.trayStatusShowChain, isFalse);
+      expect(props.trayStatusBeforeSpeed, isFalse);
+    });
+
+    test('序列化后能够恢复全部设置', () {
+      const props = AppSettingProps(
+        trayShowProxyChain: true,
+        trayStatusGroupEnable: true,
+        trayStatusGroupName: 'Global',
+        trayStatusShowName: true,
+        trayStatusShowNode: false,
+        trayStatusShowChain: true,
+        trayStatusBeforeSpeed: true,
+      );
+      final restored = AppSettingProps.fromJson(
+        jsonDecode(jsonEncode(props.toJson())) as Map<String, dynamic>,
+      );
+      expect(restored.trayShowProxyChain, isTrue);
+      expect(restored.trayStatusGroupEnable, isTrue);
+      expect(restored.trayStatusGroupName, 'Global');
+      expect(restored.trayStatusShowName, isTrue);
+      expect(restored.trayStatusShowNode, isFalse);
+      expect(restored.trayStatusShowChain, isTrue);
+      expect(restored.trayStatusBeforeSpeed, isTrue);
+    });
+  });
 }

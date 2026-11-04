@@ -2209,6 +2209,48 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayShowProxyChainDesc": MessageLookupByLibrary.simpleMessage(
       "Показывать в трее всю цепочку выбора, например Fallback → Other → узел. Если выключено, показываются только выбор и конечный узел",
     ),
+    "trayStatusAfterSpeed": MessageLookupByLibrary.simpleMessage(
+      "После скорости",
+    ),
+    "trayStatusBeforeSpeed": MessageLookupByLibrary.simpleMessage(
+      "Перед скоростью",
+    ),
+    "trayStatusGroup": MessageLookupByLibrary.simpleMessage(
+      "Группа прокси в трее",
+    ),
+    "trayStatusGroupDesc": MessageLookupByLibrary.simpleMessage(
+      "Показывать текущий выбор указанной группы рядом со значком в трее (в Windows — во всплывающей подсказке)",
+    ),
+    "trayStatusGroupHidden": MessageLookupByLibrary.simpleMessage(
+      "(скрытая)",
+    ),
+    "trayStatusGroupMissing": MessageLookupByLibrary.simpleMessage(
+      "Нет в текущем профиле",
+    ),
+    "trayStatusGroupName": MessageLookupByLibrary.simpleMessage(
+      "Группа",
+    ),
+    "trayStatusGroupNotSelected": MessageLookupByLibrary.simpleMessage(
+      "Не выбрана",
+    ),
+    "trayStatusPosition": MessageLookupByLibrary.simpleMessage(
+      "Положение",
+    ),
+    "trayStatusShowChain": MessageLookupByLibrary.simpleMessage(
+      "Показывать всю цепочку",
+    ),
+    "trayStatusShowChainDesc": MessageLookupByLibrary.simpleMessage(
+      "Все уровни до конечного узла, например Fallback → Other → узел",
+    ),
+    "trayStatusShowName": MessageLookupByLibrary.simpleMessage(
+      "Показывать имя группы",
+    ),
+    "trayStatusShowNode": MessageLookupByLibrary.simpleMessage(
+      "Показывать узел",
+    ),
+    "trayStatusShowNodeDesc": MessageLookupByLibrary.simpleMessage(
+      "Конечный узел цепочки выбора",
+    ),
     "tryManualRefresh": MessageLookupByLibrary.simpleMessage(
       "Обновите вручную",
     ),

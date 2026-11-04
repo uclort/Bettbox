@@ -1204,5 +1204,19 @@
   "tailscaleNodeRelay": "中繼",
   "trayShowProxyChain": "托盤顯示完整節點鏈路",
   "trayShowProxyChainDesc": "托盤策略組右側逐級顯示選中鏈路，如 Fallback → Other → 節點；關閉時只顯示選中項和括號中的最終節點",
-  "tailscaleDesc": "接入 Tailnet：Tailscale App 共存或內建節點"
+  "tailscaleDesc": "接入 Tailnet：Tailscale App 共存或內建節點",
+  "trayStatusGroup": "托盤顯示策略組",
+  "trayStatusGroupDesc": "在托盤圖示旁顯示指定策略組的當前選擇（Windows 顯示在懸浮提示中）",
+  "trayStatusGroupName": "顯示的策略組",
+  "trayStatusGroupNotSelected": "未選擇",
+  "trayStatusGroupMissing": "當前配置中不存在",
+  "trayStatusGroupHidden": "（隱藏）",
+  "trayStatusShowName": "顯示策略組名稱",
+  "trayStatusShowNode": "顯示具體節點",
+  "trayStatusShowNodeDesc": "沿選擇鏈顯示最終使用的節點",
+  "trayStatusShowChain": "顯示完整鏈路",
+  "trayStatusShowChainDesc": "逐級顯示到最終節點，如 Fallback → Other → 節點",
+  "trayStatusPosition": "顯示位置",
+  "trayStatusAfterSpeed": "網速後",
+  "trayStatusBeforeSpeed": "網速前"
 }

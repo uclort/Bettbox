@@ -1164,5 +1164,19 @@
   "tailscaleBypassDomainDesc": "有効時にシステムプロキシの除外リストへ追加",
   "trayShowProxyChain": "トレイに完全なプロキシチェーンを表示",
   "trayShowProxyChainDesc": "トレイのプロキシグループ右側に選択チェーンを段階的に表示します（例：Fallback → Other → ノード）。オフの場合は選択項目と括弧内の最終ノードのみ表示",
-  "tailscaleDesc": "Tailnet 接続：Tailscale App との共存または内蔵ノード"
+  "tailscaleDesc": "Tailnet 接続：Tailscale App との共存または内蔵ノード",
+  "trayStatusGroup": "トレイにプロキシグループを表示",
+  "trayStatusGroupDesc": "指定したプロキシグループの現在の選択をトレイアイコンの横に表示します（Windows ではホバー時のツールチップ）",
+  "trayStatusGroupName": "表示するグループ",
+  "trayStatusGroupNotSelected": "未選択",
+  "trayStatusGroupMissing": "現在のプロファイルにありません",
+  "trayStatusGroupHidden": "（非表示）",
+  "trayStatusShowName": "グループ名を表示",
+  "trayStatusShowNode": "ノードを表示",
+  "trayStatusShowNodeDesc": "選択チェーンの最終ノードを表示",
+  "trayStatusShowChain": "完全なチェーンを表示",
+  "trayStatusShowChainDesc": "最終ノードまで段階的に表示（例：Fallback → Other → ノード）",
+  "trayStatusPosition": "表示位置",
+  "trayStatusAfterSpeed": "速度の後",
+  "trayStatusBeforeSpeed": "速度の前"
 }

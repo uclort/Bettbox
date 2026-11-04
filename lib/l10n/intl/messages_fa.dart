@@ -2158,6 +2158,48 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayShowProxyChainDesc": MessageLookupByLibrary.simpleMessage(
       "نمایش مرحله‌به‌مرحله زنجیره انتخاب در سینی، مانند Fallback → Other → گره. در حالت خاموش فقط مورد انتخاب‌شده و گره نهایی نمایش داده می‌شود",
     ),
+    "trayStatusAfterSpeed": MessageLookupByLibrary.simpleMessage(
+      "بعد از سرعت",
+    ),
+    "trayStatusBeforeSpeed": MessageLookupByLibrary.simpleMessage(
+      "قبل از سرعت",
+    ),
+    "trayStatusGroup": MessageLookupByLibrary.simpleMessage(
+      "نمایش گروه پروکسی در سینی",
+    ),
+    "trayStatusGroupDesc": MessageLookupByLibrary.simpleMessage(
+      "نمایش انتخاب فعلی گروه پروکسی مشخص‌شده کنار آیکون سینی (در ویندوز در راهنمای شناور)",
+    ),
+    "trayStatusGroupHidden": MessageLookupByLibrary.simpleMessage(
+      "(پنهان)",
+    ),
+    "trayStatusGroupMissing": MessageLookupByLibrary.simpleMessage(
+      "در پروفایل فعلی وجود ندارد",
+    ),
+    "trayStatusGroupName": MessageLookupByLibrary.simpleMessage(
+      "گروه نمایش داده‌شده",
+    ),
+    "trayStatusGroupNotSelected": MessageLookupByLibrary.simpleMessage(
+      "انتخاب نشده",
+    ),
+    "trayStatusPosition": MessageLookupByLibrary.simpleMessage(
+      "موقعیت",
+    ),
+    "trayStatusShowChain": MessageLookupByLibrary.simpleMessage(
+      "نمایش کامل زنجیره",
+    ),
+    "trayStatusShowChainDesc": MessageLookupByLibrary.simpleMessage(
+      "همه سطوح تا گره نهایی، مانند Fallback → Other → گره",
+    ),
+    "trayStatusShowName": MessageLookupByLibrary.simpleMessage(
+      "نمایش نام گروه",
+    ),
+    "trayStatusShowNode": MessageLookupByLibrary.simpleMessage(
+      "نمایش گره",
+    ),
+    "trayStatusShowNodeDesc": MessageLookupByLibrary.simpleMessage(
+      "گره نهایی زنجیره انتخاب",
+    ),
     "tryManualRefresh": MessageLookupByLibrary.simpleMessage(
       "لطفاً به صورت دستی بروزرسانی کنید",
     ),

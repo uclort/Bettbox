@@ -1,6 +1,7 @@
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/common/network_matcher.dart';
 import 'package:bett_box/enum/enum.dart';
+import 'package:bett_box/models/models.dart';
 import 'package:bett_box/plugins/app.dart';
 import 'package:bett_box/plugins/service.dart';
 import 'package:bett_box/providers/config.dart';
@@ -749,6 +750,218 @@ class EnableTraySpeedItem extends ConsumerWidget {
   }
 }
 
+// BETTBOX-CUSTOM: 托盘策略组右侧逐级显示完整节点链路（默认关闭，只补最终节点）。
+class TrayShowProxyChainItem extends ConsumerWidget {
+  const TrayShowProxyChainItem({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final trayShowProxyChain = ref.watch(
+      appSettingProvider.select((state) => state.trayShowProxyChain),
+    );
+    return ListItem.switchItem(
+      title: Text(appLocalizations.trayShowProxyChain),
+      subtitle: Text(appLocalizations.trayShowProxyChainDesc),
+      delegate: SwitchDelegate(
+        value: trayShowProxyChain,
+        onChanged: (bool value) {
+          ref
+              .read(appSettingProvider.notifier)
+              .updateState(
+                (state) => state.copyWith(trayShowProxyChain: value),
+              );
+        },
+      ),
+    );
+  }
+}
+
+// BETTBOX-CUSTOM: 托盘图标旁显示指定策略组（含隐藏组）。开启后可选组名 / 具体节点 /
+// 完整链路三项，网速开启时可选放在网速前或后，网速关闭时占用网速位置。
+// Windows 托盘没有标题位，写入悬浮提示。刷新由 TrayManager 监听这些字段触发。
+class TrayStatusGroupItem extends ConsumerWidget {
+  const TrayStatusGroupItem({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final enable = ref.watch(
+      appSettingProvider.select((state) => state.trayStatusGroupEnable),
+    );
+    return ListItem.switchItem(
+      title: Text(appLocalizations.trayStatusGroup),
+      subtitle: Text(appLocalizations.trayStatusGroupDesc),
+      delegate: SwitchDelegate(
+        value: enable,
+        onChanged: (bool value) {
+          final groups = ref.read(groupsProvider);
+          ref
+              .read(appSettingProvider.notifier)
+              .updateState((state) {
+                // 首次开启时默认选中第一个策略组，避免开启后什么都不显示。
+                final name =
+                    value && state.trayStatusGroupName.isEmpty && groups.isNotEmpty
+                    ? groups.first.name
+                    : state.trayStatusGroupName;
+                return state.copyWith(
+                  trayStatusGroupEnable: value,
+                  trayStatusGroupName: name,
+                );
+              });
+        },
+      ),
+    );
+  }
+}
+
+class TrayStatusGroupNameItem extends ConsumerWidget {
+  const TrayStatusGroupNameItem({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final name = ref.watch(
+      appSettingProvider.select((state) => state.trayStatusGroupName),
+    );
+    final groups = ref.watch(groupsProvider);
+    final hiddenNames = {
+      for (final group in groups)
+        if (group.hidden == true) group.name,
+    };
+    final names = [for (final group in groups) group.name];
+    final subtitle = name.isEmpty
+        ? appLocalizations.trayStatusGroupNotSelected
+        : names.contains(name)
+        ? name
+        : '$name（${appLocalizations.trayStatusGroupMissing}）';
+    String textBuilder(String value) => hiddenNames.contains(value)
+        ? '$value ${appLocalizations.trayStatusGroupHidden}'
+        : value;
+    return ListItem<String>.options(
+      title: Text(appLocalizations.trayStatusGroupName),
+      subtitle: Text(subtitle),
+      delegate: OptionsDelegate<String>(
+        title: appLocalizations.trayStatusGroupName,
+        options: names,
+        value: name,
+        textBuilder: textBuilder,
+        onChanged: (value) {
+          if (value == null) return;
+          ref
+              .read(appSettingProvider.notifier)
+              .updateState((state) => state.copyWith(trayStatusGroupName: value));
+        },
+      ),
+    );
+  }
+}
+
+class _TrayStatusCheckboxItem extends ConsumerWidget {
+  final String title;
+  final String? subtitle;
+  final bool Function(AppSettingProps state) select;
+  final AppSettingProps Function(AppSettingProps state, bool value) update;
+
+  const _TrayStatusCheckboxItem({
+    required this.title,
+    this.subtitle,
+    required this.select,
+    required this.update,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final value = ref.watch(appSettingProvider.select(select));
+    return ListItem.checkbox(
+      title: Text(title),
+      subtitle: subtitle == null ? null : Text(subtitle!),
+      delegate: CheckboxDelegate(
+        value: value,
+        onChanged: (checked) {
+          ref
+              .read(appSettingProvider.notifier)
+              .updateState((state) => update(state, checked ?? false));
+        },
+      ),
+    );
+  }
+}
+
+class TrayStatusPositionItem extends ConsumerWidget {
+  const TrayStatusPositionItem({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final before = ref.watch(
+      appSettingProvider.select((state) => state.trayStatusBeforeSpeed),
+    );
+    String textBuilder(bool value) => value
+        ? appLocalizations.trayStatusBeforeSpeed
+        : appLocalizations.trayStatusAfterSpeed;
+    return ListItem<bool>.options(
+      title: Text(appLocalizations.trayStatusPosition),
+      subtitle: Text(textBuilder(before)),
+      delegate: OptionsDelegate<bool>(
+        title: appLocalizations.trayStatusPosition,
+        options: const [false, true],
+        value: before,
+        textBuilder: textBuilder,
+        onChanged: (value) {
+          if (value == null) return;
+          ref
+              .read(appSettingProvider.notifier)
+              .updateState(
+                (state) => state.copyWith(trayStatusBeforeSpeed: value),
+              );
+        },
+      ),
+    );
+  }
+}
+
+/// 托盘显示策略组及其联动子项：开启后才显示选择与显示项，网速开启时才显示位置。
+class TrayStatusGroupSection extends ConsumerWidget {
+  const TrayStatusGroupSection({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final enable = ref.watch(
+      appSettingProvider.select((state) => state.trayStatusGroupEnable),
+    );
+    final speedEnabled = ref.watch(
+      vpnSettingProvider.select((state) => state.enableTraySpeed),
+    );
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const TrayStatusGroupItem(),
+        if (enable) ...[
+          const TrayStatusGroupNameItem(),
+          _TrayStatusCheckboxItem(
+            title: appLocalizations.trayStatusShowName,
+            select: (state) => state.trayStatusShowName,
+            update: (state, value) =>
+                state.copyWith(trayStatusShowName: value),
+          ),
+          _TrayStatusCheckboxItem(
+            title: appLocalizations.trayStatusShowNode,
+            subtitle: appLocalizations.trayStatusShowNodeDesc,
+            select: (state) => state.trayStatusShowNode,
+            update: (state, value) =>
+                state.copyWith(trayStatusShowNode: value),
+          ),
+          _TrayStatusCheckboxItem(
+            title: appLocalizations.trayStatusShowChain,
+            subtitle: appLocalizations.trayStatusShowChainDesc,
+            select: (state) => state.trayStatusShowChain,
+            update: (state, value) =>
+                state.copyWith(trayStatusShowChain: value),
+          ),
+          if (speedEnabled) const TrayStatusPositionItem(),
+        ],
+      ],
+    );
+  }
+}
+
 class OtherSettingView extends ConsumerWidget {
   const OtherSettingView({super.key});
 
@@ -767,6 +980,10 @@ class OtherSettingView extends ConsumerWidget {
         const TrayClickBehaviorItem(),
       if (system.isMacOS || system.isWindows)
         const EnableTraySpeedItem(),
+      if (system.isMacOS || system.isWindows)
+        const TrayStatusGroupSection(),
+      if (system.isMacOS || system.isWindows)
+        const TrayShowProxyChainItem(),
       if (system.isWindows) const HighPriorityItem(),
       if (system.isWindows) const NetworkFixItem(),
       if (system.isAndroid) const BatteryOptimizationItem(),

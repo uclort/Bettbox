@@ -67,6 +67,9 @@ public class TrayManagerPlugin: NSObject, FlutterPlugin, NSMenuDelegate {
         case "setActive":
             setActive(call, result: result)
             break
+        case "setStatusTitle":
+            setStatusTitle(call, result: result)
+            break
         case "clearSpeedTitle":
             clearSpeedTitle(call, result: result)
             break
@@ -213,6 +216,26 @@ public class TrayManagerPlugin: NSObject, FlutterPlugin, NSMenuDelegate {
             upload: upload,
             download: download,
             active: active
+        )
+
+        result(true)
+    }
+
+    // BETTBOX-CUSTOM: 策略组标签与网速组合标题。
+    public func setStatusTitle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        let args = call.arguments as? [String: Any]
+        let label = args?["label"] as? String ?? ""
+        let labelBeforeSpeed = args?["labelBeforeSpeed"] as? Bool ?? false
+        let showSpeed = args?["showSpeed"] as? Bool ?? true
+        let upload = (args?["upload"] as? NSNumber)?.uint64Value ?? 0
+        let download = (args?["download"] as? NSNumber)?.uint64Value ?? 0
+
+        trayIcon?.setStatusTitle(
+            label: label,
+            labelBeforeSpeed: labelBeforeSpeed,
+            showSpeed: showSpeed,
+            upload: upload,
+            download: download
         )
 
         result(true)

@@ -1205,5 +1205,19 @@
   "tailscaleNodeRelay": "中继",
   "trayShowProxyChain": "托盘显示完整节点链路",
   "trayShowProxyChainDesc": "托盘策略组右侧逐级显示选中链路，如 Fallback → Other → 节点；关闭时只显示选中项和括号中的最终节点",
-  "tailscaleDesc": "接入 Tailnet：Tailscale App 共存或内置节点"
+  "tailscaleDesc": "接入 Tailnet：Tailscale App 共存或内置节点",
+  "trayStatusGroup": "托盘显示策略组",
+  "trayStatusGroupDesc": "在托盘图标旁显示指定策略组的当前选择（Windows 显示在悬浮提示中）",
+  "trayStatusGroupName": "显示的策略组",
+  "trayStatusGroupNotSelected": "未选择",
+  "trayStatusGroupMissing": "当前配置中不存在",
+  "trayStatusGroupHidden": "（隐藏）",
+  "trayStatusShowName": "显示策略组名称",
+  "trayStatusShowNode": "显示具体节点",
+  "trayStatusShowNodeDesc": "沿选择链显示最终使用的节点",
+  "trayStatusShowChain": "显示完整链路",
+  "trayStatusShowChainDesc": "逐级显示到最终节点，如 Fallback → Other → 节点",
+  "trayStatusPosition": "显示位置",
+  "trayStatusAfterSpeed": "网速后",
+  "trayStatusBeforeSpeed": "网速前"
 }

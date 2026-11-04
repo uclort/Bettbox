@@ -640,17 +640,6 @@ class _ToolViewState extends ConsumerState<ToolsView> {
           const ApplicationSettingView(),
         ),
       ),
-      if (system.isMacOS || system.isWindows)
-        _SearchItem(
-          title: appLocalizations.trayShowProxyChain,
-          subtitle: appLocalizations.trayShowProxyChainDesc,
-          category: appCategory,
-          onTap: (context, _) => _pushPage(
-            context,
-            appLocalizations.application,
-            const ApplicationSettingView(),
-          ),
-        ),
     ]);
 
     items.addAll([
@@ -773,6 +762,28 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         _SearchItem(
           title: appLocalizations.enableTraySpeed,
           subtitle: appLocalizations.enableTraySpeedDesc,
+          category: otherSettingsCategory,
+          onTap: (context, _) => _pushPage(
+            context,
+            appLocalizations.otherSettings,
+            const OtherSettingView(),
+          ),
+        ),
+      if (system.isMacOS || system.isWindows)
+        _SearchItem(
+          title: appLocalizations.trayStatusGroup,
+          subtitle: appLocalizations.trayStatusGroupDesc,
+          category: otherSettingsCategory,
+          onTap: (context, _) => _pushPage(
+            context,
+            appLocalizations.otherSettings,
+            const OtherSettingView(),
+          ),
+        ),
+      if (system.isMacOS || system.isWindows)
+        _SearchItem(
+          title: appLocalizations.trayShowProxyChain,
+          subtitle: appLocalizations.trayShowProxyChainDesc,
           category: otherSettingsCategory,
           onTap: (context, _) => _pushPage(
             context,

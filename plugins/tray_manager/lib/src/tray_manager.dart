@@ -312,6 +312,27 @@ class TrayManager {
     await _channel.invokeMethod('setSpeedTitle', arguments);
   }
 
+  /// BETTBOX-CUSTOM: 在托盘图标旁显示策略组标签，并按需与两行网速组合。
+  /// [showSpeed] 为 false 时只显示标签（占用网速的位置）；[labelBeforeSpeed]
+  /// 决定标签在网速前还是后。Windows 写入悬浮提示，macOS 绘制在状态栏。
+  Future<void> setStatusTitle({
+    required String label,
+    required bool labelBeforeSpeed,
+    required bool showSpeed,
+    required int upload,
+    required int download,
+    bool active = true,
+  }) async {
+    await _channel.invokeMethod('setStatusTitle', {
+      'label': label,
+      'labelBeforeSpeed': labelBeforeSpeed,
+      'showSpeed': showSpeed,
+      'upload': upload,
+      'download': download,
+      'active': active,
+    });
+  }
+
   /// 设置托盘图标是否处于正在接管系统流量的状态。
   Future<void> setActive(
     bool active, {

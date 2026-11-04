@@ -562,32 +562,6 @@ class AutoCheckUpdateItem extends ConsumerWidget {
   }
 }
 
-// BETTBOX-CUSTOM: 托盘策略组右侧逐级显示完整节点链路（默认关闭，只补最终节点）。
-class TrayShowProxyChainItem extends ConsumerWidget {
-  const TrayShowProxyChainItem({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final trayShowProxyChain = ref.watch(
-      appSettingProvider.select((state) => state.trayShowProxyChain),
-    );
-    return ListItem.switchItem(
-      title: Text(appLocalizations.trayShowProxyChain),
-      subtitle: Text(appLocalizations.trayShowProxyChainDesc),
-      delegate: SwitchDelegate(
-        value: trayShowProxyChain,
-        onChanged: (bool value) {
-          ref
-              .read(appSettingProvider.notifier)
-              .updateState(
-                (state) => state.copyWith(trayShowProxyChain: value),
-              );
-        },
-      ),
-    );
-  }
-}
-
 class ApplicationSettingView extends StatelessWidget {
   const ApplicationSettingView({super.key});
 
@@ -604,7 +578,6 @@ class ApplicationSettingView extends StatelessWidget {
       if (system.isAndroid) ...[NavBarHapticFeedbackItem()],
       if (globalState.isAndroidTV) const ShowStartSwitchItem(),
       if (system.isDesktop) const SidebarFlyoutItem(),
-      if (system.isMacOS || system.isWindows) const TrayShowProxyChainItem(),
       UsageItem(),
       AutoCheckUpdateItem(),
     ];

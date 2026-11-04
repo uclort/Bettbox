@@ -146,6 +146,61 @@ void main() {
     );
   });
 
+  group('托盘显示策略组标签', () {
+    String label({
+      String groupName = 'Global',
+      bool showName = false,
+      bool showNode = false,
+      bool showChain = false,
+      SelectedMap selectedMap = const {},
+    }) => trayStatusGroupLabel(
+      groupName: groupName,
+      groups: groups,
+      selectedMap: selectedMap,
+      showName: showName,
+      showNode: showNode,
+      showChain: showChain,
+    );
+
+    test('只显示具体节点时取链路末端的真实节点', () {
+      expect(label(showNode: true), 'FC-日本 1');
+    });
+
+    test('组名与具体节点以分隔符连接', () {
+      expect(label(showName: true, showNode: true), 'Global · FC-日本 1');
+    });
+
+    test('完整链路从选中项逐级到真实节点，并包含具体节点', () {
+      expect(label(showChain: true), 'Fallback → Other → FC-日本 1');
+      expect(
+        label(showName: true, showNode: true, showChain: true),
+        'Global · Fallback → Other → FC-日本 1',
+      );
+    });
+
+    test('可指定隐藏组并跟随本地选择', () {
+      expect(
+        label(
+          groupName: 'Other',
+          showName: true,
+          showNode: true,
+          selectedMap: const {'Other': 'FC-香港 6'},
+        ),
+        'Other · FC-香港 6',
+      );
+    });
+
+    test('只勾选组名时只显示组名', () {
+      expect(label(showName: true), 'Global');
+    });
+
+    test('三项都不勾选或策略组不存在时不显示', () {
+      expect(label(), isEmpty);
+      expect(label(groupName: 'missing', showName: true), isEmpty);
+      expect(label(groupName: '', showNode: true), isEmpty);
+    });
+  });
+
   test('右侧说明拼接选中项与延迟', () {
     expect(joinTrayDetail('Fallback', '169ms'), 'Fallback  169ms');
     expect(joinTrayDetail('', '169ms'), '169ms');
