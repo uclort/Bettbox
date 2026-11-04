@@ -4,7 +4,7 @@
 - `appshubcc/Bettbox` 仅用作上游代码同步源；推送、GitHub Actions、Release、标签、运行查询及其他 GitHub 操作一律显式指定 `uclort/Bettbox`，不得依赖 `gh` 的默认仓库推断。
 - 除非用户明确要求，否则不得创建 Pull Request。
 - 同步或融合 Bettbox、Mihomo、Snell 上游代码前，必须完整阅读 `.custom-build/release-notes/CUSTOM_CHANGES.md`。
-- 修改 Bettbox 自定义代码、custom-mihomo 或本地覆写脚本后，必须同步更新 `.custom-build/release-notes/CUSTOM_CHANGES.md`；本次发布增量另写入 `LATEST_CHANGES.md`。
+- 修改 Bettbox 自定义代码、custom-mihomo 或本地覆写脚本后，必须同步更新 `.custom-build/release-notes/CUSTOM_CHANGES.md`；本次发布增量另写入 `LATEST_CHANGES.md`；用户可见的新增、优化、修复还必须更新 `RELEASE_HIGHLIGHTS.md` 对应分类（它是 GitHub Release 正文的累计总览，CI 会在自定义代码变化但该文件未改时拒绝构建）。
 - 本地覆写脚本包含私有订阅地址，不提交到公开仓库；修改后必须同步到私有 custom-mihomo 仓库的 `scripts/uclort-desktop.js`，并在 `CUSTOM_CHANGES.md` 更新功能、关键常量、代码落点和验证方式。
 - 融合前后必须搜索 `BETTBOX-CUSTOM`，确认自定义逻辑仍然存在，并运行变更清单中对应的回归测试。
 - 不得因为上游文件覆盖而静默删除自定义行为；无法兼容时先说明冲突和替代方案。

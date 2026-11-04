@@ -1,7 +1,8 @@
 ## 新增
 
-- 内置 Tailscale 节点：内核作为独立设备加入 Tailnet，支持浏览器登录、设备列表与出口节点；桌面端另有「Tailscale App 共存」开关
-- 托盘策略组菜单显示选中节点与延迟，支持 Option / Alt 显示隐藏组，Windows 增加字母快捷键
+- 内置 Tailscale 节点：内核作为独立设备加入 Tailnet，支持浏览器登录或 Auth Key 两种接入方式、设备列表与出口节点；桌面端另有「Tailscale App 共存」开关；设置入口位于「内核配置 → Tailscale」
+- 托盘策略组菜单显示选中节点与延迟，一级菜单也补充实际节点，可选显示完整节点链路；支持 Option / Alt 显示隐藏组，Windows 增加字母快捷键
+- 托盘显示策略组：在菜单栏图标旁（Windows 为悬浮提示）显示指定策略组的名称、节点或完整链路，可放在网速前或后
 - 侧边栏图标、面板标题等界面自定义，隐藏策略组，Inline Provider 内容查看
 - Android 应用权限页，本地网络权限运行时申请
 - 应用内更新：Android 下载并安装，桌面端使用自定义更新源
@@ -11,12 +12,15 @@
 - 测速时保持托盘子菜单打开，菜单不再跳动
 - macOS 网络切换、睡眠唤醒后自动恢复 TUN、DNS 与系统代理
 - 内核重启与配置切换串行执行，避免启动竞态
+- 内置 Tailscale 节点在更新订阅、重载配置时不再重启，Tailnet 连接不中断；配置生效后提前启动
+- 开启内置 Tailscale 节点后，订阅中让 Tailnet 绕开节点的配置（TUN 排除网段、MagicDNS 服务器、hosts 等）在运行时自动忽略，不修改订阅
 
 ## 修复
 
 - macOS 静默启动时窗口闪现
 - Tailscale 共存时控制面域名返回真实 IP，Rex 等内嵌 tsnet 的应用登录不再无响应
-- 内置 Tailscale 节点重载配置后出现重复设备（Duplicate node key）
+- 内置 Tailscale 节点重载配置后出现重复设备（Duplicate node key）；退出后重新登录设备名变成系统主机名
+- Windows 按住 Alt 打开托盘菜单后，松开 Alt 菜单立即关闭
 
 ## 移除
 

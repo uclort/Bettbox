@@ -386,6 +386,17 @@ jobs:
               echo "自定义应用代码已变化，但 CUSTOM_CHANGES.md 未更新。" >&2
               exit 1
             fi
+            # BETTBOX-CUSTOM: Release 正文取自 RELEASE_HIGHLIGHTS.md，漏改会静默发布旧说明。
+            previous_highlights="${RUNNER_TEMP}/previous-release-highlights.md"
+            git show \
+              "${previous_release}:.custom-build/release-notes/RELEASE_HIGHLIGHTS.md" \
+              > "${previous_highlights}" 2>/dev/null || : > "${previous_highlights}"
+            if cmp -s \
+                 "${previous_highlights}" \
+                 .custom-build/release-notes/RELEASE_HIGHLIGHTS.md; then
+              echo "自定义应用代码已变化，但 RELEASE_HIGHLIGHTS.md 未更新（Release 正文来自该文件）。" >&2
+              exit 1
+            fi
           fi
 
       - name: 显示构建摘要
