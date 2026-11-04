@@ -148,3 +148,88 @@ func TestPatchTailscaleNodeKeepsProfileProxy(t *testing.T) {
 		t.Fatalf("profile proxy must be kept: %v", rawCfg.Proxy)
 	}
 }
+
+// BETTBOX-CUSTOM: Auth Key 方式用独立 state-dir 并下发 key；登录方式即使填了 key 也不下发。
+func TestPatchTailscaleNodeAuthMode(t *testing.T) {
+	for _, tc := range []struct {
+		mode, dir string
+		withKey   bool
+	}{
+		{"login", tailscaleNodeStateDir, false},
+		{"auth-key", tailscaleNodeAuthKeyStateDir, true},
+	} {
+		rawCfg := parsePatchProfile(t, tailscaleNodeProfile)
+		params := patchParams(t, `{"tailscale":{"dns-domains":["ts.net"],"node":{"name":"Bettbox-Tailscale","auth-mode":"`+tc.mode+`","auth-key":"tskey-auth-x"}}}`)
+		if _, err := applyPatch(rawCfg, params); err != nil {
+			t.Fatal(err)
+		}
+		node := rawCfg.Proxy[len(rawCfg.Proxy)-1]
+		_, hasKey := node["auth-key"]
+		if node["state-dir"] != tc.dir || hasKey != tc.withKey {
+			t.Fatalf("%s: unexpected node %v", tc.mode, node)
+		}
+	}
+}
+
+// BETTBOX-CUSTOM: 内置节点开启时清理让 Tailnet 绕开节点的配置；只开 App 共存时不动。
+func TestPatchTailscaleNodeRemovesConflicts(t *testing.T) {
+	profile := `dns:
+  enable: true
+  enhanced-mode: fake-ip
+  nameserver-policy:
+    "+.corp.example": 100.100.100.100
+    "+.cn": 223.5.5.5
+  nameserver:
+    - 223.5.5.5
+    - 100.100.100.100
+  fallback:
+    - 100.100.100.100
+hosts:
+  vps.tail1234.ts.net: 100.64.1.2
+  example.com: 1.2.3.4
+tun:
+  enable: true
+  route-exclude-address:
+    - 100.64.0.0/10
+    - 100.100.0.0/16
+    - 172.30.0.0/16
+rules:
+  - MATCH,DIRECT
+`
+	node := `"node":{"name":"Bettbox-Tailscale"},`
+	for _, withNode := range []bool{true, false} {
+		rawCfg := parsePatchProfile(t, profile)
+		n := ""
+		if withNode {
+			n = node
+		}
+		params := patchParams(t, `{"general":{"tun":{"enable":true,"route-exclude-address":["fd7a:115c:a1e0::/48"]}},"tailscale":{`+n+`"dns-domains":["ts.net"],"dns-server":"100.100.100.100","ranges":["100.64.0.0/10","fd7a:115c:a1e0::/48"]}}`)
+		if _, err := applyPatch(rawCfg, params); err != nil {
+			t.Fatal(err)
+		}
+		routes := fmt.Sprint(rawCfg.Tun.RouteExcludeAddress)
+		policy, _ := rawCfg.DNS.NameServerPolicy.Get("+.corp.example")
+		_, hasHost := rawCfg.Hosts["vps.tail1234.ts.net"]
+		if !withNode {
+			if routes != "[fd7a:115c:a1e0::/48 100.64.0.0/10 100.100.0.0/16 172.30.0.0/16]" || policy != "100.100.100.100" || !hasHost {
+				t.Fatalf("app mode must not touch profile: routes=%s policy=%v host=%v", routes, policy, hasHost)
+			}
+			continue
+		}
+		if routes != "[172.30.0.0/16]" || fmt.Sprint(params.profileRouteExclude) != "[172.30.0.0/16]" {
+			t.Fatalf("tailnet ranges must leave tun exclusion: %s / %v", routes, params.profileRouteExclude)
+		}
+		if fmt.Sprint(rawCfg.DNS.NameServer) != "[223.5.5.5]" || len(rawCfg.DNS.Fallback) != 0 {
+			t.Fatalf("MagicDNS must leave server lists: %v %v", rawCfg.DNS.NameServer, rawCfg.DNS.Fallback)
+		}
+		if policy != "tailscale://Bettbox-Tailscale" {
+			t.Fatalf("MagicDNS policy must go to the node, got %v", policy)
+		}
+		if other, _ := rawCfg.DNS.NameServerPolicy.Get("+.cn"); other != "223.5.5.5" {
+			t.Fatalf("unrelated policy must stay, got %v", other)
+		}
+		if _, ok := rawCfg.Hosts["example.com"]; hasHost || !ok {
+			t.Fatalf("only tailnet hosts must be removed: %v", rawCfg.Hosts)
+		}
+	}
+}

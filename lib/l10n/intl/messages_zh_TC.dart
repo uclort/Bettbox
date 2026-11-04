@@ -1535,7 +1535,43 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "tailscaleNodeAuthKey": MessageLookupByLibrary.simpleMessage("Auth Key"),
     "tailscaleNodeAuthKeyDesc": MessageLookupByLibrary.simpleMessage(
-      "選填，留空則以瀏覽器登入；不建議使用帶 tag 的 key",
+      "用於自動註冊，更換 key 會重新註冊為新裝置。建議使用可重複使用、非臨時的 key；帶 tag 的 key 註冊的裝置不屬於你的帳號",
+    ),
+    "tailscaleNodeAuthMode": MessageLookupByLibrary.simpleMessage(
+      "接入方式",
+    ),
+    "tailscaleNodeAuthModeLogin": MessageLookupByLibrary.simpleMessage(
+      "瀏覽器登入",
+    ),
+    "tailscaleNodeAuthModeAuthKey": MessageLookupByLibrary.simpleMessage(
+      "Auth Key",
+    ),
+    "tailscaleNodeAuthModeDesc": MessageLookupByLibrary.simpleMessage(
+      "兩種方式在 Tailnet 中是兩台裝置，各自保留身分，切回來仍用原本的登入",
+    ),
+    "tailscaleNodeSwitchModeTip": MessageLookupByLibrary.simpleMessage(
+      "目前節點在線。切換後本機會以另一台裝置加入 Tailnet，100.x IP 與 MagicDNS 名稱都會改變，依 IP 或名稱存取本機的設定（ACL、SSH 等）需要更新。目前身分會保留，切回來繼續使用。",
+    ),
+    "tailscaleNodeAuthKeyChangeTip": MessageLookupByLibrary.simpleMessage(
+      "目前節點在線。更換 Auth Key 會用新 key 重新註冊為一台新裝置，IP 可能改變，原裝置在 Tailscale 後台顯示為離線。",
+    ),
+    "tailscaleNodeAuthKeyRequired": MessageLookupByLibrary.simpleMessage(
+      "請先填寫 Auth Key",
+    ),
+    "tailscaleNodeAuthKeyFailed": MessageLookupByLibrary.simpleMessage(
+      "Auth Key 註冊失敗：key 無效、已使用或已過期，請更換",
+    ),
+    "tailscaleNodeReRegister": MessageLookupByLibrary.simpleMessage(
+      "重新註冊",
+    ),
+    "tailscaleNodeReRegisterTip": MessageLookupByLibrary.simpleMessage(
+      "會用目前的 Auth Key 重新註冊為一台新裝置，IP 可能改變",
+    ),
+    "tailscaleNodeConflicts": MessageLookupByLibrary.simpleMessage(
+      "自動處理的衝突設定",
+    ),
+    "tailscaleNodeConflictsDesc": MessageLookupByLibrary.simpleMessage(
+      "開啟內建節點後，以下設定會在執行時自動忽略，確保 Tailnet 流量交給內建節點。不會修改訂閱與覆寫腳本，關閉內建節點後恢復原狀：\n• TUN 排除路由中與 Tailnet 網段重疊的項目（否則這部分流量不進核心）\n• DNS 伺服器清單中的 100.100.100.100（沒有 Tailscale App 時無法使用）\n• 指向 100.100.100.100 的 nameserver-policy，改為交給內建節點解析\n• hosts 中寫死的 Tailnet 網域\n• 系統代理例外中的 Tailnet 網域與網段\n訂閱中針對 Tailnet 網域與網段的分流規則不受影響，內建節點的前置規則會優先比對。如果沒有自訂過這些設定，無需理會。",
     ),
     "tailscaleNodeExitNode": MessageLookupByLibrary.simpleMessage("出口節點"),
     "tailscaleNodeExitNodeDesc": MessageLookupByLibrary.simpleMessage(

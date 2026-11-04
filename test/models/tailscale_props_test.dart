@@ -83,13 +83,57 @@ void main() {
       'IP-CIDR,100.64.0.0/10,$tailscaleNodeName,no-resolve',
       'IP-CIDR6,fd7a:115c:a1e0::/48,$tailscaleNodeName,no-resolve',
     ]);
+    // 登录方式只认登录状态，填过的 key 也不下发。
     expect(props.tailscale.patchJson?['node'], {
       'name': tailscaleNodeName,
       'hostname': 'mac-bettbox',
-      'auth-key': 'tskey-auth-x',
+      'auth-mode': 'login',
       'exit-node': 'oracle',
       'accept-routes': true,
     });
+    expect(props.tailscale.patchJson?['ranges'], defaultTailscaleRouteExcludeAddress);
+  });
+
+  // BETTBOX-CUSTOM: Auth Key 方式：只下发 key，设备名加 -key 后缀，未填 key 时不注入节点。
+  test('Auth Key 方式下发 key 并区分设备名', () {
+    const props = TailscaleProps(
+      nodeEnable: true,
+      nodeUseAuthKey: true,
+      nodeHostname: 'mac-bettbox',
+      nodeAuthKey: ' tskey-auth-x ',
+    );
+    expect(props.effectiveNodeHostname, 'mac-bettbox-key');
+    expect(props.copyWith(nodeHostname: 'mac-key').effectiveNodeHostname, 'mac-key');
+    expect(props.copyWith(nodeUseAuthKey: false).effectiveNodeHostname, 'mac-bettbox');
+    expect(const TailscaleProps(nodeUseAuthKey: true).effectiveNodeHostname, endsWith('-bettbox-key'));
+    final node = props.patchJson?['node'] as Map;
+    expect(node['auth-mode'], 'auth-key');
+    expect(node['auth-key'], 'tskey-auth-x');
+    expect(node['hostname'], 'mac-bettbox-key');
+
+    final missing = props.copyWith(nodeAuthKey: ' ');
+    expect(missing.nodeActive, isFalse);
+    expect(missing.nodeAuthKeyMissing, isTrue);
+    expect(missing.patchJson, isNull);
+  });
+
+  // BETTBOX-CUSTOM: 内置节点开启时去掉让 Tailnet 绕开节点的 TUN 排除与系统代理例外。
+  test('内置节点忽略 Tailnet 的 TUN 排除与系统代理例外', () {
+    const props = NetworkProps(
+      bypassDomain: ['localhost', '*.ts.net', 'vps.tail1.ts.net', '100.64.0.0/10', '*.lan'],
+      tailscale: TailscaleProps(nodeEnable: true),
+    );
+    expect(props.realBypassDomain, ['localhost', '*.lan']);
+    final tun = props.tailscale.applyToTun(
+      const Tun(routeExcludeAddress: ['100.64.0.0/10', '172.16.0.0/12']),
+    );
+    expect(tun.routeExcludeAddress, ['172.16.0.0/12']);
+    // 只开 App 共存时保留
+    const app = NetworkProps(
+      bypassDomain: ['*.ts.net'],
+      tailscale: TailscaleProps(enable: true),
+    );
+    expect(app.realBypassDomain, contains('*.ts.net'));
   });
 
   test('两个开关同时开启时以内置节点为准', () {
@@ -112,11 +156,12 @@ void main() {
     expect(RegExp(r'^[a-z0-9-]+$').hasMatch(hostname), isTrue);
   });
 
-  test('恢复默认保留两个开关与 auth key', () {
+  test('恢复默认保留两个开关、接入方式与 auth key', () {
     const props = TailscaleProps(
       enable: true,
       nodeEnable: true,
       nodeAuthKey: 'k',
+      nodeUseAuthKey: true,
       nodeHostname: 'x',
       nodeAcceptRoutes: false,
     );
@@ -126,6 +171,7 @@ void main() {
         enable: true,
         nodeEnable: true,
         nodeAuthKey: 'k',
+        nodeUseAuthKey: true,
       ),
     );
   });

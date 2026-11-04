@@ -102,6 +102,7 @@ func applyPatch(raw *config.RawConfig, params *PatchParams) (string, error) {
 	if err := patchDns(raw, params, defaults); err != nil {
 		return "", err
 	}
+	removeTailscaleConflicts(raw, params)    // BETTBOX-CUSTOM: 内置 Tailscale 节点清理冲突配置
 	patchTailscaleDns(raw, params.Tailscale) // BETTBOX-CUSTOM: Tailscale 共存
 	if params.Tailscale != nil {
 		patchTailscaleNode(raw, params.Tailscale.Node) // BETTBOX-CUSTOM: 内置 Tailscale 节点

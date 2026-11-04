@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/metacubex/mihomo/component/ca"
@@ -53,6 +54,8 @@ type Tailscale struct {
 	closeErr  error
 	// BETTBOX-CUSTOM: 跨配置重载复用时的引用计数，受 tailscaleStateDirMu 保护。
 	refs int
+	// BETTBOX-CUSTOM: Auth Key 方式下本实例是否已用 key 尝试注册，退出登录后重置。
+	authKeyLoginTried atomic.Bool
 
 	unregisterDNSResolver func()
 }
@@ -197,7 +200,10 @@ func NewTailscale(option TailscaleOption) (*Tailscale, error) {
 
 func (t *Tailscale) start() error {
 	t.startOnce.Do(func() {
-		t.claimStateDir() // BETTBOX-CUSTOM
+		t.claimStateDir()       // BETTBOX-CUSTOM
+		t.prepareAuthKeyState() // BETTBOX-CUSTOM
+		// BETTBOX-CUSTOM: 启动时 tsnet 已用 auth-key 尝试注册，Status 不再重复尝试。
+		t.authKeyLoginTried.Store(t.option.AuthKey != "")
 		if err := t.server.Start(); err != nil {
 			t.startErr = err
 			t.setBackendInitialized(err)

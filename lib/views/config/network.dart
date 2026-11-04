@@ -966,7 +966,11 @@ class _TailscaleNodeSettingsState
 
   Future<void> _login(String url) async {
     await globalState.openUrl(url);
-    // 浏览器授权完成后自动刷新状态，最多轮询约 3 分钟。
+    _startPoll();
+  }
+
+  /// 等待登录、注册或切换方式完成：每 3 秒刷新状态，最多约 3 分钟，连上即停。
+  void _startPoll() {
     _loginPoll?.cancel();
     _pollCount = 0;
     _loginPoll = Timer.periodic(const Duration(seconds: 3), (timer) {
@@ -976,6 +980,74 @@ class _TailscaleNodeSettingsState
       }
       _refresh(silent: true);
     });
+  }
+
+  /// 当前身份有效（在线、正在连接或等待管理员批准）时，切换或换 key 需要先确认。
+  /// 还没拿到状态时按有效处理，宁可多问一次。
+  bool _identityValid(TailscaleProps props) {
+    if (!props.nodeActive) return false;
+    final status = _status;
+    if (status == null) return true;
+    return status.running ||
+        status.state == 'Starting' ||
+        status.state == 'NeedsMachineAuth';
+  }
+
+  Future<bool> _confirm(String title, String tip, TailscaleProps props) async {
+    if (!_identityValid(props)) return true;
+    final res = await globalState.showMessage(
+      title: title,
+      message: TextSpan(text: tip),
+    );
+    return res == true;
+  }
+
+  Future<void> _applyNodeChange(
+    TailscaleProps Function(TailscaleProps state) builder,
+  ) async {
+    await _updateTailscale(ref, builder);
+    if (!mounted) return;
+    setState(() => _status = null);
+    _startPoll();
+  }
+
+  Future<void> _switchAuthMode(bool useAuthKey, TailscaleProps props) async {
+    if (useAuthKey == props.nodeUseAuthKey) return;
+    final ok = await _confirm(
+      appLocalizations.tailscaleNodeAuthMode,
+      appLocalizations.tailscaleNodeSwitchModeTip,
+      props,
+    );
+    if (!ok) return;
+    await _applyNodeChange(
+      (state) => state.copyWith(nodeUseAuthKey: useAuthKey),
+    );
+  }
+
+  Future<void> _changeAuthKey(String value, TailscaleProps props) async {
+    if (value == props.nodeAuthKey.trim()) return;
+    final ok = await _confirm(
+      appLocalizations.tailscaleNodeAuthKey,
+      appLocalizations.tailscaleNodeAuthKeyChangeTip,
+      props,
+    );
+    if (!ok) return;
+    await _applyNodeChange((state) => state.copyWith(nodeAuthKey: value));
+  }
+
+  /// Auth Key 方式：退出当前身份后内核会用当前 key 重新注册。
+  Future<void> _reRegister(TailscaleProps props) async {
+    final ok = await _confirm(
+      appLocalizations.tailscaleNodeReRegister,
+      appLocalizations.tailscaleNodeReRegisterTip,
+      props,
+    );
+    if (!ok) return;
+    final error = await clashCore.tailscaleLogout();
+    if (error.isNotEmpty) globalState.showNotifier(error);
+    if (!mounted) return;
+    setState(() => _status = null);
+    _startPoll();
   }
 
   Future<void> _logout() async {
@@ -989,7 +1061,10 @@ class _TailscaleNodeSettingsState
     await _refresh();
   }
 
-  String _statusText(TailscaleNodeStatus? status) {
+  String _statusText(TailscaleProps props, TailscaleNodeStatus? status) {
+    if (props.nodeAuthKeyMissing) {
+      return appLocalizations.tailscaleNodeAuthKeyRequired;
+    }
     if (status == null) return appLocalizations.tailscaleNodeStarting;
     if (status.running) {
       return [
@@ -1000,6 +1075,12 @@ class _TailscaleNodeSettingsState
       ].join('\n');
     }
     if (status.state == 'NeedsLogin') {
+      if (props.nodeUseAuthKey) {
+        return [
+          appLocalizations.tailscaleNodeAuthKeyFailed,
+          if (status.error.isNotEmpty) status.error,
+        ].join('\n');
+      }
       return appLocalizations.tailscaleNodeNeedsLogin;
     }
     final error = status.error;
@@ -1020,7 +1101,7 @@ class _TailscaleNodeSettingsState
       if (props.nodeEnable) ...[
         ListItem(
           title: Text(appLocalizations.tailscaleNodeStatus),
-          subtitle: Text(_statusText(status)),
+          subtitle: Text(_statusText(props, status)),
           trailing: _loading
               ? const SizedBox(
                   width: 20,
@@ -1033,25 +1114,53 @@ class _TailscaleNodeSettingsState
                   icon: const Icon(Icons.refresh),
                 ),
         ),
-        if (status != null && status.needsLogin)
+        if (!props.nodeUseAuthKey && status != null && status.needsLogin)
           ListItem(
             leading: const Icon(Icons.login),
             title: Text(appLocalizations.tailscaleNodeLogin),
             onTap: () => _login(status.authUrl),
           ),
-        if (status != null && status.running)
+        if (!props.nodeUseAuthKey && status != null && status.running)
           ListItem(
             leading: const Icon(Icons.logout),
             title: Text(appLocalizations.tailscaleNodeLogout),
             onTap: _logout,
           ),
+        if (props.nodeActive &&
+            props.nodeUseAuthKey &&
+            status != null &&
+            (status.running || status.state == 'NeedsLogin'))
+          ListItem(
+            leading: const Icon(Icons.autorenew),
+            title: Text(appLocalizations.tailscaleNodeReRegister),
+            subtitle: Text(appLocalizations.tailscaleNodeReRegisterTip),
+            onTap: () => _reRegister(props),
+          ),
       ],
+      ListItem.options(
+        title: Text(appLocalizations.tailscaleNodeAuthMode),
+        subtitle: Text(
+          '${props.nodeUseAuthKey ? appLocalizations.tailscaleNodeAuthModeAuthKey : appLocalizations.tailscaleNodeAuthModeLogin}\n${appLocalizations.tailscaleNodeAuthModeDesc}',
+        ),
+        delegate: OptionsDelegate<bool>(
+          title: appLocalizations.tailscaleNodeAuthMode,
+          value: props.nodeUseAuthKey,
+          options: const [false, true],
+          textBuilder: (value) => value
+              ? appLocalizations.tailscaleNodeAuthModeAuthKey
+              : appLocalizations.tailscaleNodeAuthModeLogin,
+          onChanged: (value) {
+            if (value == null) return;
+            _switchAuthMode(value, props);
+          },
+        ),
+      ),
       ListItem.input(
         title: Text(appLocalizations.tailscaleNodeHostname),
         subtitle: Text(
           props.nodeHostname.isEmpty
               ? '${appLocalizations.tailscaleNodeHostnameDesc}: ${props.effectiveNodeHostname}'
-              : props.nodeHostname,
+              : props.effectiveNodeHostname,
         ),
         delegate: InputDelegate(
           title: appLocalizations.tailscaleNodeHostname,
@@ -1067,27 +1176,25 @@ class _TailscaleNodeSettingsState
           },
         ),
       ),
-      ListItem.input(
-        title: Text(appLocalizations.tailscaleNodeAuthKey),
-        subtitle: Text(
-          props.nodeAuthKey.isEmpty
-              ? appLocalizations.tailscaleNodeAuthKeyDesc
-              : '${props.nodeAuthKey.length > 12 ? props.nodeAuthKey.substring(0, 12) : props.nodeAuthKey}••••',
+      if (props.nodeUseAuthKey)
+        ListItem.input(
+          title: Text(appLocalizations.tailscaleNodeAuthKey),
+          subtitle: Text(
+            props.nodeAuthKey.isEmpty
+                ? appLocalizations.tailscaleNodeAuthKeyDesc
+                : '${props.nodeAuthKey.length > 12 ? props.nodeAuthKey.substring(0, 12) : props.nodeAuthKey}••••\n${appLocalizations.tailscaleNodeAuthKeyDesc}',
+          ),
+          delegate: InputDelegate(
+            title: appLocalizations.tailscaleNodeAuthKey,
+            value: props.nodeAuthKey,
+            resetValue: '',
+            hintText: 'tskey-auth-…',
+            onChanged: (value) {
+              if (value == null) return;
+              _changeAuthKey(value.trim(), props);
+            },
+          ),
         ),
-        delegate: InputDelegate(
-          title: appLocalizations.tailscaleNodeAuthKey,
-          value: props.nodeAuthKey,
-          resetValue: '',
-          hintText: 'tskey-auth-…',
-          onChanged: (value) {
-            if (value == null) return;
-            _updateTailscale(
-              ref,
-              (state) => state.copyWith(nodeAuthKey: value.trim()),
-            );
-          },
-        ),
-      ),
       ListItem.input(
         title: Text(appLocalizations.tailscaleNodeExitNode),
         subtitle: Text(
@@ -1120,6 +1227,10 @@ class _TailscaleNodeSettingsState
         ),
       ),
       ..._tailnetSharedEntries(),
+      ListItem(
+        title: Text(appLocalizations.tailscaleNodeConflicts),
+        subtitle: Text(appLocalizations.tailscaleNodeConflictsDesc),
+      ),
       if (props.nodeEnable && status != null && status.peers.isNotEmpty) ...[
         ListHeader(
           title:

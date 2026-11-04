@@ -3,6 +3,8 @@
 package outbound
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -113,5 +115,55 @@ func TestTailscaleCloseReleasesLastRef(t *testing.T) {
 	tailscaleStateDirMu.Unlock()
 	if owned {
 		t.Fatal("closed instance must release the state dir")
+	}
+}
+
+// BETTBOX-CUSTOM: 登录方式与 Auth Key 方式用不同 state-dir，切换时同名旧节点必须立即关闭。
+func TestTailscaleClaimClosesSameNameOtherDir(t *testing.T) {
+	login, _ := NewTailscale(TailscaleOption{Name: "ts-mode", StateDir: "tailscale-mode-test/login"})
+	t.Cleanup(func() { _ = login.shutdown() })
+	login.claimStateDir()
+	key, _ := NewTailscale(TailscaleOption{Name: "ts-mode", StateDir: "tailscale-mode-test/key", AuthKey: "tskey-a"})
+	t.Cleanup(func() { _ = key.shutdown() })
+	key.claimStateDir()
+	if login.ctx.Err() == nil {
+		t.Fatal("switching auth mode must close the node using the other state dir")
+	}
+	if key.ctx.Err() != nil {
+		t.Fatal("new node must stay open")
+	}
+}
+
+// BETTBOX-CUSTOM: Auth Key 变化时清掉旧身份，相同 key 保留。
+func TestTailscaleAuthKeyStateReset(t *testing.T) {
+	node, _ := NewTailscale(TailscaleOption{Name: "ts-key", StateDir: "tailscale-key-test", AuthKey: "tskey-a"})
+	t.Cleanup(func() { _ = node.shutdown() })
+	dir := t.TempDir()
+	node.option.StateDir = dir
+	state := filepath.Join(dir, "tailscaled.state")
+	write := func() {
+		if err := os.WriteFile(state, []byte("{}"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	exists := func() bool { _, err := os.Stat(state); return err == nil }
+
+	write() // 没有标记的旧状态视为来源不明，清掉
+	node.prepareAuthKeyState()
+	if exists() {
+		t.Fatal("state without marker must be cleared")
+	}
+	write()
+	node.prepareAuthKeyState()
+	if !exists() {
+		t.Fatal("same auth-key must keep the registered identity")
+	}
+	node.option.AuthKey = "tskey-b"
+	node.prepareAuthKeyState()
+	if exists() {
+		t.Fatal("changed auth-key must clear the previous identity")
+	}
+	if b, _ := os.ReadFile(filepath.Join(dir, tailscaleAuthKeyMarker)); len(b) != 64 {
+		t.Fatal("marker should store a sha256 hex digest, not the key")
 	}
 }

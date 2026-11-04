@@ -1523,7 +1523,43 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "tailscaleNodeAuthKey": MessageLookupByLibrary.simpleMessage("Auth Key"),
     "tailscaleNodeAuthKeyDesc": MessageLookupByLibrary.simpleMessage(
-      "可选，留空则用浏览器登录；不建议使用带 tag 的 key",
+      "用于自动注册，更换 key 会重新注册为新设备。建议使用可重复使用、非临时的 key；带 tag 的 key 注册的设备不属于你的账号",
+    ),
+    "tailscaleNodeAuthMode": MessageLookupByLibrary.simpleMessage(
+      "接入方式",
+    ),
+    "tailscaleNodeAuthModeLogin": MessageLookupByLibrary.simpleMessage(
+      "浏览器登录",
+    ),
+    "tailscaleNodeAuthModeAuthKey": MessageLookupByLibrary.simpleMessage(
+      "Auth Key",
+    ),
+    "tailscaleNodeAuthModeDesc": MessageLookupByLibrary.simpleMessage(
+      "两种方式在 Tailnet 中是两台设备，各自保留身份，切回来仍用原来的登录",
+    ),
+    "tailscaleNodeSwitchModeTip": MessageLookupByLibrary.simpleMessage(
+      "当前节点在线。切换后本机会以另一台设备接入 Tailnet，100.x IP 和 MagicDNS 名称都会变，按 IP 或名称访问本机的设置（ACL、SSH 等）需要更新。当前身份会保留，切回来继续使用。",
+    ),
+    "tailscaleNodeAuthKeyChangeTip": MessageLookupByLibrary.simpleMessage(
+      "当前节点在线。更换 Auth Key 会用新 key 重新注册为一台新设备，IP 可能变化，原设备在 Tailscale 后台显示为离线。",
+    ),
+    "tailscaleNodeAuthKeyRequired": MessageLookupByLibrary.simpleMessage(
+      "请先填写 Auth Key",
+    ),
+    "tailscaleNodeAuthKeyFailed": MessageLookupByLibrary.simpleMessage(
+      "Auth Key 注册失败：key 无效、已用过或已过期，请更换",
+    ),
+    "tailscaleNodeReRegister": MessageLookupByLibrary.simpleMessage(
+      "重新注册",
+    ),
+    "tailscaleNodeReRegisterTip": MessageLookupByLibrary.simpleMessage(
+      "会用当前 Auth Key 重新注册为一台新设备，IP 可能变化",
+    ),
+    "tailscaleNodeConflicts": MessageLookupByLibrary.simpleMessage(
+      "自动处理的冲突配置",
+    ),
+    "tailscaleNodeConflictsDesc": MessageLookupByLibrary.simpleMessage(
+      "开启内置节点后，以下配置会在运行时自动忽略，保证 Tailnet 流量交给内置节点。不会修改订阅和覆写脚本，关闭内置节点后恢复原样：\n• TUN 排除路由中与 Tailnet 网段重叠的条目（否则这部分流量不进内核）\n• DNS 服务器列表中的 100.100.100.100（没有 Tailscale App 时不可用）\n• 指向 100.100.100.100 的 nameserver-policy，改为交给内置节点解析\n• hosts 中写死的 Tailnet 域名\n• 系统代理例外中的 Tailnet 域名与网段\n订阅里针对 Tailnet 域名和网段的分流规则不受影响，内置节点的前置规则会优先匹配。如果没有自定义过这些配置，无需关注。",
     ),
     "tailscaleNodeExitNode": MessageLookupByLibrary.simpleMessage("出口节点"),
     "tailscaleNodeExitNodeDesc": MessageLookupByLibrary.simpleMessage(

@@ -9965,11 +9965,131 @@ class AppLocalizations {
     );
   }
 
-  /// `Optional. Leave empty to sign in with the browser; avoid tagged keys`
+  /// `Used to register automatically. A new key re-registers as a new device. Use a reusable, non-ephemeral key; devices from tagged keys don't belong to your account`
   String get tailscaleNodeAuthKeyDesc {
     return Intl.message(
-      'Optional. Leave empty to sign in with the browser; avoid tagged keys',
+      "Used to register automatically. A new key re-registers as a new device. Use a reusable, non-ephemeral key; devices from tagged keys don't belong to your account",
       name: 'tailscaleNodeAuthKeyDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Sign-in method`
+  String get tailscaleNodeAuthMode {
+    return Intl.message(
+      "Sign-in method",
+      name: 'tailscaleNodeAuthMode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Browser sign-in`
+  String get tailscaleNodeAuthModeLogin {
+    return Intl.message(
+      "Browser sign-in",
+      name: 'tailscaleNodeAuthModeLogin',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Auth Key`
+  String get tailscaleNodeAuthModeAuthKey {
+    return Intl.message(
+      "Auth Key",
+      name: 'tailscaleNodeAuthModeAuthKey',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The two methods register as two separate devices and keep their own identity; switching back keeps the previous sign-in`
+  String get tailscaleNodeAuthModeDesc {
+    return Intl.message(
+      "The two methods register as two separate devices and keep their own identity; switching back keeps the previous sign-in",
+      name: 'tailscaleNodeAuthModeDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The node is online. After switching, this Mac joins the Tailnet as another device: its 100.x IP and MagicDNS name change, so ACLs, SSH and anything that reaches this device by IP or name need updating. The current identity is kept and is used again when you switch back.`
+  String get tailscaleNodeSwitchModeTip {
+    return Intl.message(
+      "The node is online. After switching, this Mac joins the Tailnet as another device: its 100.x IP and MagicDNS name change, so ACLs, SSH and anything that reaches this device by IP or name need updating. The current identity is kept and is used again when you switch back.",
+      name: 'tailscaleNodeSwitchModeTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The node is online. A new Auth Key re-registers this Mac as a new device; its IP may change and the old device shows as offline in the Tailscale admin console.`
+  String get tailscaleNodeAuthKeyChangeTip {
+    return Intl.message(
+      "The node is online. A new Auth Key re-registers this Mac as a new device; its IP may change and the old device shows as offline in the Tailscale admin console.",
+      name: 'tailscaleNodeAuthKeyChangeTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enter an Auth Key first`
+  String get tailscaleNodeAuthKeyRequired {
+    return Intl.message(
+      "Enter an Auth Key first",
+      name: 'tailscaleNodeAuthKeyRequired',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Auth Key registration failed: the key is invalid, already used or expired. Replace it`
+  String get tailscaleNodeAuthKeyFailed {
+    return Intl.message(
+      "Auth Key registration failed: the key is invalid, already used or expired. Replace it",
+      name: 'tailscaleNodeAuthKeyFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Re-register`
+  String get tailscaleNodeReRegister {
+    return Intl.message(
+      "Re-register",
+      name: 'tailscaleNodeReRegister',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Registers again with the current Auth Key as a new device; the IP may change`
+  String get tailscaleNodeReRegisterTip {
+    return Intl.message(
+      "Registers again with the current Auth Key as a new device; the IP may change",
+      name: 'tailscaleNodeReRegisterTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Conflicting settings handled automatically`
+  String get tailscaleNodeConflicts {
+    return Intl.message(
+      "Conflicting settings handled automatically",
+      name: 'tailscaleNodeConflicts',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `While the built-in node is on, these settings are ignored at runtime so Tailnet traffic reaches the node. Profiles and override scripts are not modified, and everything is restored when the node is off:`
+  String get tailscaleNodeConflictsDesc {
+    return Intl.message(
+      "While the built-in node is on, these settings are ignored at runtime so Tailnet traffic reaches the node. Profiles and override scripts are not modified, and everything is restored when the node is off:\n• TUN route-exclude-address entries overlapping Tailnet ranges (that traffic would bypass the core)\n• 100.100.100.100 in DNS server lists (unreachable without the Tailscale App)\n• nameserver-policy entries pointing to 100.100.100.100, now resolved by the built-in node\n• hosts entries for Tailnet domains\n• Tailnet domains and ranges in the system proxy bypass list\nRules for Tailnet domains and ranges in your profile are unaffected; the built-in node's prepended rules match first. If you never customized these, nothing to do.",
+      name: 'tailscaleNodeConflictsDesc',
       desc: '',
       args: [],
     );

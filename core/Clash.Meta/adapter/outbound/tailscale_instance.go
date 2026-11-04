@@ -3,7 +3,12 @@
 package outbound
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"os"
+	"path/filepath"
 	"reflect"
+	"strings"
 	"sync"
 
 	"github.com/metacubex/mihomo/log"
@@ -34,16 +39,51 @@ func reuseTailscale(option TailscaleOption) *Tailscale {
 	return prev
 }
 
+// claimStateDir 关掉共用同一 state-dir 的旧实例；同名节点换了 state-dir（如登录方式与
+// Auth Key 方式切换）也关掉旧实例，避免等 GC 期间两台设备同时在线。
 func (t *Tailscale) claimStateDir() {
 	tailscaleStateDirMu.Lock()
-	prev := tailscaleStateDirOwner[t.option.StateDir]
+	var prevs []*Tailscale
+	for dir, prev := range tailscaleStateDirOwner {
+		if prev == t || (dir != t.option.StateDir && prev.option.Name != t.option.Name) {
+			continue
+		}
+		prevs = append(prevs, prev)
+	}
 	tailscaleStateDirOwner[t.option.StateDir] = t
 	tailscaleStateDirMu.Unlock()
-	if prev != nil && prev != t {
-		log.Infoln("[Tailscale](%s) closing previous instance sharing state dir", t.Name())
+	for _, prev := range prevs {
+		log.Infoln("[Tailscale](%s) closing previous instance (state dir %s)", t.Name(), prev.option.StateDir)
 		_ = prev.shutdown()
 	}
 }
+
+// prepareAuthKeyState 在 Auth Key 方式下保证节点身份与当前 key 对应：key 变了就清掉旧身份，
+// 启动时用新 key 重新注册。tsnet 已登录时会忽略 auth-key，不清理的话改 key 不生效。
+// 只记录 key 的哈希，不落明文。
+func (t *Tailscale) prepareAuthKeyState() {
+	if t.option.AuthKey == "" {
+		return
+	}
+	sum := sha256.Sum256([]byte(t.option.AuthKey))
+	want := hex.EncodeToString(sum[:])
+	marker := filepath.Join(t.option.StateDir, tailscaleAuthKeyMarker)
+	if got, err := os.ReadFile(marker); err == nil && strings.TrimSpace(string(got)) == want {
+		return
+	}
+	for _, name := range []string{"tailscaled.state", "profile-data"} {
+		path := filepath.Join(t.option.StateDir, name)
+		if _, err := os.Stat(path); err == nil {
+			log.Infoln("[Tailscale](%s) auth-key changed, clearing previous identity", t.Name())
+			_ = os.RemoveAll(path)
+		}
+	}
+	if err := os.MkdirAll(t.option.StateDir, 0o700); err == nil {
+		_ = os.WriteFile(marker, []byte(want), 0o600)
+	}
+}
+
+const tailscaleAuthKeyMarker = "bettbox-auth-key.sha256"
 
 func (t *Tailscale) releaseStateDir() {
 	tailscaleStateDirMu.Lock()

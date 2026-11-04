@@ -2071,7 +2071,43 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "tailscaleNodeAuthKey": MessageLookupByLibrary.simpleMessage("Auth Key"),
     "tailscaleNodeAuthKeyDesc": MessageLookupByLibrary.simpleMessage(
-      "Optional. Leave empty to sign in with the browser; avoid tagged keys",
+      "Used to register automatically. A new key re-registers as a new device. Use a reusable, non-ephemeral key; devices from tagged keys don't belong to your account",
+    ),
+    "tailscaleNodeAuthMode": MessageLookupByLibrary.simpleMessage(
+      "Sign-in method",
+    ),
+    "tailscaleNodeAuthModeLogin": MessageLookupByLibrary.simpleMessage(
+      "Browser sign-in",
+    ),
+    "tailscaleNodeAuthModeAuthKey": MessageLookupByLibrary.simpleMessage(
+      "Auth Key",
+    ),
+    "tailscaleNodeAuthModeDesc": MessageLookupByLibrary.simpleMessage(
+      "The two methods register as two separate devices and keep their own identity; switching back keeps the previous sign-in",
+    ),
+    "tailscaleNodeSwitchModeTip": MessageLookupByLibrary.simpleMessage(
+      "The node is online. After switching, this Mac joins the Tailnet as another device: its 100.x IP and MagicDNS name change, so ACLs, SSH and anything that reaches this device by IP or name need updating. The current identity is kept and is used again when you switch back.",
+    ),
+    "tailscaleNodeAuthKeyChangeTip": MessageLookupByLibrary.simpleMessage(
+      "The node is online. A new Auth Key re-registers this Mac as a new device; its IP may change and the old device shows as offline in the Tailscale admin console.",
+    ),
+    "tailscaleNodeAuthKeyRequired": MessageLookupByLibrary.simpleMessage(
+      "Enter an Auth Key first",
+    ),
+    "tailscaleNodeAuthKeyFailed": MessageLookupByLibrary.simpleMessage(
+      "Auth Key registration failed: the key is invalid, already used or expired. Replace it",
+    ),
+    "tailscaleNodeReRegister": MessageLookupByLibrary.simpleMessage(
+      "Re-register",
+    ),
+    "tailscaleNodeReRegisterTip": MessageLookupByLibrary.simpleMessage(
+      "Registers again with the current Auth Key as a new device; the IP may change",
+    ),
+    "tailscaleNodeConflicts": MessageLookupByLibrary.simpleMessage(
+      "Conflicting settings handled automatically",
+    ),
+    "tailscaleNodeConflictsDesc": MessageLookupByLibrary.simpleMessage(
+      "While the built-in node is on, these settings are ignored at runtime so Tailnet traffic reaches the node. Profiles and override scripts are not modified, and everything is restored when the node is off:\n• TUN route-exclude-address entries overlapping Tailnet ranges (that traffic would bypass the core)\n• 100.100.100.100 in DNS server lists (unreachable without the Tailscale App)\n• nameserver-policy entries pointing to 100.100.100.100, now resolved by the built-in node\n• hosts entries for Tailnet domains\n• Tailnet domains and ranges in the system proxy bypass list\nRules for Tailnet domains and ranges in your profile are unaffected; the built-in node's prepended rules match first. If you never customized these, nothing to do.",
     ),
     "tailscaleNodeExitNode": MessageLookupByLibrary.simpleMessage("Exit Node"),
     "tailscaleNodeExitNodeDesc": MessageLookupByLibrary.simpleMessage(

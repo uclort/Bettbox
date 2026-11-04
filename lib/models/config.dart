@@ -395,6 +395,8 @@ abstract class NetworkProps with _$NetworkProps {
 // - App 共存（enable，桌面端）：Tailnet 网段不进 TUN、MagicDNS 交给 100.100.100.100、系统代理绕过，流量由 Tailscale App 承载。
 // - 内置节点（nodeEnable）：内核注入 mihomo type: tailscale 节点，Tailnet 域名与网段经前置规则转给它，不依赖 App。
 // 两者同时开启时以内置节点为准；routeExcludeAddress / dnsDomains 作为两种方式共用的 Tailnet 网段与域名。
+// 内置节点有两种接入方式（nodeUseAuthKey）：浏览器登录只认登录状态；Auth Key 只认 key。两种方式在内核里
+// 用不同 state-dir，切换不会清空另一种方式的身份，在 Tailnet 中是两台设备。
 @freezed
 abstract class TailscaleProps with _$TailscaleProps {
   const factory TailscaleProps({
@@ -409,6 +411,7 @@ abstract class TailscaleProps with _$TailscaleProps {
     @Default('') String nodeAuthKey,
     @Default('') String nodeExitNode,
     @Default(true) bool nodeAcceptRoutes,
+    @Default(false) bool nodeUseAuthKey,
   }) = _TailscaleProps;
 
   factory TailscaleProps.fromJson(Map<String, Object?> json) =>
@@ -418,7 +421,13 @@ abstract class TailscaleProps with _$TailscaleProps {
 extension TailscalePropsExt on TailscaleProps {
   bool get appActive => enable && system.isDesktop;
 
-  bool get nodeActive => nodeEnable;
+  /// Auth Key 方式没填 key 时不注入节点（没有可用的注册方式）。
+  bool get nodeActive =>
+      nodeEnable && (!nodeUseAuthKey || nodeAuthKey.trim().isNotEmpty);
+
+  /// Auth Key 方式已选但还没填 key。
+  bool get nodeAuthKeyMissing =>
+      nodeEnable && nodeUseAuthKey && nodeAuthKey.trim().isEmpty;
 
   /// 任一方式开启：内核补充 Tailscale 服务域名真实 IP、Tailnet 域名 DNS 与前置规则。
   bool get active => appActive || nodeActive;
@@ -426,8 +435,15 @@ extension TailscalePropsExt on TailscaleProps {
   /// 仅 App 共存生效时才让 Tailnet 绕开 TUN；内置节点需要 TUN 把 100.x 流量交给内核。
   bool get appRouting => appActive && !nodeActive;
 
-  /// 内置节点在 Tailnet 中的设备名，留空时用「本机名-bettbox」。
+  /// 内置节点在 Tailnet 中的设备名，留空时用「本机名-bettbox」。Auth Key 方式加 `-key` 后缀：
+  /// 两种方式是两台设备，同名时后注册的会被控制面改成 `-1`，离线设备也会一直占着名字。
   String get effectiveNodeHostname {
+    final base = _baseNodeHostname;
+    if (!nodeUseAuthKey || base.endsWith('-key')) return base;
+    return '$base-key';
+  }
+
+  String get _baseNodeHostname {
     final custom = nodeHostname.trim();
     if (custom.isNotEmpty) return custom;
     var host = 'bettbox';
@@ -447,6 +463,15 @@ extension TailscalePropsExt on TailscaleProps {
 
   /// 把 Tailnet 网段并入 TUN 排除路由（桌面端 TUN 的 route-exclude-address）。
   Tun applyToTun(Tun tun) {
+    if (nodeActive) {
+      // 内置节点需要 Tailnet 流量进 TUN：去掉手动加过的 Tailnet 排除网段（内核还会按网段重叠再清理一次）。
+      final tailnet = {for (final a in routeExcludeAddress) a.trim()};
+      final kept = tun.routeExcludeAddress
+          .where((address) => !tailnet.contains(address.trim()))
+          .toList();
+      if (kept.length == tun.routeExcludeAddress.length) return tun;
+      return tun.copyWith(routeExcludeAddress: kept);
+    }
     if (!appRouting) return tun;
     final addresses = {
       ...tun.routeExcludeAddress,
@@ -460,23 +485,42 @@ extension TailscalePropsExt on TailscaleProps {
       ? {
           'dns-domains': dnsDomains,
           'dns-server': dnsServer.trim(),
-          if (nodeActive)
+          if (nodeActive) ...{
+            'ranges': routeExcludeAddress,
             'node': {
               'name': tailscaleNodeName,
               'hostname': effectiveNodeHostname,
-              'auth-key': nodeAuthKey.trim(),
+              'auth-mode': nodeUseAuthKey ? 'auth-key' : 'login',
+              if (nodeUseAuthKey) 'auth-key': nodeAuthKey.trim(),
               'exit-node': nodeExitNode.trim(),
               'accept-routes': nodeAcceptRoutes,
             },
+          },
         }
       : null;
 
-  /// 恢复默认值，保留开关状态与 auth key。
+  /// 恢复默认值，保留开关状态、接入方式与 auth key。
   TailscaleProps reset() => defaultTailscaleProps.copyWith(
     enable: enable,
     nodeEnable: nodeEnable,
     nodeAuthKey: nodeAuthKey,
+    nodeUseAuthKey: nodeUseAuthKey,
   );
+
+  /// 内置节点开启时，系统代理例外里的 Tailnet 条目会让浏览器等走系统代理的应用直连 Tailnet，
+  /// 没有 Tailscale App 时连不上，这里去掉（只影响生效值，不改用户设置）。
+  bool isTailnetBypass(String entry) {
+    final value = entry.trim();
+    if (value.isEmpty) return false;
+    if (bypassDomain.contains(value) || routeExcludeAddress.contains(value)) {
+      return true;
+    }
+    final host = normalizeTailscaleDomain(value);
+    return dnsDomains.any((item) {
+      final domain = normalizeTailscaleDomain(item);
+      return domain.isNotEmpty && (host == domain || host.endsWith('.$domain'));
+    });
+  }
 
   /// App 共存：Tailnet 直连（由系统路由交给 App）；内置节点：转给内核里的 Tailscale 节点。
   List<String> get prependRules {
@@ -591,6 +635,9 @@ String normalizeTailscaleDomain(String domain) {
 extension NetworkPropsExt on NetworkProps {
   /// 系统代理实际绕过列表：开启 Tailscale 共存时追加 Tailnet 例外。
   List<String> get realBypassDomain {
+    if (tailscale.nodeActive) {
+      return bypassDomain.where((e) => !tailscale.isTailnetBypass(e)).toList();
+    }
     if (!tailscale.appRouting) return bypassDomain;
     return {...bypassDomain, ...tailscale.bypassDomain}.toList();
   }
