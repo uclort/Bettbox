@@ -1184,5 +1184,7 @@
   "trayStatusDelayTimeout": "پایان مهلت",
   "trayStatusPreview": "پیش‌نمایش",
   "trayStatusPreviewEmpty": "با گزینه‌های فعلی چیزی برای نمایش نیست",
+  "trayPinHintAuto": "برای ثابت کردن روی گره کلیک کنید؛ کلیک دوباره انتخاب خودکار",
+  "trayPinHintPinned": "ثابت شده؛ برای انتخاب خودکار روی گره قفل‌دار کلیک کنید",
   "trayStatusPreviewDesc": "بر اساس تنظیمات و انتخاب فعلی؛ سرعت نمونه است"
 }

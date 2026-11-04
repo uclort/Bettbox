@@ -1184,5 +1184,7 @@
   "trayStatusDelayTimeout": "시간 초과",
   "trayStatusPreview": "미리보기",
   "trayStatusPreviewEmpty": "현재 옵션으로 표시할 내용이 없습니다",
+  "trayPinHintAuto": "노드를 클릭하면 고정, 다시 클릭하면 자동 선택",
+  "trayPinHintPinned": "고정됨. 잠금 표시된 노드를 클릭하면 자동 선택",
   "trayStatusPreviewDesc": "현재 설정과 선택으로 생성되며 속도는 예시 값입니다"
 }

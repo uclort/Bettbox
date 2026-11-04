@@ -1184,5 +1184,7 @@
   "trayStatusDelayTimeout": "タイムアウト",
   "trayStatusPreview": "プレビュー",
   "trayStatusPreviewEmpty": "現在の設定では表示する内容がありません",
+  "trayPinHintAuto": "ノードをクリックで固定、もう一度クリックで自動選択に戻す",
+  "trayPinHintPinned": "固定中。鍵付きのノードをクリックで自動選択に戻す",
   "trayStatusPreviewDesc": "現在の設定と選択から生成。速度はサンプル値です"
 }

@@ -163,12 +163,17 @@ private final class AlignedTrayMenuItemView: NSView {
     private var isDisabled = false
     private var isHovered = false
     private var isPressed = false
+    // BETTBOX-CUSTOM: 原始文本单独保存；富文本含图标附件后 stringValue 会丢失锁标记。
+    private var rawLabel = ""
+    private var rawDetail = ""
+    private var checkText = ""
     var onClick: (() -> Void)?
 
     init(
         label: String,
         detail: String,
         checked: Bool,
+        locked: Bool,
         disabled: Bool,
         width: CGFloat
     ) {
@@ -212,6 +217,7 @@ private final class AlignedTrayMenuItemView: NSView {
             label: label,
             detail: detail,
             checked: checked,
+            locked: locked,
             disabled: disabled
         )
     }
@@ -240,8 +246,8 @@ private final class AlignedTrayMenuItemView: NSView {
         let titleX = TrayMenuMetrics.titleX
         let detailRight = bounds.width - TrayMenuMetrics.trailingInset
         let detailWidth = TrayMenuMetrics.detailWidth(
-            detail: detailLabel.stringValue,
-            label: titleLabel.stringValue,
+            detail: rawDetail,
+            label: rawLabel,
             available: detailRight - titleX
         )
         let detailX = detailRight - detailWidth
@@ -263,15 +269,17 @@ private final class AlignedTrayMenuItemView: NSView {
         label: String,
         detail: String,
         checked: Bool,
+        locked: Bool,
         disabled: Bool
     ) {
         isDisabled = disabled
         if disabled {
             isPressed = false
         }
-        checkmarkLabel.stringValue = checked ? "✓" : ""
-        titleLabel.stringValue = label
-        detailLabel.stringValue = detail
+        // BETTBOX-CUSTOM: 自动组固定的节点在勾选列画锁代替对号，与窗口卡片一致。
+        checkText = locked ? TrayLockText.marker : (checked ? "✓" : "")
+        rawLabel = label
+        rawDetail = detail
         needsLayout = true
         updateAppearance()
     }
@@ -343,23 +351,21 @@ private final class AlignedTrayMenuItemView: NSView {
         } else {
             detailColor = .secondaryLabelColor
         }
-        let labels: [(NSTextField, NSColor, NSTextAlignment)] = [
-            (checkmarkLabel, textColor, .center),
-            (titleLabel, textColor, .left),
-            (detailLabel, detailColor, .right),
+        let labels: [(NSTextField, String, NSColor, NSTextAlignment)] = [
+            (checkmarkLabel, checkText, textColor, .center),
+            (titleLabel, rawLabel, textColor, .left),
+            (detailLabel, rawDetail, detailColor, .right),
         ]
-        for (textLabel, color, alignment) in labels {
+        for (textLabel, text, color, alignment) in labels {
             let paragraph = NSMutableParagraphStyle()
             paragraph.alignment = alignment
             paragraph.lineBreakMode = .byTruncatingTail
-            textLabel.attributedStringValue = NSAttributedString(
-                string: textLabel.stringValue,
-                attributes: [
-                    .font: textLabel.font
-                        ?? NSFont.menuFont(ofSize: NSFont.systemFontSize),
-                    .foregroundColor: color,
-                    .paragraphStyle: paragraph,
-                ]
+            textLabel.attributedStringValue = TrayLockText.attributed(
+                text,
+                font: textLabel.font
+                    ?? NSFont.menuFont(ofSize: NSFont.systemFontSize),
+                color: color,
+                paragraph: paragraph
             )
         }
     }
@@ -378,6 +384,84 @@ private func isLockedIcon(_ icon: String?) -> Bool {
     icon == "lock"
 }
 
+// BETTBOX-CUSTOM: Dart 侧在文本中用 🔒（trayLockMark）标记被固定的策略组 / 节点，
+// 绘制时替换为与文字同色的 SF Symbol `lock`，菜单与菜单栏标签共用。
+enum TrayLockText {
+    static let marker = "🔒"
+
+    static func attributed(
+        _ text: String,
+        font: NSFont,
+        color: NSColor,
+        paragraph: NSParagraphStyle? = nil
+    ) -> NSAttributedString {
+        var attributes: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: color,
+        ]
+        if let paragraph {
+            attributes[.paragraphStyle] = paragraph
+        }
+        guard text.contains(marker) else {
+            return NSAttributedString(string: text, attributes: attributes)
+        }
+        let result = NSMutableAttributedString()
+        let parts = text.components(separatedBy: marker)
+        for (index, part) in parts.enumerated() {
+            if index > 0 {
+                // 与相邻文字之间留细空格；左括号、空格旁不再加。
+                let previous = parts[index - 1].last
+                if let previous, previous != "(", previous != " " {
+                    result.append(NSAttributedString(string: "\u{2009}", attributes: attributes))
+                }
+                result.append(lockAttachment(font: font, color: color, attributes: attributes))
+                if let next = part.first, next != " ", next != ")" {
+                    result.append(NSAttributedString(string: "\u{2009}", attributes: attributes))
+                }
+            }
+            if !part.isEmpty {
+                result.append(NSAttributedString(string: part, attributes: attributes))
+            }
+        }
+        return result
+    }
+
+    private static func lockAttachment(
+        font: NSFont,
+        color: NSColor,
+        attributes: [NSAttributedString.Key: Any]
+    ) -> NSAttributedString {
+        let configuration = NSImage.SymbolConfiguration(
+            pointSize: round(font.pointSize * 0.8),
+            weight: .regular
+        ).applying(NSImage.SymbolConfiguration(paletteColors: [color]))
+        guard
+            let image = NSImage(
+                systemSymbolName: "lock",
+                accessibilityDescription: nil
+            )?.withSymbolConfiguration(configuration)
+        else {
+            return NSAttributedString(string: marker, attributes: attributes)
+        }
+        let attachment = NSTextAttachment()
+        attachment.image = image
+        let size = image.size
+        // 图标垂直居中于大写字母高度，与文字基线对齐。
+        attachment.bounds = NSRect(
+            x: 0,
+            y: round((font.capHeight - size.height) / 2),
+            width: size.width,
+            height: size.height
+        )
+        let string = NSMutableAttributedString(attachment: attachment)
+        string.addAttributes(
+            attributes,
+            range: NSRange(location: 0, length: string.length)
+        )
+        return string
+    }
+}
+
 enum TrayMenuMetrics {
     static let titleX: CGFloat = 30
     static let trailingInset: CGFloat = 14
@@ -394,7 +478,10 @@ enum TrayMenuMetrics {
     static func textWidth(_ text: String) -> CGFloat {
         guard !text.isEmpty else { return 0 }
         // NSTextField 自带约 2pt 内边距，额外留出避免末字被截断。
-        return ceil((text as NSString).size(withAttributes: [.font: font]).width) + 4
+        // 含锁标记时按替换后的图标宽度计算。
+        let width = TrayLockText.attributed(text, font: font, color: .labelColor)
+            .size().width
+        return ceil(width) + 4
     }
 
     /// 菜单宽度足够时完整显示说明；不足时说明至少保留 60%，其余截断名称。
@@ -544,15 +631,21 @@ private final class SubmenuTrayMenuItemView: NSView {
         let paragraph = NSMutableParagraphStyle()
         paragraph.alignment = alignment
         paragraph.lineBreakMode = .byTruncatingTail
-        let string = NSAttributedString(
-            string: text,
-            attributes: [
-                .font: font,
-                .foregroundColor: color,
-                .paragraphStyle: paragraph,
-            ]
+        // BETTBOX-CUSTOM: 右侧说明里的锁标记替换为图标。
+        let string = TrayLockText.attributed(
+            text,
+            font: font,
+            color: color,
+            paragraph: paragraph
         )
-        let lineHeight = ceil(string.size().height)
+        // 行高按纯文字计算，避免图标附件改变垂直位置。
+        let plain = text.replacingOccurrences(of: TrayLockText.marker, with: "")
+        let lineHeight = ceil(
+            NSAttributedString(
+                string: plain.isEmpty ? "A" : plain,
+                attributes: [.font: font]
+            ).size().height
+        )
         let textRect = NSRect(
             x: rect.minX,
             y: rect.minY + floor((rect.height - lineHeight) / 2),
@@ -797,6 +890,7 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
                     label: label,
                     detail: sublabel,
                     checked: checked ?? false,
+                    locked: isLockedIcon(itemDict["icon"] as? String),
                     disabled: disabled,
                     width: menuWidth
                 )
@@ -920,6 +1014,7 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
                     label: label,
                     detail: sublabel,
                     checked: checked ?? false,
+                    locked: isLockedIcon(itemDict["icon"] as? String),
                     disabled: disabled
                 )
                 menuItem.action = nil

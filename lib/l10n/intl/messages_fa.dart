@@ -2179,6 +2179,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayStatusPreviewEmpty": MessageLookupByLibrary.simpleMessage(
       "با گزینه‌های فعلی چیزی برای نمایش نیست",
     ),
+    "trayPinHintAuto": MessageLookupByLibrary.simpleMessage(
+      "برای ثابت کردن روی گره کلیک کنید؛ کلیک دوباره انتخاب خودکار",
+    ),
+    "trayPinHintPinned": MessageLookupByLibrary.simpleMessage(
+      "ثابت شده؛ برای انتخاب خودکار روی گره قفل‌دار کلیک کنید",
+    ),
     "trayStatusPreviewDesc": MessageLookupByLibrary.simpleMessage(
       "بر اساس تنظیمات و انتخاب فعلی؛ سرعت نمونه است",
     ),

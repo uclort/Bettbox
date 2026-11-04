@@ -213,6 +213,21 @@ class Tray {
         final isTestingThisGroup = delayTestCoordinator.isTestingGroup(
           group.name,
         );
+        final pinnedProxy = trayPinnedProxyName(group, trayState.selectedMap);
+
+        // BETTBOX-CUSTOM: URLTest / Fallback 子菜单顶部用不可点击的说明解释交互，
+        // 随固定状态切换文案；固定的节点前显示锁，与窗口策略组卡片一致。
+        if (group.type.isComputedSelected) {
+          subMenuItems.add(
+            MenuItem(
+              label: pinnedProxy.isEmpty
+                  ? appLocalizations.trayPinHintAuto
+                  : appLocalizations.trayPinHintPinned,
+              disabled: true,
+            ),
+          );
+          subMenuItems.add(MenuItem.separator());
+        }
 
         subMenuItems.add(
           MenuItem(
@@ -240,32 +255,49 @@ class Tray {
           );
 
           final delayText = _formatProxySublabel(delay);
+          // 节点本身是策略组时，它被固定也要在右侧说明里标出。
           final groupSelection = trayGroupSelectionLabel(
             groupName: proxy.name,
             groups: selectionGroups,
             selectedMap: trayState.selectedMap,
             showChain: showProxyChain,
+            markSelfPin: true,
           );
+          final locked = pinnedProxy.isNotEmpty && pinnedProxy == proxy.name;
           subMenuItems.add(
             MenuItem.checkbox(
               key: 'proxy-item:${proxy.name}',
               label: proxy.name,
               sublabel: joinTrayDetail(groupSelection, delayText),
+              // BETTBOX-CUSTOM: 固定的节点勾选列画锁代替对号。
+              icon: locked ? trayMenuLockedIcon : null,
               checked:
+                  !locked &&
                   group.getCurrentSelectedName(
-                    trayState.selectedMap[group.name] ?? '',
-                  ) ==
-                  proxy.name,
-              // BETTBOX-CUSTOM: 非 Selector 组节点置灰，原生侧不响应点击也不关闭菜单。
+                        trayState.selectedMap[group.name] ?? '',
+                      ) ==
+                      proxy.name,
+              // BETTBOX-CUSTOM: 不可手动选择的组（LoadBalance 等）节点置灰，原生侧
+              // 不响应点击也不关闭菜单。
               disabled: !selectable,
               onClick: (_) {
                 if (!selectable) return;
                 final appController = globalState.appController;
-                appController.updateCurrentSelectedMap(group.name, proxy.name);
-                appController.changeProxy(
-                  groupName: group.name,
-                  proxyName: proxy.name,
+                final next = trayNextSelection(
+                  group,
+                  trayState.selectedMap,
+                  proxy.name,
                 );
+                appController.updateCurrentSelectedMap(group.name, next);
+                if (group.type.isComputedSelected) {
+                  // 与窗口卡片相同：固定或解除后刷新策略组，拿到内核新的 now。
+                  appController.changeProxyDebounce(group.name, next);
+                } else {
+                  appController.changeProxy(
+                    groupName: group.name,
+                    proxyName: next,
+                  );
+                }
               },
             ),
           );

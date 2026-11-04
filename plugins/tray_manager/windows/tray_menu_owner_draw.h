@@ -30,7 +30,8 @@ struct TrayOwnerDrawItem {
   std::wstring label;
   std::wstring detail;
   bool submenu = false;
-  // BETTBOX-CUSTOM: URLTest / Fallback 被固定到节点时，在名称后绘制锁。
+  // BETTBOX-CUSTOM: URLTest / Fallback 被固定时绘制锁：策略组行（submenu）画在
+  // 名称后；节点行画在勾选列，代替对号。
   bool locked = false;
   std::shared_ptr<TrayOwnerDrawColumn> column;
 };
@@ -49,16 +50,19 @@ class TrayMenuOwnerDraw {
     HDC dc = GetDC(host);
     HGDIOBJ old_font = SelectObject(dc, text_font_);
     auto item_label_width = [&](const TrayOwnerDrawItem* target) {
-      const int lock = target->locked ? Layout::lock_gap + Layout::lock_width : 0;
+      const int lock = target->locked && target->submenu
+                           ? Layout::lock_gap + Layout::lock_width
+                           : 0;
       return TextWidth(dc, target->label) + Scale(lock, dpi);
     };
     int label_width = item_label_width(item);
-    int detail_width = TextWidth(dc, item->detail);
+    int detail_width = MarkedTextWidth(dc, item->detail, dpi);
     bool has_submenu = item->submenu;
     if (item->column != nullptr) {
       for (const TrayOwnerDrawItem* sibling : item->column->items) {
         label_width = (std::max)(label_width, item_label_width(sibling));
-        detail_width = (std::max)(detail_width, TextWidth(dc, sibling->detail));
+        detail_width =
+            (std::max)(detail_width, MarkedTextWidth(dc, sibling->detail, dpi));
         has_submenu = has_submenu || sibling->submenu;
       }
     }
@@ -142,9 +146,12 @@ class TrayMenuOwnerDraw {
     const int previous_mode = SetBkMode(dc, TRANSPARENT);
     const COLORREF previous_color = GetTextColor(dc);
 
-    if (checked) {
-      RECT check_rect{rect.left, rect.top, rect.left + layout.text_left,
-                      rect.bottom};
+    RECT check_rect{rect.left, rect.top, rect.left + layout.text_left,
+                    rect.bottom};
+    if (item->locked && !item->submenu) {
+      // BETTBOX-CUSTOM: 自动组固定的节点在勾选列画锁代替对号，与窗口卡片一致。
+      DrawGlyph(dc, icon_font_, L"\xE72E", check_rect, text_color);
+    } else if (checked) {
       DrawGlyph(dc, icon_font_, L"\xE73E", check_rect, text_color);
     }
 
@@ -159,22 +166,19 @@ class TrayMenuOwnerDraw {
     HGDIOBJ old_font = SelectObject(dc, text_font_);
     const int label_left = rect.left + layout.text_left;
     const int available = (std::max)(0, right - label_left);
-    int detail_width = TextWidth(dc, item->detail);
+    int detail_width = MarkedTextWidth(dc, item->detail, dpi);
     if (detail_width > 0) {
       const int label_width = TextWidth(dc, item->label);
       const int room = (std::max)(available * 6 / 10,
                                   available - layout.column_gap - label_width);
       detail_width = (std::min)(detail_width, room);
       RECT detail_rect{right - detail_width, rect.top, right, rect.bottom};
-      SetTextColor(dc, detail_color);
-      DrawTextW(dc, item->detail.c_str(), static_cast<int>(item->detail.size()),
-                &detail_rect,
-                DT_RIGHT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX |
-                    DT_END_ELLIPSIS);
+      DrawMarkedText(dc, item->detail, detail_rect, detail_color, dpi);
       right = detail_rect.left - layout.column_gap;
     }
+    const bool lock_after_label = item->locked && item->submenu;
     int label_right = right;
-    if (item->locked) {
+    if (lock_after_label) {
       label_right -= Scale(Layout::lock_gap + Layout::lock_width, dpi);
     }
     RECT label_rect{label_left, rect.top, (std::max)(label_left, label_right),
@@ -184,7 +188,7 @@ class TrayMenuOwnerDraw {
               &label_rect,
               DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX |
                   DT_END_ELLIPSIS);
-    if (item->locked) {
+    if (lock_after_label) {
       const int label_drawn = (std::min)(
           TextWidth(dc, item->label),
           static_cast<int>(label_rect.right - label_rect.left));
@@ -216,6 +220,8 @@ class TrayMenuOwnerDraw {
     // BETTBOX-CUSTOM: 名称后锁定标记的图标宽度与间距（96 DPI 基准）。
     static constexpr int lock_width = 12;
     static constexpr int lock_gap = 4;
+    // 说明文字中锁标记占位（含两侧留白）。
+    static constexpr int inline_lock_width = 14;
   };
 
   static int Scale(int value, UINT dpi) {
@@ -251,6 +257,71 @@ class TrayMenuOwnerDraw {
     DrawTextW(dc, glyph, 1, &rect,
               DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
     SelectObject(dc, old_font);
+  }
+
+  // BETTBOX-CUSTOM: Dart 侧在说明文字里用 🔒（trayLockMark，UTF-16 代理对）标记
+  // 被固定的策略组 / 节点，绘制时替换为与名称后相同的 MDL2 锁字形。
+  static constexpr wchar_t kLockMark[] = L"\xD83D\xDD12";
+  static constexpr size_t kLockMarkLength = 2;
+
+  static std::vector<std::wstring> SplitLockMark(const std::wstring& text) {
+    std::vector<std::wstring> parts;
+    size_t start = 0;
+    while (true) {
+      const size_t found = text.find(kLockMark, start);
+      if (found == std::wstring::npos) {
+        parts.push_back(text.substr(start));
+        break;
+      }
+      parts.push_back(text.substr(start, found - start));
+      start = found + kLockMarkLength;
+    }
+    return parts;
+  }
+
+  // 调用前 dc 已选入正文字体。
+  static int MarkedTextWidth(HDC dc, const std::wstring& text, UINT dpi) {
+    const std::vector<std::wstring> parts = SplitLockMark(text);
+    int width = 0;
+    for (const std::wstring& part : parts) width += TextWidth(dc, part);
+    width += static_cast<int>(parts.size() - 1) *
+             Scale(Layout::inline_lock_width, dpi);
+    return width;
+  }
+
+  // 右对齐绘制说明；放不下时从左侧开始，末段以省略号截断。
+  void DrawMarkedText(HDC dc, const std::wstring& text, RECT rect,
+                      COLORREF color, UINT dpi) const {
+    SetTextColor(dc, color);
+    const UINT flags =
+        DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS;
+    if (text.find(kLockMark) == std::wstring::npos) {
+      DrawTextW(dc, text.c_str(), static_cast<int>(text.size()), &rect,
+                DT_RIGHT | flags);
+      return;
+    }
+    const std::vector<std::wstring> parts = SplitLockMark(text);
+    const int lock_width = Scale(Layout::inline_lock_width, dpi);
+    const int right = static_cast<int>(rect.right);
+    const int room = right - static_cast<int>(rect.left);
+    int x = right - (std::min)(MarkedTextWidth(dc, text, dpi), room);
+    for (size_t i = 0; i < parts.size(); ++i) {
+      if (i > 0) {
+        if (x + lock_width > right) break;
+        RECT lock_rect{x, rect.top, x + lock_width, rect.bottom};
+        DrawGlyph(dc, lock_font_, L"\xE72E", lock_rect, color);
+        SetTextColor(dc, color);
+        x += lock_width;
+      }
+      const std::wstring& part = parts[i];
+      if (part.empty()) continue;
+      const int remaining = right - x;
+      if (remaining <= 0) break;
+      RECT part_rect{x, rect.top, rect.right, rect.bottom};
+      DrawTextW(dc, part.c_str(), static_cast<int>(part.size()), &part_rect,
+                DT_LEFT | flags);
+      x += (std::min)(TextWidth(dc, part), remaining);
+    }
   }
 
   // 与原生菜单项对齐：文字起点 = 项边距 + 勾选背景（含边距）+ 文字边距。

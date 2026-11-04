@@ -133,6 +133,31 @@ void main() {
     expect(trayDart, contains('trayMenuLockedIcon'));
   });
 
+  test('固定的节点勾选列画锁，说明中的锁标记替换为图标', () {
+    final ownerDrawSource = File(
+      'plugins/tray_manager/windows/tray_menu_owner_draw.h',
+    ).readAsStringSync();
+    expect(ownerDrawSource, contains('item->locked && !item->submenu'));
+    expect(ownerDrawSource, contains(r'kLockMark[] = L"\xD83D\xDD12"'));
+    expect(ownerDrawSource, contains('DrawMarkedText(dc, item->detail'));
+
+    final macMenu = File(
+      'plugins/tray_manager/macos/Classes/TrayMenu.swift',
+    ).readAsStringSync();
+    expect(macMenu, contains('enum TrayLockText'));
+    expect(macMenu, contains('static let marker = "🔒"'));
+    expect(macMenu, contains('checkText = locked ? TrayLockText.marker'));
+    final macIcon = File(
+      'plugins/tray_manager/macos/Classes/TrayIcon.swift',
+    ).readAsStringSync();
+    expect(macIcon, contains('TrayLockText.attributed('));
+
+    final trayDart = File('lib/common/tray.dart').readAsStringSync();
+    expect(trayDart, contains('trayNextSelection('));
+    expect(trayDart, contains('appLocalizations.trayPinHintAuto'));
+    expect(trayDart, contains('markSelfPin: true'));
+  });
+
   test('Windows 托盘菜单把 shortcut 转为助记键', () {
     expect(source, contains('std::string WithMnemonic('));
     expect(source, contains('WithMnemonic(raw_label, item_map)'));

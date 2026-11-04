@@ -260,13 +260,122 @@ void main() {
     );
   });
 
-  test('只有 Selector 组的节点可在托盘手动选择', () {
+  test('Selector 与 URLTest / Fallback 的节点可在托盘点选', () {
     for (final type in GroupType.values) {
       expect(
         isTrayGroupManuallySelectable(Group(type: type, name: type.name)),
-        type == GroupType.Selector,
+        type == GroupType.Selector ||
+            type == GroupType.URLTest ||
+            type == GroupType.Fallback,
         reason: type.name,
       );
     }
+  });
+
+  // BETTBOX-CUSTOM: 托盘点击自动组节点与窗口卡片一致：点击即固定，再点恢复自动。
+  test('自动组点击已固定节点解除固定，其他节点改为固定', () {
+    final fallback = groups.getGroup('Fallback')!;
+    final selector = groups.getGroup('Other')!;
+    const pinned = {'Fallback': 'FC-香港 6'};
+    expect(trayPinnedProxyName(fallback, const {}), isEmpty);
+    expect(trayPinnedProxyName(fallback, pinned), 'FC-香港 6');
+    expect(trayNextSelection(fallback, const {}, 'FC-香港 6'), 'FC-香港 6');
+    expect(trayNextSelection(fallback, pinned, 'FC-香港 6'), isEmpty);
+    expect(trayNextSelection(fallback, pinned, 'Other'), 'Other');
+    expect(
+      trayNextSelection(selector, const {'Other': 'FC-日本 1'}, 'FC-日本 1'),
+      'FC-日本 1',
+    );
+  });
+
+  group('链路中被固定的自动组带锁标记', () {
+    // Fallback 被固定到 Other，Global 选中 Fallback。
+    const pinned = {'Fallback': 'Other'};
+
+    test('隐藏中间链路时锁放在最终节点前', () {
+      expect(
+        trayGroupSelectionLabel(
+          groupName: 'Global',
+          groups: groups,
+          selectedMap: pinned,
+        ),
+        'Fallback (${trayLockMark}FC-日本 1)',
+      );
+    });
+
+    test('完整链路时锁紧跟被固定的组名', () {
+      expect(
+        trayGroupSelectionLabel(
+          groupName: 'Global',
+          groups: groups,
+          selectedMap: pinned,
+          showChain: true,
+        ),
+        'Fallback$trayLockMark → Other → FC-日本 1',
+      );
+    });
+
+    test('行自身被固定：一级菜单不重复，子菜单行写进说明', () {
+      String label({bool markSelfPin = false, bool showChain = false}) =>
+          trayGroupSelectionLabel(
+            groupName: 'Fallback',
+            groups: groups,
+            selectedMap: pinned,
+            markSelfPin: markSelfPin,
+            showChain: showChain,
+          );
+      expect(label(), 'Other (FC-日本 1)');
+      expect(label(markSelfPin: true), 'Other (${trayLockMark}FC-日本 1)');
+      expect(
+        label(markSelfPin: true, showChain: true),
+        '${trayLockMark}Other → FC-日本 1',
+      );
+    });
+
+    test('未固定时不带锁', () {
+      expect(
+        trayGroupSelectionLabel(
+          groupName: 'Global',
+          groups: groups,
+          selectedMap: const {},
+          showChain: true,
+        ),
+        isNot(contains(trayLockMark)),
+      );
+    });
+
+    test('托盘显示策略组：组名、节点、链路各自对应位置加锁', () {
+      String status(
+        String groupName, {
+        bool showName = false,
+        bool showNode = false,
+        bool showChain = false,
+      }) => trayStatusGroupLabel(
+        groupName: groupName,
+        groups: groups,
+        selectedMap: pinned,
+        showName: showName,
+        showNode: showNode,
+        showChain: showChain,
+      );
+      expect(
+        status('Global', showName: true, showNode: true),
+        'Global · ${trayLockMark}FC-日本 1',
+      );
+      expect(
+        status('Global', showChain: true),
+        'Fallback$trayLockMark → Other → FC-日本 1',
+      );
+      expect(
+        status('Fallback', showName: true, showNode: true),
+        'Fallback$trayLockMark · FC-日本 1',
+      );
+      expect(status('Fallback', showNode: true), '${trayLockMark}FC-日本 1');
+      expect(
+        status('Fallback', showChain: true),
+        '${trayLockMark}Other → FC-日本 1',
+      );
+      expect(status('Fallback', showName: true), 'Fallback$trayLockMark');
+    });
   });
 }

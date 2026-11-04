@@ -1225,5 +1225,7 @@
   "trayStatusDelayTimeout": "Timeout",
   "trayStatusPreview": "Preview",
   "trayStatusPreviewEmpty": "Nothing to show with the current options",
+  "trayPinHintAuto": "Click a node to pin it; click again to auto-select",
+  "trayPinHintPinned": "Pinned; click the locked node to auto-select",
   "trayStatusPreviewDesc": "Built from current settings and selection; speed values are samples"
 }

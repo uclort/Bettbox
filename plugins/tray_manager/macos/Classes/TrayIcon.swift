@@ -248,9 +248,13 @@ public class TrayIcon: NSView {
             ofSize: speedFontSize,
             weight: .regular
         )
-        let labelSize = (content.label as NSString).size(
-            withAttributes: [.font: labelFont]
+        // BETTBOX-CUSTOM: 标签中的锁标记（被固定的策略组 / 节点）替换为 SF Symbol。
+        let labelString = TrayLockText.attributed(
+            content.label,
+            font: labelFont,
+            color: .labelColor
         )
+        let labelSize = labelString.size()
         let speedLineSizes = (content.speedLines ?? []).map {
             ($0 as NSString).size(withAttributes: [.font: speedFont])
         }
@@ -311,15 +315,11 @@ public class TrayIcon: NSView {
                     x += statusIconGap
                 }
                 if segment.kind == 0 {
-                    (content.label as NSString).draw(
+                    labelString.draw(
                         at: NSPoint(
                             x: x,
                             y: (barHeight - labelSize.height) / 2
-                        ),
-                        withAttributes: [
-                            .font: labelFont,
-                            .foregroundColor: textColor,
-                        ]
+                        )
                     )
                 } else if let lines = content.speedLines {
                     let blockBottom =

@@ -1059,11 +1059,10 @@ class TrayStatusPreviewItem extends ConsumerWidget {
       ],
     );
     final labelWidget = Flexible(
-      child: Text(
-        label,
+      child: Text.rich(
+        _lockedSpan(label, TextStyle(fontSize: 13, color: foreground)),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: TextStyle(fontSize: 13, color: foreground),
       ),
     );
     final separator = Container(
@@ -1121,10 +1120,38 @@ class TrayStatusPreviewItem extends ConsumerWidget {
         border: Border.all(color: colorScheme.outlineVariant),
         borderRadius: BorderRadius.circular(4),
       ),
-      child: Text(
-        lines.join('\n'),
-        style: TextStyle(fontSize: 12, color: colorScheme.onSurface),
+      child: Text.rich(
+        _lockedSpan(
+          lines.join('\n'),
+          TextStyle(fontSize: 12, color: colorScheme.onSurface),
+        ),
       ),
+    );
+  }
+
+  /// BETTBOX-CUSTOM: 预览中把锁标记（被固定的策略组 / 节点）替换为单色锁图标，
+  /// 与 macOS / Windows 托盘的实际绘制一致。
+  static InlineSpan _lockedSpan(String text, TextStyle style) {
+    final parts = text.split(trayLockMark);
+    return TextSpan(
+      style: style,
+      children: [
+        for (var i = 0; i < parts.length; i++) ...[
+          if (i > 0)
+            WidgetSpan(
+              alignment: PlaceholderAlignment.middle,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 1.5),
+                child: Icon(
+                  Icons.lock_outline,
+                  size: (style.fontSize ?? 13) * 0.9,
+                  color: style.color,
+                ),
+              ),
+            ),
+          if (parts[i].isNotEmpty) TextSpan(text: parts[i]),
+        ],
+      ],
     );
   }
 }

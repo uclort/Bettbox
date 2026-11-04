@@ -10475,6 +10475,26 @@ class AppLocalizations {
     );
   }
 
+  /// `Click a node to pin it; click again to auto-select`
+  String get trayPinHintAuto {
+    return Intl.message(
+      "Click a node to pin it; click again to auto-select",
+      name: 'trayPinHintAuto',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Pinned; click the locked node to auto-select`
+  String get trayPinHintPinned {
+    return Intl.message(
+      "Pinned; click the locked node to auto-select",
+      name: 'trayPinHintPinned',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Built from current settings and selection; speed values are samples`
   String get trayStatusPreviewDesc {
     return Intl.message(

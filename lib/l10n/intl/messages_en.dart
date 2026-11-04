@@ -2254,6 +2254,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayStatusPreviewEmpty": MessageLookupByLibrary.simpleMessage(
       "Nothing to show with the current options",
     ),
+    "trayPinHintAuto": MessageLookupByLibrary.simpleMessage(
+      "Click a node to pin it; click again to auto-select",
+    ),
+    "trayPinHintPinned": MessageLookupByLibrary.simpleMessage(
+      "Pinned; click the locked node to auto-select",
+    ),
     "trayStatusPreviewDesc": MessageLookupByLibrary.simpleMessage(
       "Built from current settings and selection; speed values are samples",
     ),

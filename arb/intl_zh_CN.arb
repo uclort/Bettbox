@@ -1226,5 +1226,7 @@
   "trayStatusDelayTimeout": "超时",
   "trayStatusPreview": "预览",
   "trayStatusPreviewEmpty": "当前勾选项没有可显示的内容",
+  "trayPinHintAuto": "点击节点即固定，再次点击恢复自动选择",
+  "trayPinHintPinned": "已固定节点，再次点击带锁的节点恢复自动选择",
   "trayStatusPreviewDesc": "按当前设置与选中节点生成，网速为示例数据"
 }

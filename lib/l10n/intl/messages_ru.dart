@@ -2230,6 +2230,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayStatusPreviewEmpty": MessageLookupByLibrary.simpleMessage(
       "При текущих настройках нечего показывать",
     ),
+    "trayPinHintAuto": MessageLookupByLibrary.simpleMessage(
+      "Нажмите узел, чтобы закрепить; повторно — автовыбор",
+    ),
+    "trayPinHintPinned": MessageLookupByLibrary.simpleMessage(
+      "Закреплено; нажмите узел с замком для автовыбора",
+    ),
     "trayStatusPreviewDesc": MessageLookupByLibrary.simpleMessage(
       "Построено по текущим настройкам и выбору; скорость — пример",
     ),

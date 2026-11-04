@@ -1691,6 +1691,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayStatusPreviewEmpty": MessageLookupByLibrary.simpleMessage(
       "目前勾選項沒有可顯示的內容",
     ),
+    "trayPinHintAuto": MessageLookupByLibrary.simpleMessage(
+      "點擊節點即固定，再次點擊恢復自動選擇",
+    ),
+    "trayPinHintPinned": MessageLookupByLibrary.simpleMessage(
+      "已固定節點，再次點擊帶鎖的節點恢復自動選擇",
+    ),
     "trayStatusPreviewDesc": MessageLookupByLibrary.simpleMessage(
       "依目前設定與選中節點產生，網速為示例資料",
     ),

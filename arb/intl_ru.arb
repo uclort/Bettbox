@@ -1188,5 +1188,7 @@
   "trayStatusDelayTimeout": "Тайм-аут",
   "trayStatusPreview": "Предпросмотр",
   "trayStatusPreviewEmpty": "При текущих настройках нечего показывать",
+  "trayPinHintAuto": "Нажмите узел, чтобы закрепить; повторно — автовыбор",
+  "trayPinHintPinned": "Закреплено; нажмите узел с замком для автовыбора",
   "trayStatusPreviewDesc": "Построено по текущим настройкам и выбору; скорость — пример"
 }

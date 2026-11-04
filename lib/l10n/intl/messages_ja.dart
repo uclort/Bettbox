@@ -1783,6 +1783,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayStatusPreviewEmpty": MessageLookupByLibrary.simpleMessage(
       "現在の設定では表示する内容がありません",
     ),
+    "trayPinHintAuto": MessageLookupByLibrary.simpleMessage(
+      "ノードをクリックで固定、もう一度クリックで自動選択に戻す",
+    ),
+    "trayPinHintPinned": MessageLookupByLibrary.simpleMessage(
+      "固定中。鍵付きのノードをクリックで自動選択に戻す",
+    ),
     "trayStatusPreviewDesc": MessageLookupByLibrary.simpleMessage(
       "現在の設定と選択から生成。速度はサンプル値です",
     ),
