@@ -1218,5 +1218,11 @@
   "trayStatusShowChainDesc": "Every level down to the final node, e.g. Fallback → Other → node",
   "trayStatusPosition": "Position",
   "trayStatusAfterSpeed": "After speed",
-  "trayStatusBeforeSpeed": "Before speed"
+  "trayStatusBeforeSpeed": "Before speed",
+  "trayStatusShowDelay": "Show node latency",
+  "trayStatusShowDelayDesc": "Show latency in parentheses after the final node, e.g. Node (86ms)",
+  "trayStatusDelayTimeout": "Timeout",
+  "trayStatusPreview": "Preview",
+  "trayStatusPreviewEmpty": "Nothing to show with the current options",
+  "trayStatusPreviewDesc": "Built from current settings and selection; speed values are samples"
 }

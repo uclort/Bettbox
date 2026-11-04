@@ -2164,6 +2164,24 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayStatusBeforeSpeed": MessageLookupByLibrary.simpleMessage(
       "قبل از سرعت",
     ),
+    "trayStatusShowDelay": MessageLookupByLibrary.simpleMessage(
+      "نمایش تأخیر گره",
+    ),
+    "trayStatusShowDelayDesc": MessageLookupByLibrary.simpleMessage(
+      "نمایش تأخیر داخل پرانتز پس از گره نهایی، مانند گره (86ms)",
+    ),
+    "trayStatusDelayTimeout": MessageLookupByLibrary.simpleMessage(
+      "پایان مهلت",
+    ),
+    "trayStatusPreview": MessageLookupByLibrary.simpleMessage(
+      "پیش‌نمایش",
+    ),
+    "trayStatusPreviewEmpty": MessageLookupByLibrary.simpleMessage(
+      "با گزینه‌های فعلی چیزی برای نمایش نیست",
+    ),
+    "trayStatusPreviewDesc": MessageLookupByLibrary.simpleMessage(
+      "بر اساس تنظیمات و انتخاب فعلی؛ سرعت نمونه است",
+    ),
     "trayStatusGroup": MessageLookupByLibrary.simpleMessage(
       "نمایش گروه پروکسی در سینی",
     ),

@@ -1178,5 +1178,11 @@
   "trayStatusShowChainDesc": "最終ノードまで段階的に表示（例：Fallback → Other → ノード）",
   "trayStatusPosition": "表示位置",
   "trayStatusAfterSpeed": "速度の後",
-  "trayStatusBeforeSpeed": "速度の前"
+  "trayStatusBeforeSpeed": "速度の前",
+  "trayStatusShowDelay": "ノードの遅延を表示",
+  "trayStatusShowDelayDesc": "最終ノードの後に括弧で遅延を表示（例: ノード (86ms)）",
+  "trayStatusDelayTimeout": "タイムアウト",
+  "trayStatusPreview": "プレビュー",
+  "trayStatusPreviewEmpty": "現在の設定では表示する内容がありません",
+  "trayStatusPreviewDesc": "現在の設定と選択から生成。速度はサンプル値です"
 }

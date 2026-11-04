@@ -1182,5 +1182,11 @@
   "trayStatusShowChainDesc": "Все уровни до конечного узла, например Fallback → Other → узел",
   "trayStatusPosition": "Положение",
   "trayStatusAfterSpeed": "После скорости",
-  "trayStatusBeforeSpeed": "Перед скоростью"
+  "trayStatusBeforeSpeed": "Перед скоростью",
+  "trayStatusShowDelay": "Показывать задержку узла",
+  "trayStatusShowDelayDesc": "Задержка в скобках после конечного узла, например Узел (86ms)",
+  "trayStatusDelayTimeout": "Тайм-аут",
+  "trayStatusPreview": "Предпросмотр",
+  "trayStatusPreviewEmpty": "При текущих настройках нечего показывать",
+  "trayStatusPreviewDesc": "Построено по текущим настройкам и выбору; скорость — пример"
 }

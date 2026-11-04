@@ -10414,6 +10414,66 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Show node latency`
+  String get trayStatusShowDelay {
+    return Intl.message(
+      "Show node latency",
+      name: 'trayStatusShowDelay',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show latency in parentheses after the final node, e.g. Node (86ms)`
+  String get trayStatusShowDelayDesc {
+    return Intl.message(
+      "Show latency in parentheses after the final node, e.g. Node (86ms)",
+      name: 'trayStatusShowDelayDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Timeout`
+  String get trayStatusDelayTimeout {
+    return Intl.message(
+      "Timeout",
+      name: 'trayStatusDelayTimeout',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Preview`
+  String get trayStatusPreview {
+    return Intl.message(
+      "Preview",
+      name: 'trayStatusPreview',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Nothing to show with the current options`
+  String get trayStatusPreviewEmpty {
+    return Intl.message(
+      "Nothing to show with the current options",
+      name: 'trayStatusPreviewEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Built from current settings and selection; speed values are samples`
+  String get trayStatusPreviewDesc {
+    return Intl.message(
+      "Built from current settings and selection; speed values are samples",
+      name: 'trayStatusPreviewDesc',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

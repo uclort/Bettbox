@@ -46,6 +46,7 @@ class Tray {
   // BETTBOX-CUSTOM: 托盘图标旁的策略组标签（空串表示不显示），与网速共用标题。
   String _statusLabel = '';
   bool _statusLabelBeforeSpeed = false;
+  String _lastStatusDelayText = '';
   String? _lastDisplayedLabel;
   bool? _lastDisplayedLabelBefore;
   bool? _lastDisplayedShowSpeed;
@@ -449,13 +450,33 @@ class Tray {
       return '';
     }
     final allGroups = globalState.appController.getAllGroups();
+    final groups = allGroups.isEmpty ? trayState.groups : allGroups;
+    var delayText = '';
+    if (setting.trayStatusShowDelay) {
+      final group = groups.getGroup(setting.trayStatusGroupName);
+      final delay = group == null
+          ? null
+          : globalState.appController.getTrayProxyDelay(
+              proxyName: group.name,
+              testUrl: group.testUrl,
+            );
+      // 测速中（0）沿用上次结果，避免菜单栏宽度来回跳动。
+      delayText = delay == 0
+          ? _lastStatusDelayText
+          : trayStatusDelayText(
+              delay,
+              timeoutText: appLocalizations.trayStatusDelayTimeout,
+            );
+    }
+    _lastStatusDelayText = delayText;
     return trayStatusGroupLabel(
       groupName: setting.trayStatusGroupName,
-      groups: allGroups.isEmpty ? trayState.groups : allGroups,
+      groups: groups,
       selectedMap: trayState.selectedMap,
       showName: setting.trayStatusShowName,
       showNode: setting.trayStatusShowNode,
       showChain: setting.trayStatusShowChain,
+      delayText: delayText,
     );
   }
 

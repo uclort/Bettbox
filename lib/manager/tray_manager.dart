@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/enum/enum.dart';
+import 'package:bett_box/models/models.dart';
 import 'package:bett_box/providers/app.dart';
 import 'package:bett_box/providers/config.dart';
 import 'package:bett_box/providers/state.dart';
@@ -20,6 +21,8 @@ class TrayManager extends ConsumerStatefulWidget {
 }
 
 class _TrayContainerState extends ConsumerState<TrayManager> with TrayListener {
+  int? _lastStatusDelay;
+
   @override
   void initState() {
     super.initState();
@@ -40,6 +43,7 @@ class _TrayContainerState extends ConsumerState<TrayManager> with TrayListener {
           state.trayStatusShowName,
           state.trayStatusShowNode,
           state.trayStatusShowChain,
+          state.trayStatusShowDelay,
           state.trayStatusBeforeSpeed,
         ),
       ),
@@ -49,6 +53,25 @@ class _TrayContainerState extends ConsumerState<TrayManager> with TrayListener {
         }
       },
     );
+    // BETTBOX-CUSTOM: 「显示节点延迟」开启时，只在指定策略组的延迟变化时刷新，
+    // 批量测速期间其他节点的延迟更新不会触发托盘重建。
+    ref.listenManual(delayDataSourceProvider, (prev, next) {
+      final setting = ref.read(appSettingProvider);
+      if (!setting.trayStatusGroupEnable || !setting.trayStatusShowDelay) {
+        return;
+      }
+      final group = ref.read(groupsProvider).getGroup(
+        setting.trayStatusGroupName,
+      );
+      if (group == null) return;
+      final delay = ref.read(
+        getDelayProvider(proxyName: group.name, testUrl: group.testUrl),
+      );
+      if (delay != _lastStatusDelay) {
+        _lastStatusDelay = delay;
+        globalState.appController.updateTray();
+      }
+    });
     ref.listenManual(groupsProvider, (prev, next) {
       if (prev != next &&
           ref.read(

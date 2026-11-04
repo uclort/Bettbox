@@ -30,6 +30,7 @@ void main() {
       expect(props.trayStatusShowName, isFalse);
       expect(props.trayStatusShowNode, isTrue);
       expect(props.trayStatusShowChain, isFalse);
+      expect(props.trayStatusShowDelay, isFalse);
       expect(props.trayStatusBeforeSpeed, isFalse);
     });
 
@@ -41,6 +42,7 @@ void main() {
         trayStatusShowName: true,
         trayStatusShowNode: false,
         trayStatusShowChain: true,
+        trayStatusShowDelay: true,
         trayStatusBeforeSpeed: true,
       );
       final restored = AppSettingProps.fromJson(
@@ -52,6 +54,7 @@ void main() {
       expect(restored.trayStatusShowName, isTrue);
       expect(restored.trayStatusShowNode, isFalse);
       expect(restored.trayStatusShowChain, isTrue);
+      expect(restored.trayStatusShowDelay, isTrue);
       expect(restored.trayStatusBeforeSpeed, isTrue);
     });
   });

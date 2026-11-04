@@ -1178,5 +1178,11 @@
   "trayStatusShowChainDesc": "همه سطوح تا گره نهایی، مانند Fallback → Other → گره",
   "trayStatusPosition": "موقعیت",
   "trayStatusAfterSpeed": "بعد از سرعت",
-  "trayStatusBeforeSpeed": "قبل از سرعت"
+  "trayStatusBeforeSpeed": "قبل از سرعت",
+  "trayStatusShowDelay": "نمایش تأخیر گره",
+  "trayStatusShowDelayDesc": "نمایش تأخیر داخل پرانتز پس از گره نهایی، مانند گره (86ms)",
+  "trayStatusDelayTimeout": "پایان مهلت",
+  "trayStatusPreview": "پیش‌نمایش",
+  "trayStatusPreviewEmpty": "با گزینه‌های فعلی چیزی برای نمایش نیست",
+  "trayStatusPreviewDesc": "بر اساس تنظیمات و انتخاب فعلی؛ سرعت نمونه است"
 }

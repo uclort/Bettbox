@@ -74,6 +74,8 @@ List<String> resolveTrayProxyChain({
 // BETTBOX-CUSTOM: 托盘图标旁显示指定策略组。三项均可选：组名、具体节点
 // （链路末端的真实节点）、完整链路（从选中项逐级到真实节点，已含具体节点）。
 // 组名与后半段以 ` · ` 分隔，例如 `Global · Fallback → Other → FC-日本 1`。
+// 开启「显示节点延迟」后，在整段末尾用括号附加最终节点的延迟，例如
+// `Global · FC-日本 1 (86ms)`；括号与 ` · `、` → ` 都不冲突，延迟一眼可辨。
 // 策略组不存在（如切换配置后）或三项都未勾选时返回空串，表示不显示。
 const trayStatusNameSeparator = ' · ';
 
@@ -84,10 +86,42 @@ String trayStatusGroupLabel({
   required bool showName,
   required bool showNode,
   required bool showChain,
+  String delayText = '',
 }) {
   if (groupName.isEmpty || groups.getGroup(groupName) == null) {
     return '';
   }
+  final label = _trayStatusBaseLabel(
+    groupName: groupName,
+    groups: groups,
+    selectedMap: selectedMap,
+    showName: showName,
+    showNode: showNode,
+    showChain: showChain,
+  );
+  if (label.isEmpty || delayText.isEmpty) {
+    return label;
+  }
+  return '$label ($delayText)';
+}
+
+/// BETTBOX-CUSTOM: 托盘显示策略组的延迟文本，括号由 [trayStatusGroupLabel] 添加。
+/// 未测速（null）和测速中（0）返回空串（测速中由调用方沿用上次结果，避免菜单栏
+/// 宽度来回跳动）；超时显示 [timeoutText]。
+String trayStatusDelayText(int? delay, {required String timeoutText}) {
+  if (delay == null || delay == 0) return '';
+  if (delay < 0) return timeoutText;
+  return '${delay}ms';
+}
+
+String _trayStatusBaseLabel({
+  required String groupName,
+  required List<Group> groups,
+  required SelectedMap selectedMap,
+  required bool showName,
+  required bool showNode,
+  required bool showChain,
+}) {
   final selected = _selectedNameOf(groupName, groups, selectedMap);
   var detail = '';
   if ((showChain || showNode) && selected.isNotEmpty) {

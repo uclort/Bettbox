@@ -194,6 +194,43 @@ void main() {
       expect(label(showName: true), 'Global');
     });
 
+    test('延迟以括号附加在整段末尾', () {
+      String withDelay({
+        bool showName = false,
+        bool showNode = false,
+        bool showChain = false,
+        String delayText = '86ms',
+      }) => trayStatusGroupLabel(
+        groupName: 'Global',
+        groups: groups,
+        selectedMap: const {},
+        showName: showName,
+        showNode: showNode,
+        showChain: showChain,
+        delayText: delayText,
+      );
+      expect(withDelay(showNode: true), 'FC-日本 1 (86ms)');
+      expect(
+        withDelay(showName: true, showNode: true),
+        'Global · FC-日本 1 (86ms)',
+      );
+      expect(
+        withDelay(showChain: true),
+        'Fallback → Other → FC-日本 1 (86ms)',
+      );
+      expect(withDelay(showName: true), 'Global (86ms)');
+      expect(withDelay(showNode: true, delayText: ''), 'FC-日本 1');
+      // 没有可显示的内容时，单独的延迟也不显示。
+      expect(withDelay(), isEmpty);
+    });
+
+    test('延迟文本：未测速与测速中为空，超时显示提示', () {
+      expect(trayStatusDelayText(null, timeoutText: '超时'), isEmpty);
+      expect(trayStatusDelayText(0, timeoutText: '超时'), isEmpty);
+      expect(trayStatusDelayText(-1, timeoutText: '超时'), '超时');
+      expect(trayStatusDelayText(86, timeoutText: '超时'), '86ms');
+    });
+
     test('三项都不勾选或策略组不存在时不显示', () {
       expect(label(), isEmpty);
       expect(label(groupName: 'missing', showName: true), isEmpty);

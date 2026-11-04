@@ -1768,6 +1768,24 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayStatusBeforeSpeed": MessageLookupByLibrary.simpleMessage(
       "速度の前",
     ),
+    "trayStatusShowDelay": MessageLookupByLibrary.simpleMessage(
+      "ノードの遅延を表示",
+    ),
+    "trayStatusShowDelayDesc": MessageLookupByLibrary.simpleMessage(
+      "最終ノードの後に括弧で遅延を表示（例: ノード (86ms)）",
+    ),
+    "trayStatusDelayTimeout": MessageLookupByLibrary.simpleMessage(
+      "タイムアウト",
+    ),
+    "trayStatusPreview": MessageLookupByLibrary.simpleMessage(
+      "プレビュー",
+    ),
+    "trayStatusPreviewEmpty": MessageLookupByLibrary.simpleMessage(
+      "現在の設定では表示する内容がありません",
+    ),
+    "trayStatusPreviewDesc": MessageLookupByLibrary.simpleMessage(
+      "現在の設定と選択から生成。速度はサンプル値です",
+    ),
     "trayStatusGroup": MessageLookupByLibrary.simpleMessage(
       "トレイにプロキシグループを表示",
     ),

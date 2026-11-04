@@ -237,6 +237,8 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(false) bool trayStatusShowName,
     @Default(true) bool trayStatusShowNode,
     @Default(false) bool trayStatusShowChain,
+    // BETTBOX-CUSTOM: 末端节点后以括号附加延迟，例如 `FC-日本 1 (86ms)`。
+    @Default(false) bool trayStatusShowDelay,
     @Default(false) bool trayStatusBeforeSpeed,
     @Default(false) bool showLabel,
     @Default(false) bool disclaimerAccepted,

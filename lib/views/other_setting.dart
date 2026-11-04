@@ -955,9 +955,176 @@ class TrayStatusGroupSection extends ConsumerWidget {
             update: (state, value) =>
                 state.copyWith(trayStatusShowChain: value),
           ),
+          _TrayStatusCheckboxItem(
+            title: appLocalizations.trayStatusShowDelay,
+            subtitle: appLocalizations.trayStatusShowDelayDesc,
+            select: (state) => state.trayStatusShowDelay,
+            update: (state, value) =>
+                state.copyWith(trayStatusShowDelay: value),
+          ),
           if (speedEnabled) const TrayStatusPositionItem(),
+          const TrayStatusPreviewItem(),
         ],
       ],
+    );
+  }
+}
+
+/// BETTBOX-CUSTOM: 按当前设置与选中节点预览托盘最终效果，网速为示例数据。
+/// macOS 模拟菜单栏：图标、两行网速、分隔线、策略组标签，间距与原生绘制一致；
+/// Windows 模拟悬浮提示：应用名、网速、策略组标签逐行拼接。
+class TrayStatusPreviewItem extends ConsumerWidget {
+  const TrayStatusPreviewItem({super.key});
+
+  static const _sampleMacSpeed = ['12K/s', '1.5M/s'];
+  static const _sampleWindowsSpeed = '↑ 12.0 K/s\n↓ 1.5 M/s';
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final setting = ref.watch(appSettingProvider);
+    final speedEnabled = ref.watch(
+      vpnSettingProvider.select((state) => state.enableTraySpeed),
+    );
+    final groups = ref.watch(groupsProvider);
+    final selectedMap = ref.watch(selectedMapProvider);
+    final group = groups.getGroup(setting.trayStatusGroupName);
+    var delayText = '';
+    if (setting.trayStatusShowDelay && group != null) {
+      final delay = ref.watch(
+        getDelayProvider(proxyName: group.name, testUrl: group.testUrl),
+      );
+      delayText = trayStatusDelayText(
+        delay,
+        timeoutText: appLocalizations.trayStatusDelayTimeout,
+      );
+    }
+    final label = trayStatusGroupLabel(
+      groupName: setting.trayStatusGroupName,
+      groups: groups,
+      selectedMap: selectedMap,
+      showName: setting.trayStatusShowName,
+      showNode: setting.trayStatusShowNode,
+      showChain: setting.trayStatusShowChain,
+      delayText: delayText,
+    );
+    final before = setting.trayStatusBeforeSpeed;
+    return ListItem(
+      title: Text(appLocalizations.trayStatusPreview),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(appLocalizations.trayStatusPreviewDesc),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: system.isWindows
+                ? _buildWindowsPreview(context, label, speedEnabled, before)
+                : _buildMacPreview(context, label, speedEnabled, before),
+          ),
+          if (label.isEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              appLocalizations.trayStatusPreviewEmpty,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMacPreview(
+    BuildContext context,
+    String label,
+    bool speedEnabled,
+    bool before,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final foreground = isDark ? Colors.white : Colors.black87;
+    final speed = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        for (final line in _sampleMacSpeed)
+          Text(
+            line,
+            style: TextStyle(
+              fontSize: 9.5,
+              height: 1.05,
+              fontFamily: 'monospace',
+              color: foreground,
+            ),
+          ),
+      ],
+    );
+    final labelWidget = Flexible(
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(fontSize: 13, color: foreground),
+      ),
+    );
+    final separator = Container(
+      width: 1,
+      height: 12,
+      margin: const EdgeInsets.symmetric(horizontal: 6),
+      color: foreground.withValues(alpha: 0.35),
+    );
+    final hasLabel = label.isNotEmpty;
+    final segments = <Widget>[
+      if (hasLabel && speedEnabled && before) ...[labelWidget, separator, speed],
+      if (hasLabel && speedEnabled && !before) ...[speed, separator, labelWidget],
+      if (hasLabel && !speedEnabled) labelWidget,
+      if (!hasLabel && speedEnabled) speed,
+    ];
+    return Container(
+      height: 26,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2B2B2E) : const Color(0xFFE9E9EC),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.asset(
+            'assets/images/icon_template.png',
+            width: 16,
+            height: 16,
+            color: foreground,
+          ),
+          if (segments.isNotEmpty) const SizedBox(width: 6),
+          ...segments,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWindowsPreview(
+    BuildContext context,
+    String label,
+    bool speedEnabled,
+    bool before,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final speed = speedEnabled ? _sampleWindowsSpeed : '';
+    final lines = [
+      appName,
+      if (before) ...[label, speed] else ...[speed, label],
+    ].where((line) => line.isNotEmpty);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        border: Border.all(color: colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        lines.join('\n'),
+        style: TextStyle(fontSize: 12, color: colorScheme.onSurface),
+      ),
     );
   }
 }

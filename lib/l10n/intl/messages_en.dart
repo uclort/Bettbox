@@ -2236,6 +2236,24 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayStatusBeforeSpeed": MessageLookupByLibrary.simpleMessage(
       "Before speed",
     ),
+    "trayStatusShowDelay": MessageLookupByLibrary.simpleMessage(
+      "Show node latency",
+    ),
+    "trayStatusShowDelayDesc": MessageLookupByLibrary.simpleMessage(
+      "Show latency in parentheses after the final node, e.g. Node (86ms)",
+    ),
+    "trayStatusDelayTimeout": MessageLookupByLibrary.simpleMessage(
+      "Timeout",
+    ),
+    "trayStatusPreview": MessageLookupByLibrary.simpleMessage(
+      "Preview",
+    ),
+    "trayStatusPreviewEmpty": MessageLookupByLibrary.simpleMessage(
+      "Nothing to show with the current options",
+    ),
+    "trayStatusPreviewDesc": MessageLookupByLibrary.simpleMessage(
+      "Built from current settings and selection; speed values are samples",
+    ),
     "trayStatusGroup": MessageLookupByLibrary.simpleMessage(
       "Tray Proxy Group",
     ),

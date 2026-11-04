@@ -1673,6 +1673,24 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayStatusBeforeSpeed": MessageLookupByLibrary.simpleMessage(
       "網速前",
     ),
+    "trayStatusShowDelay": MessageLookupByLibrary.simpleMessage(
+      "顯示節點延遲",
+    ),
+    "trayStatusShowDelayDesc": MessageLookupByLibrary.simpleMessage(
+      "在末端節點後以括號顯示延遲，如 節點 (86ms)",
+    ),
+    "trayStatusDelayTimeout": MessageLookupByLibrary.simpleMessage(
+      "逾時",
+    ),
+    "trayStatusPreview": MessageLookupByLibrary.simpleMessage(
+      "預覽",
+    ),
+    "trayStatusPreviewEmpty": MessageLookupByLibrary.simpleMessage(
+      "目前勾選項沒有可顯示的內容",
+    ),
+    "trayStatusPreviewDesc": MessageLookupByLibrary.simpleMessage(
+      "依目前設定與選中節點產生，網速為示例資料",
+    ),
     "trayStatusGroup": MessageLookupByLibrary.simpleMessage(
       "托盤顯示策略組",
     ),

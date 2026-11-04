@@ -1219,5 +1219,11 @@
   "trayStatusShowChainDesc": "逐级显示到最终节点，如 Fallback → Other → 节点",
   "trayStatusPosition": "显示位置",
   "trayStatusAfterSpeed": "网速后",
-  "trayStatusBeforeSpeed": "网速前"
+  "trayStatusBeforeSpeed": "网速前",
+  "trayStatusShowDelay": "显示节点延迟",
+  "trayStatusShowDelayDesc": "在末端节点后以括号显示延迟，如 节点 (86ms)",
+  "trayStatusDelayTimeout": "超时",
+  "trayStatusPreview": "预览",
+  "trayStatusPreviewEmpty": "当前勾选项没有可显示的内容",
+  "trayStatusPreviewDesc": "按当前设置与选中节点生成，网速为示例数据"
 }

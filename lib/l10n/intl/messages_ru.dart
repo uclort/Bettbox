@@ -2215,6 +2215,24 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayStatusBeforeSpeed": MessageLookupByLibrary.simpleMessage(
       "Перед скоростью",
     ),
+    "trayStatusShowDelay": MessageLookupByLibrary.simpleMessage(
+      "Показывать задержку узла",
+    ),
+    "trayStatusShowDelayDesc": MessageLookupByLibrary.simpleMessage(
+      "Задержка в скобках после конечного узла, например Узел (86ms)",
+    ),
+    "trayStatusDelayTimeout": MessageLookupByLibrary.simpleMessage(
+      "Тайм-аут",
+    ),
+    "trayStatusPreview": MessageLookupByLibrary.simpleMessage(
+      "Предпросмотр",
+    ),
+    "trayStatusPreviewEmpty": MessageLookupByLibrary.simpleMessage(
+      "При текущих настройках нечего показывать",
+    ),
+    "trayStatusPreviewDesc": MessageLookupByLibrary.simpleMessage(
+      "Построено по текущим настройкам и выбору; скорость — пример",
+    ),
     "trayStatusGroup": MessageLookupByLibrary.simpleMessage(
       "Группа прокси в трее",
     ),

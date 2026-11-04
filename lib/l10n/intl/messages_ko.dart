@@ -1760,6 +1760,24 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayStatusBeforeSpeed": MessageLookupByLibrary.simpleMessage(
       "속도 앞",
     ),
+    "trayStatusShowDelay": MessageLookupByLibrary.simpleMessage(
+      "노드 지연 표시",
+    ),
+    "trayStatusShowDelayDesc": MessageLookupByLibrary.simpleMessage(
+      "최종 노드 뒤에 괄호로 지연 표시 (예: 노드 (86ms))",
+    ),
+    "trayStatusDelayTimeout": MessageLookupByLibrary.simpleMessage(
+      "시간 초과",
+    ),
+    "trayStatusPreview": MessageLookupByLibrary.simpleMessage(
+      "미리보기",
+    ),
+    "trayStatusPreviewEmpty": MessageLookupByLibrary.simpleMessage(
+      "현재 옵션으로 표시할 내용이 없습니다",
+    ),
+    "trayStatusPreviewDesc": MessageLookupByLibrary.simpleMessage(
+      "현재 설정과 선택으로 생성되며 속도는 예시 값입니다",
+    ),
     "trayStatusGroup": MessageLookupByLibrary.simpleMessage(
       "트레이에 프록시 그룹 표시",
     ),
