@@ -140,6 +140,15 @@ String _trayStatusBaseLabel({
   ].join(trayStatusNameSeparator);
 }
 
+// BETTBOX-CUSTOM: 托盘菜单中「已锁定」标记。URLTest / Fallback 这类自动组被手动
+// 指定节点后内核会一直用它（fixed），菜单里在组名后画一把锁，与策略组卡片的锁一致。
+// 借用 MenuItem.icon 把标记传给原生层，两端据此自绘锁图标。
+const trayMenuLockedIcon = 'lock';
+
+bool isTrayGroupPinned(Group group, SelectedMap selectedMap) =>
+    group.type.isComputedSelected &&
+    (selectedMap[group.name] ?? '').isNotEmpty;
+
 bool _isGroupLike(String name, List<Group> groups) {
   if (groups.getGroup(name) != null) {
     return true;

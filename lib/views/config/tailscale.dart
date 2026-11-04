@@ -392,14 +392,8 @@ class _TailscaleNodeSettingsState
       return appLocalizations.tailscaleNodeAuthKeyRequired;
     }
     if (status == null) return appLocalizations.tailscaleNodeStarting;
-    if (status.running) {
-      return [
-        appLocalizations.tailscaleNodeRunning,
-        if (status.dnsName.isNotEmpty) status.dnsName,
-        if (status.ips.isNotEmpty) status.ips.join(', '),
-        if (status.loginName.isNotEmpty) status.loginName,
-      ].join('\n');
-    }
+    // BETTBOX-CUSTOM: 设备名、IP、账号由状态面板分行显示，这里只给状态词。
+    if (status.running) return appLocalizations.tailscaleNodeRunning;
     if (status.state == 'NeedsLogin') {
       if (props.nodeUseAuthKey) {
         return [
@@ -425,20 +419,11 @@ class _TailscaleNodeSettingsState
     final status = _status;
     return generateListView([
       if (props.nodeEnable) ...[
-        ListItem(
-          title: Text(appLocalizations.tailscaleNodeStatus),
-          subtitle: Text(_statusText(props, status)),
-          trailing: _loading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : IconButton(
-                  onPressed: _refresh,
-                  tooltip: appLocalizations.update,
-                  icon: const Icon(Icons.refresh),
-                ),
+        _TailscaleNodeStatusPanel(
+          status: status,
+          loading: _loading,
+          onRefresh: _refresh,
+          statusText: _statusText(props, status),
         ),
         if (!props.nodeUseAuthKey && status != null && status.needsLogin)
           ListItem(
@@ -565,6 +550,120 @@ class _TailscaleNodeSettingsState
         for (final peer in status.peers) _TailscalePeerItem(peer: peer),
       ],
     ]);
+  }
+}
+
+// BETTBOX-CUSTOM: 内置节点状态面板。Rex 等内嵌 Tailscale 或依赖系统网络访问
+// Tailnet 的应用都经过这个节点，节点重连时它们会暂时解析不到主机；面板把状态、
+// 节点名、IP、在线设备数放在一起，方便判断问题出在节点还是对端。
+class _TailscaleNodeStatusPanel extends StatelessWidget {
+  final TailscaleNodeStatus? status;
+  final bool loading;
+  final VoidCallback onRefresh;
+  final String statusText;
+
+  const _TailscaleNodeStatusPanel({
+    required this.status,
+    required this.loading,
+    required this.onRefresh,
+    required this.statusText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final running = status?.running == true;
+    final needsLogin = status?.needsLogin == true;
+    final indicatorColor = running
+        ? Colors.green
+        : needsLogin
+        ? Colors.orange
+        : colorScheme.error;
+    final info = <(String, String)>[
+      if (status != null && status!.dnsName.isNotEmpty)
+        (appLocalizations.tailscaleNodeHostname, status!.dnsName),
+      if (status != null && status!.ips.isNotEmpty)
+        ('IP', status!.ips.join(', ')),
+      if (status != null && status!.loginName.isNotEmpty)
+        (appLocalizations.account, status!.loginName),
+      if (status != null && status!.peers.isNotEmpty)
+        (
+          appLocalizations.tailscaleNodeDevices,
+          '${status!.peers.where((peer) => peer.online).length}/${status!.peers.length} ${appLocalizations.tailscaleNodeOnline}',
+        ),
+    ];
+    final labelStyle = theme.textTheme.bodySmall?.copyWith(
+      color: colorScheme.onSurfaceVariant,
+    );
+    final valueStyle = theme.textTheme.bodySmall?.copyWith(
+      color: colorScheme.onSurface,
+    );
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.fromLTRB(12, 8, 6, 12),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colorScheme.outlineVariant),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.circle, size: 10, color: indicatorColor),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  statusText,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+              ),
+              if (loading)
+                const Padding(
+                  padding: EdgeInsets.all(8),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              else
+                IconButton(
+                  onPressed: onRefresh,
+                  tooltip: appLocalizations.update,
+                  icon: const Icon(Icons.refresh, size: 20),
+                ),
+            ],
+          ),
+          for (final (label, value) in info)
+            Padding(
+              padding: const EdgeInsets.only(left: 18, right: 6, top: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 76,
+                    child: Text(label, style: labelStyle),
+                  ),
+                  Expanded(child: Text(value, style: valueStyle)),
+                ],
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.only(left: 18, right: 6, top: 8),
+            child: Text(
+              appLocalizations.tailscaleNodePanelHint,
+              style: labelStyle?.copyWith(height: 1.4),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

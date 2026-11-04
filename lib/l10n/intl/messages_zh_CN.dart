@@ -1515,6 +1515,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "tailscaleNodeNotLoaded": MessageLookupByLibrary.simpleMessage(
       "节点尚未加载，请确认内核已启动，配置生效后再刷新",
     ),
+    "tailscaleNodePanelHint": MessageLookupByLibrary.simpleMessage(
+      "依赖该节点访问 Tailnet 的应用（如 Rex）在未连接时会暂时解析不到或连不上 Tailnet 主机。更新或重启 Bettbox、切换网络后短暂出现属正常。",
+    ),
     "tailscaleNodeLogin": MessageLookupByLibrary.simpleMessage("登录 Tailscale"),
     "tailscaleNodeLogout": MessageLookupByLibrary.simpleMessage("退出登录"),
     "tailscaleNodeLogoutTip": MessageLookupByLibrary.simpleMessage(

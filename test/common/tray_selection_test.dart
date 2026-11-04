@@ -245,6 +245,21 @@ void main() {
     expect(joinTrayDetail('', ''), isEmpty);
   });
 
+  // BETTBOX-CUSTOM: 被固定的自动组在托盘菜单里显示锁，避免误以为按顺序选择。
+  test('自动组被固定时标记为锁定，Selector 不算固定', () {
+    final fallback = groups.getGroup('Fallback')!;
+    final selector = groups.getGroup('Other')!;
+    expect(isTrayGroupPinned(fallback, const {}), isFalse);
+    expect(
+      isTrayGroupPinned(fallback, const {'Fallback': 'FC-香港 6'}),
+      isTrue,
+    );
+    expect(
+      isTrayGroupPinned(selector, const {'Other': 'FC-香港 6'}),
+      isFalse,
+    );
+  });
+
   test('只有 Selector 组的节点可在托盘手动选择', () {
     for (final type in GroupType.values) {
       expect(

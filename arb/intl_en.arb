@@ -1168,6 +1168,7 @@
   "tailscaleNodeNeedsLogin": "Not signed in",
   "tailscaleNodeStarting": "Connecting…",
   "tailscaleNodeNotLoaded": "Node not loaded yet. Make sure the core is running and refresh after the config is applied",
+  "tailscaleNodePanelHint": "Apps that reach the Tailnet through this node (such as Rex) can't resolve or connect to Tailnet hosts while it is not connected. A brief gap right after updating or restarting Bettbox, or after a network change, is expected.",
   "tailscaleNodeLogin": "Sign in to Tailscale",
   "tailscaleNodeLogout": "Sign out",
   "tailscaleNodeLogoutTip": "This device will leave the Tailnet until you sign in again",

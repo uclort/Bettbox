@@ -2059,6 +2059,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "tailscaleNodeNotLoaded": MessageLookupByLibrary.simpleMessage(
       "Node not loaded yet. Make sure the core is running and refresh after the config is applied",
     ),
+    "tailscaleNodePanelHint": MessageLookupByLibrary.simpleMessage(
+      "Apps that reach the Tailnet through this node (such as Rex) can't resolve or connect to Tailnet hosts while it is not connected. A brief gap right after updating or restarting Bettbox, or after a network change, is expected.",
+    ),
     "tailscaleNodeLogin": MessageLookupByLibrary.simpleMessage(
       "Sign in to Tailscale",
     ),

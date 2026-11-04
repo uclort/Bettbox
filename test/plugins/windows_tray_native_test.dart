@@ -110,6 +110,29 @@ void main() {
     expect(menuHostSource, contains('IsMenuModifierKeyMessage(*message)'));
   });
 
+  test('托盘菜单为固定的自动组绘制锁标记', () {
+    final ownerDrawSource = File(
+      'plugins/tray_manager/windows/tray_menu_owner_draw.h',
+    ).readAsStringSync();
+    expect(ownerDrawSource, contains('bool locked = false;'));
+    expect(ownerDrawSource, contains(r'DrawGlyph(dc, lock_font_, L"\xE72E"'));
+    expect(source, contains('data->locked = icon != nullptr && *icon == "lock";'));
+
+    final macSource = File(
+      'plugins/tray_manager/macos/Classes/TrayMenu.swift',
+    ).readAsStringSync();
+    expect(macSource, contains('private func isLockedIcon'));
+    expect(macSource, contains('systemSymbolName: "lock"'));
+    expect(macSource, contains('locked: isLockedIcon(itemDict["icon"] as? String)'));
+
+    final trayDart = File('lib/common/tray.dart').readAsStringSync();
+    expect(
+      trayDart,
+      contains('isTrayGroupPinned(group, trayState.selectedMap)'),
+    );
+    expect(trayDart, contains('trayMenuLockedIcon'));
+  });
+
   test('Windows 托盘菜单把 shortcut 转为助记键', () {
     expect(source, contains('std::string WithMnemonic('));
     expect(source, contains('WithMnemonic(raw_label, item_map)'));

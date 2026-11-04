@@ -274,6 +274,10 @@ class Tray {
           MenuItem.submenu(
             key: 'group-item:${group.name}',
             label: group.name,
+            // BETTBOX-CUSTOM: 被固定的自动组在名称后显示锁，避免误以为按顺序选择。
+            icon: isTrayGroupPinned(group, trayState.selectedMap)
+                ? trayMenuLockedIcon
+                : null,
             sublabel: joinTrayDetail(
               trayGroupSelectionLabel(
                 groupName: group.name,

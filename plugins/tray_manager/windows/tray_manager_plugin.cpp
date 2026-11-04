@@ -332,6 +332,9 @@ void TrayManagerPlugin::_CreateMenu(HMENU menu, flutter::EncodableMap args) {
       data->label = g_converter.from_bytes(label);
       if (sublabel != nullptr) data->detail = g_converter.from_bytes(*sublabel);
       data->submenu = type == "submenu";
+      // BETTBOX-CUSTOM: 自动组被固定时在名称后绘制锁，标记来自 Dart 侧 MenuItem.icon。
+      const auto* icon = std::get_if<std::string>(ValueOrNull(item_map, "icon"));
+      data->locked = icon != nullptr && *icon == "lock";
       data->column = owner_draw_column;
       owner_draw_column->items.push_back(data.get());
       owner_draw = data.get();
@@ -432,6 +435,10 @@ void TrayManagerPlugin::_UpdateMenuLabels(HMENU menu, flutter::EncodableMap args
       data->label = g_converter.from_bytes(raw_label);
       data->detail = sublabel != nullptr ? g_converter.from_bytes(*sublabel)
                                          : std::wstring();
+      // BETTBOX-CUSTOM: 锁定标记可能在菜单打开期间变化（策略组被固定/解除）。
+      const auto* icon =
+          std::get_if<std::string>(ValueOrNull(item_map, "icon"));
+      data->locked = icon != nullptr && *icon == "lock";
     }
     if (found) {
       if (mii.hSubMenu != NULL) {

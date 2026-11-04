@@ -373,6 +373,11 @@ private final class AlignedTrayMenuItemView: NSView {
 }
 
 // BETTBOX-CUSTOM: 托盘自绘行统一尺寸：左侧名称，右侧灰色说明紧贴箭头或右边缘。
+// BETTBOX-CUSTOM: Dart 侧用 MenuItem.icon 传递「已锁定」标记，与 trayMenuLockedIcon 一致。
+private func isLockedIcon(_ icon: String?) -> Bool {
+    icon == "lock"
+}
+
 enum TrayMenuMetrics {
     static let titleX: CGFloat = 30
     static let trailingInset: CGFloat = 14
@@ -380,6 +385,9 @@ enum TrayMenuMetrics {
     static let chevronWidth: CGFloat = 8
     static let chevronGap: CGFloat = 6
     static let rowHeight: CGFloat = 24
+    // BETTBOX-CUSTOM: 锁定标记（自动组被手动指定节点）紧跟在名称之后。
+    static let lockWidth: CGFloat = 10
+    static let lockGap: CGFloat = 4
 
     static var font: NSFont { NSFont.menuFont(ofSize: NSFont.systemFontSize) }
 
@@ -403,10 +411,13 @@ enum TrayMenuMetrics {
 private final class SubmenuTrayMenuItemView: NSView {
     private var label: String
     private var detail: String
+    // BETTBOX-CUSTOM: URLTest / Fallback 被固定到某个节点时，名称后绘制锁。
+    private var locked: Bool
 
-    init(label: String, detail: String, width: CGFloat) {
+    init(label: String, detail: String, locked: Bool, width: CGFloat) {
         self.label = label
         self.detail = detail
+        self.locked = locked
         super.init(
             frame: NSRect(x: 0, y: 0, width: width, height: TrayMenuMetrics.rowHeight)
         )
@@ -417,10 +428,12 @@ private final class SubmenuTrayMenuItemView: NSView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func update(label: String, detail: String) {
-        guard label != self.label || detail != self.detail else { return }
+    func update(label: String, detail: String, locked: Bool) {
+        guard label != self.label || detail != self.detail || locked != self.locked
+        else { return }
         self.label = label
         self.detail = detail
+        self.locked = locked
         needsDisplay = true
     }
 
@@ -469,11 +482,54 @@ private final class SubmenuTrayMenuItemView: NSView {
         let titleWidth = detailWidth > 0
             ? detailX - TrayMenuMetrics.columnGap - titleX
             : detailRight - titleX
+        // 锁定标记占用名称右侧空间，避免长组名覆盖锁图标。
+        let lockReserve = locked
+            ? TrayMenuMetrics.lockGap + TrayMenuMetrics.lockWidth
+            : 0
+        let labelWidth = max(0, titleWidth - lockReserve)
         drawText(
             label,
-            in: NSRect(x: titleX, y: 0, width: max(0, titleWidth), height: bounds.height),
+            in: NSRect(x: titleX, y: 0, width: labelWidth, height: bounds.height),
             color: titleColor,
             alignment: .left
+        )
+        if locked {
+            let drawnWidth = min(
+                labelWidth,
+                ceil((label as NSString).size(withAttributes: [.font: TrayMenuMetrics.font]).width)
+            )
+            let lockRect = NSRect(
+                x: titleX + drawnWidth + TrayMenuMetrics.lockGap,
+                y: bounds.midY - TrayMenuMetrics.lockWidth / 2,
+                width: TrayMenuMetrics.lockWidth,
+                height: TrayMenuMetrics.lockWidth
+            )
+            drawLock(in: lockRect, color: detailColor)
+        }
+    }
+
+    // BETTBOX-CUSTOM: 锁定标记与窗口内策略组卡片的锁一致，使用灰色（不可点击文字色）。
+    private func drawLock(in rect: NSRect, color: NSColor) {
+        let configuration = NSImage.SymbolConfiguration(pointSize: 10, weight: .regular)
+            .applying(NSImage.SymbolConfiguration(paletteColors: [color]))
+        guard
+            let image = NSImage(
+                systemSymbolName: "lock",
+                accessibilityDescription: nil
+            )?.withSymbolConfiguration(configuration)
+        else {
+            return
+        }
+        let size = image.size
+        let scale = min(1, rect.width / size.width, rect.height / size.height)
+        let drawSize = NSSize(width: size.width * scale, height: size.height * scale)
+        image.draw(
+            in: NSRect(
+                x: rect.midX - drawSize.width / 2,
+                y: rect.midY - drawSize.height / 2,
+                width: drawSize.width,
+                height: drawSize.height
+            )
         )
     }
 
@@ -761,6 +817,7 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
                 menuItem.view = SubmenuTrayMenuItemView(
                     label: label,
                     detail: sublabel,
+                    locked: isLockedIcon(itemDict["icon"] as? String),
                     width: menuWidth
                 )
             }
@@ -867,7 +924,11 @@ public class TrayMenu: NSMenu, NSMenuDelegate {
                 )
                 menuItem.action = nil
             } else if let submenuView = menuItem.view as? SubmenuTrayMenuItemView {
-                submenuView.update(label: label, detail: sublabel)
+                submenuView.update(
+                    label: label,
+                    detail: sublabel,
+                    locked: isLockedIcon(itemDict["icon"] as? String)
+                )
             }
 
             if let checkedValue = checked {

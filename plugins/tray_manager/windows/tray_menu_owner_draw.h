@@ -30,6 +30,8 @@ struct TrayOwnerDrawItem {
   std::wstring label;
   std::wstring detail;
   bool submenu = false;
+  // BETTBOX-CUSTOM: URLTest / Fallback 被固定到节点时，在名称后绘制锁。
+  bool locked = false;
   std::shared_ptr<TrayOwnerDrawColumn> column;
 };
 
@@ -46,12 +48,16 @@ class TrayMenuOwnerDraw {
 
     HDC dc = GetDC(host);
     HGDIOBJ old_font = SelectObject(dc, text_font_);
-    int label_width = TextWidth(dc, item->label);
+    auto item_label_width = [&](const TrayOwnerDrawItem* target) {
+      const int lock = target->locked ? Layout::lock_gap + Layout::lock_width : 0;
+      return TextWidth(dc, target->label) + Scale(lock, dpi);
+    };
+    int label_width = item_label_width(item);
     int detail_width = TextWidth(dc, item->detail);
     bool has_submenu = item->submenu;
     if (item->column != nullptr) {
       for (const TrayOwnerDrawItem* sibling : item->column->items) {
-        label_width = (std::max)(label_width, TextWidth(dc, sibling->label));
+        label_width = (std::max)(label_width, item_label_width(sibling));
         detail_width = (std::max)(detail_width, TextWidth(dc, sibling->detail));
         has_submenu = has_submenu || sibling->submenu;
       }
@@ -167,13 +173,28 @@ class TrayMenuOwnerDraw {
                     DT_END_ELLIPSIS);
       right = detail_rect.left - layout.column_gap;
     }
-    RECT label_rect{label_left, rect.top, (std::max)(label_left, right),
+    int label_right = right;
+    if (item->locked) {
+      label_right -= Scale(Layout::lock_gap + Layout::lock_width, dpi);
+    }
+    RECT label_rect{label_left, rect.top, (std::max)(label_left, label_right),
                     rect.bottom};
     SetTextColor(dc, text_color);
     DrawTextW(dc, item->label.c_str(), static_cast<int>(item->label.size()),
               &label_rect,
               DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX |
                   DT_END_ELLIPSIS);
+    if (item->locked) {
+      const int label_drawn = (std::min)(
+          TextWidth(dc, item->label), label_rect.right - label_rect.left);
+      RECT lock_rect{label_left + label_drawn + Scale(Layout::lock_gap, dpi),
+                     rect.top,
+                     label_left + label_drawn + Scale(Layout::lock_gap, dpi) +
+                         Scale(Layout::lock_width, dpi),
+                     rect.bottom};
+      // BETTBOX-CUSTOM: 锁与右侧说明同色（不可点击文字的灰色），不抢视觉。
+      DrawGlyph(dc, lock_font_, L"\xE72E", lock_rect, detail_color);
+    }
 
     SelectObject(dc, old_font);
     SetTextColor(dc, previous_color);
@@ -191,6 +212,9 @@ class TrayMenuOwnerDraw {
     int chevron_width;
     int chevron_gap;
     int item_height;
+    // BETTBOX-CUSTOM: 名称后锁定标记的图标宽度与间距（96 DPI 基准）。
+    static constexpr int lock_width = 12;
+    static constexpr int lock_gap = 4;
   };
 
   static int Scale(int value, UINT dpi) {
@@ -293,10 +317,13 @@ class TrayMenuOwnerDraw {
     icon_font_ = CreateFontIndirectW(&icon);
     icon.lfHeight = MulDiv(metrics.lfMenuFont.lfHeight, 2, 3);
     chevron_font_ = CreateFontIndirectW(&icon);
+    // BETTBOX-CUSTOM: 锁定标记与箭头同尺寸，略小于菜单文字。
+    icon.lfHeight = MulDiv(metrics.lfMenuFont.lfHeight, 2, 3);
+    lock_font_ = CreateFontIndirectW(&icon);
   }
 
   void ReleaseFonts() {
-    for (HFONT* font : {&text_font_, &icon_font_, &chevron_font_}) {
+    for (HFONT* font : {&text_font_, &icon_font_, &chevron_font_, &lock_font_}) {
       if (*font != nullptr) {
         DeleteObject(*font);
         *font = nullptr;
@@ -310,6 +337,7 @@ class TrayMenuOwnerDraw {
   HFONT text_font_ = nullptr;
   HFONT icon_font_ = nullptr;
   HFONT chevron_font_ = nullptr;
+  HFONT lock_font_ = nullptr;
   UINT fonts_dpi_ = 0;
 };
 

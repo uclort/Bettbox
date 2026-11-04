@@ -9905,6 +9905,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Apps that reach the Tailnet through this node (such as Rex) can't resolve or connect to Tailnet hosts while it is not connected. A brief gap right after updating or restarting Bettbox, or after a network change, is expected.`
+  String get tailscaleNodePanelHint {
+    return Intl.message(
+      "Apps that reach the Tailnet through this node (such as Rex) can't resolve or connect to Tailnet hosts while it is not connected. A brief gap right after updating or restarting Bettbox, or after a network change, is expected.",
+      name: 'tailscaleNodePanelHint',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Sign in to Tailscale`
   String get tailscaleNodeLogin {
     return Intl.message(
