@@ -1651,10 +1651,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "针对当前托盘图标颜色取反设置",
     ),
     "trayShowProxyChain": MessageLookupByLibrary.simpleMessage(
-      "托盘显示完整节点链路",
+      "托盘菜单显示完整节点链路",
     ),
     "trayShowProxyChainDesc": MessageLookupByLibrary.simpleMessage(
-      "托盘策略组右侧逐级显示选中链路，如 Fallback → Other → 节点；关闭时只显示选中项和括号中的最终节点",
+      "托盘菜单中策略组右侧逐级显示选中链路，如 Fallback → Other → 节点；关闭时只显示选中项和括号中的最终节点",
     ),
     "trayStatusAfterSpeed": MessageLookupByLibrary.simpleMessage(
       "网速后",

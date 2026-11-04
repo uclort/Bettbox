@@ -227,7 +227,12 @@ public class TrayIcon: NSView {
         }
     }
 
-    static let statusGap: CGFloat = 4
+    // 图标与第一段之间留白；网速与标签之间用细竖线分隔，两侧各留白，
+    // 看起来是一体但不挤在一起。
+    static let statusIconGap: CGFloat = 6
+    static let statusSeparatorGap: CGFloat = 6
+    static let statusSeparatorWidth: CGFloat = 1
+    static let statusSeparatorHeight: CGFloat = 12
     static let statusSpeedLineHeight: CGFloat = 10
 
     /// 组合图标、标签与两行网速。绘制回调在状态栏按钮绘制时执行，
@@ -261,9 +266,15 @@ public class TrayIcon: NSView {
                 segments.insert((1, speedWidth), at: 0)
             }
         }
+        let separatorSpan = statusSeparatorGap * 2 + statusSeparatorWidth
         var totalWidth = iconSize.width
-        for segment in segments {
-            totalWidth += (totalWidth > 0 ? statusGap : 0) + segment.width
+        for (index, segment) in segments.enumerated() {
+            if index > 0 {
+                totalWidth += separatorSpan
+            } else if totalWidth > 0 {
+                totalWidth += statusIconGap
+            }
+            totalWidth += segment.width
         }
         totalWidth = ceil(totalWidth + 2)
 
@@ -285,9 +296,19 @@ public class TrayIcon: NSView {
                 iconRect.fill(using: .sourceAtop)
                 x = iconSize.width
             }
-            for segment in segments {
-                if x > 0 {
-                    x += statusGap
+            for (index, segment) in segments.enumerated() {
+                if index > 0 {
+                    x += statusSeparatorGap
+                    textColor.withAlphaComponent(0.35).set()
+                    NSRect(
+                        x: x,
+                        y: floor((barHeight - statusSeparatorHeight) / 2),
+                        width: statusSeparatorWidth,
+                        height: statusSeparatorHeight
+                    ).fill()
+                    x += statusSeparatorWidth + statusSeparatorGap
+                } else if x > 0 {
+                    x += statusIconGap
                 }
                 if segment.kind == 0 {
                     (content.label as NSString).draw(

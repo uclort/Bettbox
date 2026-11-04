@@ -2153,10 +2153,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "معکوس کردن رنگ آیکون تسک‌بار",
     ),
     "trayShowProxyChain": MessageLookupByLibrary.simpleMessage(
-      "نمایش کامل زنجیره پروکسی در سینی",
+      "نمایش کامل زنجیره پروکسی در منوی سینی",
     ),
     "trayShowProxyChainDesc": MessageLookupByLibrary.simpleMessage(
-      "نمایش مرحله‌به‌مرحله زنجیره انتخاب در سینی، مانند Fallback → Other → گره. در حالت خاموش فقط مورد انتخاب‌شده و گره نهایی نمایش داده می‌شود",
+      "نمایش مرحله‌به‌مرحله زنجیره انتخاب کنار گروه‌ها در منوی سینی، مانند Fallback → Other → گره. در حالت خاموش فقط مورد انتخاب‌شده و گره نهایی نمایش داده می‌شود",
     ),
     "trayStatusAfterSpeed": MessageLookupByLibrary.simpleMessage(
       "بعد از سرعت",

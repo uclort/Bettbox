@@ -2204,10 +2204,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "Инвертировать цвет текущего значка в трее",
     ),
     "trayShowProxyChain": MessageLookupByLibrary.simpleMessage(
-      "Полная цепочка прокси в трее",
+      "Полная цепочка прокси в меню трея",
     ),
     "trayShowProxyChainDesc": MessageLookupByLibrary.simpleMessage(
-      "Показывать в трее всю цепочку выбора, например Fallback → Other → узел. Если выключено, показываются только выбор и конечный узел",
+      "Показывать в меню трея всю цепочку выбора рядом с группами, например Fallback → Other → узел. Если выключено, показываются только выбор и конечный узел",
     ),
     "trayStatusAfterSpeed": MessageLookupByLibrary.simpleMessage(
       "После скорости",

@@ -1757,10 +1757,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "現在のトレイアイコンの色を反転設定",
     ),
     "trayShowProxyChain": MessageLookupByLibrary.simpleMessage(
-      "トレイに完全なプロキシチェーンを表示",
+      "トレイメニューに完全なプロキシチェーンを表示",
     ),
     "trayShowProxyChainDesc": MessageLookupByLibrary.simpleMessage(
-      "トレイのプロキシグループ右側に選択チェーンを段階的に表示します（例：Fallback → Other → ノード）。オフの場合は選択項目と括弧内の最終ノードのみ表示",
+      "トレイメニューのプロキシグループ右側に選択チェーンを段階的に表示します（例：Fallback → Other → ノード）。オフの場合は選択項目と括弧内の最終ノードのみ表示",
     ),
     "trayStatusAfterSpeed": MessageLookupByLibrary.simpleMessage(
       "速度の後",

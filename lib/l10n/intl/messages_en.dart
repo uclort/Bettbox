@@ -2225,10 +2225,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "Invert the current tray icon color",
     ),
     "trayShowProxyChain": MessageLookupByLibrary.simpleMessage(
-      "Tray Full Proxy Chain",
+      "Full Proxy Chain in Tray Menu",
     ),
     "trayShowProxyChainDesc": MessageLookupByLibrary.simpleMessage(
-      "Show every level of the selected chain in the tray, e.g. Fallback → Other → node. When off, only the selection and its final node are shown",
+      "Show every level of the selected chain next to proxy groups in the tray menu, e.g. Fallback → Other → node. When off, only the selection and its final node are shown",
     ),
     "trayStatusAfterSpeed": MessageLookupByLibrary.simpleMessage(
       "After speed",

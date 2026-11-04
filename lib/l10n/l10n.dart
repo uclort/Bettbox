@@ -10245,20 +10245,20 @@ class AppLocalizations {
     );
   }
 
-  /// `Tray Full Proxy Chain`
+  /// `Full Proxy Chain in Tray Menu`
   String get trayShowProxyChain {
     return Intl.message(
-      "Tray Full Proxy Chain",
+      "Full Proxy Chain in Tray Menu",
       name: 'trayShowProxyChain',
       desc: '',
       args: [],
     );
   }
 
-  /// `Show every level of the selected chain in the tray, e.g. Fallback → Other → node. When off, only the selection and its final node are shown`
+  /// `Show every level of the selected chain next to proxy groups in the tray menu, e.g. Fallback → Other → node. When off, only the selection and its final node are shown`
   String get trayShowProxyChainDesc {
     return Intl.message(
-      "Show every level of the selected chain in the tray, e.g. Fallback → Other → node. When off, only the selection and its final node are shown",
+      "Show every level of the selected chain next to proxy groups in the tray menu, e.g. Fallback → Other → node. When off, only the selection and its final node are shown",
       name: 'trayShowProxyChainDesc',
       desc: '',
       args: [],

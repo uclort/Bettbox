@@ -1662,10 +1662,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "針對目前托盤圖示顏色取反設定",
     ),
     "trayShowProxyChain": MessageLookupByLibrary.simpleMessage(
-      "托盤顯示完整節點鏈路",
+      "托盤選單顯示完整節點鏈路",
     ),
     "trayShowProxyChainDesc": MessageLookupByLibrary.simpleMessage(
-      "托盤策略組右側逐級顯示選中鏈路，如 Fallback → Other → 節點；關閉時只顯示選中項和括號中的最終節點",
+      "托盤選單中策略組右側逐級顯示選中鏈路，如 Fallback → Other → 節點；關閉時只顯示選中項和括號中的最終節點",
     ),
     "trayStatusAfterSpeed": MessageLookupByLibrary.simpleMessage(
       "網速後",

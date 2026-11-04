@@ -1749,10 +1749,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "현재 트레이 아이콘 색상 반전 설정",
     ),
     "trayShowProxyChain": MessageLookupByLibrary.simpleMessage(
-      "트레이에 전체 프록시 체인 표시",
+      "트레이 메뉴에 전체 프록시 체인 표시",
     ),
     "trayShowProxyChainDesc": MessageLookupByLibrary.simpleMessage(
-      "트레이 프록시 그룹 오른쪽에 선택 체인을 단계별로 표시합니다(예: Fallback → Other → 노드). 끄면 선택 항목과 괄호 안의 최종 노드만 표시",
+      "트레이 메뉴의 프록시 그룹 오른쪽에 선택 체인을 단계별로 표시합니다(예: Fallback → Other → 노드). 끄면 선택 항목과 괄호 안의 최종 노드만 표시",
     ),
     "trayStatusAfterSpeed": MessageLookupByLibrary.simpleMessage(
       "속도 뒤",
