@@ -2185,6 +2185,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayPinHintPinned": MessageLookupByLibrary.simpleMessage(
       "ثابت شده؛ برای انتخاب خودکار روی گره قفل‌دار کلیک کنید",
     ),
+    "trayStatusModeDesc": MessageLookupByLibrary.simpleMessage(
+      "در حالت قانون، گروه انتخاب‌شده نمایش داده می‌شود؛ در حالت سراسری همه ترافیک از GLOBAL عبور می‌کند و همیشه GLOBAL نمایش داده می‌شود؛ در حالت مستقیم از گروه‌ها استفاده نمی‌شود و فقط DIRECT نمایش داده می‌شود (بدون زنجیره و تأخیر). تغییر حالت، گروه انتخاب‌شده را تغییر نمی‌دهد.",
+    ),
+    "trayStatusModeNothing": MessageLookupByLibrary.simpleMessage(
+      "نمایش داده نمی‌شود",
+    ),
+    "trayStatusOtherModes": MessageLookupByLibrary.simpleMessage(
+      "در حالت‌های دیگر",
+    ),
     "trayStatusPreviewDesc": MessageLookupByLibrary.simpleMessage(
       "بر اساس تنظیمات و انتخاب فعلی؛ سرعت نمونه است",
     ),

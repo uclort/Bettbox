@@ -1186,5 +1186,8 @@
   "trayStatusPreviewEmpty": "현재 옵션으로 표시할 내용이 없습니다",
   "trayPinHintAuto": "노드를 클릭하면 고정, 다시 클릭하면 자동 선택",
   "trayPinHintPinned": "고정됨. 잠금 표시된 노드를 클릭하면 자동 선택",
-  "trayStatusPreviewDesc": "현재 설정과 선택으로 생성되며 속도는 예시 값입니다"
+  "trayStatusModeDesc": "규칙 모드에서는 선택한 그룹을 표시합니다. 글로벌 모드에서는 모든 트래픽이 GLOBAL을 거치므로 항상 GLOBAL을 표시합니다. 직접 연결 모드는 프록시 그룹을 거치지 않아 DIRECT만 표시합니다(체인·지연 없음). 모드를 바꿔도 선택한 그룹은 유지됩니다.",
+  "trayStatusOtherModes": "다른 모드에서의 표시",
+  "trayStatusModeNothing": "표시 안 함",
+  "trayStatusPreviewDesc":"현재 설정과 선택으로 생성되며 속도는 예시 값입니다"
 }

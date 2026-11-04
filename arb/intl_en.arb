@@ -1227,5 +1227,8 @@
   "trayStatusPreviewEmpty": "Nothing to show with the current options",
   "trayPinHintAuto": "Click a node to pin it; click again to auto-select",
   "trayPinHintPinned": "Pinned; click the locked node to auto-select",
-  "trayStatusPreviewDesc": "Built from current settings and selection; speed values are samples"
+  "trayStatusModeDesc": "Rule mode shows the chosen group; Global mode routes all traffic through GLOBAL, so GLOBAL is always shown; Direct mode bypasses proxy groups and shows only DIRECT (no chain or delay). Switching modes keeps your chosen group.",
+  "trayStatusOtherModes": "In other modes",
+  "trayStatusModeNothing": "Nothing shown",
+  "trayStatusPreviewDesc":"Built from current settings and selection; speed values are samples"
 }

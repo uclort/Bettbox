@@ -1686,6 +1686,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayPinHintPinned": MessageLookupByLibrary.simpleMessage(
       "已固定节点，再次点击带锁的节点恢复自动选择",
     ),
+    "trayStatusModeDesc": MessageLookupByLibrary.simpleMessage(
+      "规则模式显示所选策略组；全局模式下流量都走 GLOBAL，固定显示 GLOBAL；直连模式不经过策略组，只显示 DIRECT（不附带链路与延迟）。切换模式不会改动所选策略组。",
+    ),
+    "trayStatusModeNothing": MessageLookupByLibrary.simpleMessage("不显示"),
+    "trayStatusOtherModes": MessageLookupByLibrary.simpleMessage("其他模式下显示为"),
     "trayStatusPreviewDesc": MessageLookupByLibrary.simpleMessage(
       "按当前设置与选中节点生成，网速为示例数据",
     ),

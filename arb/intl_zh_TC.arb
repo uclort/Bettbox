@@ -1227,5 +1227,8 @@
   "trayStatusPreviewEmpty": "目前勾選項沒有可顯示的內容",
   "trayPinHintAuto": "點擊節點即固定，再次點擊恢復自動選擇",
   "trayPinHintPinned": "已固定節點，再次點擊帶鎖的節點恢復自動選擇",
-  "trayStatusPreviewDesc": "依目前設定與選中節點產生，網速為示例資料"
+  "trayStatusModeDesc": "規則模式顯示所選策略組；全域模式下流量都走 GLOBAL，固定顯示 GLOBAL；直連模式不經過策略組，只顯示 DIRECT（不附帶鏈路與延遲）。切換模式不會變更所選策略組。",
+  "trayStatusOtherModes": "其他模式下顯示為",
+  "trayStatusModeNothing": "不顯示",
+  "trayStatusPreviewDesc":"依目前設定與選中節點產生，網速為示例資料"
 }

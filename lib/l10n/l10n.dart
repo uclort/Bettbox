@@ -10495,6 +10495,36 @@ class AppLocalizations {
     );
   }
 
+  /// `Rule mode shows the chosen group; Global mode routes all traffic through GLOBAL, so GLOBAL is always shown; Direct mode bypasses proxy groups and shows only DIRECT (no chain or delay). Switching modes keeps your chosen group.`
+  String get trayStatusModeDesc {
+    return Intl.message(
+      "Rule mode shows the chosen group; Global mode routes all traffic through GLOBAL, so GLOBAL is always shown; Direct mode bypasses proxy groups and shows only DIRECT (no chain or delay). Switching modes keeps your chosen group.",
+      name: 'trayStatusModeDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `In other modes`
+  String get trayStatusOtherModes {
+    return Intl.message(
+      'In other modes',
+      name: 'trayStatusOtherModes',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Nothing shown`
+  String get trayStatusModeNothing {
+    return Intl.message(
+      'Nothing shown',
+      name: 'trayStatusModeNothing',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Built from current settings and selection; speed values are samples`
   String get trayStatusPreviewDesc {
     return Intl.message(

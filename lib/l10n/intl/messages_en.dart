@@ -2260,6 +2260,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayPinHintPinned": MessageLookupByLibrary.simpleMessage(
       "Pinned; click the locked node to auto-select",
     ),
+    "trayStatusModeDesc": MessageLookupByLibrary.simpleMessage(
+      "Rule mode shows the chosen group; Global mode routes all traffic through GLOBAL, so GLOBAL is always shown; Direct mode bypasses proxy groups and shows only DIRECT (no chain or delay). Switching modes keeps your chosen group.",
+    ),
+    "trayStatusModeNothing": MessageLookupByLibrary.simpleMessage(
+      "Nothing shown",
+    ),
+    "trayStatusOtherModes": MessageLookupByLibrary.simpleMessage(
+      "In other modes",
+    ),
     "trayStatusPreviewDesc": MessageLookupByLibrary.simpleMessage(
       "Built from current settings and selection; speed values are samples",
     ),

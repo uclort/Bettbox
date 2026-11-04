@@ -1186,5 +1186,8 @@
   "trayStatusPreviewEmpty": "現在の設定では表示する内容がありません",
   "trayPinHintAuto": "ノードをクリックで固定、もう一度クリックで自動選択に戻す",
   "trayPinHintPinned": "固定中。鍵付きのノードをクリックで自動選択に戻す",
-  "trayStatusPreviewDesc": "現在の設定と選択から生成。速度はサンプル値です"
+  "trayStatusModeDesc": "ルールモードでは選択したグループを表示。グローバルモードではすべての通信が GLOBAL を経由するため常に GLOBAL を表示。ダイレクトモードはプロキシグループを使わないため DIRECT のみ表示（チェーン・遅延なし）。モードを切り替えても選択したグループは変わりません。",
+  "trayStatusOtherModes": "他のモードでの表示",
+  "trayStatusModeNothing": "表示なし",
+  "trayStatusPreviewDesc":"現在の設定と選択から生成。速度はサンプル値です"
 }

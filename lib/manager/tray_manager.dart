@@ -60,8 +60,12 @@ class _TrayContainerState extends ConsumerState<TrayManager> with TrayListener {
       if (!setting.trayStatusGroupEnable || !setting.trayStatusShowDelay) {
         return;
       }
+      // 按出站模式解析实际显示的组（全局模式查 GLOBAL，直连模式没有延迟）。
       final group = ref.read(groupsProvider).getGroup(
-        setting.trayStatusGroupName,
+        trayStatusEffectiveGroupName(
+          ref.read(patchClashConfigProvider.select((state) => state.mode)),
+          setting.trayStatusGroupName,
+        ),
       );
       if (group == null) return;
       final delay = ref.read(

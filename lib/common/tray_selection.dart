@@ -139,6 +139,23 @@ List<String> resolveTrayProxyChain({
 // 策略组不存在（如切换配置后）或三项都未勾选时返回空串，表示不显示。
 const trayStatusNameSeparator = ' · ';
 
+// BETTBOX-CUSTOM: 托盘显示策略组跟随出站模式：全局模式固定显示 GLOBAL；直连模式
+// 固定显示 DIRECT（不是策略组，没有链路、锁和延迟）；规则模式用用户选择的组。
+// GLOBAL 在规则模式下永远不会被用到，不出现在设置选项中；老配置里存的 GLOBAL
+// 在规则模式下视为不存在。只在解析时替换，不改写已保存的选择。
+const trayStatusDirectName = 'DIRECT';
+
+String trayStatusEffectiveGroupName(Mode mode, String savedName) =>
+    switch (mode) {
+      Mode.global => GroupName.GLOBAL.name,
+      Mode.direct => trayStatusDirectName,
+      Mode.rule => savedName == GroupName.GLOBAL.name ? '' : savedName,
+    };
+
+/// 设置页可选的策略组（不含 GLOBAL）。
+List<Group> trayStatusSelectableGroups(List<Group> groups) =>
+    groups.where((group) => group.name != GroupName.GLOBAL.name).toList();
+
 String trayStatusGroupLabel({
   required String groupName,
   required List<Group> groups,
@@ -148,6 +165,9 @@ String trayStatusGroupLabel({
   required bool showChain,
   String delayText = '',
 }) {
+  if (groupName == trayStatusDirectName && groups.getGroup(groupName) == null) {
+    return showName || showNode || showChain ? trayStatusDirectName : '';
+  }
   if (groupName.isEmpty || groups.getGroup(groupName) == null) {
     return '';
   }

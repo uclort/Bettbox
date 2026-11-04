@@ -1789,6 +1789,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayPinHintPinned": MessageLookupByLibrary.simpleMessage(
       "固定中。鍵付きのノードをクリックで自動選択に戻す",
     ),
+    "trayStatusModeDesc": MessageLookupByLibrary.simpleMessage(
+      "ルールモードでは選択したグループを表示。グローバルモードではすべての通信が GLOBAL を経由するため常に GLOBAL を表示。ダイレクトモードはプロキシグループを使わないため DIRECT のみ表示（チェーン・遅延なし）。モードを切り替えても選択したグループは変わりません。",
+    ),
+    "trayStatusModeNothing": MessageLookupByLibrary.simpleMessage("表示なし"),
+    "trayStatusOtherModes": MessageLookupByLibrary.simpleMessage("他のモードでの表示"),
     "trayStatusPreviewDesc": MessageLookupByLibrary.simpleMessage(
       "現在の設定と選択から生成。速度はサンプル値です",
     ),

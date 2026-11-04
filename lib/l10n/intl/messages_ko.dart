@@ -1781,6 +1781,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayPinHintPinned": MessageLookupByLibrary.simpleMessage(
       "고정됨. 잠금 표시된 노드를 클릭하면 자동 선택",
     ),
+    "trayStatusModeDesc": MessageLookupByLibrary.simpleMessage(
+      "규칙 모드에서는 선택한 그룹을 표시합니다. 글로벌 모드에서는 모든 트래픽이 GLOBAL을 거치므로 항상 GLOBAL을 표시합니다. 직접 연결 모드는 프록시 그룹을 거치지 않아 DIRECT만 표시합니다(체인·지연 없음). 모드를 바꿔도 선택한 그룹은 유지됩니다.",
+    ),
+    "trayStatusModeNothing": MessageLookupByLibrary.simpleMessage("표시 안 함"),
+    "trayStatusOtherModes": MessageLookupByLibrary.simpleMessage("다른 모드에서의 표시"),
     "trayStatusPreviewDesc": MessageLookupByLibrary.simpleMessage(
       "현재 설정과 선택으로 생성되며 속도는 예시 값입니다",
     ),

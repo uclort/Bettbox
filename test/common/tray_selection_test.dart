@@ -423,4 +423,72 @@ void main() {
       );
     });
   });
+
+  group('托盘显示策略组跟随出站模式', () {
+    final modeGroups = [
+      const Group(
+        type: GroupType.Selector,
+        name: 'GLOBAL',
+        now: 'Global',
+        all: [Proxy(name: 'Global', type: 'Selector')],
+      ),
+      ...groups,
+    ];
+
+    test('全局模式固定显示 GLOBAL，直连模式固定显示 DIRECT', () {
+      expect(trayStatusEffectiveGroupName(Mode.global, 'Other'), 'GLOBAL');
+      expect(trayStatusEffectiveGroupName(Mode.direct, 'Other'), 'DIRECT');
+      expect(trayStatusEffectiveGroupName(Mode.rule, 'Other'), 'Other');
+    });
+
+    test('规则模式下老配置存的 GLOBAL 视为不存在', () {
+      expect(trayStatusEffectiveGroupName(Mode.rule, 'GLOBAL'), '');
+      expect(
+        trayStatusGroupLabel(
+          groupName: trayStatusEffectiveGroupName(Mode.rule, 'GLOBAL'),
+          groups: modeGroups,
+          selectedMap: const {},
+          showName: true,
+          showNode: true,
+          showChain: false,
+        ),
+        '',
+      );
+    });
+
+    test('全局模式按 GLOBAL 解析链路', () {
+      expect(
+        trayStatusGroupLabel(
+          groupName: trayStatusEffectiveGroupName(Mode.global, 'Other'),
+          groups: modeGroups,
+          selectedMap: const {},
+          showName: true,
+          showNode: true,
+          showChain: false,
+        ),
+        'GLOBAL · FC-日本 1',
+      );
+    });
+
+    test('直连模式只显示 DIRECT，不附加延迟；三项都未勾选时为空', () {
+      String direct({bool any = true}) => trayStatusGroupLabel(
+        groupName: trayStatusDirectName,
+        groups: modeGroups,
+        selectedMap: const {},
+        showName: any,
+        showNode: any,
+        showChain: any,
+        delayText: '86ms',
+      );
+      expect(direct(), 'DIRECT');
+      expect(direct(any: false), '');
+    });
+
+    test('设置选项不含 GLOBAL', () {
+      expect(
+        trayStatusSelectableGroups(modeGroups).map((group) => group.name),
+        isNot(contains('GLOBAL')),
+      );
+    });
+  });
 }

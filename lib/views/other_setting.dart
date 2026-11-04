@@ -793,7 +793,7 @@ class TrayStatusGroupItem extends ConsumerWidget {
       delegate: SwitchDelegate(
         value: enable,
         onChanged: (bool value) {
-          final groups = ref.read(groupsProvider);
+          final groups = trayStatusSelectableGroups(ref.read(groupsProvider));
           ref
               .read(appSettingProvider.notifier)
               .updateState((state) {
@@ -821,7 +821,8 @@ class TrayStatusGroupNameItem extends ConsumerWidget {
     final name = ref.watch(
       appSettingProvider.select((state) => state.trayStatusGroupName),
     );
-    final groups = ref.watch(groupsProvider);
+    // BETTBOX-CUSTOM: GLOBAL 只在全局模式使用且该模式下固定显示，不作为选项。
+    final groups = trayStatusSelectableGroups(ref.watch(groupsProvider));
     final hiddenNames = {
       for (final group in groups)
         if (group.hidden == true) group.name,
@@ -987,26 +988,42 @@ class TrayStatusPreviewItem extends ConsumerWidget {
     );
     final groups = ref.watch(groupsProvider);
     final selectedMap = ref.watch(selectedMapProvider);
-    final group = groups.getGroup(setting.trayStatusGroupName);
-    var delayText = '';
-    if (setting.trayStatusShowDelay && group != null) {
-      final delay = ref.watch(
-        getDelayProvider(proxyName: group.name, testUrl: group.testUrl),
+    final mode = ref.watch(
+      patchClashConfigProvider.select((state) => state.mode),
+    );
+    // BETTBOX-CUSTOM: 当前模式画完整预览，其余两种模式用文字列出各自的显示结果。
+    String labelFor(Mode target) {
+      final groupName = trayStatusEffectiveGroupName(
+        target,
+        setting.trayStatusGroupName,
       );
-      delayText = trayStatusDelayText(
-        delay,
-        timeoutText: appLocalizations.trayStatusDelayTimeout,
+      final group = groups.getGroup(groupName);
+      var delayText = '';
+      if (setting.trayStatusShowDelay && group != null) {
+        final delay = ref.watch(
+          getDelayProvider(proxyName: group.name, testUrl: group.testUrl),
+        );
+        delayText = trayStatusDelayText(
+          delay,
+          timeoutText: appLocalizations.trayStatusDelayTimeout,
+        );
+      }
+      return trayStatusGroupLabel(
+        groupName: groupName,
+        groups: groups,
+        selectedMap: selectedMap,
+        showName: setting.trayStatusShowName,
+        showNode: setting.trayStatusShowNode,
+        showChain: setting.trayStatusShowChain,
+        delayText: delayText,
       );
     }
-    final label = trayStatusGroupLabel(
-      groupName: setting.trayStatusGroupName,
-      groups: groups,
-      selectedMap: selectedMap,
-      showName: setting.trayStatusShowName,
-      showNode: setting.trayStatusShowNode,
-      showChain: setting.trayStatusShowChain,
-      delayText: delayText,
-    );
+
+    final label = labelFor(mode);
+    final otherModes = [
+      for (final target in Mode.values)
+        if (target != mode) target,
+    ];
     final before = setting.trayStatusBeforeSpeed;
     return ListItem(
       title: Text(appLocalizations.trayStatusPreview),
@@ -1029,10 +1046,46 @@ class TrayStatusPreviewItem extends ConsumerWidget {
               style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           ],
+          const SizedBox(height: 10),
+          Text(
+            appLocalizations.trayStatusOtherModes,
+            style: Theme.of(context).textTheme.labelMedium,
+          ),
+          const SizedBox(height: 4),
+          for (final target in otherModes)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '${_modeName(target)}  ',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    TextSpan(
+                      text: () {
+                        final text = labelFor(target);
+                        return text.isEmpty
+                            ? appLocalizations.trayStatusModeNothing
+                            : text;
+                      }(),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          const SizedBox(height: 6),
+          Text(appLocalizations.trayStatusModeDesc),
         ],
       ),
     );
   }
+
+  static String _modeName(Mode mode) => switch (mode) {
+    Mode.rule => appLocalizations.rule,
+    Mode.global => appLocalizations.global,
+    Mode.direct => appLocalizations.direct,
+  };
 
   Widget _buildMacPreview(
     BuildContext context,

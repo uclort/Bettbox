@@ -490,9 +490,13 @@ class Tray {
     }
     final allGroups = globalState.appController.getAllGroups();
     final groups = allGroups.isEmpty ? trayState.groups : allGroups;
+    final groupName = trayStatusEffectiveGroupName(
+      trayState.mode,
+      setting.trayStatusGroupName,
+    );
     var delayText = '';
     if (setting.trayStatusShowDelay) {
-      final group = groups.getGroup(setting.trayStatusGroupName);
+      final group = groups.getGroup(groupName);
       final delay = group == null
           ? null
           : globalState.appController.getTrayProxyDelay(
@@ -509,7 +513,7 @@ class Tray {
     }
     _lastStatusDelayText = delayText;
     return trayStatusGroupLabel(
-      groupName: setting.trayStatusGroupName,
+      groupName: groupName,
       groups: groups,
       selectedMap: trayState.selectedMap,
       showName: setting.trayStatusShowName,

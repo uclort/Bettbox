@@ -2236,6 +2236,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "trayPinHintPinned": MessageLookupByLibrary.simpleMessage(
       "Закреплено; нажмите узел с замком для автовыбора",
     ),
+    "trayStatusModeDesc": MessageLookupByLibrary.simpleMessage(
+      "В режиме по правилам показывается выбранная группа; в глобальном режиме весь трафик идёт через GLOBAL, поэтому всегда показывается GLOBAL; в прямом режиме группы не используются и показывается только DIRECT (без цепочки и задержки). Смена режима не меняет выбранную группу.",
+    ),
+    "trayStatusModeNothing": MessageLookupByLibrary.simpleMessage(
+      "Не отображается",
+    ),
+    "trayStatusOtherModes": MessageLookupByLibrary.simpleMessage(
+      "В других режимах",
+    ),
     "trayStatusPreviewDesc": MessageLookupByLibrary.simpleMessage(
       "Построено по текущим настройкам и выбору; скорость — пример",
     ),
