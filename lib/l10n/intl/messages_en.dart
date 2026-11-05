@@ -2122,22 +2122,35 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "tailscaleProfileCurrent": MessageLookupByLibrary.simpleMessage("current"),
     "tailscalePeerUnassigned": MessageLookupByLibrary.simpleMessage(
-      "Not assigned (default group)",
+      "Not taken over (default group)",
     ),
-    "tailscalePeerUnassignedShort": MessageLookupByLibrary.simpleMessage(
-      "Not assigned",
+    "tailscaleGroupDevices": MessageLookupByLibrary.simpleMessage("Devices"),
+    "tailscaleGroupDevicesDesc": MessageLookupByLibrary.simpleMessage(
+      "Checked: this group takes over the device; rules for its name and IPs point to this group and come before all Tailnet catch-all rules. A device belongs to one group at most, so checking moves it here.\nUnchecked: no device-specific rules; the default group's catch-all rules (*.ts.net, 100.64.0.0/10) handle it.\nBettbox's own nodes on this machine cannot be taken over.",
     ),
-    "tailscaleGroupDevices": MessageLookupByLibrary.simpleMessage(
-      "Assigned devices",
+    "tailscaleGroupDevicesDefaultDesc": MessageLookupByLibrary.simpleMessage(
+      "This is the default group: unchecked devices also connect through it via the catch-all rules. Checking pins the device here with rules before the catch-all rules, so it stays here if the default group changes later.\nChecking moves the device from its current group; Bettbox's own nodes cannot be taken over.",
     ),
-    "tailscaleGroupDevicesEmpty": MessageLookupByLibrary.simpleMessage(
-      "No devices yet. Tap one in the list below or add it manually",
+    "tailscalePeerChecked": MessageLookupByLibrary.simpleMessage(
+      "Taken over by this group",
     ),
-    "tailscaleGroupDevicesDefaultEmpty": MessageLookupByLibrary.simpleMessage(
-      "Devices not assigned to any group fall back to the default group; you can also assign them here explicitly, with rules before the catch-all rules",
+    "tailscalePeerOwnedBy": MessageLookupByLibrary.simpleMessage(
+      "Taken over by another group",
     ),
-    "tailscaleGroupPickDevice": MessageLookupByLibrary.simpleMessage(
-      "Tap to add to this group",
+    "tailscalePeerMoveHint": MessageLookupByLibrary.simpleMessage(
+      "check to move it here",
+    ),
+    "tailscalePeerFallback": MessageLookupByLibrary.simpleMessage(
+      "Not taken over, default group handles it",
+    ),
+    "tailscalePeerSelfNode": MessageLookupByLibrary.simpleMessage(
+      "Bettbox node on this machine, cannot be taken over",
+    ),
+    "tailscaleGroupCustomDevices": MessageLookupByLibrary.simpleMessage(
+      "Custom devices",
+    ),
+    "tailscaleGroupCustomDevicesDesc": MessageLookupByLibrary.simpleMessage(
+      "Devices not in the list (offline or not in the Tailnet yet): enter a MagicDNS name or IP and this group takes it over. Uncheck to remove.",
     ),
     "tailscaleNodeAuthKeyPending": MessageLookupByLibrary.simpleMessage(
       "Auth key registration not finished yet, retrying automatically (not a key problem)",

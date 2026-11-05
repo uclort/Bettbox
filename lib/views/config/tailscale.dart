@@ -344,6 +344,12 @@ Widget _statusDot(BuildContext context, TailscaleNodeStatus? status) {
   return Icon(Icons.circle, size: 10, color: color);
 }
 
+/// 设备的唯一标识：MagicDNS 名，没有时用 IP。
+String tailscalePeerKey(TailscalePeer peer) {
+  final dns = normalizeTailscaleDomain(peer.dnsName);
+  return dns.isNotEmpty ? dns : peer.ips.join(',');
+}
+
 // BETTBOX-CUSTOM: 节点状态查询、登录轮询与登录 / 退出 / 重新注册，策略组列表页与详情页共用。
 mixin _TailscaleStatusMixin<T extends ConsumerStatefulWidget>
     on ConsumerState<T> {
@@ -358,17 +364,46 @@ mixin _TailscaleStatusMixin<T extends ConsumerStatefulWidget>
 
   void onStatusesUpdated() {}
 
-  /// Tailnet 设备列表：优先取 preferred 节点的，它未连接时取任一已连接节点的（各节点看到的是同一个 Tailnet）。
-  List<TailscalePeer> knownPeers(String preferred) {
-    final first = statuses[preferred];
-    if (first != null && first.running && first.peers.isNotEmpty) {
-      return first.peers;
+  /// Tailnet 全部设备：合并各已连接节点看到的设备，并补上 Bettbox 节点自身
+  /// （节点的设备列表不含它自己，只取一个节点时会漏掉本组自己的设备）。在线优先，同状态按名称排序。
+  List<TailscalePeer> allPeers() {
+    final byKey = <String, TailscalePeer>{};
+    for (final status in statuses.values.where((s) => s.running)) {
+      for (final peer in status.peers) {
+        final key = tailscalePeerKey(peer);
+        if (key.isNotEmpty) byKey.putIfAbsent(key, () => peer);
+      }
     }
-    return statuses.values
-            .where((s) => s.running && s.peers.isNotEmpty)
-            .firstOrNull
-            ?.peers ??
-        const [];
+    for (final self in selfPeers().values) {
+      byKey.putIfAbsent(tailscalePeerKey(self), () => self);
+    }
+    final peers = byKey.values.toList()
+      ..sort((a, b) {
+        if (a.online != b.online) return a.online ? -1 : 1;
+        return a.displayName.compareTo(b.displayName);
+      });
+    return peers;
+  }
+
+  /// 本机 Bettbox 节点自身（策略组名 → 设备）。
+  Map<String, TailscalePeer> selfPeers() => {
+    for (final MapEntry(key: name, value: status) in statuses.entries)
+      if (status.running && (status.dnsName.isNotEmpty || status.ips.isNotEmpty))
+        name: TailscalePeer(
+          dnsName: status.dnsName,
+          ips: status.ips,
+          online: true,
+          os: system.isMacOS ? 'macOS' : '',
+        ),
+  };
+
+  /// 设备是本机哪个 Bettbox 策略组的节点，不是时为 null。
+  String? selfGroupOf(TailscalePeer peer, Map<String, TailscalePeer> selfs) {
+    final key = tailscalePeerKey(peer);
+    for (final MapEntry(key: name, value: self) in selfs.entries) {
+      if (tailscalePeerKey(self) == key) return name;
+    }
+    return null;
   }
 
   void startAutoRefresh() {
@@ -573,9 +608,9 @@ class _TailscaleNodeSettingsState extends ConsumerState<_TailscaleNodeSettings>
 
   @override
   void onStatusesUpdated() {
-    // 指定过的设备 IP 变化时按 DNS 名更新规则（默认组未连接时用其他已连接组的设备列表）。
+    // 指定过的设备 IP 变化时按 DNS 名更新规则（合并所有已连接组看到的设备）。
     final props = ref.read(networkSettingProvider).tailscale;
-    final peers = knownPeers(props.defaultNodeGroup.name);
+    final peers = allPeers();
     if (peers.isEmpty) return;
     final synced = props.syncProxyPeers(peers);
     if (synced != null) _updateTailscale(ref, (_) => synced);
@@ -686,7 +721,6 @@ class _TailscaleNodeSettingsState extends ConsumerState<_TailscaleNodeSettings>
       networkSettingProvider.select((state) => state.tailscale),
     );
     final defaultGroup = props.defaultNodeGroup;
-    final status = statuses[defaultGroup.name];
     final entries = _groupEntries(props, _profileNodes);
     final peerGroups = [
       defaultGroup,
@@ -694,24 +728,12 @@ class _TailscaleNodeSettingsState extends ConsumerState<_TailscaleNodeSettings>
         if (!props.isDefaultGroup(entry.group) && entry.group.managed)
           entry.group,
     ];
-    final peers = knownPeers(defaultGroup.name);
+    final peers = allPeers();
+    final selfs = selfPeers();
+    // BETTBOX-CUSTOM: 状态与登录 / 重新注册只在具体策略组页里显示，这里只列策略组（带状态圆点）。
     return generateListView([
       if (_scans != null)
         _TailscaleProfileWarning(props: props, scans: _scans!),
-      if (props.nodeEnable) ...[
-        _TailscaleNodeStatusPanel(
-          title: defaultGroup.name,
-          status: status,
-          loading: statusLoading,
-          onRefresh: refreshStatus,
-          statusText: _tailscaleStatusText(props, defaultGroup, status),
-        ),
-        ...nodeActions(
-          name: defaultGroup.name,
-          useAuthKey: defaultGroup.useAuthKey,
-          active: props.nodeActive,
-        ),
-      ],
       ListHeader(title: appLocalizations.tailscaleGroups),
       ListItem(
         title: Text(appLocalizations.tailscaleGroupsDesc),
@@ -748,10 +770,14 @@ class _TailscaleNodeSettingsState extends ConsumerState<_TailscaleNodeSettings>
         for (final peer in peers)
           () {
             final current = props.assignedGroupOfPeer(peer);
-            final assignable = peer.dnsName.isNotEmpty || peer.ips.isNotEmpty;
+            final selfGroup = selfGroupOf(peer, selfs);
+            final assignable =
+                selfGroup == null &&
+                (peer.dnsName.isNotEmpty || peer.ips.isNotEmpty);
             return _TailscalePeerItem(
               peer: peer,
               groupName: current?.name,
+              selfGroup: selfGroup,
               onPickGroup: assignable
                   ? () => _pickPeerGroup(peer, current, peerGroups)
                   : null,
@@ -920,86 +946,119 @@ class _TailscaleGroupPageState extends ConsumerState<_TailscaleGroupPage>
     ];
   }
 
-  /// 本组的设备：已指定的设备（可移除），下面列出 Tailnet 里其他设备，点按加入本组，也可手动添加。
+  /// BETTBOX-CUSTOM: 本组的设备：一份完整的 Tailnet 设备列表（含本机 Bettbox 节点），右侧勾选即由本组接管；
+  /// 列表里没有的设备放在底部「自定义设备」子组，可手动添加。
   List<Widget> _deviceItems(TailscaleProps props, TailscaleGroup group) {
+    final peers = allPeers();
+    final selfs = selfPeers();
     final devices = group.proxyDevices;
-    final peers = knownPeers(group.name)
-        .where(
-          (peer) =>
-              (peer.dnsName.isNotEmpty || peer.ips.isNotEmpty) &&
-              !devices.any((d) => d.matchesPeer(peer)),
-        )
+    final custom = devices
+        .where((d) => !peers.any((peer) => d.matchesPeer(peer)))
         .toList();
+    final isDefault = props.isDefaultGroup(group);
+    final hintStyle = context.textTheme.bodySmall?.copyWith(
+      color: context.colorScheme.onSurfaceVariant,
+      height: 1.5,
+    );
+    Widget checkIcon(bool checked, {bool enabled = true}) => Icon(
+      checked ? Icons.check_circle_rounded : Icons.circle_outlined,
+      size: 24,
+      color: !enabled
+          ? context.colorScheme.outlineVariant
+          : checked
+          ? context.colorScheme.primary
+          : context.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+    );
+    void setChecked(TailscaleProxyDevice device, bool checked) {
+      _updateTailscale(
+        ref,
+        (state) => state.assignDevice(device, checked ? group.name : null),
+      );
+      if (checked) startPoll();
+    }
+
     return [
       ListHeader(
-        title: '${appLocalizations.tailscaleGroupDevices} (${devices.length})',
+        title:
+            '${appLocalizations.tailscaleGroupDevices} (${devices.length}/${peers.length + custom.length})',
       ),
-      if (devices.isEmpty)
-        ListItem(
-          title: Text(
-            props.isDefaultGroup(group)
-                ? appLocalizations.tailscaleGroupDevicesDefaultEmpty
-                : appLocalizations.tailscaleGroupDevicesEmpty,
-          ),
-          titleTextStyle: context.textTheme.bodySmall?.copyWith(
-            color: context.colorScheme.onSurfaceVariant,
-            height: 1.4,
-          ),
+      ListItem(
+        title: Text(
+          isDefault
+              ? appLocalizations.tailscaleGroupDevicesDefaultDesc
+              : appLocalizations.tailscaleGroupDevicesDesc,
         ),
-      for (final device in devices)
+        titleTextStyle: hintStyle,
+      ),
+      for (final peer in peers)
+        () {
+          final device = TailscaleProxyDevice.fromPeer(peer);
+          final selfGroup = selfGroupOf(peer, selfs);
+          final owner = props.assignedGroupOfPeer(peer);
+          final checked = owner != null && owner.id == group.id;
+          final enabled = selfGroup == null && !device.isEmpty;
+          final note = selfGroup != null
+              ? '${appLocalizations.tailscalePeerSelfNode} ($selfGroup)'
+              : checked
+              ? appLocalizations.tailscalePeerChecked
+              : owner != null
+              ? '${appLocalizations.tailscalePeerOwnedBy}: ${owner.name} · ${appLocalizations.tailscalePeerMoveHint}'
+              : appLocalizations.tailscalePeerFallback;
+          return ListItem(
+            leading: Icon(
+              Icons.circle,
+              size: 10,
+              color: peer.online ? Colors.green : context.colorScheme.outline,
+            ),
+            title: Text(
+              peer.displayName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: Text(
+              [
+                [
+                  if (peer.ips.isNotEmpty) peer.ips.first,
+                  if (peer.os.isNotEmpty) peer.os,
+                ].join(' · '),
+                note,
+              ].where((e) => e.isNotEmpty).join('\n'),
+            ),
+            trailing: Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: checkIcon(checked, enabled: enabled),
+            ),
+            onTap: enabled ? () => setChecked(device, !checked) : null,
+          );
+        }(),
+      ListHeader(
+        title:
+            '${appLocalizations.tailscaleGroupCustomDevices} (${custom.length})',
+      ),
+      ListItem(
+        title: Text(appLocalizations.tailscaleGroupCustomDevicesDesc),
+        titleTextStyle: hintStyle,
+      ),
+      for (final device in custom)
         ListItem(
-          leading: const Icon(Icons.vpn_lock_outlined, size: 20),
-          title: Text(device.displayName),
+          leading: const Icon(Icons.edit_note, size: 20),
+          title: Text(
+            device.displayName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
           subtitle: Text(
             [
               if (device.dnsName.isNotEmpty) device.dnsName,
               ...device.ips,
             ].join(' · '),
           ),
-          trailing: IconButton(
-            tooltip: appLocalizations.delete,
-            icon: const Icon(Icons.delete_outline),
-            onPressed: () => _updateTailscale(
-              ref,
-              (state) => state.assignDevice(device, null),
-            ),
+          trailing: Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: checkIcon(true),
           ),
+          onTap: () => setChecked(device, false),
         ),
-      if (peers.isNotEmpty) ...[
-        ListHeader(
-          title:
-              '${appLocalizations.tailscaleGroupPickDevice} (${peers.length})',
-        ),
-        for (final peer in peers)
-          () {
-            final other = props.assignedGroupOfPeer(peer);
-            return ListItem(
-              leading: Icon(
-                Icons.circle,
-                size: 10,
-                color: peer.online
-                    ? Colors.green
-                    : context.colorScheme.outline,
-              ),
-              title: Text(peer.displayName),
-              subtitle: Text(
-                [
-                  if (peer.ips.isNotEmpty) peer.ips.first,
-                  if (peer.os.isNotEmpty) peer.os,
-                  '${appLocalizations.tailscalePeerGroup}: ${other?.name ?? appLocalizations.tailscalePeerUnassigned}',
-                ].join(' · '),
-              ),
-              trailing: const Icon(Icons.add_circle_outline),
-              onTap: () {
-                _updateTailscale(
-                  ref,
-                  (state) => state.assignPeer(peer, group.name),
-                );
-                startPoll();
-              },
-            );
-          }(),
-      ],
       ListItem.input(
         leading: const Icon(Icons.add),
         title: Text(appLocalizations.tailscaleProxyAddDevice),
@@ -1494,13 +1553,26 @@ class _TailscalePeerItem extends StatelessWidget {
   const _TailscalePeerItem({
     required this.peer,
     this.groupName,
+    this.selfGroup,
     this.onPickGroup,
   });
 
   final TailscalePeer peer;
-  // BETTBOX-CUSTOM: 明确指定的策略组（null 为未指定，由默认组兜底），点按按钮可改。
+  // BETTBOX-CUSTOM: 明确接管的策略组（null 为未接管，由默认组兜底），点按整行可改。
   final String? groupName;
+  // 本机 Bettbox 策略组自己的节点（不能被接管）。
+  final String? selfGroup;
   final VoidCallback? onPickGroup;
+
+  String get _ownerLine {
+    if (selfGroup != null) {
+      return '${appLocalizations.tailscalePeerSelfNode} ($selfGroup)';
+    }
+    if (groupName != null) {
+      return '${appLocalizations.tailscalePeerOwnedBy}: $groupName';
+    }
+    return appLocalizations.tailscalePeerFallback;
+  }
 
   String get _subtitle {
     return [
@@ -1522,32 +1594,37 @@ class _TailscalePeerItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final label = groupName ?? appLocalizations.tailscalePeerUnassignedShort;
+    // BETTBOX-CUSTOM: 名称单行，状态一行、接管情况一行；右侧只放复制 IP 的小图标，点整行选择接管的策略组，
+    // 窄窗口下不再被按钮挤成竖排。
     return ListItem(
       leading: Icon(
         Icons.circle,
         size: 10,
         color: peer.online ? Colors.green : colorScheme.outline,
       ),
-      title: Text(peer.displayName),
-      subtitle: Text(_subtitle),
-      trailing: onPickGroup == null
+      title: Text(
+        peer.displayName,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      subtitle: Text(
+        '$_subtitle\n$_ownerLine',
+        maxLines: 3,
+        overflow: TextOverflow.ellipsis,
+      ),
+      trailing: peer.ips.isEmpty
           ? null
-          : Tooltip(
-              message: appLocalizations.tailscalePeerGroup,
-              child: groupName == null
-                  ? OutlinedButton(onPressed: onPickGroup, child: Text(label))
-                  : FilledButton.tonal(
-                      onPressed: onPickGroup,
-                      child: Text(label),
-                    ),
+          : IconButton(
+              tooltip: appLocalizations.copy,
+              visualDensity: VisualDensity.compact,
+              iconSize: 18,
+              icon: const Icon(Icons.copy_outlined),
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: peer.ips.first));
+                globalState.showNotifier(appLocalizations.copySuccess);
+              },
             ),
-      onTap: peer.ips.isEmpty
-          ? null
-          : () {
-              Clipboard.setData(ClipboardData(text: peer.ips.first));
-              globalState.showNotifier(appLocalizations.copySuccess);
-            },
+      onTap: onPickGroup,
     );
   }
 }

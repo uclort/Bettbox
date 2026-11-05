@@ -1579,16 +1579,23 @@ class MessageLookup extends MessageLookupByLibrary {
       "與 Bettbox 的策略組同名，以設定檔為準，該策略組不會注入",
     ),
     "tailscaleProfileCurrent": MessageLookupByLibrary.simpleMessage("目前"),
-    "tailscalePeerUnassigned": MessageLookupByLibrary.simpleMessage("未指定（預設組兜底）"),
-    "tailscalePeerUnassignedShort": MessageLookupByLibrary.simpleMessage("未指定"),
-    "tailscaleGroupDevices": MessageLookupByLibrary.simpleMessage("指定的裝置"),
-    "tailscaleGroupDevicesEmpty": MessageLookupByLibrary.simpleMessage(
-      "還沒有指定裝置。從下面的裝置清單點選，或手動新增",
+    "tailscalePeerUnassigned": MessageLookupByLibrary.simpleMessage("未接管（預設組兜底）"),
+    "tailscaleGroupDevices": MessageLookupByLibrary.simpleMessage("裝置"),
+    "tailscaleGroupDevicesDesc": MessageLookupByLibrary.simpleMessage(
+      "勾選：這台裝置由本組接管，它的網域和 IP 規則指向本組，排在所有 Tailnet 兜底規則之前；同一台裝置只能被一個組接管，勾選會從原來的組移過來。\n不勾選：不為這台裝置單獨產生規則，由預設組的兜底規則（*.ts.net、100.64.0.0/10）處理。\n本機 Bettbox 自己的節點不能被接管。",
     ),
-    "tailscaleGroupDevicesDefaultEmpty": MessageLookupByLibrary.simpleMessage(
-      "未指定任何組的裝置由預設組兜底；也可以在這裡明確指定，規則排在兜底規則之前",
+    "tailscaleGroupDevicesDefaultDesc": MessageLookupByLibrary.simpleMessage(
+      "本組是預設組：不勾選的裝置也經本組連線（兜底規則）。勾選是明確指定，規則排在兜底規則之前，以後更換預設組時這些裝置仍經本組連線。\n勾選會把裝置從原來接管它的組移過來；本機 Bettbox 自己的節點不能被接管。",
     ),
-    "tailscaleGroupPickDevice": MessageLookupByLibrary.simpleMessage("點按加入本組"),
+    "tailscalePeerChecked": MessageLookupByLibrary.simpleMessage("由本組接管"),
+    "tailscalePeerOwnedBy": MessageLookupByLibrary.simpleMessage("目前由其他組接管"),
+    "tailscalePeerMoveHint": MessageLookupByLibrary.simpleMessage("勾選改由本組接管"),
+    "tailscalePeerFallback": MessageLookupByLibrary.simpleMessage("未接管，由預設組兜底"),
+    "tailscalePeerSelfNode": MessageLookupByLibrary.simpleMessage("本機 Bettbox 節點，不能接管"),
+    "tailscaleGroupCustomDevices": MessageLookupByLibrary.simpleMessage("自訂裝置"),
+    "tailscaleGroupCustomDevicesDesc": MessageLookupByLibrary.simpleMessage(
+      "裝置清單裡看不到的裝置（如暫時離線、尚未加入 Tailnet），手動填寫 MagicDNS 名稱或 IP 後由本組接管；取消勾選即刪除。",
+    ),
     "tailscaleNodeAuthKeyPending": MessageLookupByLibrary.simpleMessage(
       "Auth Key 註冊未完成，會自動重試（不是 key 的問題）",
     ),

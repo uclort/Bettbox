@@ -10810,36 +10810,78 @@ class AppLocalizations {
   );
 
   String get tailscalePeerUnassigned => Intl.message(
-    "Not assigned (default group)",
+    "Not taken over (default group)",
     name: 'tailscalePeerUnassigned',
     desc: '',
     args: [],
   );
 
-  String get tailscalePeerUnassignedShort => Intl.message(
-    "Not assigned",
-    name: 'tailscalePeerUnassignedShort',
-    desc: '',
-    args: [],
-  );
-
   String get tailscaleGroupDevices => Intl.message(
-    "Assigned devices",
+    "Devices",
     name: 'tailscaleGroupDevices',
     desc: '',
     args: [],
   );
 
-  String get tailscaleGroupDevicesEmpty => Intl.message(
-    "No devices yet. Tap one in the list below or add it manually",
-    name: 'tailscaleGroupDevicesEmpty',
+  String get tailscaleGroupDevicesDesc => Intl.message(
+    "Checked: this group takes over the device; rules for its name and IPs point to this group and come before all Tailnet catch-all rules. A device belongs to one group at most, so checking moves it here.\nUnchecked: no device-specific rules; the default group's catch-all rules (*.ts.net, 100.64.0.0/10) handle it.\nBettbox's own nodes on this machine cannot be taken over.",
+    name: 'tailscaleGroupDevicesDesc',
     desc: '',
     args: [],
   );
 
-  String get tailscaleGroupDevicesDefaultEmpty => Intl.message(
-    "Devices not assigned to any group fall back to the default group; you can also assign them here explicitly, with rules before the catch-all rules",
-    name: 'tailscaleGroupDevicesDefaultEmpty',
+  String get tailscaleGroupDevicesDefaultDesc => Intl.message(
+    "This is the default group: unchecked devices also connect through it via the catch-all rules. Checking pins the device here with rules before the catch-all rules, so it stays here if the default group changes later.\nChecking moves the device from its current group; Bettbox's own nodes cannot be taken over.",
+    name: 'tailscaleGroupDevicesDefaultDesc',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscalePeerChecked => Intl.message(
+    "Taken over by this group",
+    name: 'tailscalePeerChecked',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscalePeerOwnedBy => Intl.message(
+    "Taken over by another group",
+    name: 'tailscalePeerOwnedBy',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscalePeerMoveHint => Intl.message(
+    "check to move it here",
+    name: 'tailscalePeerMoveHint',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscalePeerFallback => Intl.message(
+    "Not taken over, default group handles it",
+    name: 'tailscalePeerFallback',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscalePeerSelfNode => Intl.message(
+    "Bettbox node on this machine, cannot be taken over",
+    name: 'tailscalePeerSelfNode',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleGroupCustomDevices => Intl.message(
+    "Custom devices",
+    name: 'tailscaleGroupCustomDevices',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleGroupCustomDevicesDesc => Intl.message(
+    "Devices not in the list (offline or not in the Tailnet yet): enter a MagicDNS name or IP and this group takes it over. Uncheck to remove.",
+    name: 'tailscaleGroupCustomDevicesDesc',
     desc: '',
     args: [],
   );
@@ -10847,13 +10889,6 @@ class AppLocalizations {
   String get tailscaleNodeAuthKeyPending => Intl.message(
     "Auth key registration not finished yet, retrying automatically (not a key problem)",
     name: 'tailscaleNodeAuthKeyPending',
-    desc: '',
-    args: [],
-  );
-
-  String get tailscaleGroupPickDevice => Intl.message(
-    "Tap to add to this group",
-    name: 'tailscaleGroupPickDevice',
     desc: '',
     args: [],
   );

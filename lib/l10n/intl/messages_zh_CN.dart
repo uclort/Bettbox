@@ -1567,16 +1567,23 @@ class MessageLookup extends MessageLookupByLibrary {
       "与 Bettbox 的策略组同名，以配置文件为准，该策略组不会注入",
     ),
     "tailscaleProfileCurrent": MessageLookupByLibrary.simpleMessage("当前"),
-    "tailscalePeerUnassigned": MessageLookupByLibrary.simpleMessage("未指定（默认组兜底）"),
-    "tailscalePeerUnassignedShort": MessageLookupByLibrary.simpleMessage("未指定"),
-    "tailscaleGroupDevices": MessageLookupByLibrary.simpleMessage("指定的设备"),
-    "tailscaleGroupDevicesEmpty": MessageLookupByLibrary.simpleMessage(
-      "还没有指定设备。从下面的设备列表点选，或手动添加",
+    "tailscalePeerUnassigned": MessageLookupByLibrary.simpleMessage("未接管（默认组兜底）"),
+    "tailscaleGroupDevices": MessageLookupByLibrary.simpleMessage("设备"),
+    "tailscaleGroupDevicesDesc": MessageLookupByLibrary.simpleMessage(
+      "勾选：这台设备由本组接管，它的域名和 IP 规则指向本组，排在所有 Tailnet 兜底规则之前；同一台设备只能被一个组接管，勾选会从原来的组移过来。\n不勾选：不为这台设备单独生成规则，由默认组的兜底规则（*.ts.net、100.64.0.0/10）处理。\n本机 Bettbox 自己的节点不能被接管。",
     ),
-    "tailscaleGroupDevicesDefaultEmpty": MessageLookupByLibrary.simpleMessage(
-      "未指定任何组的设备由默认组兜底；也可以在这里明确指定，规则排在兜底规则之前",
+    "tailscaleGroupDevicesDefaultDesc": MessageLookupByLibrary.simpleMessage(
+      "本组是默认组：不勾选的设备也经本组连接（兜底规则）。勾选是明确指定，规则排在兜底规则之前，以后更换默认组时这些设备仍经本组连接。\n勾选会把设备从原来接管它的组移过来；本机 Bettbox 自己的节点不能被接管。",
     ),
-    "tailscaleGroupPickDevice": MessageLookupByLibrary.simpleMessage("点按加入本组"),
+    "tailscalePeerChecked": MessageLookupByLibrary.simpleMessage("由本组接管"),
+    "tailscalePeerOwnedBy": MessageLookupByLibrary.simpleMessage("当前由其他组接管"),
+    "tailscalePeerMoveHint": MessageLookupByLibrary.simpleMessage("勾选改由本组接管"),
+    "tailscalePeerFallback": MessageLookupByLibrary.simpleMessage("未接管，由默认组兜底"),
+    "tailscalePeerSelfNode": MessageLookupByLibrary.simpleMessage("本机 Bettbox 节点，不能接管"),
+    "tailscaleGroupCustomDevices": MessageLookupByLibrary.simpleMessage("自定义设备"),
+    "tailscaleGroupCustomDevicesDesc": MessageLookupByLibrary.simpleMessage(
+      "设备列表里看不到的设备（如暂时离线、尚未加入 Tailnet），手动填写 MagicDNS 名或 IP 后由本组接管；取消勾选即删除。",
+    ),
     "tailscaleNodeAuthKeyPending": MessageLookupByLibrary.simpleMessage(
       "Auth Key 注册未完成，会自动重试（不是 key 的问题）",
     ),
