@@ -1,3 +1,10 @@
+### 2026-11-05 macOS 彻底清理 Tailscale 的 DNS 否定缓存
+
+- 更新或重启 Bettbox 后，Rex 等应用连不上 Tailnet 主机的问题：根因仍是 macOS 系统 DNS 缓存。TUN 临时关闭期间 `*.ts.net` 解析失败，mDNSResponder 会把「无记录」缓存几分钟到约 20 分钟；节点恢复后内核对 `*.ts.net` 已能解析（`dig` 正常），但应用走系统解析仍失败，`dns-sd -G v4` 显示 `No Such Record`。
+- Tailscale 节点每次进入「已连接」时立即清一次系统 DNS 缓存，并在之后 10 秒、40 秒各再清一次，覆盖节点刚连上时 MagicDNS 仍可能短暂失败、应用正好重试又被缓存的窗口。
+- 「网络监控 → 刷新 DNS 缓存」现在同时清内核缓存和 macOS 系统缓存，不用再手动执行 `sudo killall -HUP mDNSResponder`。
+- 其他平台行为不变（系统缓存清理只在 macOS 生效）。
+
 ### 2026-11-05 Tailscale 不再内置默认策略组
 
 - 全新安装开启内置节点后，策略组列表是空的：配置里有 `type: tailscale` 节点就显示配置里的，没有就等你自己添加。之前会凭空出现一个 `Bettbox-Tailscale`，想用别的名字还得先改名。升级前已经开启的用户，原来的节点仍会自动迁移为策略组，身份和设备名不变，不用重新登录。

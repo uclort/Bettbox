@@ -1086,6 +1086,9 @@ func handleFlushFakeIP() bool {
 
 func handleFlushDnsCache() {
 	resolver.ClearCache()
+	// BETTBOX-CUSTOM: macOS 同时清系统 DNS 缓存（mDNSResponder 会缓存 Tailnet 域名的否定结果，
+	// 内核对 *.ts.net 已能解析时应用仍可能拿不到地址）。
+	flushSystemDNSCache()
 	log.Infoln("[APP] DNS cache flushed")
 }
 
