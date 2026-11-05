@@ -10609,6 +10609,205 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  String get tailscaleGroups => Intl.message(
+    "Tailscale groups",
+    name: 'tailscaleGroups',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleGroupsDesc => Intl.message(
+    "Each group is a separate device in your Tailnet. The default group handles the Tailnet catch-all rules and MagicDNS; other groups only take the devices assigned to them and their custom rules, which come before the catch-all rules. Tailscale nodes from the profile are listed here too and can be overridden.",
+    name: 'tailscaleGroupsDesc',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleGroupAdd => Intl.message(
+    "Add group",
+    name: 'tailscaleGroupAdd',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleGroupName =>
+      Intl.message("Name", name: 'tailscaleGroupName', desc: '', args: []);
+
+  String get tailscaleGroupNameDesc => Intl.message(
+    "Outbound name used in rules",
+    name: 'tailscaleGroupNameDesc',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleGroupNameExists => Intl.message(
+    "Name already in use",
+    name: 'tailscaleGroupNameExists',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleGroupDefault => Intl.message(
+    "Default",
+    name: 'tailscaleGroupDefault',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleGroupSetDefault => Intl.message(
+    "Set as default group",
+    name: 'tailscaleGroupSetDefault',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleGroupSetDefaultDesc => Intl.message(
+    "Tailnet catch-all rules and MagicDNS go to this group",
+    name: 'tailscaleGroupSetDefaultDesc',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleGroupDelete => Intl.message(
+    "Delete group",
+    name: 'tailscaleGroupDelete',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleGroupDeleteTip => Intl.message(
+    "Its devices and rules fall back to the default group. The device in the Tailscale admin console is not removed automatically.",
+    name: 'tailscaleGroupDeleteTip',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleGroupProfile => Intl.message(
+    "Profile",
+    name: 'tailscaleGroupProfile',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleGroupOverride => Intl.message(
+    "Override",
+    name: 'tailscaleGroupOverride',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleGroupOverrideDesc => Intl.message(
+    "When on, the node with this name in the profile is replaced at runtime by the settings here; the profile itself is not changed. Bettbox keeps a separate identity for it, so sign in once after turning this on.",
+    name: 'tailscaleGroupOverrideDesc',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleGroupNotInProfile => Intl.message(
+    "Not in the current profile; override is inactive",
+    name: 'tailscaleGroupNotInProfile',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleGroupProfileReadonly => Intl.message(
+    "Settings come from the profile. Turn on override to edit them here.",
+    name: 'tailscaleGroupProfileReadonly',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleGroupDirect => Intl.message(
+    "Direct",
+    name: 'tailscaleGroupDirect',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleGroupViaDesc => Intl.message(
+    "Control plane, DERP and UDP of this group go through the selected proxy; without UDP support only DERP relay is used",
+    name: 'tailscaleGroupViaDesc',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleGroupAuthKeyInherit => Intl.message(
+    "Leave empty to use the default group's key. The same key still registers a separate device and must be reusable",
+    name: 'tailscaleGroupAuthKeyInherit',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleGroupRules => Intl.message(
+    "Custom rules",
+    name: 'tailscaleGroupRules',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleGroupRulesDesc => Intl.message(
+    "Each as TYPE,VALUE, e.g. DOMAIN-SUFFIX,example.ts.net or IP-CIDR,100.100.1.0/24,no-resolve. The target is this group; they come before the default group's catch-all rules",
+    name: 'tailscaleGroupRulesDesc',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleGroupRulesInvalid => Intl.message(
+    "Invalid, ignored",
+    name: 'tailscaleGroupRulesInvalid',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscalePeerGroup => Intl.message(
+    "Connect through",
+    name: 'tailscalePeerGroup',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleProfileWarning => Intl.message(
+    "Profiles define their own Tailscale nodes",
+    name: 'tailscaleProfileWarning',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleProfileStateDirConflict => Intl.message(
+    "Same state-dir as a Bettbox group; the two nodes will keep replacing each other",
+    name: 'tailscaleProfileStateDirConflict',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleProfileRulesShadowed => Intl.message(
+    "Rules point to it, but they come after Bettbox's Tailnet rules, so Tailnet domains and ranges are matched by the built-in node first. Turn on override and assign devices or rules here instead",
+    name: 'tailscaleProfileRulesShadowed',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleProfileHostnameConflict => Intl.message(
+    "Same device name as a Bettbox group; the one registered later is renamed with -1",
+    name: 'tailscaleProfileHostnameConflict',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleProfileNameConflict => Intl.message(
+    "Same name as a Bettbox group; the profile definition wins and the group is not injected",
+    name: 'tailscaleProfileNameConflict',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleProfileCurrent => Intl.message(
+    "current",
+    name: 'tailscaleProfileCurrent',
+    desc: '',
+    args: [],
+  );
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

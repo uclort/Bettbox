@@ -2056,6 +2056,71 @@ class MessageLookup extends MessageLookupByLibrary {
     "tailscaleProxyPeer": MessageLookupByLibrary.simpleMessage(
       "Connect via proxy",
     ),
+    "tailscaleGroups": MessageLookupByLibrary.simpleMessage("Tailscale groups"),
+    "tailscaleGroupsDesc": MessageLookupByLibrary.simpleMessage(
+      "Each group is a separate device in your Tailnet. The default group handles the Tailnet catch-all rules and MagicDNS; other groups only take the devices assigned to them and their custom rules, which come before the catch-all rules. Tailscale nodes from the profile are listed here too and can be overridden.",
+    ),
+    "tailscaleGroupAdd": MessageLookupByLibrary.simpleMessage("Add group"),
+    "tailscaleGroupName": MessageLookupByLibrary.simpleMessage("Name"),
+    "tailscaleGroupNameDesc": MessageLookupByLibrary.simpleMessage(
+      "Outbound name used in rules",
+    ),
+    "tailscaleGroupNameExists": MessageLookupByLibrary.simpleMessage(
+      "Name already in use",
+    ),
+    "tailscaleGroupDefault": MessageLookupByLibrary.simpleMessage("Default"),
+    "tailscaleGroupSetDefault": MessageLookupByLibrary.simpleMessage(
+      "Set as default group",
+    ),
+    "tailscaleGroupSetDefaultDesc": MessageLookupByLibrary.simpleMessage(
+      "Tailnet catch-all rules and MagicDNS go to this group",
+    ),
+    "tailscaleGroupDelete": MessageLookupByLibrary.simpleMessage("Delete group"),
+    "tailscaleGroupDeleteTip": MessageLookupByLibrary.simpleMessage(
+      "Its devices and rules fall back to the default group. The device in the Tailscale admin console is not removed automatically.",
+    ),
+    "tailscaleGroupProfile": MessageLookupByLibrary.simpleMessage("Profile"),
+    "tailscaleGroupOverride": MessageLookupByLibrary.simpleMessage("Override"),
+    "tailscaleGroupOverrideDesc": MessageLookupByLibrary.simpleMessage(
+      "When on, the node with this name in the profile is replaced at runtime by the settings here; the profile itself is not changed. Bettbox keeps a separate identity for it, so sign in once after turning this on.",
+    ),
+    "tailscaleGroupNotInProfile": MessageLookupByLibrary.simpleMessage(
+      "Not in the current profile; override is inactive",
+    ),
+    "tailscaleGroupProfileReadonly": MessageLookupByLibrary.simpleMessage(
+      "Settings come from the profile. Turn on override to edit them here.",
+    ),
+    "tailscaleGroupDirect": MessageLookupByLibrary.simpleMessage("Direct"),
+    "tailscaleGroupViaDesc": MessageLookupByLibrary.simpleMessage(
+      "Control plane, DERP and UDP of this group go through the selected proxy; without UDP support only DERP relay is used",
+    ),
+    "tailscaleGroupAuthKeyInherit": MessageLookupByLibrary.simpleMessage(
+      "Leave empty to use the default group's key. The same key still registers a separate device and must be reusable",
+    ),
+    "tailscaleGroupRules": MessageLookupByLibrary.simpleMessage("Custom rules"),
+    "tailscaleGroupRulesDesc": MessageLookupByLibrary.simpleMessage(
+      "Each as TYPE,VALUE, e.g. DOMAIN-SUFFIX,example.ts.net or IP-CIDR,100.100.1.0/24,no-resolve. The target is this group; they come before the default group's catch-all rules",
+    ),
+    "tailscaleGroupRulesInvalid": MessageLookupByLibrary.simpleMessage(
+      "Invalid, ignored",
+    ),
+    "tailscalePeerGroup": MessageLookupByLibrary.simpleMessage("Connect through"),
+    "tailscaleProfileWarning": MessageLookupByLibrary.simpleMessage(
+      "Profiles define their own Tailscale nodes",
+    ),
+    "tailscaleProfileStateDirConflict": MessageLookupByLibrary.simpleMessage(
+      "Same state-dir as a Bettbox group; the two nodes will keep replacing each other",
+    ),
+    "tailscaleProfileRulesShadowed": MessageLookupByLibrary.simpleMessage(
+      "Rules point to it, but they come after Bettbox's Tailnet rules, so Tailnet domains and ranges are matched by the built-in node first. Turn on override and assign devices or rules here instead",
+    ),
+    "tailscaleProfileHostnameConflict": MessageLookupByLibrary.simpleMessage(
+      "Same device name as a Bettbox group; the one registered later is renamed with -1",
+    ),
+    "tailscaleProfileNameConflict": MessageLookupByLibrary.simpleMessage(
+      "Same name as a Bettbox group; the profile definition wins and the group is not injected",
+    ),
+    "tailscaleProfileCurrent": MessageLookupByLibrary.simpleMessage("current"),
     "tailscaleProxyVia": MessageLookupByLibrary.simpleMessage("Via"),
     "tailscaleProxyViaMissing": MessageLookupByLibrary.simpleMessage(
       "Choose a proxy first",

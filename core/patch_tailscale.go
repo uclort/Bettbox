@@ -14,12 +14,14 @@ import (
 
 // BETTBOX-CUSTOM: Tailscale 共存。DNS 段可能来自订阅（未开启覆写 DNS），只能在内核合并阶段补充。
 type PatchTailscale struct {
-	DnsDomains []string            `json:"dns-domains"`
-	DnsServer  string              `json:"dns-server"`
-	Node       *PatchTailscaleNode `json:"node"`
-	// BETTBOX-CUSTOM: 代理通道节点。tsnet 无法按对端切换拨号方式，指定设备经代理连接时
-	// 另起一个带 dialer-proxy 的节点（Tailnet 中是另一台设备），由前置规则把这些设备指向它。
-	ProxyNode *PatchTailscaleNode `json:"proxy-node"`
+	DnsDomains []string `json:"dns-domains"`
+	DnsServer  string   `json:"dns-server"`
+	// BETTBOX-CUSTOM: Tailscale 策略组（每个是一个 mihomo type: tailscale 节点，Tailnet 中各是一台设备）。
+	// tsnet 只能整体设置拨号方式，想让某些设备经代理连接就另起一个带 dialer-proxy 的节点，
+	// 由前置规则把这些设备指向它（与 Surge underlying-proxy 的做法相同）。
+	Nodes []*PatchTailscaleNode `json:"nodes"`
+	// 默认组：承接 Tailnet 兜底规则与 MagicDNS（tailscale://），一定是 Bettbox 注入的节点。
+	DefaultNode string `json:"default-node"`
 	// BETTBOX-CUSTOM: Tailnet 网段，内置节点开启时用于清理会让流量绕开节点的配置。
 	Ranges []string `json:"ranges"`
 }
@@ -32,55 +34,106 @@ type PatchTailscaleNode struct {
 	AuthKey      string `json:"auth-key"`
 	ExitNode     string `json:"exit-node"`
 	AcceptRoutes bool   `json:"accept-routes"`
-	// 非空时为代理通道节点：控制面、DERP 与 UDP 都经该策略组/节点发出，使用独立 state-dir。
+	// 非空时控制面、DERP 与 UDP 都经该策略组/节点发出。
 	DialerProxy string `json:"dialer-proxy"`
+	// 身份目录标识：空为默认组（tailscale/bettbox），其余为 tailscale/bettbox-<id>。
+	StateID string `json:"state-id"`
+	// 覆写配置文件里的同名节点：运行时整体替换为这里的参数；配置文件里没有该节点时不注入，
+	// 指向它的前置规则也一并去掉，避免规则引用不存在的出站。
+	Override bool `json:"override"`
 }
 
 // 状态目录固定在内核 home 下，切换订阅或重载配置不会丢失登录状态。
 // 两种接入方式各用一个目录：切到 Auth Key 不清空浏览器登录，切回来仍用原来的身份。
-// 代理通道节点同样按接入方式各用一个目录，与直连节点互不影响。
+// 每个策略组按 state-id 各用一组目录；旧版代理通道节点的 state-id 为 proxy，目录不变，升级后无需重新登录。
 const (
-	tailscaleNodeStateDir             = "tailscale/bettbox"
-	tailscaleNodeAuthKeyStateDir      = "tailscale/bettbox-authkey"
-	tailscaleProxyNodeStateDir        = "tailscale/bettbox-proxy"
-	tailscaleProxyNodeAuthKeyStateDir = "tailscale/bettbox-proxy-authkey"
-	tailscaleAuthModeAuthKey          = "auth-key"
+	tailscaleNodeStateDir    = "tailscale/bettbox"
+	tailscaleAuthKeyDirExt   = "-authkey"
+	tailscaleAuthModeAuthKey = "auth-key"
 )
 
-func patchTailscaleNode(raw *config.RawConfig, node *PatchTailscaleNode) {
-	if node == nil || node.Name == "" {
-		return
+var tailscaleStateIDSanitizer = regexp.MustCompile(`[^a-z0-9-]+`)
+
+// patchTailscaleNodes 注入或覆写各策略组节点，返回因配置文件中不存在而跳过的覆写节点名。
+func patchTailscaleNodes(raw *config.RawConfig, tailscale *PatchTailscale) map[string]bool {
+	if tailscale == nil {
+		return nil
 	}
-	exists := false
-	for _, proxy := range raw.Proxy {
+	var missing map[string]bool
+	for _, node := range tailscale.Nodes {
+		if !patchTailscaleNode(raw, node) {
+			if missing == nil {
+				missing = map[string]bool{}
+			}
+			missing[node.Name] = true
+		}
+	}
+	return missing
+}
+
+// BETTBOX-CUSTOM: 去掉指向不存在的覆写节点的前置规则。
+func dropTailscaleRules(rules []string, missing map[string]bool) []string {
+	if len(missing) == 0 {
+		return rules
+	}
+	kept := rules[:0:0]
+	for _, rule := range rules {
+		if parsed := parseRule(rule); parsed.hasTarget && missing[parsed.target] {
+			log.Infoln("[Tailscale] node %s not found in profile, skip rule %s", parsed.target, rule)
+			continue
+		}
+		kept = append(kept, rule)
+	}
+	return kept
+}
+
+func (node *PatchTailscaleNode) proxyMap() map[string]any {
+	proxy := map[string]any{
+		"name":          node.Name,
+		"type":          "tailscale",
+		"state-dir":     node.stateDir(),
+		"udp":           true,
+		"accept-routes": node.AcceptRoutes,
+	}
+	if hostname := strings.TrimSpace(node.Hostname); hostname != "" {
+		proxy["hostname"] = hostname
+	}
+	// 登录方式不下发 auth-key，只认浏览器登录状态。
+	if authKey := strings.TrimSpace(node.AuthKey); authKey != "" && node.useAuthKey() {
+		proxy["auth-key"] = authKey
+	}
+	if exitNode := strings.TrimSpace(node.ExitNode); exitNode != "" {
+		proxy["exit-node"] = exitNode
+	}
+	if dialerProxy := strings.TrimSpace(node.DialerProxy); dialerProxy != "" {
+		proxy["dialer-proxy"] = dialerProxy
+	}
+	return proxy
+}
+
+// patchTailscaleNode 返回节点是否存在于最终配置中（覆写节点在配置文件中不存在时返回 false）。
+func patchTailscaleNode(raw *config.RawConfig, node *PatchTailscaleNode) bool {
+	if node == nil || node.Name == "" {
+		return true
+	}
+	index := -1
+	for i, proxy := range raw.Proxy {
 		if name, _ := proxy["name"].(string); name == node.Name {
-			exists = true // 订阅里已有同名节点时尊重订阅定义
+			index = i
 			break
 		}
 	}
-	if !exists {
-		proxy := map[string]any{
-			"name":          node.Name,
-			"type":          "tailscale",
-			"state-dir":     node.stateDir(),
-			"udp":           true,
-			"accept-routes": node.AcceptRoutes,
-		}
-		if hostname := strings.TrimSpace(node.Hostname); hostname != "" {
-			proxy["hostname"] = hostname
-		}
-		// 登录方式不下发 auth-key，只认浏览器登录状态。
-		if authKey := strings.TrimSpace(node.AuthKey); authKey != "" && node.useAuthKey() {
-			proxy["auth-key"] = authKey
-		}
-		if exitNode := strings.TrimSpace(node.ExitNode); exitNode != "" {
-			proxy["exit-node"] = exitNode
-		}
-		if dialerProxy := strings.TrimSpace(node.DialerProxy); dialerProxy != "" {
-			proxy["dialer-proxy"] = dialerProxy
-		}
-		raw.Proxy = append(raw.Proxy, proxy)
+	switch {
+	case node.Override && index < 0:
+		return false
+	case node.Override:
+		log.Infoln("[Tailscale] override profile node %s", node.Name)
+		raw.Proxy[index] = node.proxyMap()
+		return true // 配置文件里的节点，策略组引用保持原样，不加 exclude-filter
+	case index < 0:
+		raw.Proxy = append(raw.Proxy, node.proxyMap())
 	}
+	// 没开覆写的同名节点尊重配置文件定义。
 	// include-all 策略组会把它当普通节点做健康检查甚至自动选中，这里排除，只由前置规则引用。
 	filter := "^" + regexp.QuoteMeta(node.Name) + "$"
 	for _, group := range raw.ProxyGroup {
@@ -97,6 +150,7 @@ func patchTailscaleNode(raw *config.RawConfig, node *PatchTailscaleNode) {
 		}
 		combineExcludeFilter(group, filter)
 	}
+	return true
 }
 
 func (node *PatchTailscaleNode) useAuthKey() bool {
@@ -104,16 +158,15 @@ func (node *PatchTailscaleNode) useAuthKey() bool {
 }
 
 func (node *PatchTailscaleNode) stateDir() string {
-	proxied := strings.TrimSpace(node.DialerProxy) != ""
-	switch {
-	case proxied && node.useAuthKey():
-		return tailscaleProxyNodeAuthKeyStateDir
-	case proxied:
-		return tailscaleProxyNodeStateDir
-	case node.useAuthKey():
-		return tailscaleNodeAuthKeyStateDir
+	dir := tailscaleNodeStateDir
+	id := tailscaleStateIDSanitizer.ReplaceAllString(strings.ToLower(strings.TrimSpace(node.StateID)), "-")
+	if id = strings.Trim(id, "-"); id != "" {
+		dir += "-" + id
 	}
-	return tailscaleNodeStateDir
+	if node.useAuthKey() {
+		dir += tailscaleAuthKeyDirExt
+	}
+	return dir
 }
 
 func normalizeTailscaleDomain(domain string) string {
@@ -156,8 +209,8 @@ func patchTailscaleDns(raw *config.RawConfig, tailscale *PatchTailscale) {
 	// 内置节点模式：MagicDNS 交给节点自身解析，并覆盖订阅里同域名的 nameserver-policy
 	// （订阅通常指向 100.100.100.100，App 未运行时不可用）。
 	override := false
-	if node := tailscale.Node; node != nil && node.Name != "" {
-		server = "tailscale://" + node.Name
+	if tailscale.DefaultNode != "" {
+		server = "tailscale://" + tailscale.DefaultNode
 		override = true
 	}
 	for _, item := range tailscale.DnsDomains {
@@ -218,7 +271,7 @@ const tailscaleMagicDNS = "100.100.100.100"
 
 func removeTailscaleConflicts(raw *config.RawConfig, params *PatchParams) {
 	tailscale := params.Tailscale
-	if tailscale == nil || tailscale.Node == nil || tailscale.Node.Name == "" {
+	if tailscale == nil || tailscale.DefaultNode == "" {
 		return
 	}
 	var ranges []netip.Prefix
@@ -262,7 +315,7 @@ func removeTailscaleConflicts(raw *config.RawConfig, params *PatchParams) {
 	raw.DNS.DirectNameServer = filterServers("direct-nameserver", raw.DNS.DirectNameServer, false)
 
 	if policy := raw.DNS.NameServerPolicy; policy != nil {
-		nodeServer := "tailscale://" + tailscale.Node.Name
+		nodeServer := "tailscale://" + tailscale.DefaultNode
 		for pair := policy.Oldest(); pair != nil; pair = pair.Next() {
 			if policyUsesMagicDNS(pair.Value) {
 				log.Infoln("[Tailscale] built-in node: dns.nameserver-policy %s -> %s", pair.Key, nodeServer)

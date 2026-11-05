@@ -243,6 +243,255 @@ class TailscaleNodeItem extends ConsumerWidget {
   }
 }
 
+// BETTBOX-CUSTOM: 预读取全部配置文件（含覆写脚本结果），找出自定义的 Tailscale 节点。
+Future<List<TailscaleProfileScan>> _scanTailscaleProfiles() async {
+  final config = globalState.config;
+  final scans = <TailscaleProfileScan>[];
+  for (final profile in config.profiles) {
+    try {
+      final raw = await globalState.getProfileConfig(
+        profile.id,
+        effective: true,
+      );
+      scans.add(
+        TailscaleProfileScan.fromConfig(
+          profileId: profile.id,
+          label: profile.label ?? profile.id,
+          current: profile.id == config.currentProfileId,
+          config: raw,
+        ),
+      );
+    } catch (_) {}
+  }
+  return scans;
+}
+
+/// 配置文件里的节点在列表中的条目：已保存的覆写设置，或按配置文件参数生成的只读组。
+class _TailscaleGroupEntry {
+  const _TailscaleGroupEntry(this.group, [this.node]);
+
+  final TailscaleGroup group;
+
+  /// 当前配置文件中的同名节点（不在当前配置文件中时为 null）。
+  final TailscaleProfileNode? node;
+}
+
+List<_TailscaleGroupEntry> _groupEntries(
+  TailscaleProps props,
+  List<TailscaleProfileNode> profileNodes,
+) {
+  final stored = {
+    for (final g in props.nodeGroups)
+      if (g.profile) g.name: g,
+  };
+  return [
+    for (final g in props.nodeGroups)
+      if (!g.profile) _TailscaleGroupEntry(g),
+    for (final node in profileNodes)
+      _TailscaleGroupEntry(
+        stored[node.name] ?? node.toGroup().copyWith(override: false),
+        node,
+      ),
+    for (final g in stored.values)
+      if (!profileNodes.any((n) => n.name == g.name)) _TailscaleGroupEntry(g),
+  ];
+}
+
+String _tailscaleStatusText(
+  TailscaleProps props,
+  TailscaleGroup group,
+  TailscaleNodeStatus? status,
+) {
+  if (group.managed && props.groupAuthKeyMissing(group)) {
+    return appLocalizations.tailscaleNodeAuthKeyRequired;
+  }
+  if (status == null) return appLocalizations.tailscaleNodeStarting;
+  // BETTBOX-CUSTOM: 设备名、IP、账号由状态面板分行显示，这里只给状态词。
+  if (status.running) return appLocalizations.tailscaleNodeRunning;
+  if (status.state == 'NeedsLogin') {
+    if (group.useAuthKey) {
+      return [
+        appLocalizations.tailscaleNodeAuthKeyFailed,
+        if (status.error.isNotEmpty) status.error,
+      ].join('\n');
+    }
+    return appLocalizations.tailscaleNodeNeedsLogin;
+  }
+  final error = status.error;
+  if (error.contains('not found') || error.contains('not initialized')) {
+    return appLocalizations.tailscaleNodeNotLoaded;
+  }
+  if (error.isNotEmpty) return error;
+  return '${appLocalizations.tailscaleNodeStarting} (${status.state})';
+}
+
+Widget _statusDot(BuildContext context, TailscaleNodeStatus? status) {
+  final color = status == null
+      ? context.colorScheme.outline
+      : status.running
+      ? Colors.green
+      : status.needsLogin
+      ? Colors.orange
+      : context.colorScheme.error;
+  return Icon(Icons.circle, size: 10, color: color);
+}
+
+// BETTBOX-CUSTOM: 节点状态查询、登录轮询与登录 / 退出 / 重新注册，策略组列表页与详情页共用。
+mixin _TailscaleStatusMixin<T extends ConsumerStatefulWidget>
+    on ConsumerState<T> {
+  final Map<String, TailscaleNodeStatus> statuses = {};
+  bool statusLoading = false;
+  Timer? _statusPoll;
+  Timer? _statusAuto;
+  int _statusPollCount = 0;
+
+  /// 需要查询状态的节点名。
+  List<String> get statusNames;
+
+  void onStatusesUpdated() {}
+
+  void startAutoRefresh() {
+    _statusAuto?.cancel();
+    // 页面打开期间定时刷新设备在线状态。
+    _statusAuto = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (statuses.values.any((s) => s.running)) refreshStatus(silent: true);
+    });
+  }
+
+  void disposeStatus() {
+    _statusPoll?.cancel();
+    _statusAuto?.cancel();
+  }
+
+  Future<void> refreshStatus({bool silent = false}) async {
+    if (statusLoading) return;
+    statusLoading = true;
+    if (!silent && mounted) setState(() {});
+    final result = <String, TailscaleNodeStatus>{};
+    for (final name in statusNames) {
+      result[name] = await clashCore.getTailscaleStatus(name);
+    }
+    if (!mounted) return;
+    setState(() {
+      statuses
+        ..clear()
+        ..addAll(result);
+      statusLoading = false;
+    });
+    onStatusesUpdated();
+    if (result.isNotEmpty && result.values.every((s) => s.running)) {
+      _statusPoll?.cancel();
+    }
+  }
+
+  /// 等待登录、注册或切换方式完成：每 3 秒刷新状态，最多约 3 分钟，连上即停。
+  void startPoll() {
+    _statusPoll?.cancel();
+    _statusPollCount = 0;
+    _statusPoll = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (!mounted || ++_statusPollCount > 60) {
+        timer.cancel();
+        return;
+      }
+      refreshStatus(silent: true);
+    });
+  }
+
+  void resetStatus(String name) {
+    if (!mounted) return;
+    setState(() => statuses.remove(name));
+    startPoll();
+  }
+
+  /// 当前身份有效（在线、正在连接或等待管理员批准）时，切换或换 key 需要先确认。
+  /// 还没拿到状态时按有效处理，宁可多问一次。
+  bool identityValid(String name, bool active) {
+    if (!active) return false;
+    final status = statuses[name];
+    if (status == null) return true;
+    return status.running ||
+        status.state == 'Starting' ||
+        status.state == 'NeedsMachineAuth';
+  }
+
+  Future<bool> confirmChange(
+    String name,
+    bool active,
+    String title,
+    String tip,
+  ) async {
+    if (!identityValid(name, active)) return true;
+    final res = await globalState.showMessage(
+      title: title,
+      message: TextSpan(text: tip),
+    );
+    return res == true;
+  }
+
+  Future<void> _login(String url) async {
+    await globalState.openUrl(url);
+    startPoll();
+  }
+
+  Future<void> _logout(String name) async {
+    final res = await globalState.showMessage(
+      title: appLocalizations.tailscaleNodeLogout,
+      message: TextSpan(text: appLocalizations.tailscaleNodeLogoutTip),
+    );
+    if (res != true) return;
+    final error = await clashCore.tailscaleLogout(name);
+    if (error.isNotEmpty) globalState.showNotifier(error);
+    await refreshStatus();
+  }
+
+  /// Auth Key 方式：退出当前身份后内核会用当前 key 重新注册。
+  Future<void> _reRegister(String name, bool active) async {
+    final ok = await confirmChange(
+      name,
+      active,
+      appLocalizations.tailscaleNodeReRegister,
+      appLocalizations.tailscaleNodeReRegisterTip,
+    );
+    if (!ok) return;
+    final error = await clashCore.tailscaleLogout(name);
+    if (error.isNotEmpty) globalState.showNotifier(error);
+    resetStatus(name);
+  }
+
+  /// 登录 / 退出登录 / 重新注册按钮。
+  List<Widget> nodeActions({
+    required String name,
+    required bool useAuthKey,
+    required bool active,
+  }) {
+    final status = statuses[name];
+    return [
+      if (!useAuthKey && status != null && status.needsLogin)
+        ListItem(
+          leading: const Icon(Icons.login),
+          title: Text(appLocalizations.tailscaleNodeLogin),
+          onTap: () => _login(status.authUrl),
+        ),
+      if (!useAuthKey && status != null && status.running)
+        ListItem(
+          leading: const Icon(Icons.logout),
+          title: Text(appLocalizations.tailscaleNodeLogout),
+          onTap: () => _logout(name),
+        ),
+      if (active &&
+          useAuthKey &&
+          status != null &&
+          (status.running || status.state == 'NeedsLogin'))
+        ListItem(
+          leading: const Icon(Icons.autorenew),
+          title: Text(appLocalizations.tailscaleNodeReRegister),
+          subtitle: Text(appLocalizations.tailscaleNodeReRegisterTip),
+          onTap: () => _reRegister(name, active),
+        ),
+    ];
+  }
+}
+
 class _TailscaleNodeSettings extends ConsumerStatefulWidget {
   const _TailscaleNodeSettings();
 
@@ -251,288 +500,421 @@ class _TailscaleNodeSettings extends ConsumerStatefulWidget {
       _TailscaleNodeSettingsState();
 }
 
-class _TailscaleNodeSettingsState
-    extends ConsumerState<_TailscaleNodeSettings> {
-  TailscaleNodeStatus? _status;
-  // BETTBOX-CUSTOM: 代理通道节点状态（只在 proxyNodeActive 时查询）。
-  TailscaleNodeStatus? _proxyStatus;
-  bool _loading = false;
-  Timer? _loginPoll;
-  Timer? _autoRefresh;
-  int _pollCount = 0;
+class _TailscaleNodeSettingsState extends ConsumerState<_TailscaleNodeSettings>
+    with _TailscaleStatusMixin<_TailscaleNodeSettings> {
+  List<TailscaleProfileScan>? _scans;
+
+  List<TailscaleProfileNode> get _profileNodes =>
+      _scans?.where((scan) => scan.current).firstOrNull?.nodes ?? const [];
+
+  @override
+  List<String> get statusNames {
+    final props = ref.read(networkSettingProvider).tailscale;
+    final overridden = {
+      for (final g in props.nodeGroups)
+        if (g.profile && g.override) g.name,
+    };
+    return {
+      for (final g in props.activeGroups) g.name,
+      // 未覆写的配置文件节点由配置文件启动，同样可以查询状态和登录。
+      for (final node in _profileNodes)
+        if (!props.nodeEnable || !overridden.contains(node.name)) node.name,
+    }.toList();
+  }
 
   @override
   void initState() {
     super.initState();
+    _loadScans();
     if (ref.read(networkSettingProvider).tailscale.nodeEnable) {
-      _refresh();
-      // 页面打开期间定时刷新设备在线状态。
-      _autoRefresh = Timer.periodic(const Duration(seconds: 5), (_) {
-        if (_status?.running == true) _refresh(silent: true);
-      });
+      refreshStatus();
+      startAutoRefresh();
+    }
+  }
+
+  Future<void> _loadScans() async {
+    final scans = await _scanTailscaleProfiles();
+    if (!mounted) return;
+    setState(() => _scans = scans);
+    if (scans.any((scan) => scan.current && scan.nodes.isNotEmpty)) {
+      refreshStatus(silent: true);
     }
   }
 
   @override
   void dispose() {
-    _loginPoll?.cancel();
-    _autoRefresh?.cancel();
+    disposeStatus();
     super.dispose();
   }
 
-  Future<void> _refresh({bool silent = false}) async {
-    if (_loading) return;
-    if (!silent) setState(() => _loading = true);
-    _loading = true;
-    final status = await clashCore.getTailscaleStatus();
+  @override
+  void onStatusesUpdated() {
+    // 经其他组连接的设备 IP 变化时按 DNS 名更新规则。
     final props = ref.read(networkSettingProvider).tailscale;
-    final proxyStatus = props.proxyNodeActive
-        ? await clashCore.getTailscaleStatus(tailscaleProxyNodeName)
-        : null;
-    if (!mounted) return;
-    setState(() {
-      _status = status;
-      _proxyStatus = proxyStatus;
-      _loading = false;
+    final status = statuses[props.defaultNodeGroup.name];
+    if (status == null || !status.running) return;
+    final synced = props.syncProxyPeers(status.peers);
+    if (synced != null) _updateTailscale(ref, (_) => synced);
+  }
+
+  String? _validateName(String? value) {
+    final name = value?.trim() ?? '';
+    if (name.isEmpty) return appLocalizations.emptyTip(appLocalizations.name);
+    final props = ref.read(networkSettingProvider).tailscale;
+    final used = {
+      for (final g in props.nodeGroups) g.name,
+      for (final node in _profileNodes) node.name,
+    };
+    if (used.contains(name)) return appLocalizations.tailscaleGroupNameExists;
+    return null;
+  }
+
+  Future<void> _addGroup(String name) async {
+    if (_validateName(name) != null) return;
+    await _updateTailscale(ref, (state) {
+      final group = state.newGroup(name.trim());
+      return state.updateGroup(group.id, group);
     });
-    // 经代理连接的设备 IP 变化时按 DNS 名更新规则。
-    if (status.running) {
-      final synced = ref
-          .read(networkSettingProvider)
-          .tailscale
-          .syncProxyPeers(status.peers);
-      if (synced != null) _updateTailscale(ref, (_) => synced);
-    }
-    if (status.running && (proxyStatus == null || proxyStatus.running)) {
-      _loginPoll?.cancel();
-    }
+    startPoll();
   }
 
-  Future<void> _setProxyPeer(TailscalePeer peer, bool value) async {
-    await _updateTailscale(ref, (state) => state.toggleProxyPeer(peer, value));
-    if (value) _startPoll();
-  }
-
-  Future<void> _removeProxyDevice(TailscaleProxyDevice device) async {
-    await _updateTailscale(
-      ref,
-      (state) => state.copyWith(
-        nodeProxyDevices: [
-          for (final d in state.proxyDevices)
-            if (!d.matches(device)) d.encoded,
-        ],
-      ),
-    );
-  }
-
-  Future<void> _addProxyDevice(String raw) async {
-    final device = TailscaleProxyDevice.parse(raw);
-    if (device.isEmpty) return;
-    await _updateTailscale(
-      ref,
-      (state) => state.copyWith(
-        nodeProxyDevices: [
-          for (final d in state.proxyDevices)
-            if (!d.matches(device)) d.encoded,
-          device.encoded,
-        ],
-      ),
-    );
-    _startPoll();
-  }
-
-  Future<void> _changeProxyVia(String value) async {
-    await _updateTailscale(ref, (state) => state.copyWith(nodeProxyVia: value));
-    if (!mounted) return;
-    setState(() => _proxyStatus = null);
-    _startPoll();
-  }
-
-  Future<void> _login(String url) async {
-    await globalState.openUrl(url);
-    _startPoll();
-  }
-
-  /// 等待登录、注册或切换方式完成：每 3 秒刷新状态，最多约 3 分钟，连上即停。
-  void _startPoll() {
-    _loginPoll?.cancel();
-    _pollCount = 0;
-    _loginPoll = Timer.periodic(const Duration(seconds: 3), (timer) {
-      if (!mounted || ++_pollCount > 60) {
-        timer.cancel();
-        return;
-      }
-      _refresh(silent: true);
+  Future<void> _setOverride(_TailscaleGroupEntry entry, bool value) async {
+    await _updateTailscale(ref, (state) {
+      final stored = state.groupById(entry.group.id);
+      final group = (stored ?? entry.node?.toGroup() ?? entry.group).copyWith(
+        override: value,
+      );
+      return state.updateGroup(group.id, group);
     });
+    resetStatus(entry.group.name);
   }
 
-  /// 当前身份有效（在线、正在连接或等待管理员批准）时，切换或换 key 需要先确认。
-  /// 还没拿到状态时按有效处理，宁可多问一次。
-  bool _identityValid(TailscaleProps props) {
-    if (!props.nodeActive) return false;
-    final status = _status;
-    if (status == null) return true;
-    return status.running ||
-        status.state == 'Starting' ||
-        status.state == 'NeedsMachineAuth';
-  }
-
-  Future<bool> _confirm(String title, String tip, TailscaleProps props) async {
-    if (!_identityValid(props)) return true;
-    final res = await globalState.showMessage(
-      title: title,
-      message: TextSpan(text: tip),
-    );
-    return res == true;
-  }
-
-  Future<void> _applyNodeChange(
-    TailscaleProps Function(TailscaleProps state) builder,
+  Future<void> _pickPeerGroup(
+    TailscalePeer peer,
+    TailscaleGroup current,
+    List<TailscaleGroup> options,
   ) async {
-    await _updateTailscale(ref, builder);
-    if (!mounted) return;
-    setState(() => _status = null);
-    _startPoll();
-  }
-
-  Future<void> _switchAuthMode(bool useAuthKey, TailscaleProps props) async {
-    if (useAuthKey == props.nodeUseAuthKey) return;
-    final ok = await _confirm(
-      appLocalizations.tailscaleNodeAuthMode,
-      appLocalizations.tailscaleNodeSwitchModeTip,
-      props,
-    );
-    if (!ok) return;
-    await _applyNodeChange(
-      (state) => state.copyWith(nodeUseAuthKey: useAuthKey),
-    );
-  }
-
-  Future<void> _changeAuthKey(String value, TailscaleProps props) async {
-    if (value == props.nodeAuthKey.trim()) return;
-    final ok = await _confirm(
-      appLocalizations.tailscaleNodeAuthKey,
-      appLocalizations.tailscaleNodeAuthKeyChangeTip,
-      props,
-    );
-    if (!ok) return;
-    await _applyNodeChange((state) => state.copyWith(nodeAuthKey: value));
-  }
-
-  /// Auth Key 方式：退出当前身份后内核会用当前 key 重新注册。
-  Future<void> _reRegister(
-    TailscaleProps props, [
-    String name = tailscaleNodeName,
-  ]) async {
-    final ok = await _confirm(
-      appLocalizations.tailscaleNodeReRegister,
-      appLocalizations.tailscaleNodeReRegisterTip,
-      props,
-    );
-    if (!ok) return;
-    final error = await clashCore.tailscaleLogout(name);
-    if (error.isNotEmpty) globalState.showNotifier(error);
-    if (!mounted) return;
-    setState(() {
-      if (name == tailscaleNodeName) {
-        _status = null;
-      } else {
-        _proxyStatus = null;
-      }
-    });
-    _startPoll();
-  }
-
-  Future<void> _logout([String name = tailscaleNodeName]) async {
-    final res = await globalState.showMessage(
-      title: appLocalizations.tailscaleNodeLogout,
-      message: TextSpan(text: appLocalizations.tailscaleNodeLogoutTip),
-    );
-    if (res != true) return;
-    final error = await clashCore.tailscaleLogout(name);
-    if (error.isNotEmpty) globalState.showNotifier(error);
-    await _refresh();
-  }
-
-  /// 登录 / 退出登录 / 重新注册按钮，主节点与代理通道节点共用。
-  List<Widget> _nodeActions(
-    TailscaleProps props,
-    TailscaleNodeStatus? status,
-    String name,
-  ) => [
-    if (!props.nodeUseAuthKey && status != null && status.needsLogin)
-      ListItem(
-        leading: const Icon(Icons.login),
-        title: Text(appLocalizations.tailscaleNodeLogin),
-        onTap: () => _login(status.authUrl),
+    final value = await globalState.showCommonDialog<String>(
+      child: OptionsDialog<String>(
+        title: appLocalizations.tailscalePeerGroup,
+        options: [for (final g in options) g.id],
+        textBuilder: (id) =>
+            options.where((g) => g.id == id).firstOrNull?.name ?? id,
+        value: current.id,
       ),
-    if (!props.nodeUseAuthKey && status != null && status.running)
-      ListItem(
-        leading: const Icon(Icons.logout),
-        title: Text(appLocalizations.tailscaleNodeLogout),
-        onTap: () => _logout(name),
-      ),
-    if (props.nodeActive &&
-        props.nodeUseAuthKey &&
-        status != null &&
-        (status.running || status.state == 'NeedsLogin'))
-      ListItem(
-        leading: const Icon(Icons.autorenew),
-        title: Text(appLocalizations.tailscaleNodeReRegister),
-        subtitle: Text(appLocalizations.tailscaleNodeReRegisterTip),
-        onTap: () => _reRegister(props, name),
-      ),
-  ];
+    );
+    if (value == null || value == current.id) return;
+    final target = options.where((g) => g.id == value).firstOrNull;
+    if (target == null) return;
+    await _updateTailscale(ref, (state) => state.assignPeer(peer, target.name));
+    startPoll();
+  }
 
-  List<Widget> _proxyChannelSection(TailscaleProps props) {
-    final devices = props.proxyDevices;
-    final groups = ref
-        .watch(groupsProvider)
-        .map((group) => group.name)
-        .where(
-          (name) =>
-              name != GroupName.GLOBAL.name &&
-              name != tailscaleNodeName &&
-              name != tailscaleProxyNodeName,
-        )
-        .toList();
-    final via = props.nodeProxyVia.trim();
-    final options = [if (via.isNotEmpty && !groups.contains(via)) via, ...groups];
-    final proxyStatus = _proxyStatus;
-    return [
-      ListHeader(title: appLocalizations.tailscaleProxyChannel),
-      ListItem(
-        title: Text(appLocalizations.tailscaleProxyChannel),
-        subtitle: Text(appLocalizations.tailscaleProxyChannelDesc),
-      ),
-      ListItem.options(
-        title: Text(appLocalizations.tailscaleProxyVia),
-        subtitle: Text(
-          via.isEmpty ? appLocalizations.tailscaleProxyViaMissing : via,
+  Widget _groupTile(TailscaleProps props, _TailscaleGroupEntry entry) {
+    final group = entry.group;
+    final isDefault = props.isDefaultGroup(group);
+    final via = group.via.trim();
+    final summary = [
+      if (isDefault) appLocalizations.tailscaleGroupDefault,
+      if (group.profile) appLocalizations.tailscaleGroupProfile,
+      if (group.profile && group.override)
+        appLocalizations.tailscaleGroupOverride,
+      via.isEmpty
+          ? appLocalizations.tailscaleGroupDirect
+          : '${appLocalizations.tailscaleProxyVia} $via',
+      if (!isDefault && group.managed && group.proxyDevices.isNotEmpty)
+        '${appLocalizations.tailscaleNodeDevices} ${group.proxyDevices.length}',
+      if (group.managed && group.validRules.isNotEmpty)
+        '${appLocalizations.tailscaleGroupRules} ${group.validRules.length}',
+      if (group.profile && entry.node == null)
+        appLocalizations.tailscaleGroupNotInProfile,
+    ].join(' · ');
+    return ListItem.next(
+      leading: _statusDot(context, statuses[group.name]),
+      title: Text(group.name),
+      subtitle: Text(summary),
+      trailing: group.profile
+          ? Switch(
+              value: group.override,
+              onChanged: (value) => _setOverride(entry, value),
+            )
+          : null,
+      delegate: NextDelegate(
+        blur: false,
+        title: group.name,
+        widget: _TailscaleGroupPage(
+          id: group.id,
+          profileNode: entry.node,
+          profileNodes: _profileNodes,
         ),
-        delegate: OptionsDelegate<String>(
-          title: appLocalizations.tailscaleProxyVia,
-          value: via,
-          options: options,
-          textBuilder: (value) => value,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final props = ref.watch(
+      networkSettingProvider.select((state) => state.tailscale),
+    );
+    final defaultGroup = props.defaultNodeGroup;
+    final status = statuses[defaultGroup.name];
+    final entries = _groupEntries(props, _profileNodes);
+    final peerGroups = [
+      defaultGroup,
+      for (final entry in entries)
+        if (!props.isDefaultGroup(entry.group) && entry.group.managed)
+          entry.group,
+    ];
+    return generateListView([
+      if (_scans != null)
+        _TailscaleProfileWarning(props: props, scans: _scans!),
+      if (props.nodeEnable) ...[
+        _TailscaleNodeStatusPanel(
+          title: defaultGroup.name,
+          status: status,
+          loading: statusLoading,
+          onRefresh: refreshStatus,
+          statusText: _tailscaleStatusText(props, defaultGroup, status),
+        ),
+        ...nodeActions(
+          name: defaultGroup.name,
+          useAuthKey: defaultGroup.useAuthKey,
+          active: props.nodeActive,
+        ),
+      ],
+      ListHeader(title: appLocalizations.tailscaleGroups),
+      ListItem(
+        title: Text(appLocalizations.tailscaleGroupsDesc),
+        titleTextStyle: context.textTheme.bodySmall?.copyWith(
+          color: context.colorScheme.onSurfaceVariant,
+          height: 1.4,
+        ),
+      ),
+      for (final entry in entries) _groupTile(props, entry),
+      ListItem.input(
+        leading: const Icon(Icons.add),
+        title: Text(appLocalizations.tailscaleGroupAdd),
+        delegate: InputDelegate(
+          title: appLocalizations.tailscaleGroupAdd,
+          value: '',
+          hintText: 'Tailscale-Proxy',
+          validator: _validateName,
           onChanged: (value) {
-            if (value == null || value == via) return;
-            _changeProxyVia(value);
+            if (value == null) return;
+            _addGroup(value);
           },
         ),
       ),
-      if (devices.isNotEmpty) ...[
-        _TailscaleNodeStatusPanel(
-          status: proxyStatus,
-          loading: _loading,
-          onRefresh: _refresh,
-          statusText: props.proxyViaMissing
-              ? appLocalizations.tailscaleProxyViaMissing
-              : _statusText(props, proxyStatus),
+      ..._tailnetSharedEntries(),
+      ListItem(
+        title: Text(appLocalizations.tailscaleNodeConflicts),
+        subtitle: Text(appLocalizations.tailscaleNodeConflictsDesc),
+      ),
+      if (props.nodeEnable && status != null && status.peers.isNotEmpty) ...[
+        ListHeader(
+          title:
+              '${appLocalizations.tailscaleNodeDevices} (${status.peers.where((peer) => peer.online).length}/${status.peers.length})',
         ),
-        if (props.proxyNodeActive)
-          ..._nodeActions(props, proxyStatus, tailscaleProxyNodeName),
+        for (final peer in status.peers)
+          () {
+            final current = props.groupOfPeer(peer);
+            final assignable =
+                peerGroups.length > 1 &&
+                (peer.dnsName.isNotEmpty || peer.ips.isNotEmpty);
+            return _TailscalePeerItem(
+              peer: peer,
+              groupName: props.isDefaultGroup(current) ? null : current.name,
+              onPickGroup: assignable
+                  ? () => _pickPeerGroup(peer, current, peerGroups)
+                  : null,
+            );
+          }(),
       ],
+    ]);
+  }
+}
+
+// BETTBOX-CUSTOM: 单个 Tailscale 策略组的设置。配置文件里的节点未开覆写时只读，只能登录 / 退出。
+class _TailscaleGroupPage extends ConsumerStatefulWidget {
+  const _TailscaleGroupPage({
+    required this.id,
+    this.profileNode,
+    this.profileNodes = const [],
+  });
+
+  final String id;
+  final TailscaleProfileNode? profileNode;
+  final List<TailscaleProfileNode> profileNodes;
+
+  @override
+  ConsumerState<_TailscaleGroupPage> createState() =>
+      _TailscaleGroupPageState();
+}
+
+class _TailscaleGroupPageState extends ConsumerState<_TailscaleGroupPage>
+    with _TailscaleStatusMixin<_TailscaleGroupPage> {
+  TailscaleGroup? _groupOf(TailscaleProps props) =>
+      props.groupById(widget.id) ??
+      widget.profileNode?.toGroup().copyWith(override: false);
+
+  @override
+  List<String> get statusNames {
+    final props = ref.read(networkSettingProvider).tailscale;
+    final group = _groupOf(props);
+    if (group == null) return const [];
+    final running = props.groupActive(group) || widget.profileNode != null;
+    return running ? [group.name] : const [];
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    refreshStatus();
+    startAutoRefresh();
+  }
+
+  @override
+  void dispose() {
+    disposeStatus();
+    super.dispose();
+  }
+
+  Future<void> _update(
+    TailscaleGroup Function(TailscaleGroup group) builder, {
+    bool restart = false,
+  }) async {
+    final props = ref.read(networkSettingProvider).tailscale;
+    final current = _groupOf(props);
+    if (current == null) return;
+    final updated = builder(current);
+    await _updateTailscale(
+      ref,
+      (state) => state.updateGroup(widget.id, updated),
+    );
+    if (restart) resetStatus(updated.name);
+  }
+
+  String? _validateName(String? value, TailscaleGroup group) {
+    final name = value?.trim() ?? '';
+    if (name.isEmpty) return appLocalizations.emptyTip(appLocalizations.name);
+    if (name == group.name) return null;
+    final props = ref.read(networkSettingProvider).tailscale;
+    final used = {
+      for (final g in props.nodeGroups) g.name,
+      for (final node in widget.profileNodes) node.name,
+    };
+    if (used.contains(name)) return appLocalizations.tailscaleGroupNameExists;
+    return null;
+  }
+
+  Future<void> _switchAuthMode(
+    bool useAuthKey,
+    TailscaleGroup group,
+    bool active,
+  ) async {
+    if (useAuthKey == group.useAuthKey) return;
+    final ok = await confirmChange(
+      group.name,
+      active,
+      appLocalizations.tailscaleNodeAuthMode,
+      appLocalizations.tailscaleNodeSwitchModeTip,
+    );
+    if (!ok) return;
+    await _update((g) => g.copyWith(useAuthKey: useAuthKey), restart: true);
+  }
+
+  Future<void> _changeAuthKey(
+    String value,
+    TailscaleGroup group,
+    bool active,
+  ) async {
+    if (value == group.authKey.trim()) return;
+    final ok = await confirmChange(
+      group.name,
+      active,
+      appLocalizations.tailscaleNodeAuthKey,
+      appLocalizations.tailscaleNodeAuthKeyChangeTip,
+    );
+    if (!ok) return;
+    await _update((g) => g.copyWith(authKey: value), restart: true);
+  }
+
+  Future<void> _delete(TailscaleGroup group) async {
+    final res = await globalState.showMessage(
+      title: appLocalizations.tailscaleGroupDelete,
+      message: TextSpan(text: appLocalizations.tailscaleGroupDeleteTip),
+    );
+    if (res != true) return;
+    await _updateTailscale(ref, (state) => state.removeGroup(widget.id));
+    if (mounted) Navigator.of(context).maybePop();
+  }
+
+  List<Widget> _readonlyItems(TailscaleProfileNode node) {
+    final via = node.dialerProxy;
+    return [
+      ListItem(
+        title: Text(appLocalizations.tailscaleGroupProfileReadonly),
+        titleTextStyle: context.textTheme.bodySmall?.copyWith(
+          color: context.colorScheme.onSurfaceVariant,
+        ),
+      ),
+      ListItem(
+        title: Text(appLocalizations.tailscaleNodeAuthMode),
+        subtitle: Text(
+          node.authKey.isNotEmpty
+              ? appLocalizations.tailscaleNodeAuthModeAuthKey
+              : appLocalizations.tailscaleNodeAuthModeLogin,
+        ),
+      ),
+      if (node.hostname.isNotEmpty)
+        ListItem(
+          title: Text(appLocalizations.tailscaleNodeHostname),
+          subtitle: Text(node.hostname),
+        ),
+      ListItem(
+        title: Text(appLocalizations.tailscaleProxyVia),
+        subtitle: Text(
+          via.isEmpty ? appLocalizations.tailscaleGroupDirect : via,
+        ),
+      ),
+      if (node.exitNode.isNotEmpty)
+        ListItem(
+          title: Text(appLocalizations.tailscaleNodeExitNode),
+          subtitle: Text(node.exitNode),
+        ),
+      if (node.stateDir.isNotEmpty)
+        ListItem(title: const Text('state-dir'), subtitle: Text(node.stateDir)),
+    ];
+  }
+
+  List<Widget> _deviceItems(TailscaleGroup group) {
+    final devices = group.proxyDevices;
+    return [
+      ListHeader(
+        title: '${appLocalizations.tailscaleNodeDevices} (${devices.length})',
+      ),
+      for (final device in devices)
+        ListItem(
+          leading: const Icon(Icons.vpn_lock_outlined, size: 20),
+          title: Text(device.displayName),
+          subtitle: Text(
+            [
+              if (device.dnsName.isNotEmpty) device.dnsName,
+              ...device.ips,
+            ].join(' · '),
+          ),
+          trailing: IconButton(
+            tooltip: appLocalizations.delete,
+            icon: const Icon(Icons.delete_outline),
+            onPressed: () => _updateTailscale(
+              ref,
+              (state) => state.assignDevice(
+                device,
+                state.defaultNodeGroup.name,
+              ),
+            ),
+          ),
+        ),
       ListItem.input(
         leading: const Icon(Icons.add),
         title: Text(appLocalizations.tailscaleProxyAddDevice),
@@ -543,56 +925,57 @@ class _TailscaleNodeSettingsState
           hintText: 'rex.tailxxxx.ts.net, 100.x.y.z',
           onChanged: (value) {
             if (value == null) return;
-            _addProxyDevice(value);
+            final device = TailscaleProxyDevice.parse(value);
+            if (device.isEmpty) return;
+            _updateTailscale(
+              ref,
+              (state) => state.assignDevice(device, group.name),
+            );
+            startPoll();
           },
         ),
       ),
-      if (devices.isNotEmpty) ...[
-        ListHeader(
-          title: '${appLocalizations.tailscaleProxyDevices} (${devices.length})',
-        ),
-        for (final device in devices)
-          ListItem(
-            leading: const Icon(Icons.vpn_lock_outlined, size: 20),
-            title: Text(device.displayName),
-            subtitle: Text(
-              [
-                if (device.dnsName.isNotEmpty) device.dnsName,
-                ...device.ips,
-              ].join(' · '),
-            ),
-            trailing: IconButton(
-              tooltip: appLocalizations.delete,
-              icon: const Icon(Icons.delete_outline),
-              onPressed: () => _removeProxyDevice(device),
-            ),
-          ),
-      ],
     ];
   }
 
-  String _statusText(TailscaleProps props, TailscaleNodeStatus? status) {
-    if (props.nodeAuthKeyMissing) {
-      return appLocalizations.tailscaleNodeAuthKeyRequired;
-    }
-    if (status == null) return appLocalizations.tailscaleNodeStarting;
-    // BETTBOX-CUSTOM: 设备名、IP、账号由状态面板分行显示，这里只给状态词。
-    if (status.running) return appLocalizations.tailscaleNodeRunning;
-    if (status.state == 'NeedsLogin') {
-      if (props.nodeUseAuthKey) {
-        return [
-          appLocalizations.tailscaleNodeAuthKeyFailed,
-          if (status.error.isNotEmpty) status.error,
-        ].join('\n');
-      }
-      return appLocalizations.tailscaleNodeNeedsLogin;
-    }
-    final error = status.error;
-    if (error.contains('not found') || error.contains('not initialized')) {
-      return appLocalizations.tailscaleNodeNotLoaded;
-    }
-    if (error.isNotEmpty) return error;
-    return '${appLocalizations.tailscaleNodeStarting} (${status.state})';
+  Widget _rulesEntry(TailscaleGroup group) {
+    final valid = group.validRules.length;
+    return ListItem.next(
+      leading: const Icon(Icons.rule),
+      title: Text('${appLocalizations.tailscaleGroupRules} ($valid)'),
+      subtitle: Text(appLocalizations.tailscaleGroupRulesDesc),
+      delegate: NextDelegate(
+        blur: false,
+        title: appLocalizations.tailscaleGroupRules,
+        widget: Consumer(
+          builder: (_, ref, _) {
+            final rules = ref.watch(
+              networkSettingProvider.select(
+                (state) =>
+                    state.tailscale.groupById(widget.id)?.rules ?? const [],
+              ),
+            );
+            return ListInputPage(
+              title: appLocalizations.tailscaleGroupRules,
+              items: rules,
+              titleBuilder: (item) => Text(
+                normalizeTailscaleRule(item) == null
+                    ? '$item (${appLocalizations.tailscaleGroupRulesInvalid})'
+                    : item,
+              ),
+              onChange: (items) => _updateTailscale(ref, (state) {
+                final current = state.groupById(widget.id);
+                if (current == null) return state;
+                return state.updateGroup(
+                  widget.id,
+                  current.copyWith(rules: List.from(items)),
+                );
+              }),
+            );
+          },
+        ),
+      ),
+    );
   }
 
   @override
@@ -600,127 +983,308 @@ class _TailscaleNodeSettingsState
     final props = ref.watch(
       networkSettingProvider.select((state) => state.tailscale),
     );
-    final status = _status;
+    final group = _groupOf(props);
+    if (group == null) return const SizedBox();
+    final isDefault = props.isDefaultGroup(group);
+    final active = props.groupActive(group);
+    final status = statuses[group.name];
+    final profileNode = widget.profileNode;
+    final useAuthKey = group.managed
+        ? group.useAuthKey
+        : (profileNode?.authKey.isNotEmpty ?? false);
+    final tailscaleNames = {for (final g in props.nodeGroups) g.name};
+    final proxyGroups = ref
+        .watch(groupsProvider)
+        .map((g) => g.name)
+        .where(
+          (name) =>
+              name != GroupName.GLOBAL.name && !tailscaleNames.contains(name),
+        )
+        .toList();
+    final via = group.via.trim();
+    final viaOptions = [
+      '',
+      if (via.isNotEmpty && !proxyGroups.contains(via)) via,
+      ...proxyGroups,
+    ];
     return generateListView([
-      if (props.nodeEnable) ...[
+      if (props.nodeEnable || profileNode != null) ...[
         _TailscaleNodeStatusPanel(
           status: status,
-          loading: _loading,
-          onRefresh: _refresh,
-          statusText: _statusText(props, status),
+          loading: statusLoading,
+          onRefresh: refreshStatus,
+          statusText: _tailscaleStatusText(props, group, status),
         ),
-        ..._nodeActions(props, status, tailscaleNodeName),
+        ...nodeActions(name: group.name, useAuthKey: useAuthKey, active: active),
       ],
-      ListItem.options(
-        title: Text(appLocalizations.tailscaleNodeAuthMode),
-        subtitle: Text(
-          '${props.nodeUseAuthKey ? appLocalizations.tailscaleNodeAuthModeAuthKey : appLocalizations.tailscaleNodeAuthModeLogin}\n${appLocalizations.tailscaleNodeAuthModeDesc}',
-        ),
-        delegate: OptionsDelegate<bool>(
-          title: appLocalizations.tailscaleNodeAuthMode,
-          value: props.nodeUseAuthKey,
-          options: const [false, true],
-          textBuilder: (value) => value
-              ? appLocalizations.tailscaleNodeAuthModeAuthKey
-              : appLocalizations.tailscaleNodeAuthModeLogin,
-          onChanged: (value) {
-            if (value == null) return;
-            _switchAuthMode(value, props);
-          },
-        ),
-      ),
-      ListItem.input(
-        title: Text(appLocalizations.tailscaleNodeHostname),
-        subtitle: Text(
-          props.nodeHostname.isEmpty
-              ? '${appLocalizations.tailscaleNodeHostnameDesc}: ${props.effectiveNodeHostname}'
-              : props.effectiveNodeHostname,
-        ),
-        delegate: InputDelegate(
-          title: appLocalizations.tailscaleNodeHostname,
-          value: props.nodeHostname,
-          resetValue: '',
-          hintText: props.effectiveNodeHostname,
-          onChanged: (value) {
-            if (value == null) return;
-            _updateTailscale(
-              ref,
-              (state) => state.copyWith(nodeHostname: value.trim()),
-            );
-          },
-        ),
-      ),
-      if (props.nodeUseAuthKey)
-        ListItem.input(
-          title: Text(appLocalizations.tailscaleNodeAuthKey),
+      if (group.profile) ...[
+        ListItem.switchItem(
+          title: Text(appLocalizations.tailscaleGroupOverride),
           subtitle: Text(
-            props.nodeAuthKey.isEmpty
-                ? appLocalizations.tailscaleNodeAuthKeyDesc
-                : '${props.nodeAuthKey.length > 12 ? props.nodeAuthKey.substring(0, 12) : props.nodeAuthKey}••••\n${appLocalizations.tailscaleNodeAuthKeyDesc}',
+            profileNode == null
+                ? appLocalizations.tailscaleGroupNotInProfile
+                : appLocalizations.tailscaleGroupOverrideDesc,
           ),
-          delegate: InputDelegate(
-            title: appLocalizations.tailscaleNodeAuthKey,
-            value: props.nodeAuthKey,
-            resetValue: '',
-            hintText: 'tskey-auth-…',
+          delegate: SwitchDelegate(
+            value: group.override,
+            onChanged: (value) => _update(
+              (g) => g.copyWith(override: value),
+              restart: true,
+            ),
+          ),
+        ),
+        if (!group.override && profileNode != null)
+          ..._readonlyItems(profileNode),
+      ],
+      if (group.managed) ...[
+        if (!group.profile)
+          ListItem.input(
+            title: Text(appLocalizations.tailscaleGroupName),
+            subtitle: Text('${group.name}\n${appLocalizations.tailscaleGroupNameDesc}'),
+            delegate: InputDelegate(
+              title: appLocalizations.tailscaleGroupName,
+              value: group.name,
+              validator: (value) => _validateName(value, group),
+              onChanged: (value) {
+                if (value == null || _validateName(value, group) != null) {
+                  return;
+                }
+                if (value.trim() == group.name) return;
+                _update((g) => g.copyWith(name: value.trim()), restart: true);
+              },
+            ),
+          ),
+        if (!isDefault && !group.profile)
+          ListItem(
+            leading: const Icon(Icons.star_outline),
+            title: Text(appLocalizations.tailscaleGroupSetDefault),
+            subtitle: Text(appLocalizations.tailscaleGroupSetDefaultDesc),
+            onTap: () => _updateTailscale(
+              ref,
+              (state) => state.setDefaultGroup(widget.id),
+            ),
+          ),
+        ListItem.options(
+          title: Text(appLocalizations.tailscaleNodeAuthMode),
+          subtitle: Text(
+            '${group.useAuthKey ? appLocalizations.tailscaleNodeAuthModeAuthKey : appLocalizations.tailscaleNodeAuthModeLogin}\n${appLocalizations.tailscaleNodeAuthModeDesc}',
+          ),
+          delegate: OptionsDelegate<bool>(
+            title: appLocalizations.tailscaleNodeAuthMode,
+            value: group.useAuthKey,
+            options: const [false, true],
+            textBuilder: (value) => value
+                ? appLocalizations.tailscaleNodeAuthModeAuthKey
+                : appLocalizations.tailscaleNodeAuthModeLogin,
             onChanged: (value) {
               if (value == null) return;
-              _changeAuthKey(value.trim(), props);
+              _switchAuthMode(value, group, active);
             },
           ),
         ),
-      ListItem.input(
-        title: Text(appLocalizations.tailscaleNodeExitNode),
-        subtitle: Text(
-          props.nodeExitNode.isEmpty
-              ? appLocalizations.tailscaleNodeExitNodeDesc
-              : props.nodeExitNode,
-        ),
-        delegate: InputDelegate(
-          title: appLocalizations.tailscaleNodeExitNode,
-          value: props.nodeExitNode,
-          resetValue: '',
-          onChanged: (value) {
-            if (value == null) return;
-            _updateTailscale(
-              ref,
-              (state) => state.copyWith(nodeExitNode: value.trim()),
-            );
-          },
-        ),
-      ),
-      ListItem.switchItem(
-        title: Text(appLocalizations.tailscaleNodeAcceptRoutes),
-        subtitle: Text(appLocalizations.tailscaleNodeAcceptRoutesDesc),
-        delegate: SwitchDelegate(
-          value: props.nodeAcceptRoutes,
-          onChanged: (value) => _updateTailscale(
-            ref,
-            (state) => state.copyWith(nodeAcceptRoutes: value),
+        ListItem.input(
+          title: Text(appLocalizations.tailscaleNodeHostname),
+          subtitle: Text(
+            group.hostname.isEmpty
+                ? '${appLocalizations.tailscaleNodeHostnameDesc}: ${props.effectiveHostname(group)}'
+                : props.effectiveHostname(group),
+          ),
+          delegate: InputDelegate(
+            title: appLocalizations.tailscaleNodeHostname,
+            value: group.hostname,
+            resetValue: '',
+            hintText: props.effectiveHostname(group),
+            onChanged: (value) {
+              if (value == null) return;
+              _update((g) => g.copyWith(hostname: value.trim()));
+            },
           ),
         ),
-      ),
-      ..._tailnetSharedEntries(),
-      ListItem(
-        title: Text(appLocalizations.tailscaleNodeConflicts),
-        subtitle: Text(appLocalizations.tailscaleNodeConflictsDesc),
-      ),
-      if (props.nodeEnable) ..._proxyChannelSection(props),
-      if (props.nodeEnable && status != null && status.peers.isNotEmpty) ...[
-        ListHeader(
-          title:
-              '${appLocalizations.tailscaleNodeDevices} (${status.peers.where((peer) => peer.online).length}/${status.peers.length})',
+        if (group.useAuthKey)
+          ListItem.input(
+            title: Text(appLocalizations.tailscaleNodeAuthKey),
+            subtitle: Text(
+              [
+                if (group.authKey.isNotEmpty)
+                  '${group.authKey.length > 12 ? group.authKey.substring(0, 12) : group.authKey}••••',
+                isDefault
+                    ? appLocalizations.tailscaleNodeAuthKeyDesc
+                    : appLocalizations.tailscaleGroupAuthKeyInherit,
+              ].join('\n'),
+            ),
+            delegate: InputDelegate(
+              title: appLocalizations.tailscaleNodeAuthKey,
+              value: group.authKey,
+              resetValue: '',
+              hintText: 'tskey-auth-…',
+              onChanged: (value) {
+                if (value == null) return;
+                _changeAuthKey(value.trim(), group, active);
+              },
+            ),
+          ),
+        ListItem.input(
+          title: Text(appLocalizations.tailscaleNodeExitNode),
+          subtitle: Text(
+            group.exitNode.isEmpty
+                ? appLocalizations.tailscaleNodeExitNodeDesc
+                : group.exitNode,
+          ),
+          delegate: InputDelegate(
+            title: appLocalizations.tailscaleNodeExitNode,
+            value: group.exitNode,
+            resetValue: '',
+            onChanged: (value) {
+              if (value == null) return;
+              _update((g) => g.copyWith(exitNode: value.trim()));
+            },
+          ),
         ),
-        for (final peer in status.peers)
-          _TailscalePeerItem(
-            peer: peer,
-            viaProxy: props.isProxyPeer(peer),
-            onViaProxyChanged: peer.dnsName.isEmpty && peer.ips.isEmpty
-                ? null
-                : (value) => _setProxyPeer(peer, value),
+        ListItem.switchItem(
+          title: Text(appLocalizations.tailscaleNodeAcceptRoutes),
+          subtitle: Text(appLocalizations.tailscaleNodeAcceptRoutesDesc),
+          delegate: SwitchDelegate(
+            value: group.acceptRoutes,
+            onChanged: (value) =>
+                _update((g) => g.copyWith(acceptRoutes: value)),
+          ),
+        ),
+        ListItem.options(
+          title: Text(appLocalizations.tailscaleProxyVia),
+          subtitle: Text(
+            '${via.isEmpty ? appLocalizations.tailscaleGroupDirect : via}\n${appLocalizations.tailscaleGroupViaDesc}',
+          ),
+          delegate: OptionsDelegate<String>(
+            title: appLocalizations.tailscaleProxyVia,
+            value: via,
+            options: viaOptions,
+            textBuilder: (value) =>
+                value.isEmpty ? appLocalizations.tailscaleGroupDirect : value,
+            onChanged: (value) {
+              if (value == null || value == via) return;
+              _update((g) => g.copyWith(via: value), restart: true);
+            },
+          ),
+        ),
+        _rulesEntry(group),
+        if (!isDefault) ..._deviceItems(group),
+        if (!isDefault && !group.profile)
+          ListItem(
+            leading: Icon(
+              Icons.delete_outline,
+              color: context.colorScheme.error,
+            ),
+            title: Text(
+              appLocalizations.tailscaleGroupDelete,
+              style: TextStyle(color: context.colorScheme.error),
+            ),
+            onTap: () => _delete(group),
           ),
       ],
     ]);
+  }
+}
+
+// BETTBOX-CUSTOM: 配置文件预读取告警：列出定义了 Tailscale 节点的配置文件，以及会影响内置节点的项。
+class _TailscaleProfileWarning extends StatelessWidget {
+  const _TailscaleProfileWarning({required this.props, required this.scans});
+
+  final TailscaleProps props;
+  final List<TailscaleProfileScan> scans;
+
+  static bool _isBettboxStateDir(String dir) =>
+      dir.replaceAll('\\', '/').contains('tailscale/bettbox');
+
+  @override
+  Widget build(BuildContext context) {
+    final own = props.nodeGroups.where((g) => !g.profile).toList();
+    final ownNames = {for (final g in own) g.name};
+    final ownHosts = {
+      if (props.nodeEnable)
+        for (final g in own)
+          if (props.groupActive(g)) props.effectiveHostname(g).toLowerCase(),
+    };
+    final sections = <(String, List<String>)>[
+      for (final scan in scans)
+        if (scan.nodes.isNotEmpty)
+          (
+            scan.current
+                ? '${scan.label} (${appLocalizations.tailscaleProfileCurrent})'
+                : scan.label,
+            [
+              for (final node in scan.nodes)
+                () {
+                  final issues = [
+                    if (ownNames.contains(node.name))
+                      appLocalizations.tailscaleProfileNameConflict,
+                    if (_isBettboxStateDir(node.stateDir))
+                      appLocalizations.tailscaleProfileStateDirConflict,
+                    if (node.hostname.isNotEmpty &&
+                        ownHosts.contains(node.hostname.toLowerCase()))
+                      appLocalizations.tailscaleProfileHostnameConflict,
+                    if (props.nodeActive && (scan.ruleTargets[node.name] ?? 0) > 0)
+                      appLocalizations.tailscaleProfileRulesShadowed,
+                  ];
+                  return issues.isEmpty
+                      ? node.name
+                      : '${node.name}：${issues.join('；')}';
+                }(),
+            ],
+          ),
+    ];
+    if (sections.isEmpty) return const SizedBox();
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textColor = colorScheme.onTertiaryContainer;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colorScheme.tertiaryContainer.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, size: 18, color: textColor),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  appLocalizations.tailscaleProfileWarning,
+                  style: theme.textTheme.titleSmall?.copyWith(color: textColor),
+                ),
+              ),
+            ],
+          ),
+          for (final (label, lines) in sections) ...[
+            Padding(
+              padding: const EdgeInsets.only(top: 8, left: 26),
+              child: Text(
+                label,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: textColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            for (final line in lines)
+              Padding(
+                padding: const EdgeInsets.only(top: 2, left: 26),
+                child: Text(
+                  '· $line',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: textColor,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
   }
 }
 
@@ -728,12 +1292,14 @@ class _TailscaleNodeSettingsState
 // Tailnet 的应用都经过这个节点，节点重连时它们会暂时解析不到主机；面板把状态、
 // 节点名、IP、在线设备数放在一起，方便判断问题出在节点还是对端。
 class _TailscaleNodeStatusPanel extends StatelessWidget {
+  final String? title;
   final TailscaleNodeStatus? status;
   final bool loading;
   final VoidCallback onRefresh;
   final String statusText;
 
   const _TailscaleNodeStatusPanel({
+    this.title,
     required this.status,
     required this.loading,
     required this.onRefresh,
@@ -752,6 +1318,7 @@ class _TailscaleNodeStatusPanel extends StatelessWidget {
         ? Colors.orange
         : colorScheme.error;
     final info = <(String, String)>[
+      if (title != null) (appLocalizations.tailscaleGroups, title!),
       if (status != null && status!.dnsName.isNotEmpty)
         (appLocalizations.tailscaleNodeHostname, status!.dnsName),
       if (status != null && status!.ips.isNotEmpty)
@@ -841,18 +1408,17 @@ class _TailscaleNodeStatusPanel extends StatelessWidget {
 class _TailscalePeerItem extends StatelessWidget {
   const _TailscalePeerItem({
     required this.peer,
-    this.viaProxy = false,
-    this.onViaProxyChanged,
+    this.groupName,
+    this.onPickGroup,
   });
 
   final TailscalePeer peer;
-  // BETTBOX-CUSTOM: 该设备是否经代理通道连接。
-  final bool viaProxy;
-  final ValueChanged<bool>? onViaProxyChanged;
+  // BETTBOX-CUSTOM: 该设备经哪个非默认策略组连接（null 为默认组），点按按钮可改。
+  final String? groupName;
+  final VoidCallback? onPickGroup;
 
   String get _subtitle {
     return [
-      if (viaProxy) appLocalizations.tailscaleProxyPeer,
       peer.online
           ? appLocalizations.tailscaleNodeOnline
           : appLocalizations.tailscaleNodeOffline,
@@ -871,6 +1437,7 @@ class _TailscalePeerItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    final label = groupName ?? appLocalizations.tailscaleGroupDefault;
     return ListItem(
       leading: Icon(
         Icons.circle,
@@ -879,11 +1446,16 @@ class _TailscalePeerItem extends StatelessWidget {
       ),
       title: Text(peer.displayName),
       subtitle: Text(_subtitle),
-      trailing: onViaProxyChanged == null
+      trailing: onPickGroup == null
           ? null
           : Tooltip(
-              message: appLocalizations.tailscaleProxyPeer,
-              child: Switch(value: viaProxy, onChanged: onViaProxyChanged),
+              message: appLocalizations.tailscalePeerGroup,
+              child: groupName == null
+                  ? OutlinedButton(onPressed: onPickGroup, child: Text(label))
+                  : FilledButton.tonal(
+                      onPressed: onPickGroup,
+                      child: Text(label),
+                    ),
             ),
       onTap: peer.ips.isEmpty
           ? null

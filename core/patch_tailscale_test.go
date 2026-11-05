@@ -102,7 +102,7 @@ proxy-groups:
 // BETTBOX-CUSTOM: 内置 Tailscale 节点注入、MagicDNS 交给节点解析、排除出 include-all 策略组。
 func TestPatchTailscaleNode(t *testing.T) {
 	rawCfg := parsePatchProfile(t, tailscaleNodeProfile)
-	params := patchParams(t, `{"tailscale":{"dns-domains":["ts.net"],"dns-server":"100.100.100.100","node":{"name":"Bettbox-Tailscale","hostname":"m1-bettbox","auth-key":" ","exit-node":"","accept-routes":true}}}`)
+	params := patchParams(t, `{"tailscale":{"dns-domains":["ts.net"],"dns-server":"100.100.100.100","default-node":"Bettbox-Tailscale","nodes":[{"name":"Bettbox-Tailscale","hostname":"m1-bettbox","auth-key":" ","exit-node":"","accept-routes":true}]}}`)
 	if _, err := applyPatch(rawCfg, params); err != nil {
 		t.Fatal(err)
 	}
@@ -124,7 +124,7 @@ func TestPatchTailscaleNode(t *testing.T) {
 		t.Fatal("explicit group must not be touched")
 	}
 	// 重复打补丁（热更新）不重复注入
-	patchTailscaleNode(rawCfg, params.Tailscale.Node)
+	patchTailscaleNodes(rawCfg, params.Tailscale)
 	count := 0
 	for _, proxy := range rawCfg.Proxy {
 		if proxy["name"] == "Bettbox-Tailscale" {
@@ -140,12 +140,47 @@ func TestPatchTailscaleNodeKeepsProfileProxy(t *testing.T) {
 	rawCfg := parsePatchProfile(t, tailscaleProfile+`proxies:
   - {name: Bettbox-Tailscale, type: tailscale, hostname: from-profile}
 `)
-	params := patchParams(t, `{"tailscale":{"dns-domains":["ts.net"],"node":{"name":"Bettbox-Tailscale","hostname":"gui"}}}`)
+	params := patchParams(t, `{"tailscale":{"dns-domains":["ts.net"],"default-node":"Bettbox-Tailscale","nodes":[{"name":"Bettbox-Tailscale","hostname":"gui"}]}}`)
 	if _, err := applyPatch(rawCfg, params); err != nil {
 		t.Fatal(err)
 	}
 	if len(rawCfg.Proxy) != 1 || rawCfg.Proxy[0]["hostname"] != "from-profile" {
 		t.Fatalf("profile proxy must be kept: %v", rawCfg.Proxy)
+	}
+}
+
+// BETTBOX-CUSTOM: 开启覆写的配置文件节点运行时整体替换为 GUI 参数，策略组引用不变；
+// 当前配置文件没有该节点时不注入，指向它的前置规则一并去掉。
+func TestPatchTailscaleOverrideProfileNode(t *testing.T) {
+	profile := tailscaleProfile + `proxies:
+  - {name: hk, type: socks5, server: 127.0.0.1, port: 1080}
+  - {name: Tailscale-Proxy, type: tailscale, hostname: from-profile, state-dir: ./ts, auth-key: tskey-file}
+proxy-groups:
+  - {name: auto, type: url-test, include-all: true}
+  - {name: manual, type: select, proxies: [hk, Tailscale-Proxy]}
+`
+	rawCfg := parsePatchProfile(t, profile)
+	params := patchParams(t, `{"tailscale":{"dns-domains":["ts.net"],"default-node":"Bettbox-Tailscale","nodes":[
+		{"name":"Bettbox-Tailscale"},
+		{"name":"Tailscale-Proxy","override":true,"state-id":"p-tailscale-proxy","hostname":"gui-proxy","auth-mode":"auth-key","auth-key":"tskey-gui","dialer-proxy":"hk"},
+		{"name":"Missing-Node","override":true,"state-id":"p-missing"}]},
+		"prepend-rules":["DOMAIN,rex.tail1.ts.net,Tailscale-Proxy","DOMAIN,vps.tail1.ts.net,Missing-Node","DOMAIN-SUFFIX,ts.net,Bettbox-Tailscale"]}`)
+	if _, err := applyPatch(rawCfg, params); err != nil {
+		t.Fatal(err)
+	}
+	if len(rawCfg.Proxy) != 3 {
+		t.Fatalf("override must replace in place and skip missing node: %v", rawCfg.Proxy)
+	}
+	node := rawCfg.Proxy[1]
+	if node["name"] != "Tailscale-Proxy" || node["hostname"] != "gui-proxy" || node["auth-key"] != "tskey-gui" ||
+		node["dialer-proxy"] != "hk" || node["state-dir"] != "tailscale/bettbox-p-tailscale-proxy-authkey" {
+		t.Fatalf("unexpected overridden node: %v", node)
+	}
+	if got := fmt.Sprint(rawCfg.Rule[:2]); got != "[DOMAIN,rex.tail1.ts.net,Tailscale-Proxy DOMAIN-SUFFIX,ts.net,Bettbox-Tailscale]" {
+		t.Fatalf("rules to missing node must be dropped: %s", got)
+	}
+	if got := rawCfg.ProxyGroup[0]["exclude-filter"]; got != "^Bettbox-Tailscale$" {
+		t.Fatalf("only injected node is excluded from include-all, got %v", got)
 	}
 }
 
@@ -155,11 +190,11 @@ func TestPatchTailscaleNodeAuthMode(t *testing.T) {
 		mode, dir string
 		withKey   bool
 	}{
-		{"login", tailscaleNodeStateDir, false},
-		{"auth-key", tailscaleNodeAuthKeyStateDir, true},
+		{"login", "tailscale/bettbox", false},
+		{"auth-key", "tailscale/bettbox-authkey", true},
 	} {
 		rawCfg := parsePatchProfile(t, tailscaleNodeProfile)
-		params := patchParams(t, `{"tailscale":{"dns-domains":["ts.net"],"node":{"name":"Bettbox-Tailscale","auth-mode":"`+tc.mode+`","auth-key":"tskey-auth-x"}}}`)
+		params := patchParams(t, `{"tailscale":{"dns-domains":["ts.net"],"default-node":"Bettbox-Tailscale","nodes":[{"name":"Bettbox-Tailscale","auth-mode":"`+tc.mode+`","auth-key":"tskey-auth-x"}]}}`)
 		if _, err := applyPatch(rawCfg, params); err != nil {
 			t.Fatal(err)
 		}
@@ -171,16 +206,17 @@ func TestPatchTailscaleNodeAuthMode(t *testing.T) {
 	}
 }
 
-// BETTBOX-CUSTOM: 代理通道节点带 dialer-proxy、使用独立 state-dir，同样排除出 include-all 策略组。
+// BETTBOX-CUSTOM: 经代理的策略组带 dialer-proxy、按 state-id 使用独立 state-dir（旧版代理通道 proxy 目录不变），
+// 同样排除出 include-all 策略组。
 func TestPatchTailscaleProxyNode(t *testing.T) {
 	for _, tc := range []struct{ mode, dir string }{
-		{"login", tailscaleProxyNodeStateDir},
-		{"auth-key", tailscaleProxyNodeAuthKeyStateDir},
+		{"login", "tailscale/bettbox-proxy"},
+		{"auth-key", "tailscale/bettbox-proxy-authkey"},
 	} {
 		rawCfg := parsePatchProfile(t, tailscaleNodeProfile)
-		params := patchParams(t, `{"tailscale":{"dns-domains":["ts.net"],
-			"node":{"name":"Bettbox-Tailscale","auth-mode":"`+tc.mode+`","auth-key":"k"},
-			"proxy-node":{"name":"Bettbox-Tailscale-Proxy","hostname":"m1-bettbox-proxy","auth-mode":"`+tc.mode+`","auth-key":"k","dialer-proxy":"manual","accept-routes":true}}}`)
+		params := patchParams(t, `{"tailscale":{"dns-domains":["ts.net"],"default-node":"Bettbox-Tailscale","nodes":[
+			{"name":"Bettbox-Tailscale","auth-mode":"`+tc.mode+`","auth-key":"k"},
+			{"name":"Bettbox-Tailscale-Proxy","state-id":"proxy","hostname":"m1-bettbox-proxy","auth-mode":"`+tc.mode+`","auth-key":"k","dialer-proxy":"manual","accept-routes":true}]}}`)
 		if _, err := applyPatch(rawCfg, params); err != nil {
 			t.Fatal(err)
 		}
@@ -227,7 +263,7 @@ tun:
 rules:
   - MATCH,DIRECT
 `
-	node := `"node":{"name":"Bettbox-Tailscale"},`
+	node := `"default-node":"Bettbox-Tailscale","nodes":[{"name":"Bettbox-Tailscale"}],`
 	for _, withNode := range []bool{true, false} {
 		rawCfg := parsePatchProfile(t, profile)
 		n := ""

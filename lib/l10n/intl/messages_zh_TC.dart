@@ -1522,6 +1522,63 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "tailscaleProxyDevices": MessageLookupByLibrary.simpleMessage("經代理連線的裝置"),
     "tailscaleProxyPeer": MessageLookupByLibrary.simpleMessage("經代理連線"),
+    "tailscaleGroups": MessageLookupByLibrary.simpleMessage("Tailscale 策略組"),
+    "tailscaleGroupsDesc": MessageLookupByLibrary.simpleMessage(
+      "每個策略組在 Tailnet 中是一台獨立裝置。預設組承接 Tailnet 兜底規則與 MagicDNS；其他組只接管指定給它的裝置和自訂規則，這些規則排在兜底規則之前。設定檔裡的 Tailscale 節點也列在這裡，可開啟覆寫。",
+    ),
+    "tailscaleGroupAdd": MessageLookupByLibrary.simpleMessage("新增策略組"),
+    "tailscaleGroupName": MessageLookupByLibrary.simpleMessage("名稱"),
+    "tailscaleGroupNameDesc": MessageLookupByLibrary.simpleMessage("規則中引用的出站名稱"),
+    "tailscaleGroupNameExists": MessageLookupByLibrary.simpleMessage("名稱已被使用"),
+    "tailscaleGroupDefault": MessageLookupByLibrary.simpleMessage("預設"),
+    "tailscaleGroupSetDefault": MessageLookupByLibrary.simpleMessage("設為預設組"),
+    "tailscaleGroupSetDefaultDesc": MessageLookupByLibrary.simpleMessage(
+      "Tailnet 兜底規則與 MagicDNS 交給這個組",
+    ),
+    "tailscaleGroupDelete": MessageLookupByLibrary.simpleMessage("刪除策略組"),
+    "tailscaleGroupDeleteTip": MessageLookupByLibrary.simpleMessage(
+      "刪除後這個組的裝置與規則回到預設組。Tailscale 後台裡對應的裝置不會自動刪除。",
+    ),
+    "tailscaleGroupProfile": MessageLookupByLibrary.simpleMessage("設定檔"),
+    "tailscaleGroupOverride": MessageLookupByLibrary.simpleMessage("覆寫"),
+    "tailscaleGroupOverrideDesc": MessageLookupByLibrary.simpleMessage(
+      "開啟後執行時以這裡的設定取代設定檔中的同名節點，不改設定檔。Bettbox 為它使用獨立的身分目錄，開啟後需要登入一次。",
+    ),
+    "tailscaleGroupNotInProfile": MessageLookupByLibrary.simpleMessage(
+      "目前設定檔中沒有這個節點，覆寫暫不生效",
+    ),
+    "tailscaleGroupProfileReadonly": MessageLookupByLibrary.simpleMessage(
+      "參數來自設定檔，開啟覆寫後可在這裡編輯",
+    ),
+    "tailscaleGroupDirect": MessageLookupByLibrary.simpleMessage("直連"),
+    "tailscaleGroupViaDesc": MessageLookupByLibrary.simpleMessage(
+      "這個組的控制面、DERP 與 UDP 經所選代理連線；代理不支援 UDP 時只走 DERP 中繼",
+    ),
+    "tailscaleGroupAuthKeyInherit": MessageLookupByLibrary.simpleMessage(
+      "留空則使用預設組的 key。同一個 key 在 Tailnet 中仍是兩台裝置，key 需勾選 Reusable",
+    ),
+    "tailscaleGroupRules": MessageLookupByLibrary.simpleMessage("自訂規則"),
+    "tailscaleGroupRulesDesc": MessageLookupByLibrary.simpleMessage(
+      "每條為「類型,值」，如 DOMAIN-SUFFIX,example.ts.net 或 IP-CIDR,100.100.1.0/24,no-resolve。目標自動設為這個組，排在預設組兜底規則之前",
+    ),
+    "tailscaleGroupRulesInvalid": MessageLookupByLibrary.simpleMessage("格式無效，已忽略"),
+    "tailscalePeerGroup": MessageLookupByLibrary.simpleMessage("連線方式"),
+    "tailscaleProfileWarning": MessageLookupByLibrary.simpleMessage(
+      "設定檔中有自訂的 Tailscale 節點",
+    ),
+    "tailscaleProfileStateDirConflict": MessageLookupByLibrary.simpleMessage(
+      "身分目錄與 Bettbox 的策略組相同，兩個節點會互相頂替",
+    ),
+    "tailscaleProfileRulesShadowed": MessageLookupByLibrary.simpleMessage(
+      "有規則指向它，但排在 Bettbox 的 Tailnet 前置規則之後，Tailnet 網域和網段會先被內建節點比對。可開啟覆寫，在這裡指定裝置或規則",
+    ),
+    "tailscaleProfileHostnameConflict": MessageLookupByLibrary.simpleMessage(
+      "裝置名稱與 Bettbox 的策略組相同，後註冊的會被改名為 -1",
+    ),
+    "tailscaleProfileNameConflict": MessageLookupByLibrary.simpleMessage(
+      "與 Bettbox 的策略組同名，以設定檔為準，該策略組不會注入",
+    ),
+    "tailscaleProfileCurrent": MessageLookupByLibrary.simpleMessage("目前"),
     "tailscaleProxyVia": MessageLookupByLibrary.simpleMessage("透過"),
     "tailscaleProxyViaMissing": MessageLookupByLibrary.simpleMessage("請先選擇代理"),
     "tailscaleNodeOnline": MessageLookupByLibrary.simpleMessage("在線"),

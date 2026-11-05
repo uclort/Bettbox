@@ -15,7 +15,7 @@ func TestPatchTailscaleNodeParses(t *testing.T) {
 	C.SetHomeDir(t.TempDir())
 	rawCfg := parsePatchProfile(t, tailscaleNodeProfile)
 	params := patchParams(t, `{
-		"tailscale":{"dns-domains":["ts.net"],"dns-server":"100.100.100.100","node":{"name":"Bettbox-Tailscale","hostname":"m1-bettbox","accept-routes":true}},
+		"tailscale":{"dns-domains":["ts.net"],"dns-server":"100.100.100.100","default-node":"Bettbox-Tailscale","nodes":[{"name":"Bettbox-Tailscale","hostname":"m1-bettbox","accept-routes":true}]},
 		"prepend-rules":["DOMAIN-SUFFIX,ts.net,Bettbox-Tailscale","IP-CIDR,100.64.0.0/10,Bettbox-Tailscale,no-resolve"]
 	}`)
 	if _, err := applyPatch(rawCfg, params); err != nil {
@@ -45,8 +45,8 @@ func TestPatchTailscaleProxyNodeParses(t *testing.T) {
 	C.SetHomeDir(t.TempDir())
 	rawCfg := parsePatchProfile(t, tailscaleNodeProfile)
 	params := patchParams(t, `{
-		"tailscale":{"dns-domains":["ts.net"],"node":{"name":"Bettbox-Tailscale"},
-			"proxy-node":{"name":"Bettbox-Tailscale-Proxy","dialer-proxy":"manual"}},
+		"tailscale":{"dns-domains":["ts.net"],"default-node":"Bettbox-Tailscale","nodes":[{"name":"Bettbox-Tailscale"},
+			{"name":"Bettbox-Tailscale-Proxy","state-id":"proxy","dialer-proxy":"manual"}]},
 		"prepend-rules":["DOMAIN,rex.tail1.ts.net,Bettbox-Tailscale-Proxy","IP-CIDR,100.121.3.59/32,Bettbox-Tailscale-Proxy,no-resolve",
 			"DOMAIN-SUFFIX,ts.net,Bettbox-Tailscale","IP-CIDR,100.64.0.0/10,Bettbox-Tailscale,no-resolve"]
 	}`)

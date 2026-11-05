@@ -517,6 +517,12 @@ _TailscaleProps _$TailscalePropsFromJson(Map<String, dynamic> json) =>
               .toList() ??
           const [],
       nodeProxyVia: json['nodeProxyVia'] as String? ?? '',
+      groups:
+          (json['groups'] as List<dynamic>?)
+              ?.map((e) => TailscaleGroup.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      defaultGroup: json['defaultGroup'] as String? ?? '',
     );
 
 Map<String, dynamic> _$TailscalePropsToJson(_TailscaleProps instance) =>
@@ -534,6 +540,8 @@ Map<String, dynamic> _$TailscalePropsToJson(_TailscaleProps instance) =>
       'nodeUseAuthKey': instance.nodeUseAuthKey,
       'nodeProxyDevices': instance.nodeProxyDevices,
       'nodeProxyVia': instance.nodeProxyVia,
+      'groups': instance.groups,
+      'defaultGroup': instance.defaultGroup,
     };
 
 _ProxiesStyle _$ProxiesStyleFromJson(Map<String, dynamic> json) =>
