@@ -41,6 +41,9 @@ type TailscaleNode interface {
 	Logout(ctx context.Context) error
 	// Warmup 后台启动节点，配置生效后调用，不阻塞。
 	Warmup()
+	// DNSNames 在节点 Running 时返回本节点与其他设备的 MagicDNS 名，否则返回 nil。
+	// BETTBOX-CUSTOM: 内核 macOS 版用它检查系统 DNS 缓存，没有登录等副作用。
+	DNSNames(ctx context.Context) []string
 }
 
 // AsTailscaleNode 解开 parser 外层的 autoCloseProxyAdapter，取出内置 Tailscale 节点。

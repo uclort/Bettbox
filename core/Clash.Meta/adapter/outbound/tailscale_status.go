@@ -209,6 +209,45 @@ func (t *Tailscale) loginWithAuthKey(ctx context.Context) error {
 	return t.applyPrefs(ctx)
 }
 
+// BETTBOX-CUSTOM: 本节点与其他设备的 MagicDNS 名，用于检查 macOS 系统 DNS 缓存是否已恢复。
+// 只取有 Tailscale IP 的设备（离线的也有）。节点不在 Running 时返回 nil，不会触发登录等副作用。
+func (t *Tailscale) DNSNames(ctx context.Context) []string {
+	const maxNames = 8
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	lc, err := t.server.LocalClient()
+	if err != nil {
+		return nil
+	}
+	st, err := lc.Status(ctx)
+	if err != nil || st.BackendState != ipn.Running.String() {
+		return nil
+	}
+	var peerNames []string
+	for _, p := range st.Peer {
+		if len(p.TailscaleIPs) == 0 {
+			continue
+		}
+		if name := strings.TrimSuffix(p.DNSName, "."); name != "" {
+			peerNames = append(peerNames, name)
+		}
+	}
+	sort.Strings(peerNames)
+	names := make([]string, 0, maxNames)
+	if st.Self != nil && len(st.Self.TailscaleIPs) > 0 {
+		if name := strings.TrimSuffix(st.Self.DNSName, "."); name != "" {
+			names = append(names, name)
+		}
+	}
+	for _, name := range peerNames {
+		if len(names) >= maxNames {
+			break
+		}
+		names = append(names, name)
+	}
+	return names
+}
+
 // tailscalePeers 在线设备优先，同状态按名称排序。
 func tailscalePeers(st *ipnstate.Status) []TailscalePeer {
 	peers := make([]TailscalePeer, 0, len(st.Peer))

@@ -1,8 +1,8 @@
 ### 2026-11-05 macOS 彻底清理 Tailscale 的 DNS 否定缓存
 
-- 更新或重启 Bettbox 后，Rex 等应用连不上 Tailnet 主机的问题：根因仍是 macOS 系统 DNS 缓存。TUN 临时关闭期间 `*.ts.net` 解析失败，mDNSResponder 会把「无记录」缓存几分钟到约 20 分钟；节点恢复后内核对 `*.ts.net` 已能解析（`dig` 正常），但应用走系统解析仍失败，`dns-sd -G v4` 显示 `No Such Record`。
-- Tailscale 节点每次进入「已连接」时立即清一次系统 DNS 缓存，并在之后 10 秒、40 秒各再清一次，覆盖节点刚连上时 MagicDNS 仍可能短暂失败、应用正好重试又被缓存的窗口。
-- 「网络监控 → 刷新 DNS 缓存」现在同时清内核缓存和 macOS 系统缓存，不用再手动执行 `sudo killall -HUP mDNSResponder`。
+- 更新或重启 Bettbox 后，Rex 等应用连不上 Tailnet 主机的问题：根因是 macOS 系统 DNS 缓存。TUN 临时关闭期间系统 DNS 回落到公共 DNS，而 `ts.net` 对不存在的记录返回 NXDOMAIN（否定 TTL 300 秒），mDNSResponder 会把这个「无记录」缓存约 5 分钟。节点恢复后内核对 `*.ts.net` 已能解析（`dig` 正常），应用走系统解析仍失败（`dns-sd -G v4` 显示 `No Such Record`），面板里也看不到它们发起的连接。
+- 上一版只在节点连上后固定清三次（0 / 10 / 40 秒），实测不够：缓存窗口内应用任何一次重试失败都会重新写入否定结果。现在改为持续检查：Tailscale 节点连上后先清一次，之后 10 分钟内用系统解析器查询本节点和其他设备的 MagicDNS 名，查不到就再清，恢复后停止；前 2 分钟每 10 秒检查一次，之后每 30 秒一次，连续 3 次清理无效时重启一次 mDNSResponder。「日志」页能看到清理过程和结果。
+- 「网络监控 → 刷新 DNS 缓存」仍然同时清内核缓存和 macOS 系统缓存，不用再手动执行 `sudo killall -HUP mDNSResponder`。
 - 其他平台行为不变（系统缓存清理只在 macOS 生效）。
 
 ### 2026-11-05 Tailscale 不再内置默认策略组

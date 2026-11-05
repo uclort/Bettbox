@@ -507,7 +507,8 @@ func setupConfig(params *SetupParams) (string, error) {
 	currentRawConfig = prepared.rawCfg
 	currentProfileRouteExclude = prepared.profileRouteExclude
 	hub.ApplyConfig(currentConfig)
-	warmupTailscaleNodes() // BETTBOX-CUSTOM: 内置 Tailscale 节点配置生效即启动
+	warmupTailscaleNodes()   // BETTBOX-CUSTOM: 内置 Tailscale 节点配置生效即启动
+	startTailscaleDNSWatch() // BETTBOX-CUSTOM: macOS 上检查并清理 *.ts.net 的系统 DNS 否定缓存
 	resetGroupShapes()
 	selectedMap := params.SelectedMap
 	if prepared.global != "" {

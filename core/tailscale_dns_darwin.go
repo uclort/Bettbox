@@ -3,57 +3,217 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"os"
 	"os/exec"
-	"sync/atomic"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/metacubex/mihomo/adapter/outbound"
 	"github.com/metacubex/mihomo/log"
+	"github.com/metacubex/mihomo/tunnel"
 )
 
-// BETTBOX-CUSTOM: Tailscale 节点进入 Running 后清 macOS 系统 DNS 缓存。节点掉线（包括更新 Bettbox 时
-// TUN 临时关闭、系统 DNS 回落到公共 DNS）期间 *.ts.net 会解析失败，mDNSResponder 把「无记录」缓存
-// 几分钟到约 20 分钟；节点恢复后 Rex 等应用仍解析不到 Tailnet 主机（实测 dns-sd 显示 No Such Record）。
-// BettboxCore 在 macOS 以 root 运行，可以直接清。
+// BETTBOX-CUSTOM: 内置 Tailscale 节点连上后清理 macOS 系统 DNS 缓存。
 //
-// 节点刚 Running 时 MagicDNS 可能还有短暂失败（应用正好在这次重试），产生的否定结果会再次被缓存，
-// 所以启动窗口内（+10s、+40s）各补清一次；多个节点几乎同时连上只安排一轮。
-var tailscaleDNSFlushScheduled atomic.Bool
-
+// 节点掉线（包括更新 Bettbox 时 TUN 临时关闭、系统 DNS 回落到公共 DNS）期间 *.ts.net 会解析失败。
+// ts.net 的 SOA 否定 TTL 是 300 秒，公共 DNS 返回的 NXDOMAIN 会被 mDNSResponder 缓存约 5 分钟；
+// 节点恢复后内核对 *.ts.net 已能解析（TUN 内的 DNS 正常），但应用走系统解析仍拿到「无记录」，
+// Rex 等依赖 Tailnet 的应用因此连不上，面板里也看不到它们的连接。
+//
+// 只在节点进入 Running 时按固定时间清几次并不可靠：否定缓存窗口内任何一次失败查询（应用重试、
+// MagicDNS 刚连上时短暂失败）都会重新写入否定结果。所以这里在配置生效后持续检查：用系统解析器
+// 查询本节点和其他设备的 MagicDNS 名，查不到就再清一次，直到恢复正常或窗口结束。
 const (
-	tailscaleDNSFlushRetry1 = 10 * time.Second
-	tailscaleDNSFlushRetry2 = 30 * time.Second
+	// 覆盖 TUN 关闭期间写入的否定缓存（300 秒）以及应用的重试。
+	tailscaleDNSWatchWindow   = 10 * time.Minute
+	tailscaleDNSPollInterval  = 2 * time.Second
+	tailscaleDNSProbeInterval = 10 * time.Second
+	tailscaleDNSProbeSlow     = 30 * time.Second
+	tailscaleDNSFastUntil     = 2 * time.Minute
+	tailscaleDNSProbeTimeout  = 4 * time.Second
+	tailscaleDNSMaxFailures   = 10
+	// 连续这么多次清理都不生效时，改为重启 mDNSResponder（launchd 会立即拉起，缓存彻底清空）。
+	tailscaleDNSRestartAfter = 3
 )
 
-func init() {
-	outbound.TailscaleOnRunning = scheduleSystemDNSFlush
+var (
+	dnsWatchMu  sync.Mutex
+	dnsWatchEnd time.Time
+	dnsWatching bool
+)
+
+// startTailscaleDNSWatch 在配置生效后调用（内置节点会同时 warmup），扩展检查窗口并在需要时启动后台检查。
+func startTailscaleDNSWatch() {
+	if os.Geteuid() != 0 {
+		dnsWatchLog(log.WARNING, "[Tailscale] 需要 root 权限才能清理系统 DNS 缓存，已跳过")
+		return
+	}
+	if !hasTailscaleNode() {
+		return
+	}
+	dnsWatchMu.Lock()
+	if end := time.Now().Add(tailscaleDNSWatchWindow); end.After(dnsWatchEnd) {
+		dnsWatchEnd = end
+	}
+	active := dnsWatching
+	dnsWatching = true
+	dnsWatchMu.Unlock()
+	if !active {
+		go runTailscaleDNSWatch()
+	}
 }
 
-func scheduleSystemDNSFlush(name string) {
-	if os.Geteuid() != 0 {
+func runTailscaleDNSWatch() {
+	// 等内置节点进入 Running（MagicDNS 名可用）。配置刚生效时节点还在连接。
+	var names []string
+	for dnsWatchAlive() {
+		if names = tailnetDNSNames(); len(names) > 0 {
+			break
+		}
+		time.Sleep(tailscaleDNSPollInterval)
+	}
+	if len(names) == 0 {
 		return
 	}
-	if !tailscaleDNSFlushScheduled.CompareAndSwap(false, true) {
-		return
+
+	// 进入 Running 时先无条件清一次：TUN 恢复前的否定结果一定已经写进缓存。
+	flushSystemDNSCache()
+	dnsWatchLog(log.INFO, "[Tailscale] 开始检查 macOS 系统 DNS 缓存")
+
+	poisoned := false
+	failures := 0
+	flushes := 0
+	start := time.Now()
+	for dnsWatchAlive() {
+		// 设备列表可能随配置变化，每轮重新取；节点断开时先等它回来，避免把「没连上」当成缓存问题。
+		latest := tailnetDNSNames()
+		if len(latest) == 0 {
+			time.Sleep(tailscaleDNSPollInterval)
+			continue
+		}
+		names = latest
+		if bad := probeSystemDNS(names); bad == "" {
+			failures = 0
+			if poisoned {
+				poisoned = false
+				dnsWatchLog(log.INFO, "[Tailscale] 系统 DNS 已恢复正常（共清理 %d 次）", flushes)
+			}
+		} else {
+			flushSystemDNSCache()
+			flushes++
+			failures++
+			if failures == tailscaleDNSRestartAfter {
+				restartMDNSResponder()
+			}
+			if failures > tailscaleDNSMaxFailures {
+				dnsWatchLog(log.WARNING, "[Tailscale] 系统 DNS 仍解析不到 %s，停止清理（可能没有开启虚拟网卡）", bad)
+				dnsWatchOK()
+				return
+			}
+			if !poisoned {
+				poisoned = true
+				dnsWatchLog(log.WARNING, "[Tailscale] 系统 DNS 仍解析不到 %s，已清理系统缓存", bad)
+			}
+		}
+		wait := tailscaleDNSProbeSlow
+		if time.Since(start) < tailscaleDNSFastUntil {
+			wait = tailscaleDNSProbeInterval
+		}
+		time.Sleep(wait)
 	}
-	go func() {
-		defer tailscaleDNSFlushScheduled.Store(false)
-		flushSystemDNSCache()
-		log.Infoln("[Tailscale](%s) running, flushed system DNS cache", name)
-		time.Sleep(tailscaleDNSFlushRetry1)
-		flushSystemDNSCache()
-		time.Sleep(tailscaleDNSFlushRetry2)
-		flushSystemDNSCache()
-		log.Infoln("[Tailscale](%s) flushed system DNS cache again after startup", name)
-	}()
+}
+
+func dnsWatchAlive() bool {
+	dnsWatchMu.Lock()
+	defer dnsWatchMu.Unlock()
+	if time.Now().Before(dnsWatchEnd) {
+		return true
+	}
+	dnsWatching = false
+	return false
+}
+
+func dnsWatchOK() {
+	dnsWatchMu.Lock()
+	dnsWatching = false
+	dnsWatchMu.Unlock()
+}
+
+func hasTailscaleNode() bool {
+	for _, proxy := range tunnel.Proxies() {
+		if _, ok := outbound.AsTailscaleNode(proxy.Adapter()); ok {
+			return true
+		}
+	}
+	return false
+}
+
+// tailnetDNSNames 返回一个已连上的内置节点的本机与其他设备 MagicDNS 名。
+func tailnetDNSNames() []string {
+	for _, proxy := range tunnel.Proxies() {
+		node, ok := outbound.AsTailscaleNode(proxy.Adapter())
+		if !ok {
+			continue
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), tailscaleDNSProbeTimeout)
+		names := node.DNSNames(ctx)
+		cancel()
+		if len(names) > 0 {
+			return names
+		}
+	}
+	return nil
+}
+
+// probeSystemDNS 用系统解析器（mDNSResponder）查询 MagicDNS 名，返回第一个查不到的名字。
+// dscacheutil 走的是和普通应用相同的系统解析路径，查到时输出 ip_address 行。
+func probeSystemDNS(names []string) string {
+	for _, name := range names {
+		ctx, cancel := context.WithTimeout(context.Background(), tailscaleDNSProbeTimeout)
+		out, err := exec.CommandContext(ctx, "/usr/bin/dscacheutil", "-q", "host", "-a", "name", name).Output()
+		cancel()
+		if err == nil && strings.Contains(string(out), "ip_address") {
+			continue
+		}
+		return name
+	}
+	return ""
 }
 
 // flushSystemDNSCache 清 macOS 系统 DNS 缓存（所有解析器的缓存，不只是 Tailnet 域名）。
 // 也用于「刷新 DNS 缓存」操作，用户不必再手动执行 sudo killall -HUP mDNSResponder。
 func flushSystemDNSCache() {
+	if os.Geteuid() != 0 {
+		return
+	}
 	_ = exec.Command("/usr/bin/dscacheutil", "-flushcache").Run()
 	if err := exec.Command("/usr/bin/killall", "-HUP", "mDNSResponder").Run(); err != nil {
 		log.Warnln("[Tailscale] flush system DNS cache failed: %v", err)
+	}
+}
+
+func restartMDNSResponder() {
+	if err := exec.Command("/usr/bin/killall", "-TERM", "mDNSResponder").Run(); err != nil {
+		dnsWatchLog(log.WARNING, "[Tailscale] 重启 mDNSResponder 失败：%v", err)
+		return
+	}
+	dnsWatchLog(log.WARNING, "[Tailscale] 清理系统 DNS 缓存未生效，已重启 mDNSResponder")
+}
+
+// dnsWatchLog 同时写日志历史和日志流：只有打开「日志」页时才有人订阅日志流，
+// 写进历史可以让用户之后在日志页看到清理过程。
+func dnsWatchLog(level log.LogLevel, format string, args ...any) {
+	msg := fmt.Sprintf(format, args...)
+	recordLogHistory(logEntry{
+		Event: log.Event{LogLevel: level, Payload: msg},
+		Time:  time.Now().UnixMilli(),
+	})
+	if level >= log.WARNING {
+		log.Warnln("%s", msg)
+	} else {
+		log.Infoln("%s", msg)
 	}
 }
