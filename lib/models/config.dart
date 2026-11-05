@@ -58,6 +58,9 @@ const tailscaleNodeName = 'Bettbox-Tailscale';
 const tailscaleProxyNodeName = 'Bettbox-Tailscale-Proxy';
 const tailscaleLegacyProxyStateId = 'proxy';
 
+/// BETTBOX-CUSTOM: Tailnet 兜底规则的目标占位名，内核换成实际选定的默认组（与 core/patch_tailscale.go 一致）。
+const tailscaleDefaultTarget = 'BETTBOX-TAILSCALE-DEFAULT';
+
 /// 自定义规则只接受「类型,值[,no-resolve|src]」，目标由所在策略组决定；逻辑规则与 MATCH 不支持。
 const _tailscaleRuleOptions = {'no-resolve', 'src'};
 const _tailscaleUnsupportedRuleTypes = {
@@ -759,10 +762,14 @@ abstract class TailscaleProps with _$TailscaleProps {
     // BETTBOX-CUSTOM: 旧版代理通道（经代理连接的设备与所用代理），只用于迁移到 groups。
     @Default([]) List<String> nodeProxyDevices,
     @Default('') String nodeProxyVia,
-    // BETTBOX-CUSTOM: Tailscale 策略组。为空时由上面的 node* 旧字段迁移（见 nodeGroups），
-    // 第一次修改后写入这里，旧字段不再使用。
+    // BETTBOX-CUSTOM: Tailscale 策略组（自己添加的组与开启过覆写的配置文件节点）。不再内置默认组：
+    // 全新安装为空；旧版只开过内置节点的配置由 node* 旧字段迁移（见 nodeGroups）。
     @Default([]) List<TailscaleGroup> groups,
+    // 手动指定的默认组名（可以是配置文件里的节点）；空为自动：配置文件里第一个 Tailscale 节点，
+    // 没有时为第一个自己添加的组。实际选择在内核合并配置时完成（只有内核知道当前配置里有哪些节点）。
     @Default('') String defaultGroup,
+    // 配置版本：全新安装为 1；旧版配置缺少该字段时按 0 读入，只有 0 才从 node* 旧字段迁移。
+    @JsonKey(defaultValue: 0) @Default(1) int groupsVersion,
   }) = _TailscaleProps;
 
   factory TailscaleProps.fromJson(Map<String, Object?> json) =>
@@ -772,10 +779,13 @@ abstract class TailscaleProps with _$TailscaleProps {
 extension TailscalePropsExt on TailscaleProps {
   bool get appActive => enable && system.isDesktop;
 
-  /// 全部策略组（含开启过覆写的配置文件节点）。还没写入 groups 时由旧字段迁移：
-  /// 主节点为默认组（身份目录不变），旧代理通道为 state-id proxy 的组（目录不变），升级后无需重新登录。
+  /// 全部已保存的策略组（自己添加的组与开启过覆写的配置文件节点）。
+  /// 旧版配置（groupsVersion 0）且开过内置节点、还没写入 groups 时由旧字段迁移：主节点（身份目录不变）
+  /// 与旧代理通道（state-id proxy，目录不变），升级后无需重新登录。全新安装不再内置任何组。
   List<TailscaleGroup> get nodeGroups {
-    if (groups.any((g) => !g.profile)) return groups;
+    if (groupsVersion > 0 || groups.any((g) => !g.profile) || !nodeEnable) {
+      return groups;
+    }
     return [
       TailscaleGroup(
         name: tailscaleNodeName,
@@ -798,65 +808,85 @@ extension TailscalePropsExt on TailscaleProps {
     ];
   }
 
-  /// 默认组：承接 Tailnet 兜底规则与 MagicDNS，一定是 Bettbox 自己的组。
-  TailscaleGroup get defaultNodeGroup {
-    final all = nodeGroups.where((g) => !g.profile);
-    return all.where((g) => g.name == defaultGroup).firstOrNull ?? all.first;
+  /// 实际的默认组名（与内核的选择规则一致）：手动指定且可用的组 → 配置文件里第一个 Tailscale 节点 →
+  /// 第一个生效的自己添加的组；都没有时为 null（不生成 Tailnet 兜底规则）。
+  /// profileNodes 是当前配置文件里的 Tailscale 节点名（设置页预读取得到）。
+  String? effectiveDefaultName([List<String> profileNodes = const []]) {
+    final ownActive = [
+      for (final g in nodeGroups)
+        if (!g.profile && groupActive(g)) g.name,
+    ];
+    final preferred = defaultGroup.trim();
+    if (preferred.isNotEmpty &&
+        (profileNodes.contains(preferred) || ownActive.contains(preferred))) {
+      return preferred;
+    }
+    return profileNodes.firstOrNull ?? ownActive.firstOrNull;
   }
 
-  bool isDefaultGroup(TailscaleGroup group) =>
-      !group.profile && group.name == defaultNodeGroup.name;
+  bool isDefaultGroup(
+    TailscaleGroup group, [
+    List<String> profileNodes = const [],
+  ]) => group.name == effectiveDefaultName(profileNodes);
 
-  /// 写回策略组列表（同时固定默认组名，之后不再读取旧字段）。
+  /// 写回策略组列表（同时标记已迁移，之后不再读取旧字段）。手动指定的默认组被删除或改名时跟着更新。
   TailscaleProps withGroups(List<TailscaleGroup> value, {String? defaultName}) {
-    final own = value.where((g) => !g.profile);
-    final name = defaultName ?? defaultNodeGroup.name;
     return copyWith(
       groups: value,
-      defaultGroup: own.any((g) => g.name == name)
-          ? name
-          : (own.firstOrNull?.name ?? ''),
+      defaultGroup: defaultName ?? defaultGroup,
+      groupsVersion: 1,
     );
   }
 
   /// 按身份标识替换（或追加）策略组（名称可能与配置文件节点重名，id 唯一）。
+  /// 改名时如果它是手动指定的默认组，默认组名跟着改。
   TailscaleProps updateGroup(String id, TailscaleGroup group) {
     final list = nodeGroups;
     final index = list.indexWhere((g) => g.id == id);
     final updated = [...list];
+    String? defaultName;
     if (index < 0) {
       updated.add(group);
     } else {
+      if (list[index].name == defaultGroup) defaultName = group.name;
       updated[index] = group;
     }
+    return withGroups(updated, defaultName: defaultName);
+  }
+
+  /// 删除策略组；删的是手动指定的默认组时改回自动选择。
+  TailscaleProps removeGroup(String id) {
+    final removed = groupById(id);
+    if (removed == null) return this;
     return withGroups(
-      updated,
-      defaultName: defaultNodeGroup.id == id ? group.name : null,
+      nodeGroups.where((g) => g.id != id).toList(),
+      defaultName: removed.name == defaultGroup ? '' : null,
     );
   }
 
-  /// 删除策略组；默认组不能删。
-  TailscaleProps removeGroup(String id) {
-    if (defaultNodeGroup.id == id) return this;
-    return withGroups(nodeGroups.where((g) => g.id != id).toList());
-  }
-
-  /// 设为默认组（只能是 Bettbox 自己的组）。
-  TailscaleProps setDefaultGroup(String id) {
-    final group = nodeGroups.where((g) => g.id == id && !g.profile).firstOrNull;
-    if (group == null) return this;
-    // 各组明确指定的设备保持不变，只是兜底规则与 MagicDNS 换到新组。
-    return withGroups(nodeGroups, defaultName: group.name);
-  }
+  /// 手动指定默认组（自己添加的组或配置文件里的节点，按名称）；空为自动。
+  TailscaleProps setDefaultGroup(String name) =>
+      withGroups(nodeGroups, defaultName: name);
 
   TailscaleGroup? groupById(String id) =>
       nodeGroups.where((g) => g.id == id).firstOrNull;
 
-  /// 非默认组的 key 留空时用默认组的 key（同一个 key 在 Tailnet 中仍是两台设备）。
+  /// key 留空时借用手动指定的默认组的 key，没有时用第一个填了 key 的自己添加的组
+  /// （同一个 key 在 Tailnet 中仍是两台设备）。
   String effectiveAuthKey(TailscaleGroup group) {
     final own = group.authKey.trim();
-    if (own.isNotEmpty || isDefaultGroup(group)) return own;
-    return defaultNodeGroup.authKey.trim();
+    if (own.isNotEmpty) return own;
+    final candidates = [
+      for (final g in nodeGroups)
+        if (g.name == defaultGroup && g.id != group.id) g,
+      for (final g in nodeGroups)
+        if (!g.profile && g.id != group.id) g,
+    ];
+    return candidates
+            .map((g) => g.authKey.trim())
+            .where((key) => key.isNotEmpty)
+            .firstOrNull ??
+        '';
   }
 
   /// Auth Key 方式没填 key 时不注入节点（没有可用的注册方式）。
@@ -870,20 +900,14 @@ extension TailscalePropsExt on TailscaleProps {
   List<TailscaleGroup> get activeGroups =>
       nodeGroups.where(groupActive).toList();
 
-  bool get nodeActive => groupActive(defaultNodeGroup);
-
-  /// Auth Key 方式已选但还没填 key。
-  bool get nodeAuthKeyMissing =>
-      nodeEnable && groupAuthKeyMissing(defaultNodeGroup);
+  /// 内置节点模式开启。是否真有可用节点（自己添加的组或配置文件里的节点）由内核决定，
+  /// 一个都没有时不生成 Tailnet 兜底规则。
+  bool get nodeActive => nodeEnable;
 
   /// 明确指定了这台设备的组（包括默认组），未指定时为 null。
   TailscaleGroup? assignedGroupOfPeer(TailscalePeer peer) => nodeGroups
       .where((g) => g.proxyDevices.any((device) => device.matchesPeer(peer)))
       .firstOrNull;
-
-  /// 设备实际交给哪个组：明确指定的组，否则由默认组兜底。
-  TailscaleGroup groupOfPeer(TailscalePeer peer) =>
-      assignedGroupOfPeer(peer) ?? defaultNodeGroup;
 
   /// 把设备指定给某个组（同一台设备只在一个组里）。默认组也可以明确指定，规则同样排在兜底规则之前；
   /// groupName 为 null 时取消指定，交回默认组兜底。
@@ -946,11 +970,13 @@ extension TailscalePropsExt on TailscaleProps {
     for (var i = 2; ids.contains(id); i++) {
       id = '$base-$i';
     }
+    // 沿用上一个自己添加的组的接入方式，第一个组默认浏览器登录。
+    final last = nodeGroups.where((g) => !g.profile).lastOrNull;
     return TailscaleGroup(
       id: id,
       name: name,
-      useAuthKey: defaultNodeGroup.useAuthKey,
-      acceptRoutes: defaultNodeGroup.acceptRoutes,
+      useAuthKey: last?.useAuthKey ?? false,
+      acceptRoutes: last?.acceptRoutes ?? true,
     );
   }
 
@@ -960,28 +986,28 @@ extension TailscalePropsExt on TailscaleProps {
   /// 仅 App 共存生效时才让 Tailnet 绕开 TUN；内置节点需要 TUN 把 100.x 流量交给内核。
   bool get appRouting => appActive && !nodeActive;
 
-  /// 策略组在 Tailnet 中的设备名。默认组留空时用「本机名-bettbox」，其他组留空时在默认组设备名后加组标识
-  /// （旧代理通道为 `-proxy`）。Auth Key 方式加 `-key` 后缀：两种方式是两台设备，同名时后注册的会被
-  /// 控制面改成 `-1`，离线设备也会一直占着名字。
+  /// 策略组在 Tailnet 中的设备名，留空时自动生成：新建的组为「本机名-组标识」；旧版迁移来的主节点
+  /// （id 为空）仍是「本机名-bettbox」，旧代理通道为「本机名-bettbox-proxy」，保持原设备名。
+  /// Auth Key 方式加 `-key` 后缀：两种方式是两台设备，同名时后注册的会被控制面改成 `-1`，
+  /// 离线设备也会一直占着名字。
   String effectiveHostname(TailscaleGroup group) {
     var base = group.hostname.trim();
     if (base.isEmpty) {
-      base = _baseNodeHostname;
-      if (!isDefaultGroup(group)) {
+      final host = _machineHostname;
+      if (group.id.isEmpty) {
+        base = '$host-bettbox';
+      } else if (group.id == tailscaleLegacyProxyStateId) {
+        base = '$host-bettbox-proxy';
+      } else {
         final suffix = group.id.replaceFirst(RegExp(r'^[gp]-'), '');
-        final tag = suffix.isEmpty ? tailscaleSlug(group.name) : suffix;
-        if (!base.endsWith('-$tag')) base = '$base-$tag';
+        base = '$host-${suffix.isEmpty ? tailscaleSlug(group.name) : suffix}';
       }
     }
     if (!group.useAuthKey || base.endsWith('-key')) return base;
     return '$base-key';
   }
 
-  String get effectiveNodeHostname => effectiveHostname(defaultNodeGroup);
-
-  String get _baseNodeHostname {
-    final custom = defaultNodeGroup.hostname.trim();
-    if (custom.isNotEmpty) return custom;
+  String get _machineHostname {
     var host = 'bettbox';
     try {
       host = Platform.localHostname;
@@ -994,7 +1020,7 @@ extension TailscalePropsExt on TailscaleProps {
         .toLowerCase()
         .replaceAll(RegExp(r'[^a-z0-9-]+'), '-')
         .replaceAll(RegExp(r'^-+|-+$'), '');
-    return '${sanitized.isEmpty ? 'device' : sanitized}-bettbox';
+    return sanitized.isEmpty ? 'device' : sanitized;
   }
 
   /// 把 Tailnet 网段并入 TUN 排除路由（桌面端 TUN 的 route-exclude-address）。
@@ -1023,7 +1049,12 @@ extension TailscalePropsExt on TailscaleProps {
           'dns-server': dnsServer.trim(),
           if (nodeActive) ...{
             'ranges': routeExcludeAddress,
-            'default-node': defaultNodeGroup.name,
+            // 内置节点模式：一个节点都没有时内核不把 MagicDNS 交给 100.100.100.100。
+            'node-mode': true,
+            // 手动指定的默认组（可空）；内核按「它 → 配置文件里第一个 Tailscale 节点 → 第一个注入的组」选定。
+            'default-node': defaultGroup.trim(),
+            // 所有已保存的组名：当前配置里不存在的，指向它们的前置规则由内核去掉。
+            'groups': [for (final g in nodeGroups) g.name],
             'nodes': [
               for (final group in activeGroups)
                 {
@@ -1056,6 +1087,7 @@ extension TailscalePropsExt on TailscaleProps {
     nodeProxyVia: nodeProxyVia,
     groups: groups,
     defaultGroup: defaultGroup,
+    groupsVersion: groupsVersion,
   );
 
   /// 内置节点开启时，系统代理例外里的 Tailnet 条目会让浏览器等走系统代理的应用直连 Tailnet，
@@ -1075,15 +1107,12 @@ extension TailscalePropsExt on TailscaleProps {
 
   /// App 共存：Tailnet 直连（由系统路由交给 App）；内置节点：转给内核里的 Tailscale 节点。
   List<String> get prependRules {
-    final target = nodeActive ? defaultNodeGroup.name : 'DIRECT';
+    // 内置节点模式下兜底规则的目标是占位名，由内核换成实际选定的默认组；没有可用节点时内核去掉这些规则。
+    final target = nodeActive ? tailscaleDefaultTarget : 'DIRECT';
     return [
-      // 其他策略组的设备规则与自定义规则按列表顺序排在默认组的兜底规则之前，不会被它覆盖；
-      // 默认组自己的自定义规则排在它们之后、兜底规则之前。
-      if (nodeActive) ...[
-        for (final group in activeGroups)
-          if (!isDefaultGroup(group)) ...group.prependRules,
-        ...defaultNodeGroup.prependRules,
-      ],
+      // 各组的设备规则与自定义规则按列表顺序排在兜底规则之前，不会被兜底规则覆盖。
+      if (nodeActive)
+        for (final group in activeGroups) ...group.prependRules,
       for (final domain in dnsDomains)
         if (normalizeTailscaleDomain(domain) case final d when d.isNotEmpty)
           'DOMAIN-SUFFIX,$d,$target',

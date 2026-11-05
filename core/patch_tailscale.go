@@ -20,12 +20,87 @@ type PatchTailscale struct {
 	// tsnet 只能整体设置拨号方式，想让某些设备经代理连接就另起一个带 dialer-proxy 的节点，
 	// 由前置规则把这些设备指向它（与 Surge underlying-proxy 的做法相同）。
 	Nodes []*PatchTailscaleNode `json:"nodes"`
-	// 默认组：承接 Tailnet 兜底规则与 MagicDNS（tailscale://），一定是 Bettbox 注入的节点。
+	// 手动指定的默认组（可空）。默认组承接 Tailnet 兜底规则与 MagicDNS（tailscale://），实际选择见
+	// resolveTailscaleDefault：它在当前配置里存在就用它，否则用配置里第一个 type: tailscale 节点
+	// （配置文件自己的节点在前，Bettbox 注入的组追加在后）。
 	DefaultNode string `json:"default-node"`
+	// GUI 保存的全部策略组名：当前配置里不存在的，指向它们的前置规则会被去掉。
+	Groups []string `json:"groups"`
+	// 内置节点模式（而非 Tailscale App 共存）：一个节点都没有时不要把 MagicDNS 交给 100.100.100.100。
+	NodeMode bool `json:"node-mode"`
 	// BETTBOX-CUSTOM: Tailnet 网段，内置节点开启时用于清理会让流量绕开节点的配置。
 	Ranges []string `json:"ranges"`
-	// 配置文件中不存在、因而没有注入的覆写节点（patchTailscaleNodes 填写）。
+	// 当前配置中不存在的策略组（resolveTailscaleDefault 填写）。
 	missing map[string]bool
+	// 实际选定的默认组，空表示当前配置里没有任何 Tailscale 节点。
+	resolved string
+}
+
+// BETTBOX-CUSTOM: 兜底规则的目标占位名，与 Dart tailscaleDefaultTarget 一致。
+const tailscaleDefaultTarget = "BETTBOX-TAILSCALE-DEFAULT"
+
+// resolveTailscaleDefault 在节点注入后选定默认组，并记录当前配置中不存在的策略组。
+func resolveTailscaleDefault(raw *config.RawConfig, tailscale *PatchTailscale) {
+	if tailscale == nil {
+		return
+	}
+	exists := map[string]bool{}
+	isTailscale := map[string]bool{}
+	var first string
+	for _, proxy := range raw.Proxy {
+		name, _ := proxy["name"].(string)
+		if name == "" {
+			continue
+		}
+		exists[name] = true
+		if kind, _ := proxy["type"].(string); strings.EqualFold(kind, "tailscale") {
+			isTailscale[name] = true
+			if first == "" {
+				first = name
+			}
+		}
+	}
+	tailscale.missing = map[string]bool{}
+	for _, name := range tailscale.Groups {
+		if name != "" && !exists[name] {
+			tailscale.missing[name] = true
+		}
+	}
+	for _, node := range tailscale.Nodes {
+		if node != nil && node.Name != "" && !exists[node.Name] {
+			tailscale.missing[node.Name] = true
+		}
+	}
+	tailscale.resolved = first
+	if preferred := strings.TrimSpace(tailscale.DefaultNode); preferred != "" && isTailscale[preferred] {
+		tailscale.resolved = preferred
+	}
+	if tailscale.resolved != "" {
+		log.Infoln("[Tailscale] default node: %s", tailscale.resolved)
+	}
+}
+
+// rewriteTailscaleRules 把兜底规则的占位目标换成选定的默认组（没有时去掉），并去掉指向不存在的组的规则。
+func rewriteTailscaleRules(rules []string, tailscale *PatchTailscale) []string {
+	if tailscale == nil {
+		return rules
+	}
+	kept := rules[:0:0]
+	for _, rule := range rules {
+		parsed := parseRule(rule)
+		if parsed.hasTarget && parsed.target == tailscaleDefaultTarget {
+			if tailscale.resolved == "" {
+				continue
+			}
+			parsed.target = tailscale.resolved
+			rule = parsed.String()
+		} else if parsed.hasTarget && tailscale.missing[parsed.target] {
+			log.Infoln("[Tailscale] node %s not found in profile, skip rule %s", parsed.target, rule)
+			continue
+		}
+		kept = append(kept, rule)
+	}
+	return kept
 }
 
 // BETTBOX-CUSTOM: 内置 Tailscale 节点（mihomo type: tailscale），不依赖 Tailscale App 访问 Tailnet。
@@ -56,37 +131,16 @@ const (
 
 var tailscaleStateIDSanitizer = regexp.MustCompile(`[^a-z0-9-]+`)
 
-// patchTailscaleNodes 注入或覆写各策略组节点，返回因配置文件中不存在而跳过的覆写节点名。
-func patchTailscaleNodes(raw *config.RawConfig, tailscale *PatchTailscale) map[string]bool {
+// patchTailscaleNodes 注入或覆写各策略组节点，然后选定默认组、记录当前配置里不存在的组
+// （配置文件中不存在的覆写节点不会注入）。
+func patchTailscaleNodes(raw *config.RawConfig, tailscale *PatchTailscale) {
 	if tailscale == nil {
-		return nil
+		return
 	}
-	var missing map[string]bool
 	for _, node := range tailscale.Nodes {
-		if !patchTailscaleNode(raw, node) {
-			if missing == nil {
-				missing = map[string]bool{}
-			}
-			missing[node.Name] = true
-		}
+		patchTailscaleNode(raw, node)
 	}
-	return missing
-}
-
-// BETTBOX-CUSTOM: 去掉指向不存在的覆写节点的前置规则。
-func dropTailscaleRules(rules []string, missing map[string]bool) []string {
-	if len(missing) == 0 {
-		return rules
-	}
-	kept := rules[:0:0]
-	for _, rule := range rules {
-		if parsed := parseRule(rule); parsed.hasTarget && missing[parsed.target] {
-			log.Infoln("[Tailscale] node %s not found in profile, skip rule %s", parsed.target, rule)
-			continue
-		}
-		kept = append(kept, rule)
-	}
-	return kept
+	resolveTailscaleDefault(raw, tailscale)
 }
 
 func (node *PatchTailscaleNode) proxyMap() map[string]any {
@@ -113,10 +167,10 @@ func (node *PatchTailscaleNode) proxyMap() map[string]any {
 	return proxy
 }
 
-// patchTailscaleNode 返回节点是否存在于最终配置中（覆写节点在配置文件中不存在时返回 false）。
-func patchTailscaleNode(raw *config.RawConfig, node *PatchTailscaleNode) bool {
+// patchTailscaleNode 注入或覆写节点；覆写节点在配置文件中不存在时跳过（由 resolveTailscaleDefault 记为缺失）。
+func patchTailscaleNode(raw *config.RawConfig, node *PatchTailscaleNode) {
 	if node == nil || node.Name == "" {
-		return true
+		return
 	}
 	index := -1
 	for i, proxy := range raw.Proxy {
@@ -127,11 +181,12 @@ func patchTailscaleNode(raw *config.RawConfig, node *PatchTailscaleNode) bool {
 	}
 	switch {
 	case node.Override && index < 0:
-		return false
+		return
 	case node.Override:
 		log.Infoln("[Tailscale] override profile node %s", node.Name)
+		// 配置文件里的节点，策略组引用保持原样，不加 exclude-filter。
 		raw.Proxy[index] = node.proxyMap()
-		return true // 配置文件里的节点，策略组引用保持原样，不加 exclude-filter
+		return
 	case index < 0:
 		raw.Proxy = append(raw.Proxy, node.proxyMap())
 	}
@@ -152,7 +207,6 @@ func patchTailscaleNode(raw *config.RawConfig, node *PatchTailscaleNode) bool {
 		}
 		combineExcludeFilter(group, filter)
 	}
-	return true
 }
 
 func (node *PatchTailscaleNode) useAuthKey() bool {
@@ -204,12 +258,12 @@ func addTailscaleRealIPDomain(raw *config.RawConfig, domain string) {
 // 各节点在同一个 Tailnet，记录相同；只交给默认组时，默认组掉线（如 Auth Key 身份失效）会让
 // 所有 *.ts.net 返回 SERVFAIL，经其他组连接的设备也解析不出来。覆写节点在配置文件中不存在时跳过。
 func (tailscale *PatchTailscale) magicDNSServers() []string {
-	if tailscale == nil || tailscale.DefaultNode == "" {
+	if tailscale == nil || tailscale.resolved == "" {
 		return nil
 	}
-	servers := []string{"tailscale://" + tailscale.DefaultNode}
+	servers := []string{"tailscale://" + tailscale.resolved}
 	for _, node := range tailscale.Nodes {
-		if node == nil || node.Name == "" || node.Name == tailscale.DefaultNode || tailscale.missing[node.Name] {
+		if node == nil || node.Name == "" || node.Name == tailscale.resolved || tailscale.missing[node.Name] {
 			continue
 		}
 		servers = append(servers, "tailscale://"+node.Name)
@@ -234,6 +288,10 @@ func patchTailscaleDns(raw *config.RawConfig, tailscale *PatchTailscale) {
 	if servers := tailscale.magicDNSServers(); servers != nil {
 		server = servers
 		override = true
+	} else if tailscale.NodeMode {
+		// 内置节点模式但当前没有任何节点：MagicDNS 没有可用的解析方，不要退回 100.100.100.100
+		// （没有 Tailscale App 时它不可用，查询只会超时）。
+		server = nil
 	}
 	for _, item := range tailscale.DnsDomains {
 		domain := normalizeTailscaleDomain(item)
@@ -293,7 +351,7 @@ const tailscaleMagicDNS = "100.100.100.100"
 
 func removeTailscaleConflicts(raw *config.RawConfig, params *PatchParams) {
 	tailscale := params.Tailscale
-	if tailscale == nil || tailscale.DefaultNode == "" {
+	if tailscale == nil || tailscale.resolved == "" {
 		return
 	}
 	var ranges []netip.Prefix

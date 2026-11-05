@@ -1241,7 +1241,7 @@
   "tailscaleProxyAddDevice": "手动添加设备",
   "tailscaleProxyAddDeviceDesc": "填写 MagicDNS 名或 Tailscale IP，多个用逗号分隔，用于列表里看不到的设备",
   "tailscaleGroups": "Tailscale 策略组",
-  "tailscaleGroupsDesc": "每个策略组在 Tailnet 中是一台独立设备。默认组承接 Tailnet 兜底规则与 MagicDNS；其他组只接管指定给它的设备和自定义规则，这些规则排在兜底规则之前。配置文件里的 Tailscale 节点也列在这里，可开启覆写。",
+  "tailscaleGroupsDesc": "每个策略组在 Tailnet 中是一台独立设备。默认组自动选配置文件里第一个 Tailscale 节点，没有时用第一个策略组；它承接 Tailnet 兜底规则与 MagicDNS。其他组只接管指定给它的设备和自定义规则，这些规则排在兜底规则之前。配置文件里的 Tailscale 节点也列在这里，可直接设为默认组或开启覆写。",
   "tailscaleGroupAdd": "添加策略组",
   "tailscaleGroupName": "名称",
   "tailscaleGroupNameDesc": "规则中引用的出站名称",

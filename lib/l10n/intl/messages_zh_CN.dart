@@ -1512,7 +1512,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tailscaleProxyPeer": MessageLookupByLibrary.simpleMessage("经代理连接"),
     "tailscaleGroups": MessageLookupByLibrary.simpleMessage("Tailscale 策略组"),
     "tailscaleGroupsDesc": MessageLookupByLibrary.simpleMessage(
-      "每个策略组在 Tailnet 中是一台独立设备。默认组承接 Tailnet 兜底规则与 MagicDNS；其他组只接管指定给它的设备和自定义规则，这些规则排在兜底规则之前。配置文件里的 Tailscale 节点也列在这里，可开启覆写。",
+      "每个策略组在 Tailnet 中是一台独立设备。默认组自动选配置文件里第一个 Tailscale 节点，没有时用第一个策略组；它承接 Tailnet 兜底规则与 MagicDNS。其他组只接管指定给它的设备和自定义规则，这些规则排在兜底规则之前。配置文件里的 Tailscale 节点也列在这里，可直接设为默认组或开启覆写。",
     ),
     "tailscaleGroupAdd": MessageLookupByLibrary.simpleMessage("添加策略组"),
     "tailscaleGroupName": MessageLookupByLibrary.simpleMessage("名称"),

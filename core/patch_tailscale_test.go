@@ -303,3 +303,63 @@ rules:
 		}
 	}
 }
+
+// BETTBOX-CUSTOM: 默认组自动取配置文件里第一个 Tailscale 节点（未手动指定时），
+// 兜底规则的占位目标换成它；配置文件与 GUI 都没有节点时兜底规则被去掉。
+func TestPatchTailscaleAutoDefault(t *testing.T) {
+	profile := tailscaleProfile + `proxies:
+  - {name: hk, type: socks5, server: 127.0.0.1, port: 1080}
+  - {name: Profile-TS, type: tailscale, hostname: from-profile}
+`
+	prepend := `"prepend-rules":["DOMAIN-SUFFIX,ts.net,BETTBOX-TAILSCALE-DEFAULT","IP-CIDR,100.64.0.0/10,BETTBOX-TAILSCALE-DEFAULT,no-resolve","DOMAIN,gui.tail.ts.net,GUI-TS","DOMAIN,gone.tail.ts.net,Gone"]`
+	rawCfg := parsePatchProfile(t, profile)
+	params := patchParams(t, `{"tailscale":{"dns-domains":["ts.net"],"groups":["GUI-TS","Gone"],"nodes":[{"name":"GUI-TS"}]},`+prepend+`}`)
+	if _, err := applyPatch(rawCfg, params); err != nil {
+		t.Fatal(err)
+	}
+	if params.Tailscale.resolved != "Profile-TS" {
+		t.Fatalf("default must be the profile's first tailscale node, got %q", params.Tailscale.resolved)
+	}
+	want := "[DOMAIN-SUFFIX,ts.net,Profile-TS IP-CIDR,100.64.0.0/10,Profile-TS,no-resolve DOMAIN,gui.tail.ts.net,GUI-TS MATCH,DIRECT]"
+	if got := fmt.Sprint(rawCfg.Rule); got != want {
+		t.Fatalf("unexpected rules:\n got %s\nwant %s", got, want)
+	}
+	if value, _ := rawCfg.DNS.NameServerPolicy.Get("+.ts.net"); fmt.Sprint(value) != "[tailscale://Profile-TS tailscale://GUI-TS]" {
+		t.Fatalf("MagicDNS must use every node, default first, got %v", value)
+	}
+
+	// 手动指定优先于自动选择。
+	rawCfg = parsePatchProfile(t, profile)
+	params = patchParams(t, `{"tailscale":{"dns-domains":["ts.net"],"default-node":"GUI-TS","groups":["GUI-TS"],"nodes":[{"name":"GUI-TS"}]},`+prepend+`}`)
+	if _, err := applyPatch(rawCfg, params); err != nil {
+		t.Fatal(err)
+	}
+	if params.Tailscale.resolved != "GUI-TS" || rawCfg.Rule[0] != "DOMAIN-SUFFIX,ts.net,GUI-TS" {
+		t.Fatalf("manual default must win: resolved=%q rules=%v", params.Tailscale.resolved, rawCfg.Rule)
+	}
+
+	// 没有任何 Tailscale 节点：占位规则被去掉，不引用不存在的出站。
+	rawCfg = parsePatchProfile(t, tailscaleProfile)
+	params = patchParams(t, `{"tailscale":{"dns-domains":["ts.net"],"groups":["GUI-TS","Gone"],"nodes":[]},`+prepend+`}`)
+	if _, err := applyPatch(rawCfg, params); err != nil {
+		t.Fatal(err)
+	}
+	if params.Tailscale.resolved != "" || fmt.Sprint(rawCfg.Rule) != "[MATCH,DIRECT]" {
+		t.Fatalf("placeholder rules must be dropped: resolved=%q rules=%v", params.Tailscale.resolved, rawCfg.Rule)
+	}
+}
+
+// BETTBOX-CUSTOM: 内置节点模式但一个节点都没有时，MagicDNS 不能退回 100.100.100.100（没有 App 时不可用）。
+func TestPatchTailscaleNodeModeWithoutNodesKeepsDns(t *testing.T) {
+	rawCfg := parsePatchProfile(t, tailscaleProfile)
+	params := patchParams(t, `{"tailscale":{"dns-domains":["ts.net","corp.example"],"dns-server":"100.100.100.100","node-mode":true,"groups":[],"nodes":[]}}`)
+	if _, err := applyPatch(rawCfg, params); err != nil {
+		t.Fatal(err)
+	}
+	if value, _ := rawCfg.DNS.NameServerPolicy.Get("+.ts.net"); fmt.Sprint(value) != "10.0.0.53" {
+		t.Fatalf("profile policy must be kept, got %v", value)
+	}
+	if _, exists := rawCfg.DNS.NameServerPolicy.Get("+.corp.example"); exists {
+		t.Fatal("no node means no magic dns policy")
+	}
+}

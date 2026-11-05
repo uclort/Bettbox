@@ -104,11 +104,9 @@ func applyPatch(raw *config.RawConfig, params *PatchParams) (string, error) {
 	}
 	// BETTBOX-CUSTOM: Tailscale 策略组节点；配置文件里不存在的覆写节点跳过，并去掉指向它的前置规则。
 	// 先注入节点，MagicDNS 只交给真正存在的节点。
-	missingTailscale := patchTailscaleNodes(raw, params.Tailscale)
-	params.PrependRules = dropTailscaleRules(params.PrependRules, missingTailscale)
-	if params.Tailscale != nil {
-		params.Tailscale.missing = missingTailscale
-	}
+	// 选定默认组后把兜底规则的占位目标换成它，没有任何 Tailscale 节点时去掉兜底规则。
+	patchTailscaleNodes(raw, params.Tailscale)
+	params.PrependRules = rewriteTailscaleRules(params.PrependRules, params.Tailscale)
 	removeTailscaleConflicts(raw, params)    // BETTBOX-CUSTOM: 内置 Tailscale 节点清理冲突配置
 	patchTailscaleDns(raw, params.Tailscale) // BETTBOX-CUSTOM: Tailscale 共存
 	if hasPatchValue(params.Ntp) {

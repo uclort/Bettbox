@@ -70,6 +70,7 @@ void main() {
     const props = NetworkProps(
       tailscale: TailscaleProps(
         nodeEnable: true,
+        groupsVersion: 0,
         nodeHostname: 'mac-bettbox',
         nodeAuthKey: ' tskey-auth-x ',
         nodeExitNode: 'oracle',
@@ -78,13 +79,15 @@ void main() {
     const tun = Tun(routeExcludeAddress: ['172.16.0.0/12']);
     expect(props.tailscale.applyToTun(tun), tun);
     expect(props.realBypassDomain, props.bypassDomain);
+    // 兜底规则用占位目标，内核按当前配置换成实际默认组
     expect(props.tailscale.prependRules, [
-      'DOMAIN-SUFFIX,ts.net,$tailscaleNodeName',
-      'IP-CIDR,100.64.0.0/10,$tailscaleNodeName,no-resolve',
-      'IP-CIDR6,fd7a:115c:a1e0::/48,$tailscaleNodeName,no-resolve',
+      'DOMAIN-SUFFIX,ts.net,$tailscaleDefaultTarget',
+      'IP-CIDR,100.64.0.0/10,$tailscaleDefaultTarget,no-resolve',
+      'IP-CIDR6,fd7a:115c:a1e0::/48,$tailscaleDefaultTarget,no-resolve',
     ]);
-    // 登录方式只认登录状态，填过的 key 也不下发。
-    expect(props.tailscale.patchJson?['default-node'], tailscaleNodeName);
+    // 没有手动指定默认组，由内核自动选第一个 Tailscale 节点。
+    expect(props.tailscale.patchJson?['default-node'], '');
+    expect(props.tailscale.patchJson?['groups'], [tailscaleNodeName]);
     expect(props.tailscale.patchJson?['nodes'], [
       {
         'name': tailscaleNodeName,
@@ -102,23 +105,28 @@ void main() {
   test('Auth Key 方式下发 key 并区分设备名', () {
     const props = TailscaleProps(
       nodeEnable: true,
+      groupsVersion: 0,
       nodeUseAuthKey: true,
       nodeHostname: 'mac-bettbox',
       nodeAuthKey: ' tskey-auth-x ',
     );
-    expect(props.effectiveNodeHostname, 'mac-bettbox-key');
-    expect(props.copyWith(nodeHostname: 'mac-key').effectiveNodeHostname, 'mac-key');
-    expect(props.copyWith(nodeUseAuthKey: false).effectiveNodeHostname, 'mac-bettbox');
-    expect(const TailscaleProps(nodeUseAuthKey: true).effectiveNodeHostname, endsWith('-bettbox-key'));
+    String hostname(TailscaleProps p) => p.effectiveHostname(p.nodeGroups.first);
+    expect(hostname(props), 'mac-bettbox-key');
+    expect(hostname(props.copyWith(nodeHostname: 'mac-key')), 'mac-key');
+    expect(hostname(props.copyWith(nodeUseAuthKey: false)), 'mac-bettbox');
+    expect(
+      hostname(const TailscaleProps(nodeEnable: true, groupsVersion: 0, nodeUseAuthKey: true)),
+      endsWith('-bettbox-key'),
+    );
     final node = (props.patchJson?['nodes'] as List).first as Map;
     expect(node['auth-mode'], 'auth-key');
     expect(node['auth-key'], 'tskey-auth-x');
     expect(node['hostname'], 'mac-bettbox-key');
 
+    // 没填 key 时这个组不注入（也没有可继承的组）；兜底规则由内核去掉
     final missing = props.copyWith(nodeAuthKey: ' ');
-    expect(missing.nodeActive, isFalse);
-    expect(missing.nodeAuthKeyMissing, isTrue);
-    expect(missing.patchJson, isNull);
+    expect(missing.groupAuthKeyMissing(missing.nodeGroups.first), isTrue);
+    expect(missing.patchJson?['nodes'], isEmpty);
   });
 
   // BETTBOX-CUSTOM: 内置节点开启时去掉让 Tailnet 绕开节点的 TUN 排除与系统代理例外。
@@ -150,12 +158,13 @@ void main() {
     expect(props.realBypassDomain, props.bypassDomain);
     expect(
       props.tailscale.prependRules.first,
-      'DOMAIN-SUFFIX,ts.net,$tailscaleNodeName',
+      'DOMAIN-SUFFIX,ts.net,$tailscaleDefaultTarget',
     );
   });
 
   test('设备名留空时使用本机名-bettbox 且只含合法字符', () {
-    final hostname = const TailscaleProps().effectiveNodeHostname;
+    const props = TailscaleProps(nodeEnable: true, groupsVersion: 0);
+    final hostname = props.effectiveHostname(props.nodeGroups.first);
     expect(hostname, endsWith('-bettbox'));
     expect(RegExp(r'^[a-z0-9-]+$').hasMatch(hostname), isTrue);
   });
@@ -177,13 +186,15 @@ void main() {
   test('旧版代理通道迁移为 Tailscale 策略组', () {
     const legacy = TailscaleProps(
       nodeEnable: true,
+      groupsVersion: 0, // 旧版配置没有该字段，按 0 读入
       nodeHostname: 'mac-bettbox',
       nodeProxyDevices: ['rex.tailc7e14e.ts.net,100.121.3.59'],
       nodeProxyVia: 'Global',
     );
     final groups = legacy.nodeGroups;
     expect(groups.map((g) => g.name), [tailscaleNodeName, tailscaleProxyNodeName]);
-    expect(legacy.defaultNodeGroup.id, '');
+    // 没有配置文件节点时，默认组是第一个生效的自己添加的组
+    expect(legacy.effectiveDefaultName(), tailscaleNodeName);
     expect(groups.last.id, tailscaleLegacyProxyStateId);
     expect(legacy.effectiveHostname(groups.last), 'mac-bettbox-proxy');
     final nodes = legacy.patchJson?['nodes'] as List;
@@ -199,7 +210,7 @@ void main() {
     expect(legacy.prependRules.take(3), [
       'DOMAIN,rex.tailc7e14e.ts.net,$tailscaleProxyNodeName',
       'IP-CIDR,100.121.3.59/32,$tailscaleProxyNodeName,no-resolve',
-      'DOMAIN-SUFFIX,ts.net,$tailscaleNodeName',
+      'DOMAIN-SUFFIX,ts.net,$tailscaleDefaultTarget',
     ]);
     final keyed = legacy.copyWith(nodeUseAuthKey: true, nodeAuthKey: 'k');
     expect(keyed.effectiveHostname(keyed.nodeGroups.last), 'mac-bettbox-proxy-key');
@@ -208,7 +219,8 @@ void main() {
     // 第一次写入后不再读取旧字段
     final saved = legacy.withGroups(legacy.nodeGroups);
     expect(saved.groups, hasLength(2));
-    expect(saved.defaultGroup, tailscaleNodeName);
+    expect(saved.defaultGroup, isEmpty);
+    expect(saved.effectiveDefaultName(), tailscaleNodeName);
     expect(saved.copyWith(nodeProxyVia: 'Other').nodeGroups.last.via, 'Global');
   });
 
@@ -218,7 +230,11 @@ void main() {
       dnsName: 'rex.tailc7e14e.ts.net.',
       ips: ['100.121.3.59', 'fd7a:115c:a1e0::1'],
     );
-    var props = const TailscaleProps(nodeEnable: true, nodeHostname: 'mac');
+    var props = const TailscaleProps(
+      nodeEnable: true,
+      groupsVersion: 0,
+      nodeHostname: 'mac',
+    );
     final proxy = props.newGroup('Tailscale-Proxy').copyWith(
       via: 'Global',
       rules: ['domain-suffix, corp.example', 'IP-CIDR,100.100.1.0/24,no-resolve', 'MATCH,x', 'bad'],
@@ -227,10 +243,10 @@ void main() {
     props = props.updateGroup(proxy.id, proxy);
     final other = props.newGroup('Other');
     props = props.updateGroup(other.id, other);
-    expect(props.groupOfPeer(rex).name, tailscaleNodeName);
+    expect(props.assignedGroupOfPeer(rex), isNull);
 
     props = props.assignPeer(rex, 'Tailscale-Proxy');
-    expect(props.groupOfPeer(rex).name, 'Tailscale-Proxy');
+    expect(props.assignedGroupOfPeer(rex)?.name, 'Tailscale-Proxy');
     // 改指定到另一个组时从原来的组移除
     expect(props.assignPeer(rex, 'Other').groupById(proxy.id)!.devices, isEmpty);
     expect(props.prependRules.take(6), [
@@ -239,7 +255,7 @@ void main() {
       'IP-CIDR6,fd7a:115c:a1e0::1/128,Tailscale-Proxy,no-resolve',
       'DOMAIN-SUFFIX,corp.example,Tailscale-Proxy',
       'IP-CIDR,100.100.1.0/24,Tailscale-Proxy,no-resolve',
-      'DOMAIN-SUFFIX,ts.net,$tailscaleNodeName',
+      'DOMAIN-SUFFIX,ts.net,$tailscaleDefaultTarget',
     ]);
     expect(props.effectiveHostname(props.groupById(proxy.id)!), 'mac-tailscale-proxy');
     expect(props.patchJson?['nodes'], hasLength(3));
@@ -255,23 +271,26 @@ void main() {
     final toDefault = props.assignPeer(rex, tailscaleNodeName);
     expect(toDefault.groupById(proxy.id)!.devices, isEmpty);
     expect(toDefault.assignedGroupOfPeer(rex)?.name, tailscaleNodeName);
-    expect(toDefault.prependRules.first, 'DOMAIN-SUFFIX,corp.example,Tailscale-Proxy');
+    // 默认组在列表最前，它的设备规则同样排在兜底规则之前
+    expect(toDefault.prependRules.first, 'DOMAIN,rex.tailc7e14e.ts.net,$tailscaleNodeName');
     expect(
       toDefault.prependRules.indexOf('DOMAIN,rex.tailc7e14e.ts.net,$tailscaleNodeName'),
-      lessThan(toDefault.prependRules.indexOf('DOMAIN-SUFFIX,ts.net,$tailscaleNodeName')),
+      lessThan(toDefault.prependRules.indexOf('DOMAIN-SUFFIX,ts.net,$tailscaleDefaultTarget')),
     );
     // 取消指定：交回默认组兜底，不生成单独规则
     final unassigned = props.assignPeer(rex, null);
     expect(unassigned.assignedGroupOfPeer(rex), isNull);
-    expect(unassigned.groupOfPeer(rex).name, tailscaleNodeName);
+    expect(unassigned.effectiveDefaultName(), tailscaleNodeName);
     expect(unassigned.prependRules.any((r) => r.startsWith('DOMAIN,rex')), isFalse);
-    // 设为默认组：兜底规则与 MagicDNS 交给它，已指定的设备保持，默认组不能删除
-    final switched = props.setDefaultGroup(proxy.id);
-    expect(switched.defaultNodeGroup.name, 'Tailscale-Proxy');
+    // 设为默认组：兜底规则与 MagicDNS 交给它，已指定的设备保持，默认组也可以删除（删后自动回退）
+    final switched = props.setDefaultGroup('Tailscale-Proxy');
+    expect(switched.effectiveDefaultName(), 'Tailscale-Proxy');
     expect(switched.groupById(proxy.id)!.devices, hasLength(1));
     expect(switched.patchJson?['default-node'], 'Tailscale-Proxy');
-    expect(switched.removeGroup(proxy.id), switched);
-    expect(switched.removeGroup('').nodeGroups, hasLength(2));
+    final removedDefault = switched.removeGroup(proxy.id);
+    expect(removedDefault.nodeGroups, hasLength(2));
+    expect(removedDefault.defaultGroup, isEmpty);
+    expect(removedDefault.effectiveDefaultName(), tailscaleNodeName);
 
     final manual = TailscaleProxyDevice.parse(' 100.1.2.3 , Rex.Tail.ts.net. ');
     expect(manual.encoded, 'rex.tail.ts.net,100.1.2.3');
@@ -312,9 +331,14 @@ void main() {
     expect(group.profile, isTrue);
     expect(group.useAuthKey, isTrue);
     expect(group.via, 'Global');
-    var props = const TailscaleProps(nodeEnable: true).updateGroup(group.id, group);
-    // 配置文件节点不能成为默认组
-    expect(props.defaultNodeGroup.name, tailscaleNodeName);
+    // 旧版配置（升级前已开启内置节点）：主节点由旧字段迁移，配置文件节点也在列表里
+    var props = const TailscaleProps(
+      nodeEnable: true,
+      groupsVersion: 0,
+    ).updateGroup(group.id, group);
+    // 配置文件里的节点可以直接当默认组；没有配置文件节点时用第一个自己添加的组
+    expect(props.effectiveDefaultName(['Tailscale-Proxy']), 'Tailscale-Proxy');
+    expect(props.effectiveDefaultName(), tailscaleNodeName);
     props = props.assignDevice(TailscaleProxyDevice.parse('rex.tail.ts.net'), 'Tailscale-Proxy');
     final nodes = props.patchJson?['nodes'] as List;
     expect(nodes.last['override'], isTrue);
@@ -323,11 +347,27 @@ void main() {
     // 关闭覆写：不下发、不生成规则，但保留设置
     final off = props.updateGroup(group.id, props.groupById(group.id)!.copyWith(overridden: false));
     expect((off.patchJson?['nodes'] as List), hasLength(1));
-    expect(off.prependRules.first, 'DOMAIN-SUFFIX,ts.net,$tailscaleNodeName');
+    expect(off.prependRules.first, 'DOMAIN-SUFFIX,ts.net,$tailscaleDefaultTarget');
     expect(off.groupById(group.id)!.devices, isNotEmpty);
     expect(tailscaleSlug('代理'), startsWith('n'));
     expect(tailscaleSlug('代理'), tailscaleSlug('代理'));
   });
+
+  // BETTBOX-CUSTOM: 不再内置默认策略组：全新安装开启内置节点时列表为空，等配置文件节点或手动添加。
+  test('全新安装不生成内置策略组', () {
+    const props = TailscaleProps(nodeEnable: true, groupsVersion: 1);
+    expect(props.nodeGroups, isEmpty);
+    expect(props.effectiveDefaultName(), isNull);
+    expect(props.patchJson?['nodes'], isEmpty);
+    expect(props.patchJson?['default-node'], '');
+    expect(props.patchJson?['groups'], isEmpty);
+    // 没有节点时兜底规则用的是占位目标，由内核去掉，不会引用不存在的出站
+    expect(props.prependRules, [
+      'DOMAIN-SUFFIX,ts.net,$tailscaleDefaultTarget',
+      'IP-CIDR,100.64.0.0/10,$tailscaleDefaultTarget,no-resolve',
+      'IP-CIDR6,fd7a:115c:a1e0::/48,$tailscaleDefaultTarget,no-resolve',
+    ]);
+  }, skip: !system.isDesktop);
 
   test('节点状态解析', () {
     final status = TailscaleNodeStatus.fromJson({

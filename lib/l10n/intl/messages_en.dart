@@ -2058,7 +2058,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "tailscaleGroups": MessageLookupByLibrary.simpleMessage("Tailscale groups"),
     "tailscaleGroupsDesc": MessageLookupByLibrary.simpleMessage(
-      "Each group is a separate device in your Tailnet. The default group handles the Tailnet catch-all rules and MagicDNS; other groups only take the devices assigned to them and their custom rules, which come before the catch-all rules. Tailscale nodes from the profile are listed here too and can be overridden.",
+      "Each group is a separate device in your Tailnet. The default group is the profile's first Tailscale node, or the first group when the profile has none; it handles the Tailnet catch-all rules and MagicDNS. Other groups only take the devices assigned to them and their custom rules, which come before the catch-all rules. Tailscale nodes from the profile are listed here too: they can be set as the default group or overridden.",
     ),
     "tailscaleGroupAdd": MessageLookupByLibrary.simpleMessage("Add group"),
     "tailscaleGroupName": MessageLookupByLibrary.simpleMessage("Name"),

@@ -236,8 +236,16 @@ class TailscaleNodeItem extends ConsumerWidget {
       subtitle: Text(appLocalizations.tailscaleNodeDesc),
       delegate: SwitchDelegate(
         value: enable,
-        onChanged: (value) =>
-            _updateTailscale(ref, (state) => state.copyWith(nodeEnable: value)),
+        // BETTBOX-CUSTOM: 关闭时先把迁移出的策略组写回，再标记已迁移；全新安装开启时列表为空，
+        // 不会凭空出现 Bettbox-Tailscale（配置文件里有节点就显示配置文件里的）。
+        onChanged: (value) => _updateTailscale(
+          ref,
+          (state) => state.copyWith(
+            nodeEnable: value,
+            groups: value ? state.groups : state.nodeGroups,
+            groupsVersion: 1,
+          ),
+        ),
       ),
     );
   }
@@ -676,7 +684,9 @@ class _TailscaleNodeSettingsState extends ConsumerState<_TailscaleNodeSettings>
 
   Widget _groupTile(TailscaleProps props, _TailscaleGroupEntry entry) {
     final group = entry.group;
-    final isDefault = props.isDefaultGroup(group);
+    final isDefault = props.isDefaultGroup(group, [
+      for (final node in _profileNodes) node.name,
+    ]);
     final via = group.via.trim();
     final summary = [
       if (isDefault) appLocalizations.tailscaleGroupDefault,
@@ -720,13 +730,16 @@ class _TailscaleNodeSettingsState extends ConsumerState<_TailscaleNodeSettings>
     final props = ref.watch(
       networkSettingProvider.select((state) => state.tailscale),
     );
-    final defaultGroup = props.defaultNodeGroup;
+    final profileNames = [for (final node in _profileNodes) node.name];
+    final defaultName = props.effectiveDefaultName(profileNames);
     final entries = _groupEntries(props, _profileNodes);
+    // 只有被 Bettbox 接管的组能指定设备（未覆写的配置文件节点不能写入设备设置）。
     final peerGroups = [
-      defaultGroup,
       for (final entry in entries)
-        if (!props.isDefaultGroup(entry.group) && entry.group.managed)
+        if (entry.group.name == defaultName && entry.group.managed)
           entry.group,
+      for (final entry in entries)
+        if (entry.group.name != defaultName && entry.group.managed) entry.group,
     ];
     final peers = allPeers();
     final selfs = selfPeers();
@@ -955,7 +968,9 @@ class _TailscaleGroupPageState extends ConsumerState<_TailscaleGroupPage>
     final custom = devices
         .where((d) => !peers.any((peer) => d.matchesPeer(peer)))
         .toList();
-    final isDefault = props.isDefaultGroup(group);
+    final isDefault = props.isDefaultGroup(group, [
+      for (final node in widget.profileNodes) node.name,
+    ]);
     final hintStyle = context.textTheme.bodySmall?.copyWith(
       color: context.colorScheme.onSurfaceVariant,
       height: 1.5,
@@ -1129,7 +1144,8 @@ class _TailscaleGroupPageState extends ConsumerState<_TailscaleGroupPage>
     );
     final group = _groupOf(props);
     if (group == null) return const SizedBox();
-    final isDefault = props.isDefaultGroup(group);
+    final profileNames = [for (final node in widget.profileNodes) node.name];
+    final isDefault = props.isDefaultGroup(group, profileNames);
     final active = props.groupActive(group);
     final status = statuses[group.name];
     final profileNode = widget.profileNode;
@@ -1180,6 +1196,18 @@ class _TailscaleGroupPageState extends ConsumerState<_TailscaleGroupPage>
         if (!group.overridden && profileNode != null)
           ..._readonlyItems(profileNode),
       ],
+      // BETTBOX-CUSTOM: 配置文件里的节点也可以直接当默认组，不要求先开覆写。
+      if (!isDefault &&
+          (group.profile ? profileNode != null : props.groupActive(group)))
+        ListItem(
+          leading: const Icon(Icons.star_outline),
+          title: Text(appLocalizations.tailscaleGroupSetDefault),
+          subtitle: Text(appLocalizations.tailscaleGroupSetDefaultDesc),
+          onTap: () => _updateTailscale(
+            ref,
+            (state) => state.setDefaultGroup(group.name),
+          ),
+        ),
       if (group.managed) ...[
         if (!group.profile)
           ListItem.input(
@@ -1196,16 +1224,6 @@ class _TailscaleGroupPageState extends ConsumerState<_TailscaleGroupPage>
                 if (value.trim() == group.name) return;
                 _update((g) => g.copyWith(name: value.trim()), restart: true);
               },
-            ),
-          ),
-        if (!isDefault && !group.profile)
-          ListItem(
-            leading: const Icon(Icons.star_outline),
-            title: Text(appLocalizations.tailscaleGroupSetDefault),
-            subtitle: Text(appLocalizations.tailscaleGroupSetDefaultDesc),
-            onTap: () => _updateTailscale(
-              ref,
-              (state) => state.setDefaultGroup(widget.id),
             ),
           ),
         ListItem.options(
@@ -1312,7 +1330,8 @@ class _TailscaleGroupPageState extends ConsumerState<_TailscaleGroupPage>
         ),
         _rulesEntry(group),
         ..._deviceItems(props, group),
-        if (!isDefault && !group.profile)
+        // 默认组也可以删除：删掉后由 effectiveDefaultName 自动回退（配置文件节点 → 第一个自己添加的组）。
+        if (!group.profile)
           ListItem(
             leading: Icon(
               Icons.delete_outline,
