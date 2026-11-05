@@ -176,6 +176,11 @@ func NewTailscale(option TailscaleOption) (*Tailscale, error) {
 			log.Debugln("[Tailscale](%s) SystemPacketListener: start listen %s %s", option.Name, network, address)
 			pc, err := outbound.dialer.ListenPacket(ctx, network, address, netip.AddrPort{})
 			log.Debugln("[Tailscale](%s) SystemPacketListener: finish listen %s %s, err: %v", option.Name, network, address, err)
+			// BETTBOX-CUSTOM: 代理建不了 UDP 时退回仅 DERP 中继，节点仍能启动（见 tailscale_noudp.go）。
+			if err != nil && option.DialerProxy != "" {
+				log.Warnln("[Tailscale](%s) dialer-proxy %s 无法建立 UDP（%v），改为仅经 DERP 中继", option.Name, option.DialerProxy, err)
+				return newTailscaleNoUDPConn(network), nil
+			}
 			return pc, err
 		},
 		ExtraRootCAs: ca.GetCertPool(),
