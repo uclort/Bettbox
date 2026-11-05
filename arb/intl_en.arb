@@ -1273,5 +1273,6 @@
   "tailscaleGroupDevices": "Assigned devices",
   "tailscaleGroupDevicesEmpty": "No devices yet. Tap one in the list below or add it manually",
   "tailscaleGroupDevicesDefaultEmpty": "Devices not assigned to any group fall back to the default group; you can also assign them here explicitly, with rules before the catch-all rules",
-  "tailscaleGroupPickDevice": "Tap to add to this group"
+  "tailscaleGroupPickDevice": "Tap to add to this group",
+  "tailscaleNodeAuthKeyPending": "Auth key registration not finished yet, retrying automatically (not a key problem)"
 }

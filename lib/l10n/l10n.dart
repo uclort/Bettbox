@@ -10844,6 +10844,13 @@ class AppLocalizations {
     args: [],
   );
 
+  String get tailscaleNodeAuthKeyPending => Intl.message(
+    "Auth key registration not finished yet, retrying automatically (not a key problem)",
+    name: 'tailscaleNodeAuthKeyPending',
+    desc: '',
+    args: [],
+  );
+
   String get tailscaleGroupPickDevice => Intl.message(
     "Tap to add to this group",
     name: 'tailscaleGroupPickDevice',

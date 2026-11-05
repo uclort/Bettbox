@@ -310,8 +310,16 @@ String _tailscaleStatusText(
   if (status.running) return appLocalizations.tailscaleNodeRunning;
   if (status.state == 'NeedsLogin') {
     if (group.useAuthKey) {
+      // BETTBOX-CUSTOM: 只有控制面明确拒绝 key 时才提示换 key；连不上控制面 / DERP 等网络原因
+      // 不是 key 的问题，提示「注册未完成」并给出真实错误（会自动重试）。
+      final keyRejected = RegExp(
+        r'invalid key|key.*(expired|not valid|invalid)|unauthorized|not authorized|authkey',
+        caseSensitive: false,
+      ).hasMatch(status.error);
       return [
-        appLocalizations.tailscaleNodeAuthKeyFailed,
+        keyRejected
+            ? appLocalizations.tailscaleNodeAuthKeyFailed
+            : appLocalizations.tailscaleNodeAuthKeyPending,
         if (status.error.isNotEmpty) status.error,
       ].join('\n');
     }

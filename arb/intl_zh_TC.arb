@@ -1273,5 +1273,6 @@
   "tailscaleGroupDevices": "指定的裝置",
   "tailscaleGroupDevicesEmpty": "還沒有指定裝置。從下面的裝置清單點選，或手動新增",
   "tailscaleGroupDevicesDefaultEmpty": "未指定任何組的裝置由預設組兜底；也可以在這裡明確指定，規則排在兜底規則之前",
-  "tailscaleGroupPickDevice": "點按加入本組"
+  "tailscaleGroupPickDevice": "點按加入本組",
+  "tailscaleNodeAuthKeyPending": "Auth Key 註冊未完成，會自動重試（不是 key 的問題）"
 }

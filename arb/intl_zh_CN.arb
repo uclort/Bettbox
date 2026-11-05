@@ -1274,5 +1274,6 @@
   "tailscaleGroupDevices": "指定的设备",
   "tailscaleGroupDevicesEmpty": "还没有指定设备。从下面的设备列表点选，或手动添加",
   "tailscaleGroupDevicesDefaultEmpty": "未指定任何组的设备由默认组兜底；也可以在这里明确指定，规则排在兜底规则之前",
-  "tailscaleGroupPickDevice": "点按加入本组"
+  "tailscaleGroupPickDevice": "点按加入本组",
+  "tailscaleNodeAuthKeyPending": "Auth Key 注册未完成，会自动重试（不是 key 的问题）"
 }

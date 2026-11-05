@@ -1589,6 +1589,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "未指定任何組的裝置由預設組兜底；也可以在這裡明確指定，規則排在兜底規則之前",
     ),
     "tailscaleGroupPickDevice": MessageLookupByLibrary.simpleMessage("點按加入本組"),
+    "tailscaleNodeAuthKeyPending": MessageLookupByLibrary.simpleMessage(
+      "Auth Key 註冊未完成，會自動重試（不是 key 的問題）",
+    ),
     "tailscaleProxyVia": MessageLookupByLibrary.simpleMessage("透過"),
     "tailscaleProxyViaMissing": MessageLookupByLibrary.simpleMessage("請先選擇代理"),
     "tailscaleNodeOnline": MessageLookupByLibrary.simpleMessage("在線"),

@@ -2139,6 +2139,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "tailscaleGroupPickDevice": MessageLookupByLibrary.simpleMessage(
       "Tap to add to this group",
     ),
+    "tailscaleNodeAuthKeyPending": MessageLookupByLibrary.simpleMessage(
+      "Auth key registration not finished yet, retrying automatically (not a key problem)",
+    ),
     "tailscaleProxyVia": MessageLookupByLibrary.simpleMessage("Via"),
     "tailscaleProxyViaMissing": MessageLookupByLibrary.simpleMessage(
       "Choose a proxy first",
