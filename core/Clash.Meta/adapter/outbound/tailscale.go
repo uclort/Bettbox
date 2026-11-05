@@ -54,8 +54,10 @@ type Tailscale struct {
 	closeErr  error
 	// BETTBOX-CUSTOM: 跨配置重载复用时的引用计数，受 tailscaleStateDirMu 保护。
 	refs int
-	// BETTBOX-CUSTOM: Auth Key 方式下本实例是否已用 key 尝试注册，退出登录后重置。
-	authKeyLoginTried atomic.Bool
+	// BETTBOX-CUSTOM: Auth Key 方式上次用 key 注册的时间（UnixNano，0 为未尝试）与控制面返回的错误。
+	// 节点运行中被登出（后台删除设备、身份失效等）时按节流间隔自动重新注册，不再只试一次。
+	authKeyLoginAt  atomic.Int64
+	authKeyLoginErr atomic.Value // string
 
 	unregisterDNSResolver func()
 }
@@ -207,8 +209,10 @@ func (t *Tailscale) start() error {
 	t.startOnce.Do(func() {
 		t.claimStateDir()       // BETTBOX-CUSTOM
 		t.prepareAuthKeyState() // BETTBOX-CUSTOM
-		// BETTBOX-CUSTOM: 启动时 tsnet 已用 auth-key 尝试注册，Status 不再重复尝试。
-		t.authKeyLoginTried.Store(t.option.AuthKey != "")
+		// BETTBOX-CUSTOM: 启动时 tsnet 已用 auth-key 尝试注册，节流间隔内不再重复尝试。
+		if t.option.AuthKey != "" {
+			t.authKeyLoginAt.Store(time.Now().UnixNano())
+		}
 		if err := t.server.Start(); err != nil {
 			t.startErr = err
 			t.setBackendInitialized(err)
@@ -249,11 +253,17 @@ func (t *Tailscale) watchBackendState() {
 
 	backendInitialized := false
 	exitNodeNeedsStatus := tailscaleExitNodeNeedsStatus(t.option)
+	// BETTBOX-CUSTOM: Auth Key 方式一直监听：记录控制面错误，运行中被登出时自动用 key 重新注册。
+	useAuthKey := t.option.AuthKey != ""
 	for {
 		n, err := watcher.Next()
 		if err != nil {
 			t.setBackendInitialized(err)
 			return
+		}
+		if useAuthKey && n.ErrMessage != nil && *n.ErrMessage != "" {
+			t.authKeyLoginErr.Store(*n.ErrMessage)
+			log.Warnln("[Tailscale](%s) %s", t.Name(), *n.ErrMessage)
 		}
 		if n.State == nil {
 			continue
@@ -262,7 +272,7 @@ func (t *Tailscale) watchBackendState() {
 		if *n.State != ipn.NoState && !backendInitialized {
 			t.setBackendInitialized(nil)
 			backendInitialized = true
-			if !exitNodeNeedsStatus {
+			if !exitNodeNeedsStatus && !useAuthKey {
 				return
 			}
 		}
@@ -270,7 +280,16 @@ func (t *Tailscale) watchBackendState() {
 			if err := t.applyExitNodePrefs(t.ctx); err != nil {
 				log.Warnln("[Tailscale](%s) set exit node failed: %v", t.Name(), err)
 			}
-			return
+			exitNodeNeedsStatus = false
+			if !useAuthKey {
+				return
+			}
+		}
+		if useAuthKey && *n.State == ipn.Running {
+			t.authKeyLoginErr.Store("")
+		}
+		if useAuthKey && *n.State == ipn.NeedsLogin {
+			go t.retryAuthKeyLogin()
 		}
 	}
 }

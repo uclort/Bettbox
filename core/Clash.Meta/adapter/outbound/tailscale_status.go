@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/metacubex/mihomo/log"
 	"github.com/metacubex/tailscale/ipn"
 	"github.com/metacubex/tailscale/ipn/ipnstate"
 )
@@ -47,14 +48,22 @@ func (t *Tailscale) Status(ctx context.Context) TailscaleStatus {
 		// BETTBOX-CUSTOM: Auth Key 方式只认 key，不给浏览器登录链接；注册失败时返回控制面的原因。
 		if t.option.AuthKey != "" {
 			status.AuthURL = ""
-			if needsLogin && t.authKeyLoginTried.CompareAndSwap(false, true) {
-				if err := t.loginWithAuthKey(ctx); err != nil {
+			tried := false
+			if needsLogin {
+				var err error
+				if tried, err = t.tryAuthKeyLogin(ctx); err != nil {
 					status.Error = err.Error()
 					return status
 				}
-			} else if !needsLogin || time.Now().After(deadline) {
+			}
+			if !tried && (!needsLogin || time.Now().After(deadline)) {
 				if needsLogin {
-					status.Error = strings.Join(st.Health, "; ")
+					// 优先给控制面的注册错误；没有时才用健康提示（未登录时 DERP 连不上属于连带现象）。
+					if msg, _ := t.authKeyLoginErr.Load().(string); msg != "" {
+						status.Error = msg
+					} else {
+						status.Error = strings.Join(st.Health, "; ")
+					}
 				}
 				return status
 			}
@@ -93,8 +102,62 @@ func (t *Tailscale) Logout(ctx context.Context) error {
 		return err
 	}
 	// BETTBOX-CUSTOM: Auth Key 方式下退出即「重新注册」，下次查询状态时用 key 重新注册。
-	t.authKeyLoginTried.Store(false)
+	t.authKeyLoginAt.Store(0)
+	t.authKeyLoginErr.Store("")
 	return nil
+}
+
+// BETTBOX-CUSTOM: Auth Key 自动重新注册的节流间隔。
+const tailscaleAuthKeyRetry = 20 * time.Second
+
+// tryAuthKeyLogin 在节流间隔外用 key 重新注册一次，返回是否真的尝试了。
+func (t *Tailscale) tryAuthKeyLogin(ctx context.Context) (bool, error) {
+	if t.option.AuthKey == "" {
+		return false, nil
+	}
+	now := time.Now().UnixNano()
+	last := t.authKeyLoginAt.Load()
+	if last != 0 && time.Duration(now-last) < tailscaleAuthKeyRetry {
+		return false, nil
+	}
+	if !t.authKeyLoginAt.CompareAndSwap(last, now) {
+		return false, nil
+	}
+	log.Infoln("[Tailscale](%s) needs login, registering with auth-key", t.Name())
+	err := t.loginWithAuthKey(ctx)
+	if err != nil {
+		t.authKeyLoginErr.Store(err.Error())
+		log.Warnln("[Tailscale](%s) auth-key login failed: %v", t.Name(), err)
+	}
+	return true, err
+}
+
+// retryAuthKeyLogin 在后台等到节流间隔结束后重试，仍需登录才注册；节点关闭或已登录即停。
+func (t *Tailscale) retryAuthKeyLogin() {
+	for attempt := 0; attempt < 3; attempt++ {
+		if wait := tailscaleAuthKeyRetry - time.Duration(time.Now().UnixNano()-t.authKeyLoginAt.Load()); wait > 0 {
+			select {
+			case <-t.ctx.Done():
+				return
+			case <-time.After(wait):
+			}
+		}
+		lc, err := t.server.LocalClient()
+		if err != nil {
+			return
+		}
+		ctx, cancel := context.WithTimeout(t.ctx, 30*time.Second)
+		st, err := lc.StatusWithoutPeers(ctx)
+		if err != nil || st.BackendState != ipn.NeedsLogin.String() {
+			cancel()
+			return
+		}
+		tried, _ := t.tryAuthKeyLogin(ctx)
+		cancel()
+		if tried {
+			return
+		}
+	}
 }
 
 // BETTBOX-CUSTOM: 退出登录会删掉当前 profile，新 profile 的偏好是默认值；重新登录前补回设备名、
