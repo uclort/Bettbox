@@ -1230,5 +1230,13 @@
   "trayStatusModeDesc": "規則模式顯示所選策略組；全域模式下流量都走 GLOBAL，固定顯示 GLOBAL；直連模式不經過策略組，只顯示 DIRECT（不附帶鏈路與延遲）。切換模式不會變更所選策略組。",
   "trayStatusOtherModes": "其他模式下顯示為",
   "trayStatusModeNothing": "不顯示",
-  "trayStatusPreviewDesc":"依目前設定與選中節點產生，網速為示例資料"
+  "trayStatusPreviewDesc":"依目前設定與選中節點產生，網速為示例資料",
+  "tailscaleProxyPeer": "經代理連線",
+  "tailscaleProxyChannel": "代理通道",
+  "tailscaleProxyChannelDesc": "標記為「經代理連線」的裝置透過另一個內建節點存取，它的控制面、DERP 與 UDP 流量都經所選代理送出。該節點在 Tailnet 中是另一台裝置，需要單獨登入；速度取決於所選代理。",
+  "tailscaleProxyVia": "透過",
+  "tailscaleProxyViaMissing": "請先選擇代理",
+  "tailscaleProxyDevices": "經代理連線的裝置",
+  "tailscaleProxyAddDevice": "手動新增裝置",
+  "tailscaleProxyAddDeviceDesc": "填寫 MagicDNS 名稱或 Tailscale IP，多個以逗號分隔，用於清單中看不到的裝置"
 }

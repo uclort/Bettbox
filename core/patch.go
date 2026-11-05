@@ -105,7 +105,8 @@ func applyPatch(raw *config.RawConfig, params *PatchParams) (string, error) {
 	removeTailscaleConflicts(raw, params)    // BETTBOX-CUSTOM: 内置 Tailscale 节点清理冲突配置
 	patchTailscaleDns(raw, params.Tailscale) // BETTBOX-CUSTOM: Tailscale 共存
 	if params.Tailscale != nil {
-		patchTailscaleNode(raw, params.Tailscale.Node) // BETTBOX-CUSTOM: 内置 Tailscale 节点
+		patchTailscaleNode(raw, params.Tailscale.Node)      // BETTBOX-CUSTOM: 内置 Tailscale 节点
+		patchTailscaleNode(raw, params.Tailscale.ProxyNode) // BETTBOX-CUSTOM: 代理通道节点
 	}
 	if hasPatchValue(params.Ntp) {
 		raw.NTP = defaults.NTP

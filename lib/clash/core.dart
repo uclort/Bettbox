@@ -573,9 +573,11 @@ class ClashCore {
   }
 
   // BETTBOX-CUSTOM: 内置 Tailscale 节点状态，未登录时附带浏览器登录链接。
-  Future<TailscaleNodeStatus> getTailscaleStatus() async {
+  Future<TailscaleNodeStatus> getTailscaleStatus([
+    String name = tailscaleNodeName,
+  ]) async {
     try {
-      final value = await clashInterface.getTailscaleStatus(tailscaleNodeName);
+      final value = await clashInterface.getTailscaleStatus(name);
       final decoded = value.isEmpty ? null : json.decode(value);
       if (decoded is! Map) return const TailscaleNodeStatus(error: 'empty');
       return TailscaleNodeStatus.fromJson(Map<String, dynamic>.from(decoded));
@@ -585,9 +587,9 @@ class ClashCore {
   }
 
   /// 返回错误信息，成功为空字符串。
-  Future<String> tailscaleLogout() async {
+  Future<String> tailscaleLogout([String name = tailscaleNodeName]) async {
     try {
-      return await clashInterface.tailscaleLogout(tailscaleNodeName);
+      return await clashInterface.tailscaleLogout(name);
     } catch (e) {
       return e.toString();
     }

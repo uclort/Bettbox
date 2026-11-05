@@ -10534,6 +10534,81 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Connect via proxy`
+  String get tailscaleProxyPeer {
+    return Intl.message(
+      'Connect via proxy',
+      name: 'tailscaleProxyPeer',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Proxy channel`
+  String get tailscaleProxyChannel {
+    return Intl.message(
+      'Proxy channel',
+      name: 'tailscaleProxyChannel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Devices marked "Connect via proxy" are reached through a second built-in node whose control plane, DERP and UDP traffic all go through the selected proxy. It is a separate device in your Tailnet and needs its own sign-in; its speed depends on the proxy.`
+  String get tailscaleProxyChannelDesc {
+    return Intl.message(
+      'Devices marked "Connect via proxy" are reached through a second built-in node whose control plane, DERP and UDP traffic all go through the selected proxy. It is a separate device in your Tailnet and needs its own sign-in; its speed depends on the proxy.',
+      name: 'tailscaleProxyChannelDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Via`
+  String get tailscaleProxyVia {
+    return Intl.message('Via', name: 'tailscaleProxyVia', desc: '', args: []);
+  }
+
+  /// `Choose a proxy first`
+  String get tailscaleProxyViaMissing {
+    return Intl.message(
+      'Choose a proxy first',
+      name: 'tailscaleProxyViaMissing',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Devices via proxy`
+  String get tailscaleProxyDevices {
+    return Intl.message(
+      'Devices via proxy',
+      name: 'tailscaleProxyDevices',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add device`
+  String get tailscaleProxyAddDevice {
+    return Intl.message(
+      'Add device',
+      name: 'tailscaleProxyAddDevice',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `MagicDNS name or Tailscale IP, comma separated; for devices not in the list`
+  String get tailscaleProxyAddDeviceDesc {
+    return Intl.message(
+      'MagicDNS name or Tailscale IP, comma separated; for devices not in the list',
+      name: 'tailscaleProxyAddDeviceDesc',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

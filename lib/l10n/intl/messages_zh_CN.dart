@@ -1500,6 +1500,18 @@ class MessageLookup extends MessageLookupByLibrary {
       "内置 Tailscale 节点\n\nBettbox 内核作为一台独立设备（默认名「本机名-bettbox」）加入 Tailnet，Tailnet 域名和网段通过规则转给它。本机流量本来就经过 Bettbox 的 VPN，不需要额外设置。\n\n为什么没有 Tailscale App 共存\n\n系统同一时间只允许一个 VPN 运行。Bettbox 启动后，Tailscale App 的 VPN 会被断开，反之亦然。Bettbox 运行时想访问 Tailnet，请使用内置节点。\n\n限制\n\n• 只负责本机访问 Tailnet，其他设备无法通过内置节点访问本机。\n• 如果本机需要被其他设备访问，只能停用 Bettbox，改用 Tailscale App。\n\n登录\n\n未填 Auth Key 时，点「登录 Tailscale」在浏览器里授权即可。登录状态保存在本机，重载配置不需要重新登录。使用带 tag 的 Auth Key 时，设备以 tag 身份出现，只允许你本人账号的服务可能拒绝访问。",
     ),
     "tailscaleNodeDevices": MessageLookupByLibrary.simpleMessage("设备"),
+    "tailscaleProxyAddDevice": MessageLookupByLibrary.simpleMessage("手动添加设备"),
+    "tailscaleProxyAddDeviceDesc": MessageLookupByLibrary.simpleMessage(
+      "填写 MagicDNS 名或 Tailscale IP，多个用逗号分隔，用于列表里看不到的设备",
+    ),
+    "tailscaleProxyChannel": MessageLookupByLibrary.simpleMessage("代理通道"),
+    "tailscaleProxyChannelDesc": MessageLookupByLibrary.simpleMessage(
+      "标记为「经代理连接」的设备通过另一个内置节点访问，它的控制面、DERP 与 UDP 流量都经所选代理发出。该节点在 Tailnet 中是另一台设备，需要单独登录；速度取决于所选代理。",
+    ),
+    "tailscaleProxyDevices": MessageLookupByLibrary.simpleMessage("经代理连接的设备"),
+    "tailscaleProxyPeer": MessageLookupByLibrary.simpleMessage("经代理连接"),
+    "tailscaleProxyVia": MessageLookupByLibrary.simpleMessage("通过"),
+    "tailscaleProxyViaMissing": MessageLookupByLibrary.simpleMessage("请先选择代理"),
     "tailscaleNodeOnline": MessageLookupByLibrary.simpleMessage("在线"),
     "tailscaleNodeOffline": MessageLookupByLibrary.simpleMessage("离线"),
     "tailscaleNodeDirect": MessageLookupByLibrary.simpleMessage("直连"),

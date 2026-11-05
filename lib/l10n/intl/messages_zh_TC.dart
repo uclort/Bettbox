@@ -1512,6 +1512,18 @@ class MessageLookup extends MessageLookupByLibrary {
       "內建 Tailscale 節點\n\nBettbox 核心作為一台獨立裝置（預設名稱「本機名稱-bettbox」）加入 Tailnet，Tailnet 網域與網段透過規則轉給它。本機流量本來就經過 Bettbox 的 VPN，不需要額外設定。\n\n為何沒有 Tailscale App 共存\n\n系統同一時間只允許一個 VPN 執行。Bettbox 啟動後，Tailscale App 的 VPN 會被中斷，反之亦然。Bettbox 執行時想存取 Tailnet，請使用內建節點。\n\n限制\n\n• 只負責本機存取 Tailnet，其他裝置無法透過內建節點存取本機。\n• 若本機需要被其他裝置存取，只能停用 Bettbox，改用 Tailscale App。\n\n登入\n\n未填 Auth Key 時，點「登入 Tailscale」在瀏覽器授權即可。登入狀態儲存在本機，重新載入設定不需要重新登入。使用帶 tag 的 Auth Key 時，裝置以 tag 身分出現，只允許你本人帳號的服務可能拒絕存取。",
     ),
     "tailscaleNodeDevices": MessageLookupByLibrary.simpleMessage("裝置"),
+    "tailscaleProxyAddDevice": MessageLookupByLibrary.simpleMessage("手動新增裝置"),
+    "tailscaleProxyAddDeviceDesc": MessageLookupByLibrary.simpleMessage(
+      "填寫 MagicDNS 名稱或 Tailscale IP，多個以逗號分隔，用於清單中看不到的裝置",
+    ),
+    "tailscaleProxyChannel": MessageLookupByLibrary.simpleMessage("代理通道"),
+    "tailscaleProxyChannelDesc": MessageLookupByLibrary.simpleMessage(
+      "標記為「經代理連線」的裝置透過另一個內建節點存取，它的控制面、DERP 與 UDP 流量都經所選代理送出。該節點在 Tailnet 中是另一台裝置，需要單獨登入；速度取決於所選代理。",
+    ),
+    "tailscaleProxyDevices": MessageLookupByLibrary.simpleMessage("經代理連線的裝置"),
+    "tailscaleProxyPeer": MessageLookupByLibrary.simpleMessage("經代理連線"),
+    "tailscaleProxyVia": MessageLookupByLibrary.simpleMessage("透過"),
+    "tailscaleProxyViaMissing": MessageLookupByLibrary.simpleMessage("請先選擇代理"),
     "tailscaleNodeOnline": MessageLookupByLibrary.simpleMessage("在線"),
     "tailscaleNodeOffline": MessageLookupByLibrary.simpleMessage("離線"),
     "tailscaleNodeDirect": MessageLookupByLibrary.simpleMessage("直連"),

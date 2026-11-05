@@ -1,6 +1,6 @@
 // ignore_for_file: invalid_annotation_target
 
-import 'dart:io' show Platform;
+import 'dart:io' show InternetAddress, Platform;
 
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/enum/enum.dart';
@@ -53,6 +53,65 @@ const defaultTailscaleProps = TailscaleProps();
 
 // BETTBOX-CUSTOM: 内置 Tailscale 节点在内核中的名称，前置规则与 tailscale:// DNS 都引用它。
 const tailscaleNodeName = 'Bettbox-Tailscale';
+
+// BETTBOX-CUSTOM: 代理通道节点。tsnet 不能按对端切换拨号方式，指定设备经代理连接时另起一个带
+// dialer-proxy 的节点（Tailnet 中是另一台设备），前置规则把这些设备的域名与 IP 指向它。
+const tailscaleProxyNodeName = 'Bettbox-Tailscale-Proxy';
+
+/// 经代理连接的设备。持久化为 `DNS名,IP,IP`（手动添加时可以只有 DNS 名或只有 IP）。
+class TailscaleProxyDevice {
+  const TailscaleProxyDevice({this.dnsName = '', this.ips = const []});
+
+  factory TailscaleProxyDevice.parse(String raw) {
+    var dnsName = '';
+    final ips = <String>[];
+    for (final part in raw.split(',')) {
+      final value = part.trim();
+      if (value.isEmpty) continue;
+      if (InternetAddress.tryParse(value) != null) {
+        if (!ips.contains(value)) ips.add(value);
+      } else if (dnsName.isEmpty) {
+        dnsName = normalizeTailscaleDomain(value);
+      }
+    }
+    return TailscaleProxyDevice(dnsName: dnsName, ips: ips);
+  }
+
+  factory TailscaleProxyDevice.fromPeer(TailscalePeer peer) =>
+      TailscaleProxyDevice(
+        dnsName: normalizeTailscaleDomain(peer.dnsName),
+        ips: peer.ips,
+      );
+
+  final String dnsName;
+  final List<String> ips;
+
+  bool get isEmpty => dnsName.isEmpty && ips.isEmpty;
+
+  String get encoded => [if (dnsName.isNotEmpty) dnsName, ...ips].join(',');
+
+  String get displayName {
+    final short = dnsName.split('.').first;
+    return short.isNotEmpty ? short : ips.join(', ');
+  }
+
+  /// 同一台设备：DNS 名相同，或任一 IP 相同。
+  bool matches(TailscaleProxyDevice other) {
+    if (dnsName.isNotEmpty && dnsName == other.dnsName) return true;
+    return ips.any(other.ips.contains);
+  }
+
+  bool matchesPeer(TailscalePeer peer) =>
+      matches(TailscaleProxyDevice.fromPeer(peer));
+
+  List<String> rules(String target) => [
+    if (dnsName.isNotEmpty) 'DOMAIN,$dnsName,$target',
+    for (final ip in ips)
+      ip.contains(':')
+          ? 'IP-CIDR6,$ip/128,$target,no-resolve'
+          : 'IP-CIDR,$ip/32,$target,no-resolve',
+  ];
+}
 
 const defaultAppSettingProps = AppSettingProps();
 const defaultVpnProps = VpnProps();
@@ -424,6 +483,9 @@ abstract class TailscaleProps with _$TailscaleProps {
     @Default('') String nodeExitNode,
     @Default(true) bool nodeAcceptRoutes,
     @Default(false) bool nodeUseAuthKey,
+    // BETTBOX-CUSTOM: 经代理连接的设备（TailscaleProxyDevice.encoded）与代理通道使用的策略组/节点。
+    @Default([]) List<String> nodeProxyDevices,
+    @Default('') String nodeProxyVia,
   }) = _TailscaleProps;
 
   factory TailscaleProps.fromJson(Map<String, Object?> json) =>
@@ -440,6 +502,65 @@ extension TailscalePropsExt on TailscaleProps {
   /// Auth Key 方式已选但还没填 key。
   bool get nodeAuthKeyMissing =>
       nodeEnable && nodeUseAuthKey && nodeAuthKey.trim().isEmpty;
+
+  List<TailscaleProxyDevice> get proxyDevices => [
+    for (final raw in nodeProxyDevices)
+      if (TailscaleProxyDevice.parse(raw) case final d when !d.isEmpty) d,
+  ];
+
+  /// 有经代理连接的设备但还没选代理。
+  bool get proxyViaMissing =>
+      nodeActive && proxyDevices.isNotEmpty && nodeProxyVia.trim().isEmpty;
+
+  /// 代理通道节点生效：内置节点生效、至少一台设备、已选代理。
+  bool get proxyNodeActive =>
+      nodeActive && proxyDevices.isNotEmpty && nodeProxyVia.trim().isNotEmpty;
+
+  /// 代理通道节点的设备名：主设备名加 `-proxy`（Auth Key 方式为 `…-proxy-key`）。
+  String get effectiveProxyNodeHostname {
+    final base = _baseNodeHostname;
+    final proxied = base.endsWith('-proxy') ? base : '$base-proxy';
+    return nodeUseAuthKey ? '$proxied-key' : proxied;
+  }
+
+  bool isProxyPeer(TailscalePeer peer) =>
+      proxyDevices.any((device) => device.matchesPeer(peer));
+
+  /// 切换某台设备是否经代理连接。
+  TailscaleProps toggleProxyPeer(TailscalePeer peer, bool value) {
+    final device = TailscaleProxyDevice.fromPeer(peer);
+    final rest = proxyDevices.where((d) => !d.matches(device));
+    return copyWith(
+      nodeProxyDevices: [
+        for (final d in rest) d.encoded,
+        if (value && !device.isEmpty) device.encoded,
+      ],
+    );
+  }
+
+  /// 设备 IP 变化时按 DNS 名用最新状态更新，返回 null 表示无变化。
+  TailscaleProps? syncProxyPeers(List<TailscalePeer> peers) {
+    var changed = false;
+    final updated = <String>[];
+    for (final device in proxyDevices) {
+      final peer = device.dnsName.isEmpty
+          ? null
+          : peers
+                .where(
+                  (p) => normalizeTailscaleDomain(p.dnsName) == device.dnsName,
+                )
+                .firstOrNull;
+      if (peer != null &&
+          peer.ips.isNotEmpty &&
+          peer.ips.join(',') != device.ips.join(',')) {
+        changed = true;
+        updated.add(TailscaleProxyDevice.fromPeer(peer).encoded);
+      } else {
+        updated.add(device.encoded);
+      }
+    }
+    return changed ? copyWith(nodeProxyDevices: updated) : null;
+  }
 
   /// 任一方式开启：内核补充 Tailscale 服务域名真实 IP、Tailnet 域名 DNS 与前置规则。
   bool get active => appActive || nodeActive;
@@ -507,16 +628,29 @@ extension TailscalePropsExt on TailscaleProps {
               'exit-node': nodeExitNode.trim(),
               'accept-routes': nodeAcceptRoutes,
             },
+            // 代理通道节点只用于访问指定设备，不设 exit node；接入方式与主节点一致。
+            if (proxyNodeActive)
+              'proxy-node': {
+                'name': tailscaleProxyNodeName,
+                'hostname': effectiveProxyNodeHostname,
+                'auth-mode': nodeUseAuthKey ? 'auth-key' : 'login',
+                if (nodeUseAuthKey) 'auth-key': nodeAuthKey.trim(),
+                'exit-node': '',
+                'accept-routes': nodeAcceptRoutes,
+                'dialer-proxy': nodeProxyVia.trim(),
+              },
           },
         }
       : null;
 
-  /// 恢复默认值，保留开关状态、接入方式与 auth key。
+  /// 恢复默认值，保留开关状态、接入方式、auth key 与经代理连接的设备。
   TailscaleProps reset() => defaultTailscaleProps.copyWith(
     enable: enable,
     nodeEnable: nodeEnable,
     nodeAuthKey: nodeAuthKey,
     nodeUseAuthKey: nodeUseAuthKey,
+    nodeProxyDevices: nodeProxyDevices,
+    nodeProxyVia: nodeProxyVia,
   );
 
   /// 内置节点开启时，系统代理例外里的 Tailnet 条目会让浏览器等走系统代理的应用直连 Tailnet，
@@ -538,6 +672,10 @@ extension TailscalePropsExt on TailscaleProps {
   List<String> get prependRules {
     final target = nodeActive ? tailscaleNodeName : 'DIRECT';
     return [
+      // 指定设备经代理通道，必须排在通用 Tailnet 规则之前。
+      if (proxyNodeActive)
+        for (final device in proxyDevices)
+          ...device.rules(tailscaleProxyNodeName),
       for (final domain in dnsDomains)
         if (normalizeTailscaleDomain(domain) case final d when d.isNotEmpty)
           'DOMAIN-SUFFIX,$d,$target',

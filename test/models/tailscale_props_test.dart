@@ -176,6 +176,71 @@ void main() {
     );
   });
 
+  // BETTBOX-CUSTOM: 指定设备经代理通道节点连接，规则排在通用 Tailnet 规则之前。
+  test('经代理连接的设备注入代理通道节点与前置规则', () {
+    const rex = TailscalePeer(
+      dnsName: 'rex.tailc7e14e.ts.net.',
+      ips: ['100.121.3.59', 'fd7a:115c:a1e0::1'],
+    );
+    var props = const TailscaleProps(
+      nodeEnable: true,
+      nodeHostname: 'mac-bettbox',
+    ).toggleProxyPeer(rex, true);
+    expect(props.nodeProxyDevices, [
+      'rex.tailc7e14e.ts.net,100.121.3.59,fd7a:115c:a1e0::1',
+    ]);
+    expect(props.isProxyPeer(rex), isTrue);
+    // 未选代理时不注入，规则不变
+    expect(props.proxyViaMissing, isTrue);
+    expect(props.proxyNodeActive, isFalse);
+    expect(props.patchJson?['proxy-node'], isNull);
+    expect(props.prependRules.first, 'DOMAIN-SUFFIX,ts.net,$tailscaleNodeName');
+
+    props = props.copyWith(nodeProxyVia: 'Global');
+    expect(props.proxyNodeActive, isTrue);
+    expect(props.patchJson?['proxy-node'], {
+      'name': tailscaleProxyNodeName,
+      'hostname': 'mac-bettbox-proxy',
+      'auth-mode': 'login',
+      'exit-node': '',
+      'accept-routes': true,
+      'dialer-proxy': 'Global',
+    });
+    expect(props.prependRules.take(4), [
+      'DOMAIN,rex.tailc7e14e.ts.net,$tailscaleProxyNodeName',
+      'IP-CIDR,100.121.3.59/32,$tailscaleProxyNodeName,no-resolve',
+      'IP-CIDR6,fd7a:115c:a1e0::1/128,$tailscaleProxyNodeName,no-resolve',
+      'DOMAIN-SUFFIX,ts.net,$tailscaleNodeName',
+    ]);
+    expect(
+      props.copyWith(nodeUseAuthKey: true, nodeAuthKey: 'k').effectiveProxyNodeHostname,
+      'mac-bettbox-proxy-key',
+    );
+
+    // IP 变化时按 DNS 名同步；无变化返回 null
+    const moved = TailscalePeer(dnsName: 'rex.tailc7e14e.ts.net', ips: ['100.121.3.60']);
+    expect(props.syncProxyPeers([rex]), isNull);
+    expect(props.syncProxyPeers([moved])?.nodeProxyDevices, [
+      'rex.tailc7e14e.ts.net,100.121.3.60',
+    ]);
+
+    // 关闭后恢复；手动添加只有 IP 的设备也能生成规则
+    expect(props.toggleProxyPeer(rex, false).nodeProxyDevices, isEmpty);
+    final manual = TailscaleProxyDevice.parse(' 100.1.2.3 , Rex.Tail.ts.net. ');
+    expect(manual.encoded, 'rex.tail.ts.net,100.1.2.3');
+    expect(TailscaleProxyDevice.parse('100.1.2.3').rules('X'), [
+      'IP-CIDR,100.1.2.3/32,X,no-resolve',
+    ]);
+
+    // 只开 App 共存时不生效
+    const app = TailscaleProps(
+      enable: true,
+      nodeProxyDevices: ['rex.tail.ts.net'],
+      nodeProxyVia: 'Global',
+    );
+    expect(app.proxyNodeActive, isFalse);
+  });
+
   test('节点状态解析', () {
     final status = TailscaleNodeStatus.fromJson({
       'state': 'NeedsLogin',

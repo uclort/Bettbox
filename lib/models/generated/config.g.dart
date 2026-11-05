@@ -511,6 +511,12 @@ _TailscaleProps _$TailscalePropsFromJson(Map<String, dynamic> json) =>
       nodeExitNode: json['nodeExitNode'] as String? ?? '',
       nodeAcceptRoutes: json['nodeAcceptRoutes'] as bool? ?? true,
       nodeUseAuthKey: json['nodeUseAuthKey'] as bool? ?? false,
+      nodeProxyDevices:
+          (json['nodeProxyDevices'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+      nodeProxyVia: json['nodeProxyVia'] as String? ?? '',
     );
 
 Map<String, dynamic> _$TailscalePropsToJson(_TailscaleProps instance) =>
@@ -526,6 +532,8 @@ Map<String, dynamic> _$TailscalePropsToJson(_TailscaleProps instance) =>
       'nodeExitNode': instance.nodeExitNode,
       'nodeAcceptRoutes': instance.nodeAcceptRoutes,
       'nodeUseAuthKey': instance.nodeUseAuthKey,
+      'nodeProxyDevices': instance.nodeProxyDevices,
+      'nodeProxyVia': instance.nodeProxyVia,
     };
 
 _ProxiesStyle _$ProxiesStyleFromJson(Map<String, dynamic> json) =>

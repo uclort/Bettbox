@@ -1230,5 +1230,13 @@
   "trayStatusModeDesc": "Rule mode shows the chosen group; Global mode routes all traffic through GLOBAL, so GLOBAL is always shown; Direct mode bypasses proxy groups and shows only DIRECT (no chain or delay). Switching modes keeps your chosen group.",
   "trayStatusOtherModes": "In other modes",
   "trayStatusModeNothing": "Nothing shown",
-  "trayStatusPreviewDesc":"Built from current settings and selection; speed values are samples"
+  "trayStatusPreviewDesc":"Built from current settings and selection; speed values are samples",
+  "tailscaleProxyPeer": "Connect via proxy",
+  "tailscaleProxyChannel": "Proxy channel",
+  "tailscaleProxyChannelDesc": "Devices marked \"Connect via proxy\" are reached through a second built-in node whose control plane, DERP and UDP traffic all go through the selected proxy. It is a separate device in your Tailnet and needs its own sign-in; its speed depends on the proxy.",
+  "tailscaleProxyVia": "Via",
+  "tailscaleProxyViaMissing": "Choose a proxy first",
+  "tailscaleProxyDevices": "Devices via proxy",
+  "tailscaleProxyAddDevice": "Add device",
+  "tailscaleProxyAddDeviceDesc": "MagicDNS name or Tailscale IP, comma separated; for devices not in the list"
 }

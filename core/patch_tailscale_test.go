@@ -171,6 +171,37 @@ func TestPatchTailscaleNodeAuthMode(t *testing.T) {
 	}
 }
 
+// BETTBOX-CUSTOM: 代理通道节点带 dialer-proxy、使用独立 state-dir，同样排除出 include-all 策略组。
+func TestPatchTailscaleProxyNode(t *testing.T) {
+	for _, tc := range []struct{ mode, dir string }{
+		{"login", tailscaleProxyNodeStateDir},
+		{"auth-key", tailscaleProxyNodeAuthKeyStateDir},
+	} {
+		rawCfg := parsePatchProfile(t, tailscaleNodeProfile)
+		params := patchParams(t, `{"tailscale":{"dns-domains":["ts.net"],
+			"node":{"name":"Bettbox-Tailscale","auth-mode":"`+tc.mode+`","auth-key":"k"},
+			"proxy-node":{"name":"Bettbox-Tailscale-Proxy","hostname":"m1-bettbox-proxy","auth-mode":"`+tc.mode+`","auth-key":"k","dialer-proxy":"manual","accept-routes":true}}}`)
+		if _, err := applyPatch(rawCfg, params); err != nil {
+			t.Fatal(err)
+		}
+		direct, proxy := rawCfg.Proxy[len(rawCfg.Proxy)-2], rawCfg.Proxy[len(rawCfg.Proxy)-1]
+		if _, ok := direct["dialer-proxy"]; ok || direct["state-dir"] == tc.dir {
+			t.Fatalf("%s: direct node must stay direct: %v", tc.mode, direct)
+		}
+		if proxy["name"] != "Bettbox-Tailscale-Proxy" || proxy["dialer-proxy"] != "manual" ||
+			proxy["state-dir"] != tc.dir || proxy["hostname"] != "m1-bettbox-proxy" {
+			t.Fatalf("%s: unexpected proxy node: %v", tc.mode, proxy)
+		}
+		if got := rawCfg.ProxyGroup[0]["exclude-filter"]; got != "过期|^Bettbox-Tailscale$|^Bettbox-Tailscale-Proxy$" {
+			t.Fatalf("include-all group must exclude both nodes, got %v", got)
+		}
+		// MagicDNS 仍由直连节点解析
+		if value, _ := rawCfg.DNS.NameServerPolicy.Get("+.ts.net"); value != "tailscale://Bettbox-Tailscale" {
+			t.Fatalf("MagicDNS must stay on direct node, got %v", value)
+		}
+	}
+}
+
 // BETTBOX-CUSTOM: 内置节点开启时清理让 Tailnet 绕开节点的配置；只开 App 共存时不动。
 func TestPatchTailscaleNodeRemovesConflicts(t *testing.T) {
 	profile := `dns:

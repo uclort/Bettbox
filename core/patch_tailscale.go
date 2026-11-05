@@ -17,6 +17,9 @@ type PatchTailscale struct {
 	DnsDomains []string            `json:"dns-domains"`
 	DnsServer  string              `json:"dns-server"`
 	Node       *PatchTailscaleNode `json:"node"`
+	// BETTBOX-CUSTOM: 代理通道节点。tsnet 无法按对端切换拨号方式，指定设备经代理连接时
+	// 另起一个带 dialer-proxy 的节点（Tailnet 中是另一台设备），由前置规则把这些设备指向它。
+	ProxyNode *PatchTailscaleNode `json:"proxy-node"`
 	// BETTBOX-CUSTOM: Tailnet 网段，内置节点开启时用于清理会让流量绕开节点的配置。
 	Ranges []string `json:"ranges"`
 }
@@ -29,14 +32,19 @@ type PatchTailscaleNode struct {
 	AuthKey      string `json:"auth-key"`
 	ExitNode     string `json:"exit-node"`
 	AcceptRoutes bool   `json:"accept-routes"`
+	// 非空时为代理通道节点：控制面、DERP 与 UDP 都经该策略组/节点发出，使用独立 state-dir。
+	DialerProxy string `json:"dialer-proxy"`
 }
 
 // 状态目录固定在内核 home 下，切换订阅或重载配置不会丢失登录状态。
 // 两种接入方式各用一个目录：切到 Auth Key 不清空浏览器登录，切回来仍用原来的身份。
+// 代理通道节点同样按接入方式各用一个目录，与直连节点互不影响。
 const (
-	tailscaleNodeStateDir        = "tailscale/bettbox"
-	tailscaleNodeAuthKeyStateDir = "tailscale/bettbox-authkey"
-	tailscaleAuthModeAuthKey     = "auth-key"
+	tailscaleNodeStateDir             = "tailscale/bettbox"
+	tailscaleNodeAuthKeyStateDir      = "tailscale/bettbox-authkey"
+	tailscaleProxyNodeStateDir        = "tailscale/bettbox-proxy"
+	tailscaleProxyNodeAuthKeyStateDir = "tailscale/bettbox-proxy-authkey"
+	tailscaleAuthModeAuthKey          = "auth-key"
 )
 
 func patchTailscaleNode(raw *config.RawConfig, node *PatchTailscaleNode) {
@@ -68,6 +76,9 @@ func patchTailscaleNode(raw *config.RawConfig, node *PatchTailscaleNode) {
 		if exitNode := strings.TrimSpace(node.ExitNode); exitNode != "" {
 			proxy["exit-node"] = exitNode
 		}
+		if dialerProxy := strings.TrimSpace(node.DialerProxy); dialerProxy != "" {
+			proxy["dialer-proxy"] = dialerProxy
+		}
 		raw.Proxy = append(raw.Proxy, proxy)
 	}
 	// include-all 策略组会把它当普通节点做健康检查甚至自动选中，这里排除，只由前置规则引用。
@@ -93,7 +104,13 @@ func (node *PatchTailscaleNode) useAuthKey() bool {
 }
 
 func (node *PatchTailscaleNode) stateDir() string {
-	if node.useAuthKey() {
+	proxied := strings.TrimSpace(node.DialerProxy) != ""
+	switch {
+	case proxied && node.useAuthKey():
+		return tailscaleProxyNodeAuthKeyStateDir
+	case proxied:
+		return tailscaleProxyNodeStateDir
+	case node.useAuthKey():
 		return tailscaleNodeAuthKeyStateDir
 	}
 	return tailscaleNodeStateDir

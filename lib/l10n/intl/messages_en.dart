@@ -2038,6 +2038,28 @@ class MessageLookup extends MessageLookupByLibrary {
       "Built-in Tailscale Node\n\nThe Bettbox core joins your Tailnet as a separate device (named \"<hostname>-bettbox\" by default), and Tailnet domains and ranges are forwarded to it by rules. All traffic on this device already passes through the Bettbox VPN, so no extra setup is needed.\n\nWhy there is no Tailscale App coexistence\n\nThe system allows only one VPN at a time. Once Bettbox starts, the Tailscale App's VPN is disconnected, and vice versa. To reach your Tailnet while Bettbox is running, use the built-in node.\n\nLimits\n\n• Outbound only: this device can reach the Tailnet, but other devices cannot reach this device through the built-in node.\n• If you need this device to be reachable, stop Bettbox and use the Tailscale App instead.\n\nSign-in\n\nWithout an Auth Key, tap \"Sign in to Tailscale\" and authorize in the browser. The login is stored locally and survives config reloads. With a tagged Auth Key the device shows up as the tag instead of your account, and services that only allow your account may reject it.",
     ),
     "tailscaleNodeDevices": MessageLookupByLibrary.simpleMessage("Devices"),
+    "tailscaleProxyAddDevice": MessageLookupByLibrary.simpleMessage(
+      "Add device",
+    ),
+    "tailscaleProxyAddDeviceDesc": MessageLookupByLibrary.simpleMessage(
+      "MagicDNS name or Tailscale IP, comma separated; for devices not in the list",
+    ),
+    "tailscaleProxyChannel": MessageLookupByLibrary.simpleMessage(
+      "Proxy channel",
+    ),
+    "tailscaleProxyChannelDesc": MessageLookupByLibrary.simpleMessage(
+      "Devices marked \"Connect via proxy\" are reached through a second built-in node whose control plane, DERP and UDP traffic all go through the selected proxy. It is a separate device in your Tailnet and needs its own sign-in; its speed depends on the proxy.",
+    ),
+    "tailscaleProxyDevices": MessageLookupByLibrary.simpleMessage(
+      "Devices via proxy",
+    ),
+    "tailscaleProxyPeer": MessageLookupByLibrary.simpleMessage(
+      "Connect via proxy",
+    ),
+    "tailscaleProxyVia": MessageLookupByLibrary.simpleMessage("Via"),
+    "tailscaleProxyViaMissing": MessageLookupByLibrary.simpleMessage(
+      "Choose a proxy first",
+    ),
     "tailscaleNodeOnline": MessageLookupByLibrary.simpleMessage("Online"),
     "tailscaleNodeOffline": MessageLookupByLibrary.simpleMessage("Offline"),
     "tailscaleNodeDirect": MessageLookupByLibrary.simpleMessage("Direct"),

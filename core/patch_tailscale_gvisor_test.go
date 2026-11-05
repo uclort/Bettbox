@@ -39,3 +39,32 @@ func TestPatchTailscaleNodeParses(t *testing.T) {
 	}
 	_ = proxy.Close()
 }
+
+// BETTBOX-CUSTOM: 代理通道节点与按设备的前置规则能被 mihomo 解析。
+func TestPatchTailscaleProxyNodeParses(t *testing.T) {
+	C.SetHomeDir(t.TempDir())
+	rawCfg := parsePatchProfile(t, tailscaleNodeProfile)
+	params := patchParams(t, `{
+		"tailscale":{"dns-domains":["ts.net"],"node":{"name":"Bettbox-Tailscale"},
+			"proxy-node":{"name":"Bettbox-Tailscale-Proxy","dialer-proxy":"manual"}},
+		"prepend-rules":["DOMAIN,rex.tail1.ts.net,Bettbox-Tailscale-Proxy","IP-CIDR,100.121.3.59/32,Bettbox-Tailscale-Proxy,no-resolve",
+			"DOMAIN-SUFFIX,ts.net,Bettbox-Tailscale","IP-CIDR,100.64.0.0/10,Bettbox-Tailscale,no-resolve"]
+	}`)
+	if _, err := applyPatch(rawCfg, params); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := config.ParseRawConfig(rawCfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"Bettbox-Tailscale", "Bettbox-Tailscale-Proxy"} {
+		proxy, ok := cfg.Proxies[name]
+		if !ok || proxy.Type() != C.Tailscale {
+			t.Fatalf("missing tailscale node %s", name)
+		}
+		_ = proxy.Close()
+	}
+	if got := cfg.Rules[0].Adapter(); got != "Bettbox-Tailscale-Proxy" {
+		t.Fatalf("device rule must come first, got %s", got)
+	}
+}

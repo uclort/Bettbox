@@ -253,6 +253,8 @@ class _TailscaleNodeSettings extends ConsumerStatefulWidget {
 class _TailscaleNodeSettingsState
     extends ConsumerState<_TailscaleNodeSettings> {
   TailscaleNodeStatus? _status;
+  // BETTBOX-CUSTOM: 代理通道节点状态（只在 proxyNodeActive 时查询）。
+  TailscaleNodeStatus? _proxyStatus;
   bool _loading = false;
   Timer? _loginPoll;
   Timer? _autoRefresh;
@@ -282,12 +284,67 @@ class _TailscaleNodeSettingsState
     if (!silent) setState(() => _loading = true);
     _loading = true;
     final status = await clashCore.getTailscaleStatus();
+    final props = ref.read(networkSettingProvider).tailscale;
+    final proxyStatus = props.proxyNodeActive
+        ? await clashCore.getTailscaleStatus(tailscaleProxyNodeName)
+        : null;
     if (!mounted) return;
     setState(() {
       _status = status;
+      _proxyStatus = proxyStatus;
       _loading = false;
     });
-    if (status.running) _loginPoll?.cancel();
+    // 经代理连接的设备 IP 变化时按 DNS 名更新规则。
+    if (status.running) {
+      final synced = ref
+          .read(networkSettingProvider)
+          .tailscale
+          .syncProxyPeers(status.peers);
+      if (synced != null) _updateTailscale(ref, (_) => synced);
+    }
+    if (status.running && (proxyStatus == null || proxyStatus.running)) {
+      _loginPoll?.cancel();
+    }
+  }
+
+  Future<void> _setProxyPeer(TailscalePeer peer, bool value) async {
+    await _updateTailscale(ref, (state) => state.toggleProxyPeer(peer, value));
+    if (value) _startPoll();
+  }
+
+  Future<void> _removeProxyDevice(TailscaleProxyDevice device) async {
+    await _updateTailscale(
+      ref,
+      (state) => state.copyWith(
+        nodeProxyDevices: [
+          for (final d in state.proxyDevices)
+            if (!d.matches(device)) d.encoded,
+        ],
+      ),
+    );
+  }
+
+  Future<void> _addProxyDevice(String raw) async {
+    final device = TailscaleProxyDevice.parse(raw);
+    if (device.isEmpty) return;
+    await _updateTailscale(
+      ref,
+      (state) => state.copyWith(
+        nodeProxyDevices: [
+          for (final d in state.proxyDevices)
+            if (!d.matches(device)) d.encoded,
+          device.encoded,
+        ],
+      ),
+    );
+    _startPoll();
+  }
+
+  Future<void> _changeProxyVia(String value) async {
+    await _updateTailscale(ref, (state) => state.copyWith(nodeProxyVia: value));
+    if (!mounted) return;
+    setState(() => _proxyStatus = null);
+    _startPoll();
   }
 
   Future<void> _login(String url) async {
@@ -362,29 +419,155 @@ class _TailscaleNodeSettingsState
   }
 
   /// Auth Key 方式：退出当前身份后内核会用当前 key 重新注册。
-  Future<void> _reRegister(TailscaleProps props) async {
+  Future<void> _reRegister(
+    TailscaleProps props, [
+    String name = tailscaleNodeName,
+  ]) async {
     final ok = await _confirm(
       appLocalizations.tailscaleNodeReRegister,
       appLocalizations.tailscaleNodeReRegisterTip,
       props,
     );
     if (!ok) return;
-    final error = await clashCore.tailscaleLogout();
+    final error = await clashCore.tailscaleLogout(name);
     if (error.isNotEmpty) globalState.showNotifier(error);
     if (!mounted) return;
-    setState(() => _status = null);
+    setState(() {
+      if (name == tailscaleNodeName) {
+        _status = null;
+      } else {
+        _proxyStatus = null;
+      }
+    });
     _startPoll();
   }
 
-  Future<void> _logout() async {
+  Future<void> _logout([String name = tailscaleNodeName]) async {
     final res = await globalState.showMessage(
       title: appLocalizations.tailscaleNodeLogout,
       message: TextSpan(text: appLocalizations.tailscaleNodeLogoutTip),
     );
     if (res != true) return;
-    final error = await clashCore.tailscaleLogout();
+    final error = await clashCore.tailscaleLogout(name);
     if (error.isNotEmpty) globalState.showNotifier(error);
     await _refresh();
+  }
+
+  /// 登录 / 退出登录 / 重新注册按钮，主节点与代理通道节点共用。
+  List<Widget> _nodeActions(
+    TailscaleProps props,
+    TailscaleNodeStatus? status,
+    String name,
+  ) => [
+    if (!props.nodeUseAuthKey && status != null && status.needsLogin)
+      ListItem(
+        leading: const Icon(Icons.login),
+        title: Text(appLocalizations.tailscaleNodeLogin),
+        onTap: () => _login(status.authUrl),
+      ),
+    if (!props.nodeUseAuthKey && status != null && status.running)
+      ListItem(
+        leading: const Icon(Icons.logout),
+        title: Text(appLocalizations.tailscaleNodeLogout),
+        onTap: () => _logout(name),
+      ),
+    if (props.nodeActive &&
+        props.nodeUseAuthKey &&
+        status != null &&
+        (status.running || status.state == 'NeedsLogin'))
+      ListItem(
+        leading: const Icon(Icons.autorenew),
+        title: Text(appLocalizations.tailscaleNodeReRegister),
+        subtitle: Text(appLocalizations.tailscaleNodeReRegisterTip),
+        onTap: () => _reRegister(props, name),
+      ),
+  ];
+
+  List<Widget> _proxyChannelSection(TailscaleProps props) {
+    final devices = props.proxyDevices;
+    final groups = ref
+        .watch(groupsProvider)
+        .map((group) => group.name)
+        .where(
+          (name) =>
+              name != GroupName.GLOBAL.name &&
+              name != tailscaleNodeName &&
+              name != tailscaleProxyNodeName,
+        )
+        .toList();
+    final via = props.nodeProxyVia.trim();
+    final options = [if (via.isNotEmpty && !groups.contains(via)) via, ...groups];
+    final proxyStatus = _proxyStatus;
+    return [
+      ListHeader(title: appLocalizations.tailscaleProxyChannel),
+      ListItem(
+        title: Text(appLocalizations.tailscaleProxyChannel),
+        subtitle: Text(appLocalizations.tailscaleProxyChannelDesc),
+      ),
+      ListItem.options(
+        title: Text(appLocalizations.tailscaleProxyVia),
+        subtitle: Text(
+          via.isEmpty ? appLocalizations.tailscaleProxyViaMissing : via,
+        ),
+        delegate: OptionsDelegate<String>(
+          title: appLocalizations.tailscaleProxyVia,
+          value: via,
+          options: options,
+          textBuilder: (value) => value,
+          onChanged: (value) {
+            if (value == null || value == via) return;
+            _changeProxyVia(value);
+          },
+        ),
+      ),
+      if (devices.isNotEmpty) ...[
+        _TailscaleNodeStatusPanel(
+          status: proxyStatus,
+          loading: _loading,
+          onRefresh: _refresh,
+          statusText: props.proxyViaMissing
+              ? appLocalizations.tailscaleProxyViaMissing
+              : _statusText(props, proxyStatus),
+        ),
+        if (props.proxyNodeActive)
+          ..._nodeActions(props, proxyStatus, tailscaleProxyNodeName),
+      ],
+      ListItem.input(
+        leading: const Icon(Icons.add),
+        title: Text(appLocalizations.tailscaleProxyAddDevice),
+        subtitle: Text(appLocalizations.tailscaleProxyAddDeviceDesc),
+        delegate: InputDelegate(
+          title: appLocalizations.tailscaleProxyAddDevice,
+          value: '',
+          hintText: 'rex.tailxxxx.ts.net, 100.x.y.z',
+          onChanged: (value) {
+            if (value == null) return;
+            _addProxyDevice(value);
+          },
+        ),
+      ),
+      if (devices.isNotEmpty) ...[
+        ListHeader(
+          title: '${appLocalizations.tailscaleProxyDevices} (${devices.length})',
+        ),
+        for (final device in devices)
+          ListItem(
+            leading: const Icon(Icons.vpn_lock_outlined, size: 20),
+            title: Text(device.displayName),
+            subtitle: Text(
+              [
+                if (device.dnsName.isNotEmpty) device.dnsName,
+                ...device.ips,
+              ].join(' · '),
+            ),
+            trailing: IconButton(
+              tooltip: appLocalizations.delete,
+              icon: const Icon(Icons.delete_outline),
+              onPressed: () => _removeProxyDevice(device),
+            ),
+          ),
+      ],
+    ];
   }
 
   String _statusText(TailscaleProps props, TailscaleNodeStatus? status) {
@@ -425,28 +608,7 @@ class _TailscaleNodeSettingsState
           onRefresh: _refresh,
           statusText: _statusText(props, status),
         ),
-        if (!props.nodeUseAuthKey && status != null && status.needsLogin)
-          ListItem(
-            leading: const Icon(Icons.login),
-            title: Text(appLocalizations.tailscaleNodeLogin),
-            onTap: () => _login(status.authUrl),
-          ),
-        if (!props.nodeUseAuthKey && status != null && status.running)
-          ListItem(
-            leading: const Icon(Icons.logout),
-            title: Text(appLocalizations.tailscaleNodeLogout),
-            onTap: _logout,
-          ),
-        if (props.nodeActive &&
-            props.nodeUseAuthKey &&
-            status != null &&
-            (status.running || status.state == 'NeedsLogin'))
-          ListItem(
-            leading: const Icon(Icons.autorenew),
-            title: Text(appLocalizations.tailscaleNodeReRegister),
-            subtitle: Text(appLocalizations.tailscaleNodeReRegisterTip),
-            onTap: () => _reRegister(props),
-          ),
+        ..._nodeActions(props, status, tailscaleNodeName),
       ],
       ListItem.options(
         title: Text(appLocalizations.tailscaleNodeAuthMode),
@@ -542,12 +704,20 @@ class _TailscaleNodeSettingsState
         title: Text(appLocalizations.tailscaleNodeConflicts),
         subtitle: Text(appLocalizations.tailscaleNodeConflictsDesc),
       ),
+      if (props.nodeEnable) ..._proxyChannelSection(props),
       if (props.nodeEnable && status != null && status.peers.isNotEmpty) ...[
         ListHeader(
           title:
               '${appLocalizations.tailscaleNodeDevices} (${status.peers.where((peer) => peer.online).length}/${status.peers.length})',
         ),
-        for (final peer in status.peers) _TailscalePeerItem(peer: peer),
+        for (final peer in status.peers)
+          _TailscalePeerItem(
+            peer: peer,
+            viaProxy: props.isProxyPeer(peer),
+            onViaProxyChanged: peer.dnsName.isEmpty && peer.ips.isEmpty
+                ? null
+                : (value) => _setProxyPeer(peer, value),
+          ),
       ],
     ]);
   }
@@ -668,12 +838,20 @@ class _TailscaleNodeStatusPanel extends StatelessWidget {
 }
 
 class _TailscalePeerItem extends StatelessWidget {
-  const _TailscalePeerItem({required this.peer});
+  const _TailscalePeerItem({
+    required this.peer,
+    this.viaProxy = false,
+    this.onViaProxyChanged,
+  });
 
   final TailscalePeer peer;
+  // BETTBOX-CUSTOM: 该设备是否经代理通道连接。
+  final bool viaProxy;
+  final ValueChanged<bool>? onViaProxyChanged;
 
   String get _subtitle {
     return [
+      if (viaProxy) appLocalizations.tailscaleProxyPeer,
       peer.online
           ? appLocalizations.tailscaleNodeOnline
           : appLocalizations.tailscaleNodeOffline,
@@ -700,6 +878,12 @@ class _TailscalePeerItem extends StatelessWidget {
       ),
       title: Text(peer.displayName),
       subtitle: Text(_subtitle),
+      trailing: onViaProxyChanged == null
+          ? null
+          : Tooltip(
+              message: appLocalizations.tailscaleProxyPeer,
+              child: Switch(value: viaProxy, onChanged: onViaProxyChanged),
+            ),
       onTap: peer.ips.isEmpty
           ? null
           : () {
