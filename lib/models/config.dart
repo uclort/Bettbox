@@ -993,7 +993,7 @@ extension TailscalePropsExt on TailscaleProps {
   String effectiveHostname(TailscaleGroup group) {
     var base = group.hostname.trim();
     if (base.isEmpty) {
-      final host = _machineHostname;
+      final host = _hostnameBase;
       if (group.id.isEmpty) {
         base = '$host-bettbox';
       } else if (group.id == tailscaleLegacyProxyStateId) {
@@ -1005,6 +1005,17 @@ extension TailscalePropsExt on TailscaleProps {
     }
     if (!group.useAuthKey || base.endsWith('-key')) return base;
     return '$base-key';
+  }
+
+  /// 自动设备名的前缀：优先用第一个自己添加的组填过的设备名，保持旧行为（其他组在默认组设备名后加后缀，
+  /// 例如默认组 `mac` 的另一组是 `mac-tailscale-proxy`）；都没填时用本机名。
+  String get _hostnameBase {
+    for (final g in nodeGroups) {
+      if (g.profile) continue;
+      final name = g.hostname.trim();
+      if (name.isNotEmpty) return name;
+    }
+    return _machineHostname;
   }
 
   String get _machineHostname {
