@@ -993,29 +993,33 @@ extension TailscalePropsExt on TailscaleProps {
   String effectiveHostname(TailscaleGroup group) {
     var base = group.hostname.trim();
     if (base.isEmpty) {
-      final host = _hostnameBase;
       if (group.id.isEmpty) {
-        base = '$host-bettbox';
-      } else if (group.id == tailscaleLegacyProxyStateId) {
-        base = '$host-bettbox-proxy';
+        // 旧版主节点：设备名固定为「本机名-bettbox」。
+        base = '$_machineHostname-bettbox';
       } else {
-        final suffix = group.id.replaceFirst(RegExp(r'^[gp]-'), '');
-        base = '$host-${suffix.isEmpty ? tailscaleSlug(group.name) : suffix}';
+        final custom = _customHostnameBase;
+        final host = custom ?? _machineHostname;
+        if (group.id == tailscaleLegacyProxyStateId) {
+          // 旧版代理通道：沿用主节点设备名加 -proxy。
+          base = custom == null ? '$host-bettbox-proxy' : '$host-proxy';
+        } else {
+          final suffix = group.id.replaceFirst(RegExp(r'^[gp]-'), '');
+          base = '$host-${suffix.isEmpty ? tailscaleSlug(group.name) : suffix}';
+        }
       }
     }
     if (!group.useAuthKey || base.endsWith('-key')) return base;
     return '$base-key';
   }
 
-  /// 自动设备名的前缀：优先用第一个自己添加的组填过的设备名，保持旧行为（其他组在默认组设备名后加后缀，
-  /// 例如默认组 `mac` 的另一组是 `mac-tailscale-proxy`）；都没填时用本机名。
-  String get _hostnameBase {
+  /// 第一个自己添加的组手动填过的设备名（其他组留空时在它后面加后缀），都没填时为 null。
+  String? get _customHostnameBase {
     for (final g in nodeGroups) {
       if (g.profile) continue;
       final name = g.hostname.trim();
       if (name.isNotEmpty) return name;
     }
-    return _machineHostname;
+    return null;
   }
 
   String get _machineHostname {
