@@ -101,7 +101,12 @@ func (t *Tailscale) Logout(ctx context.Context) error {
 	if err := lc.Logout(ctx); err != nil {
 		return err
 	}
-	// BETTBOX-CUSTOM: Auth Key 方式下退出即「重新注册」，下次查询状态时用 key 重新注册。
+	// BETTBOX-CUSTOM: Auth Key 方式下退出即「重新注册」。进程内用 key 再注册对卡住的实例不可靠
+	// （实测身份为空、连不上控制面的实例反复 login 无效，新建实例立即成功），所以标记本实例不再复用，
+	// GUI 随后重载配置，内核新建实例并用 key 注册；claimStateDir 会关掉这个旧实例。
+	if t.option.AuthKey != "" {
+		t.noReuse.Store(true)
+	}
 	t.authKeyLoginAt.Store(0)
 	t.authKeyLoginErr.Store("")
 	return nil

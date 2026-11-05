@@ -8,6 +8,10 @@ import (
 
 // BETTBOX-CUSTOM: 给 GUI 查询内置 Tailscale 节点状态与浏览器登录链接。
 // tsnet 未填 auth-key 时会进入交互式登录，但登录链接只写在 Debug 日志里，这里直接读出来。
+// BETTBOX-CUSTOM: Tailscale 节点每次进入 Running 时调用（参数为节点名），由 Bettbox 内核设置。
+// 放在无构建标签的文件里，不带 with_gvisor 编译时内核也能设置。
+var TailscaleOnRunning func(name string)
+
 type TailscaleStatus struct {
 	State     string   `json:"state"`
 	AuthURL   string   `json:"auth-url,omitempty"`

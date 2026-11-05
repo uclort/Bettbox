@@ -476,6 +476,9 @@ mixin _TailscaleStatusMixin<T extends ConsumerStatefulWidget>
     if (!ok) return;
     final error = await clashCore.tailscaleLogout(name);
     if (error.isNotEmpty) globalState.showNotifier(error);
+    // BETTBOX-CUSTOM: 内核已标记该实例不再复用，重载配置让它新建实例并用 key 注册
+    // （进程内再注册对卡住的实例无效，新建实例才可靠）。
+    globalState.appController.setupClashConfigDebounce();
     resetStatus(name);
   }
 

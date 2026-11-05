@@ -68,6 +68,15 @@ func TestTailscaleReuseAcrossReload(t *testing.T) {
 		t.Fatal("reload with identical options should reuse the running instance")
 	}
 
+	// BETTBOX-CUSTOM: Auth Key 重新注册后标记不再复用，参数相同也要新建实例。
+	running.noReuse.Store(true)
+	fresh := newNode(same)
+	if fresh == running {
+		t.Fatal("instance marked noReuse must not be reused")
+	}
+	_ = fresh.shutdown()
+	running.noReuse.Store(false)
+
 	if err := running.Close(); err != nil { // 旧配置被回收
 		t.Fatalf("Close: %v", err)
 	}

@@ -58,6 +58,8 @@ type Tailscale struct {
 	// 节点运行中被登出（后台删除设备、身份失效等）时按节流间隔自动重新注册，不再只试一次。
 	authKeyLoginAt  atomic.Int64
 	authKeyLoginErr atomic.Value // string
+	// BETTBOX-CUSTOM: 为 true 时配置重载不再复用本实例（Auth Key 重新注册）。
+	noReuse atomic.Bool
 
 	unregisterDNSResolver func()
 }
@@ -255,6 +257,7 @@ func (t *Tailscale) watchBackendState() {
 	exitNodeNeedsStatus := tailscaleExitNodeNeedsStatus(t.option)
 	// BETTBOX-CUSTOM: Auth Key 方式一直监听：记录控制面错误，运行中被登出时自动用 key 重新注册。
 	useAuthKey := t.option.AuthKey != ""
+	wasRunning := false
 	for {
 		n, err := watcher.Next()
 		if err != nil {
@@ -272,20 +275,23 @@ func (t *Tailscale) watchBackendState() {
 		if *n.State != ipn.NoState && !backendInitialized {
 			t.setBackendInitialized(nil)
 			backendInitialized = true
-			if !exitNodeNeedsStatus && !useAuthKey {
-				return
+		}
+		// BETTBOX-CUSTOM: 一直监听到实例关闭。每次进入 Running 时通知（GUI 内核用来清系统 DNS 缓存：
+		// 节点掉线期间 *.ts.net 返回 SERVFAIL，macOS mDNSResponder 会缓存「无记录」约 20 分钟）。
+		running := *n.State == ipn.Running
+		if running && !wasRunning {
+			if hook := TailscaleOnRunning; hook != nil {
+				go hook(t.Name())
 			}
 		}
-		if exitNodeNeedsStatus && *n.State == ipn.Running {
+		wasRunning = running
+		if exitNodeNeedsStatus && running {
 			if err := t.applyExitNodePrefs(t.ctx); err != nil {
 				log.Warnln("[Tailscale](%s) set exit node failed: %v", t.Name(), err)
 			}
 			exitNodeNeedsStatus = false
-			if !useAuthKey {
-				return
-			}
 		}
-		if useAuthKey && *n.State == ipn.Running {
+		if useAuthKey && running {
 			t.authKeyLoginErr.Store("")
 		}
 		if useAuthKey && *n.State == ipn.NeedsLogin {

@@ -32,7 +32,7 @@ func reuseTailscale(option TailscaleOption) *Tailscale {
 	tailscaleStateDirMu.Lock()
 	defer tailscaleStateDirMu.Unlock()
 	prev := tailscaleStateDirOwner[option.StateDir]
-	if prev == nil || prev.ctx.Err() != nil || prev.refs <= 0 || !reflect.DeepEqual(prev.option, option) {
+	if prev == nil || prev.ctx.Err() != nil || prev.refs <= 0 || prev.noReuse.Load() || !reflect.DeepEqual(prev.option, option) {
 		return nil
 	}
 	prev.refs++
