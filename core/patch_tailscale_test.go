@@ -114,7 +114,7 @@ func TestPatchTailscaleNode(t *testing.T) {
 	if _, ok := node["auth-key"]; ok {
 		t.Fatal("blank auth-key must be omitted for browser login")
 	}
-	if value, _ := rawCfg.DNS.NameServerPolicy.Get("+.ts.net"); value != "tailscale://Bettbox-Tailscale" {
+	if value, _ := rawCfg.DNS.NameServerPolicy.Get("+.ts.net"); fmt.Sprint(value) != "[tailscale://Bettbox-Tailscale]" {
 		t.Fatalf("node mode must override MagicDNS policy, got %v", value)
 	}
 	if got := rawCfg.ProxyGroup[0]["exclude-filter"]; got != "过期|^Bettbox-Tailscale$" {
@@ -179,6 +179,9 @@ proxy-groups:
 	if got := fmt.Sprint(rawCfg.Rule[:2]); got != "[DOMAIN,rex.tail1.ts.net,Tailscale-Proxy DOMAIN-SUFFIX,ts.net,Bettbox-Tailscale]" {
 		t.Fatalf("rules to missing node must be dropped: %s", got)
 	}
+	if value, _ := rawCfg.DNS.NameServerPolicy.Get("+.ts.net"); fmt.Sprint(value) != "[tailscale://Bettbox-Tailscale tailscale://Tailscale-Proxy]" {
+		t.Fatalf("MagicDNS must skip missing override node, got %v", value)
+	}
 	if got := rawCfg.ProxyGroup[0]["exclude-filter"]; got != "^Bettbox-Tailscale$" {
 		t.Fatalf("only injected node is excluded from include-all, got %v", got)
 	}
@@ -231,9 +234,9 @@ func TestPatchTailscaleProxyNode(t *testing.T) {
 		if got := rawCfg.ProxyGroup[0]["exclude-filter"]; got != "过期|^Bettbox-Tailscale$|^Bettbox-Tailscale-Proxy$" {
 			t.Fatalf("include-all group must exclude both nodes, got %v", got)
 		}
-		// MagicDNS 仍由直连节点解析
-		if value, _ := rawCfg.DNS.NameServerPolicy.Get("+.ts.net"); value != "tailscale://Bettbox-Tailscale" {
-			t.Fatalf("MagicDNS must stay on direct node, got %v", value)
+		// MagicDNS 交给所有节点并行解析，默认组在前：默认组掉线时其他组仍能解析
+		if value, _ := rawCfg.DNS.NameServerPolicy.Get("+.ts.net"); fmt.Sprint(value) != "[tailscale://Bettbox-Tailscale tailscale://Bettbox-Tailscale-Proxy]" {
+			t.Fatalf("MagicDNS must use every node, default first, got %v", value)
 		}
 	}
 }
@@ -289,7 +292,7 @@ rules:
 		if fmt.Sprint(rawCfg.DNS.NameServer) != "[223.5.5.5]" || len(rawCfg.DNS.Fallback) != 0 {
 			t.Fatalf("MagicDNS must leave server lists: %v %v", rawCfg.DNS.NameServer, rawCfg.DNS.Fallback)
 		}
-		if policy != "tailscale://Bettbox-Tailscale" {
+		if fmt.Sprint(policy) != "[tailscale://Bettbox-Tailscale]" {
 			t.Fatalf("MagicDNS policy must go to the node, got %v", policy)
 		}
 		if other, _ := rawCfg.DNS.NameServerPolicy.Get("+.cn"); other != "223.5.5.5" {

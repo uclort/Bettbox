@@ -24,6 +24,8 @@ type PatchTailscale struct {
 	DefaultNode string `json:"default-node"`
 	// BETTBOX-CUSTOM: Tailnet 网段，内置节点开启时用于清理会让流量绕开节点的配置。
 	Ranges []string `json:"ranges"`
+	// 配置文件中不存在、因而没有注入的覆写节点（patchTailscaleNodes 填写）。
+	missing map[string]bool
 }
 
 // BETTBOX-CUSTOM: 内置 Tailscale 节点（mihomo type: tailscale），不依赖 Tailscale App 访问 Tailnet。
@@ -198,6 +200,23 @@ func addTailscaleRealIPDomain(raw *config.RawConfig, domain string) {
 	// FilterWhiteList 下未列出的域名本来就返回真实 IP，无需处理。
 }
 
+// BETTBOX-CUSTOM: MagicDNS 交给所有生效的 Tailscale 节点并行解析（默认组在前），取第一个成功的应答。
+// 各节点在同一个 Tailnet，记录相同；只交给默认组时，默认组掉线（如 Auth Key 身份失效）会让
+// 所有 *.ts.net 返回 SERVFAIL，经其他组连接的设备也解析不出来。覆写节点在配置文件中不存在时跳过。
+func (tailscale *PatchTailscale) magicDNSServers() []string {
+	if tailscale == nil || tailscale.DefaultNode == "" {
+		return nil
+	}
+	servers := []string{"tailscale://" + tailscale.DefaultNode}
+	for _, node := range tailscale.Nodes {
+		if node == nil || node.Name == "" || node.Name == tailscale.DefaultNode || tailscale.missing[node.Name] {
+			continue
+		}
+		servers = append(servers, "tailscale://"+node.Name)
+	}
+	return servers
+}
+
 func patchTailscaleDns(raw *config.RawConfig, tailscale *PatchTailscale) {
 	if tailscale == nil {
 		return
@@ -205,12 +224,15 @@ func patchTailscaleDns(raw *config.RawConfig, tailscale *PatchTailscale) {
 	for _, domain := range tailscaleServiceDomains {
 		addTailscaleRealIPDomain(raw, domain)
 	}
-	server := strings.TrimSpace(tailscale.DnsServer)
+	var server any
+	if s := strings.TrimSpace(tailscale.DnsServer); s != "" {
+		server = s
+	}
 	// 内置节点模式：MagicDNS 交给节点自身解析，并覆盖订阅里同域名的 nameserver-policy
 	// （订阅通常指向 100.100.100.100，App 未运行时不可用）。
 	override := false
-	if tailscale.DefaultNode != "" {
-		server = "tailscale://" + tailscale.DefaultNode
+	if servers := tailscale.magicDNSServers(); servers != nil {
+		server = servers
 		override = true
 	}
 	for _, item := range tailscale.DnsDomains {
@@ -220,7 +242,7 @@ func patchTailscaleDns(raw *config.RawConfig, tailscale *PatchTailscale) {
 		}
 		pattern := "+." + domain
 		addTailscaleRealIPDomain(raw, domain)
-		if server == "" {
+		if server == nil {
 			continue
 		}
 		if raw.DNS.NameServerPolicy == nil {
@@ -315,7 +337,7 @@ func removeTailscaleConflicts(raw *config.RawConfig, params *PatchParams) {
 	raw.DNS.DirectNameServer = filterServers("direct-nameserver", raw.DNS.DirectNameServer, false)
 
 	if policy := raw.DNS.NameServerPolicy; policy != nil {
-		nodeServer := "tailscale://" + tailscale.DefaultNode
+		nodeServer := tailscale.magicDNSServers()
 		for pair := policy.Oldest(); pair != nil; pair = pair.Next() {
 			if policyUsesMagicDNS(pair.Value) {
 				log.Infoln("[Tailscale] built-in node: dns.nameserver-policy %s -> %s", pair.Key, nodeServer)
