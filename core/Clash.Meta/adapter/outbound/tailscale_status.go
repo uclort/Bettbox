@@ -212,7 +212,7 @@ func (t *Tailscale) loginWithAuthKey(ctx context.Context) error {
 // BETTBOX-CUSTOM: 本节点与其他设备的 MagicDNS 名，用于检查 macOS 系统 DNS 缓存是否已恢复。
 // 只取有 Tailscale IP 的设备（离线的也有）。节点不在 Running 时返回 nil，不会触发登录等副作用。
 func (t *Tailscale) DNSNames(ctx context.Context) []string {
-	const maxNames = 8
+	const maxNames = 64
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	lc, err := t.server.LocalClient()

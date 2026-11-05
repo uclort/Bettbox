@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/metacubex/mihomo/adapter/outbound"
@@ -80,12 +82,13 @@ func runTailscaleDNSWatch() {
 	}
 
 	// 进入 Running 时先无条件清一次：TUN 恢复前的否定结果一定已经写进缓存。
-	flushSystemDNSCache()
-	dnsWatchLog(log.INFO, "[Tailscale] 开始检查 macOS 系统 DNS 缓存")
+	err := flushSystemDNSCache()
+	dnsWatchLog(log.INFO, "[Tailscale] 开始检查 macOS 系统 DNS 缓存（%d 个域名，清缓存%s）", len(names), flushResult(err))
 
 	poisoned := false
 	failures := 0
 	flushes := 0
+	healthy := false
 	start := time.Now()
 	for dnsWatchAlive() {
 		// 设备列表可能随配置变化，每轮重新取；节点断开时先等它回来，避免把「没连上」当成缓存问题。
@@ -97,16 +100,26 @@ func runTailscaleDNSWatch() {
 		names = latest
 		if bad := probeSystemDNS(names); bad == "" {
 			failures = 0
-			if poisoned {
-				poisoned = false
-				dnsWatchLog(log.INFO, "[Tailscale] 系统 DNS 已恢复正常（共清理 %d 次）", flushes)
+			if !healthy {
+				healthy = true
+				if poisoned {
+					poisoned = false
+					dnsWatchLog(log.INFO, "[Tailscale] 系统 DNS 已恢复正常（共清理 %d 次）", flushes)
+				} else {
+					dnsWatchLog(log.INFO, "[Tailscale] 系统 DNS 正常")
+				}
 			}
 		} else {
-			flushSystemDNSCache()
+			healthy = false
+			err := flushSystemDNSCache()
 			flushes++
 			failures++
 			if failures == tailscaleDNSRestartAfter {
-				restartMDNSResponder()
+				if err := restartMDNSResponder(); err != nil {
+					dnsWatchLog(log.WARNING, "[Tailscale] 重启 mDNSResponder 失败：%v", err)
+				} else {
+					dnsWatchLog(log.WARNING, "[Tailscale] 清理系统 DNS 缓存未生效，已重启 mDNSResponder")
+				}
 			}
 			if failures > tailscaleDNSMaxFailures {
 				dnsWatchLog(log.WARNING, "[Tailscale] 系统 DNS 仍解析不到 %s，停止清理（可能没有开启虚拟网卡）", bad)
@@ -115,7 +128,7 @@ func runTailscaleDNSWatch() {
 			}
 			if !poisoned {
 				poisoned = true
-				dnsWatchLog(log.WARNING, "[Tailscale] 系统 DNS 仍解析不到 %s，已清理系统缓存", bad)
+				dnsWatchLog(log.WARNING, "[Tailscale] 系统 DNS 仍解析不到 %s，再清一次系统缓存（%s）", bad, flushResult(err))
 			}
 		}
 		wait := tailscaleDNSProbeSlow
@@ -185,22 +198,50 @@ func probeSystemDNS(names []string) string {
 
 // flushSystemDNSCache 清 macOS 系统 DNS 缓存（所有解析器的缓存，不只是 Tailnet 域名）。
 // 也用于「刷新 DNS 缓存」操作，用户不必再手动执行 sudo killall -HUP mDNSResponder。
-func flushSystemDNSCache() {
+func flushSystemDNSCache() error {
 	if os.Geteuid() != 0 {
-		return
+		return fmt.Errorf("not running as root")
 	}
 	_ = exec.Command("/usr/bin/dscacheutil", "-flushcache").Run()
-	if err := exec.Command("/usr/bin/killall", "-HUP", "mDNSResponder").Run(); err != nil {
-		log.Warnln("[Tailscale] flush system DNS cache failed: %v", err)
-	}
+	return signalMDNSResponder(syscall.SIGHUP)
 }
 
-func restartMDNSResponder() {
-	if err := exec.Command("/usr/bin/killall", "-TERM", "mDNSResponder").Run(); err != nil {
-		dnsWatchLog(log.WARNING, "[Tailscale] 重启 mDNSResponder 失败：%v", err)
-		return
+// signalMDNSResponder 给 mDNSResponder 发信号。用 pgrep 找 pid、由本进程（setuid root）直接发信号，
+// 而不是执行 killall：killall 作为子进程不一定继承 root 权限，失败时也没有任何可见结果。
+func signalMDNSResponder(sig syscall.Signal) error {
+	out, err := exec.Command("/usr/bin/pgrep", "-x", "mDNSResponder").Output()
+	if err != nil {
+		return fmt.Errorf("pgrep mDNSResponder: %w", err)
 	}
-	dnsWatchLog(log.WARNING, "[Tailscale] 清理系统 DNS 缓存未生效，已重启 mDNSResponder")
+	signaled := false
+	for _, field := range strings.Fields(string(out)) {
+		pid, err := strconv.Atoi(field)
+		if err != nil || pid <= 1 {
+			continue
+		}
+		if err := syscall.Kill(pid, sig); err != nil {
+			return fmt.Errorf("kill %d: %w", pid, err)
+		}
+		signaled = true
+	}
+	if !signaled {
+		return fmt.Errorf("mDNSResponder not found")
+	}
+	return nil
+}
+
+func restartMDNSResponder() error {
+	if err := signalMDNSResponder(syscall.SIGTERM); err != nil {
+		return err
+	}
+	return nil
+}
+
+func flushResult(err error) string {
+	if err != nil {
+		return "失败：" + err.Error()
+	}
+	return "成功"
 }
 
 // dnsWatchLog 同时写日志历史和日志流：只有打开「日志」页时才有人订阅日志流，

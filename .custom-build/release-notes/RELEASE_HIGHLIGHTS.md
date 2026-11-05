@@ -27,7 +27,7 @@
 - Tailscale 代理通道所选代理不支持 UDP 时节点启动失败（Rebind IPv4 failed），现改为经 DERP 中继连接
 - Auth Key 方式的 Tailscale 节点运行中被登出后不再一直停在「需要登录」，会自动用 key 重新注册
 - Tailscale 默认组掉线时 `*.ts.net` 全部解析失败：MagicDNS 改为交给所有在线的策略组解析
-- Tailscale 「重新注册」改为重建节点，卡住的 Auth Key 节点可以恢复；macOS 节点连上后持续检查系统 DNS 是否仍返回「无记录」并反复清理系统缓存（覆盖约 5 分钟的否定缓存窗口），「刷新 DNS 缓存」也会一并清系统缓存，不再出现节点已恢复、Rex 等应用仍解析不到 Tailnet 主机而要手动 `killall -HUP mDNSResponder`
+- Tailscale 「重新注册」改为重建节点，卡住的 Auth Key 节点可以恢复；macOS 节点连上后持续检查系统 DNS 是否仍返回「无记录」并反复清理系统缓存（覆盖约 5 分钟的否定缓存窗口），清理信号由内核进程直接发给 mDNSResponder、过程可在「日志」页查看，「刷新 DNS 缓存」也会一并清系统缓存，不再出现节点已恢复、Rex 等应用仍解析不到 Tailnet 主机而要手动 `killall -HUP mDNSResponder`
 - 内置 Tailscale 节点重载配置后出现重复设备（Duplicate node key）；退出后重新登录设备名变成系统主机名
 - Windows 按住 Alt 打开托盘菜单后，松开 Alt 菜单立即关闭
 
