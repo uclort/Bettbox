@@ -88,7 +88,7 @@ class TailscaleGroup {
     this.id = '',
     this.name = '',
     this.profile = false,
-    this.override = false,
+    this.overridden = false,
     this.hostname = '',
     this.useAuthKey = false,
     this.authKey = '',
@@ -106,7 +106,7 @@ class TailscaleGroup {
       id: json['id'] as String? ?? '',
       name: json['name'] as String? ?? '',
       profile: json['profile'] as bool? ?? false,
-      override: json['override'] as bool? ?? false,
+      overridden: json['override'] as bool? ?? false,
       hostname: json['hostname'] as String? ?? '',
       useAuthKey: json['useAuthKey'] as bool? ?? false,
       authKey: json['authKey'] as String? ?? '',
@@ -122,7 +122,9 @@ class TailscaleGroup {
   final String id;
   final String name;
   final bool profile;
-  final bool override;
+
+  /// 配置文件节点是否开启覆写。不能命名为 override：字段会遮住 @override 注解导致编译失败。
+  final bool overridden;
   final String hostname;
   final bool useAuthKey;
 
@@ -144,7 +146,7 @@ class TailscaleGroup {
     'id': id,
     'name': name,
     'profile': profile,
-    'override': override,
+    'override': overridden,
     'hostname': hostname,
     'useAuthKey': useAuthKey,
     'authKey': authKey,
@@ -159,7 +161,7 @@ class TailscaleGroup {
     String? id,
     String? name,
     bool? profile,
-    bool? override,
+    bool? overridden,
     String? hostname,
     bool? useAuthKey,
     String? authKey,
@@ -172,7 +174,7 @@ class TailscaleGroup {
     id: id ?? this.id,
     name: name ?? this.name,
     profile: profile ?? this.profile,
-    override: override ?? this.override,
+    overridden: overridden ?? this.overridden,
     hostname: hostname ?? this.hostname,
     useAuthKey: useAuthKey ?? this.useAuthKey,
     authKey: authKey ?? this.authKey,
@@ -189,7 +191,7 @@ class TailscaleGroup {
   ];
 
   /// 配置文件里的节点只有开启覆写后才由 Bettbox 接管。
-  bool get managed => !profile || override;
+  bool get managed => !profile || overridden;
 
   List<String> get validRules => [
     for (final raw in rules)
@@ -253,7 +255,7 @@ class TailscaleProfileNode {
     id: 'p-${tailscaleSlug(name)}',
     name: name,
     profile: true,
-    override: true,
+    overridden: true,
     hostname: hostname,
     useAuthKey: authKey.isNotEmpty,
     authKey: authKey,

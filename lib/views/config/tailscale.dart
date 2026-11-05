@@ -289,7 +289,7 @@ List<_TailscaleGroupEntry> _groupEntries(
       if (!g.profile) _TailscaleGroupEntry(g),
     for (final node in profileNodes)
       _TailscaleGroupEntry(
-        stored[node.name] ?? node.toGroup().copyWith(override: false),
+        stored[node.name] ?? node.toGroup().copyWith(overridden: false),
         node,
       ),
     for (final g in stored.values)
@@ -512,7 +512,7 @@ class _TailscaleNodeSettingsState extends ConsumerState<_TailscaleNodeSettings>
     final props = ref.read(networkSettingProvider).tailscale;
     final overridden = {
       for (final g in props.nodeGroups)
-        if (g.profile && g.override) g.name,
+        if (g.profile && g.overridden) g.name,
     };
     return {
       for (final g in props.activeGroups) g.name,
@@ -582,7 +582,7 @@ class _TailscaleNodeSettingsState extends ConsumerState<_TailscaleNodeSettings>
     await _updateTailscale(ref, (state) {
       final stored = state.groupById(entry.group.id);
       final group = (stored ?? entry.node?.toGroup() ?? entry.group).copyWith(
-        override: value,
+        overridden: value,
       );
       return state.updateGroup(group.id, group);
     });
@@ -617,7 +617,7 @@ class _TailscaleNodeSettingsState extends ConsumerState<_TailscaleNodeSettings>
     final summary = [
       if (isDefault) appLocalizations.tailscaleGroupDefault,
       if (group.profile) appLocalizations.tailscaleGroupProfile,
-      if (group.profile && group.override)
+      if (group.profile && group.overridden)
         appLocalizations.tailscaleGroupOverride,
       via.isEmpty
           ? appLocalizations.tailscaleGroupDirect
@@ -635,7 +635,7 @@ class _TailscaleNodeSettingsState extends ConsumerState<_TailscaleNodeSettings>
       subtitle: Text(summary),
       trailing: group.profile
           ? Switch(
-              value: group.override,
+              value: group.overridden,
               onChanged: (value) => _setOverride(entry, value),
             )
           : null,
@@ -755,7 +755,7 @@ class _TailscaleGroupPageState extends ConsumerState<_TailscaleGroupPage>
     with _TailscaleStatusMixin<_TailscaleGroupPage> {
   TailscaleGroup? _groupOf(TailscaleProps props) =>
       props.groupById(widget.id) ??
-      widget.profileNode?.toGroup().copyWith(override: false);
+      widget.profileNode?.toGroup().copyWith(overridden: false);
 
   @override
   List<String> get statusNames {
@@ -1026,14 +1026,14 @@ class _TailscaleGroupPageState extends ConsumerState<_TailscaleGroupPage>
                 : appLocalizations.tailscaleGroupOverrideDesc,
           ),
           delegate: SwitchDelegate(
-            value: group.override,
+            value: group.overridden,
             onChanged: (value) => _update(
-              (g) => g.copyWith(override: value),
+              (g) => g.copyWith(overridden: value),
               restart: true,
             ),
           ),
         ),
-        if (!group.override && profileNode != null)
+        if (!group.overridden && profileNode != null)
           ..._readonlyItems(profileNode),
       ],
       if (group.managed) ...[

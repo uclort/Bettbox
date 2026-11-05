@@ -309,7 +309,7 @@ void main() {
     expect(nodes.last['state-id'], 'p-tailscale-proxy');
     expect(props.prependRules.first, 'DOMAIN,rex.tail.ts.net,Tailscale-Proxy');
     // 关闭覆写：不下发、不生成规则，但保留设置
-    final off = props.updateGroup(group.id, props.groupById(group.id)!.copyWith(override: false));
+    final off = props.updateGroup(group.id, props.groupById(group.id)!.copyWith(overridden: false));
     expect((off.patchJson?['nodes'] as List), hasLength(1));
     expect(off.prependRules.first, 'DOMAIN-SUFFIX,ts.net,$tailscaleNodeName');
     expect(off.groupById(group.id)!.devices, isNotEmpty);
