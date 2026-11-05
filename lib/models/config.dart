@@ -845,10 +845,8 @@ extension TailscalePropsExt on TailscaleProps {
   TailscaleProps setDefaultGroup(String id) {
     final group = nodeGroups.where((g) => g.id == id && !g.profile).firstOrNull;
     if (group == null) return this;
-    // 新的默认组接管兜底规则，原来指定给它的设备不再需要单独的规则。
-    return withGroups([
-      for (final g in nodeGroups) g.id == id ? g.copyWith(devices: []) : g,
-    ], defaultName: group.name);
+    // 各组明确指定的设备保持不变，只是兜底规则与 MagicDNS 换到新组。
+    return withGroups(nodeGroups, defaultName: group.name);
   }
 
   TailscaleGroup? groupById(String id) =>
@@ -878,22 +876,21 @@ extension TailscalePropsExt on TailscaleProps {
   bool get nodeAuthKeyMissing =>
       nodeEnable && groupAuthKeyMissing(defaultNodeGroup);
 
-  /// 设备交给哪个组：非默认组里勾选过的优先，否则是默认组。
-  TailscaleGroup groupOfPeer(TailscalePeer peer) =>
-      nodeGroups
-          .where(
-            (g) =>
-                !isDefaultGroup(g) &&
-                g.proxyDevices.any((device) => device.matchesPeer(peer)),
-          )
-          .firstOrNull ??
-      defaultNodeGroup;
+  /// 明确指定了这台设备的组（包括默认组），未指定时为 null。
+  TailscaleGroup? assignedGroupOfPeer(TailscalePeer peer) => nodeGroups
+      .where((g) => g.proxyDevices.any((device) => device.matchesPeer(peer)))
+      .firstOrNull;
 
-  /// 把设备指定给某个组（同一台设备只在一个组里）；指定给默认组即恢复兜底规则。
-  TailscaleProps assignPeer(TailscalePeer peer, String groupName) =>
+  /// 设备实际交给哪个组：明确指定的组，否则由默认组兜底。
+  TailscaleGroup groupOfPeer(TailscalePeer peer) =>
+      assignedGroupOfPeer(peer) ?? defaultNodeGroup;
+
+  /// 把设备指定给某个组（同一台设备只在一个组里）。默认组也可以明确指定，规则同样排在兜底规则之前；
+  /// groupName 为 null 时取消指定，交回默认组兜底。
+  TailscaleProps assignPeer(TailscalePeer peer, String? groupName) =>
       assignDevice(TailscaleProxyDevice.fromPeer(peer), groupName);
 
-  TailscaleProps assignDevice(TailscaleProxyDevice device, String groupName) {
+  TailscaleProps assignDevice(TailscaleProxyDevice device, String? groupName) {
     if (device.isEmpty) return this;
     final updated = [
       for (final group in nodeGroups)
@@ -902,7 +899,7 @@ extension TailscalePropsExt on TailscaleProps {
             for (final d in group.proxyDevices)
               if (!d.matches(device)) d.encoded,
           ];
-          final add = group.name == groupName && !isDefaultGroup(group);
+          final add = groupName != null && group.name == groupName;
           return group.copyWith(devices: [...rest, if (add) device.encoded]);
         }(),
     ];

@@ -1567,6 +1567,16 @@ class MessageLookup extends MessageLookupByLibrary {
       "与 Bettbox 的策略组同名，以配置文件为准，该策略组不会注入",
     ),
     "tailscaleProfileCurrent": MessageLookupByLibrary.simpleMessage("当前"),
+    "tailscalePeerUnassigned": MessageLookupByLibrary.simpleMessage("未指定（默认组兜底）"),
+    "tailscalePeerUnassignedShort": MessageLookupByLibrary.simpleMessage("未指定"),
+    "tailscaleGroupDevices": MessageLookupByLibrary.simpleMessage("指定的设备"),
+    "tailscaleGroupDevicesEmpty": MessageLookupByLibrary.simpleMessage(
+      "还没有指定设备。从下面的设备列表点选，或手动添加",
+    ),
+    "tailscaleGroupDevicesDefaultEmpty": MessageLookupByLibrary.simpleMessage(
+      "未指定任何组的设备由默认组兜底；也可以在这里明确指定，规则排在兜底规则之前",
+    ),
+    "tailscaleGroupPickDevice": MessageLookupByLibrary.simpleMessage("点按加入本组"),
     "tailscaleProxyVia": MessageLookupByLibrary.simpleMessage("通过"),
     "tailscaleProxyViaMissing": MessageLookupByLibrary.simpleMessage("请先选择代理"),
     "tailscaleNodeOnline": MessageLookupByLibrary.simpleMessage("在线"),

@@ -2121,6 +2121,24 @@ class MessageLookup extends MessageLookupByLibrary {
       "Same name as a Bettbox group; the profile definition wins and the group is not injected",
     ),
     "tailscaleProfileCurrent": MessageLookupByLibrary.simpleMessage("current"),
+    "tailscalePeerUnassigned": MessageLookupByLibrary.simpleMessage(
+      "Not assigned (default group)",
+    ),
+    "tailscalePeerUnassignedShort": MessageLookupByLibrary.simpleMessage(
+      "Not assigned",
+    ),
+    "tailscaleGroupDevices": MessageLookupByLibrary.simpleMessage(
+      "Assigned devices",
+    ),
+    "tailscaleGroupDevicesEmpty": MessageLookupByLibrary.simpleMessage(
+      "No devices yet. Tap one in the list below or add it manually",
+    ),
+    "tailscaleGroupDevicesDefaultEmpty": MessageLookupByLibrary.simpleMessage(
+      "Devices not assigned to any group fall back to the default group; you can also assign them here explicitly, with rules before the catch-all rules",
+    ),
+    "tailscaleGroupPickDevice": MessageLookupByLibrary.simpleMessage(
+      "Tap to add to this group",
+    ),
     "tailscaleProxyVia": MessageLookupByLibrary.simpleMessage("Via"),
     "tailscaleProxyViaMissing": MessageLookupByLibrary.simpleMessage(
       "Choose a proxy first",

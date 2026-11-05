@@ -251,12 +251,24 @@ void main() {
       'rex.tailc7e14e.ts.net,100.121.3.60',
     ]);
 
-    // 指定回默认组即恢复兜底规则
-    expect(props.assignPeer(rex, tailscaleNodeName).groupById(proxy.id)!.devices, isEmpty);
-    // 设为默认组：兜底规则与 MagicDNS 交给它，默认组不能删除
+    // 默认组也可以明确指定设备：规则同样排在兜底规则之前
+    final toDefault = props.assignPeer(rex, tailscaleNodeName);
+    expect(toDefault.groupById(proxy.id)!.devices, isEmpty);
+    expect(toDefault.assignedGroupOfPeer(rex)?.name, tailscaleNodeName);
+    expect(toDefault.prependRules.first, 'DOMAIN-SUFFIX,corp.example,Tailscale-Proxy');
+    expect(
+      toDefault.prependRules.indexOf('DOMAIN,rex.tailc7e14e.ts.net,$tailscaleNodeName'),
+      lessThan(toDefault.prependRules.indexOf('DOMAIN-SUFFIX,ts.net,$tailscaleNodeName')),
+    );
+    // 取消指定：交回默认组兜底，不生成单独规则
+    final unassigned = props.assignPeer(rex, null);
+    expect(unassigned.assignedGroupOfPeer(rex), isNull);
+    expect(unassigned.groupOfPeer(rex).name, tailscaleNodeName);
+    expect(unassigned.prependRules.any((r) => r.startsWith('DOMAIN,rex')), isFalse);
+    // 设为默认组：兜底规则与 MagicDNS 交给它，已指定的设备保持，默认组不能删除
     final switched = props.setDefaultGroup(proxy.id);
     expect(switched.defaultNodeGroup.name, 'Tailscale-Proxy');
-    expect(switched.groupById(proxy.id)!.devices, isEmpty);
+    expect(switched.groupById(proxy.id)!.devices, hasLength(1));
     expect(switched.patchJson?['default-node'], 'Tailscale-Proxy');
     expect(switched.removeGroup(proxy.id), switched);
     expect(switched.removeGroup('').nodeGroups, hasLength(2));

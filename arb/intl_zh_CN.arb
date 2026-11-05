@@ -1268,5 +1268,11 @@
   "tailscaleProfileRulesShadowed": "有规则指向它，但排在 Bettbox 的 Tailnet 前置规则之后，Tailnet 域名和网段会先被内置节点匹配。可开启覆写，在这里指定设备或规则",
   "tailscaleProfileHostnameConflict": "设备名与 Bettbox 的策略组相同，后注册的会被改名为 -1",
   "tailscaleProfileNameConflict": "与 Bettbox 的策略组同名，以配置文件为准，该策略组不会注入",
-  "tailscaleProfileCurrent": "当前"
+  "tailscaleProfileCurrent": "当前",
+  "tailscalePeerUnassigned": "未指定（默认组兜底）",
+  "tailscalePeerUnassignedShort": "未指定",
+  "tailscaleGroupDevices": "指定的设备",
+  "tailscaleGroupDevicesEmpty": "还没有指定设备。从下面的设备列表点选，或手动添加",
+  "tailscaleGroupDevicesDefaultEmpty": "未指定任何组的设备由默认组兜底；也可以在这里明确指定，规则排在兜底规则之前",
+  "tailscaleGroupPickDevice": "点按加入本组"
 }

@@ -10808,6 +10808,48 @@ class AppLocalizations {
     desc: '',
     args: [],
   );
+
+  String get tailscalePeerUnassigned => Intl.message(
+    "Not assigned (default group)",
+    name: 'tailscalePeerUnassigned',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscalePeerUnassignedShort => Intl.message(
+    "Not assigned",
+    name: 'tailscalePeerUnassignedShort',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleGroupDevices => Intl.message(
+    "Assigned devices",
+    name: 'tailscaleGroupDevices',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleGroupDevicesEmpty => Intl.message(
+    "No devices yet. Tap one in the list below or add it manually",
+    name: 'tailscaleGroupDevicesEmpty',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleGroupDevicesDefaultEmpty => Intl.message(
+    "Devices not assigned to any group fall back to the default group; you can also assign them here explicitly, with rules before the catch-all rules",
+    name: 'tailscaleGroupDevicesDefaultEmpty',
+    desc: '',
+    args: [],
+  );
+
+  String get tailscaleGroupPickDevice => Intl.message(
+    "Tap to add to this group",
+    name: 'tailscaleGroupPickDevice',
+    desc: '',
+    args: [],
+  );
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

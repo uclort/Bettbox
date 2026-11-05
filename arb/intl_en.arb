@@ -1267,5 +1267,11 @@
   "tailscaleProfileRulesShadowed": "Rules point to it, but they come after Bettbox's Tailnet rules, so Tailnet domains and ranges are matched by the built-in node first. Turn on override and assign devices or rules here instead",
   "tailscaleProfileHostnameConflict": "Same device name as a Bettbox group; the one registered later is renamed with -1",
   "tailscaleProfileNameConflict": "Same name as a Bettbox group; the profile definition wins and the group is not injected",
-  "tailscaleProfileCurrent": "current"
+  "tailscaleProfileCurrent": "current",
+  "tailscalePeerUnassigned": "Not assigned (default group)",
+  "tailscalePeerUnassignedShort": "Not assigned",
+  "tailscaleGroupDevices": "Assigned devices",
+  "tailscaleGroupDevicesEmpty": "No devices yet. Tap one in the list below or add it manually",
+  "tailscaleGroupDevicesDefaultEmpty": "Devices not assigned to any group fall back to the default group; you can also assign them here explicitly, with rules before the catch-all rules",
+  "tailscaleGroupPickDevice": "Tap to add to this group"
 }
