@@ -6,9 +6,9 @@
     <description>Bettbox 自定义版本更新源</description>
     <language>zh-CN</language>
     <item>
-      <title>Bettbox 1.19.7+2090000255</title>
-      <pubDate>Thu, 05 Nov 2026 07:19:18 +0000</pubDate>
-      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000255</link>
+      <title>Bettbox 1.19.7+2090000257</title>
+      <pubDate>Thu, 05 Nov 2026 08:05:48 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000257</link>
       <description><![CDATA[<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https:;">
@@ -49,7 +49,7 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>Tailscale 代理通道所选代理不支持 UDP 时节点启动失败（Rebind IPv4 failed），现改为经 DERP 中继连接</li>
 <li>Auth Key 方式的 Tailscale 节点运行中被登出后不再一直停在「需要登录」，会自动用 key 重新注册</li>
 <li>Tailscale 默认组掉线时 <code class="notranslate">*.ts.net</code> 全部解析失败：MagicDNS 改为交给所有在线的策略组解析</li>
-<li>Tailscale 「重新注册」改为重建节点，卡住的 Auth Key 节点可以恢复；macOS 节点连上后自动清系统 DNS 缓存（启动窗口内再补清两次），「刷新 DNS 缓存」也会一并清系统缓存，不再出现节点已恢复、Rex 等应用仍解析不到 Tailnet 主机而要手动 <code class="notranslate">killall -HUP mDNSResponder</code></li>
+<li>Tailscale 「重新注册」改为重建节点，卡住的 Auth Key 节点可以恢复；macOS 节点连上后持续检查系统 DNS 是否仍返回「无记录」并反复清理系统缓存（覆盖约 5 分钟的否定缓存窗口），「刷新 DNS 缓存」也会一并清系统缓存，不再出现节点已恢复、Rex 等应用仍解析不到 Tailnet 主机而要手动 <code class="notranslate">killall -HUP mDNSResponder</code></li>
 <li>内置 Tailscale 节点重载配置后出现重复设备（Duplicate node key）；退出后重新登录设备名变成系统主机名</li>
 <li>Windows 按住 Alt 打开托盘菜单后，松开 Alt 菜单立即关闭</li>
 </ul>
@@ -66,11 +66,11 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>自定义 Mihomo 内核：Snell v6、direct proxy 跟随接口 DNS、Tailscale 出站状态接口</li>
 </ul>
 <hr>
-<p dir="auto">构建版本 <code class="notranslate">1.19.7+2090000255</code>，提交 <code class="notranslate">97e81b1d7000</code>，自定义内核 <code class="notranslate">2de9c36d2370</code>。Windows 与 macOS 安装包未做商业代码签名；Android 使用 Bettbox 自定义版固定 Release 签名。</p>
-<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7%2B2090000255">查看完整发布页</a></footer></body></html>]]></description>
-      <sparkle:version>2090000255</sparkle:version>
-      <sparkle:shortVersionString>1.19.7+2090000255</sparkle:shortVersionString>
-      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.7+2090000255/Bettbox-1.19.7-macos-amd64.dmg" length="75089960" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="Yz2rpPPSloI2wPxWGJ3sKlE561tQK00hPgT2hNnrQKRGHMTvh151l4AhjROImAXyPZ3OAbdfX1TcXyqVmeOrCg==" />
+<p dir="auto">构建版本 <code class="notranslate">1.19.7+2090000257</code>，提交 <code class="notranslate">395d4948e381</code>，自定义内核 <code class="notranslate">92561cab6ef1</code>。Windows 与 macOS 安装包未做商业代码签名；Android 使用 Bettbox 自定义版固定 Release 签名。</p>
+<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7%2B2090000257">查看完整发布页</a></footer></body></html>]]></description>
+      <sparkle:version>2090000257</sparkle:version>
+      <sparkle:shortVersionString>1.19.7+2090000257</sparkle:shortVersionString>
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.7+2090000257/Bettbox-1.19.7-macos-amd64.dmg" length="75105986" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="UTVLePS/bb//PTpYzgthYVV4WfAdWH2IEs56lTx2qr5WpOt28XTB0X/s6qO8xKWRvHibHts3EDY8v0E1M+sFBA==" />
     </item>
   </channel>
 </rss>
