@@ -725,10 +725,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Disconnect on network change (WiFi/Mobile)`
+  /// `Close connections on network change or node switch`
   String get quickResponseDesc {
     return Intl.message(
-      'Disconnect on network change (WiFi/Mobile)',
+      'Close connections on network change or node switch',
       name: 'quickResponseDesc',
       desc: '',
       args: [],
@@ -1010,6 +1010,56 @@ class AppLocalizations {
     );
   }
 
+  /// `Update Settings`
+  String get updateSettings {
+    return Intl.message(
+      'Update Settings',
+      name: 'updateSettings',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Auto Update`
+  String get appAutoUpdate {
+    return Intl.message(
+      'Auto Update',
+      name: 'appAutoUpdate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Check for new versions on launch and notify`
+  String get appAutoUpdateDesc {
+    return Intl.message(
+      'Check for new versions on launch and notify',
+      name: 'appAutoUpdateDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Receive Pre-releases`
+  String get receivePreRelease {
+    return Intl.message(
+      'Receive Pre-releases',
+      name: 'receivePreRelease',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Also receive pre-release updates, which may be less stable`
+  String get receivePreReleaseDesc {
+    return Intl.message(
+      'Also receive pre-release updates, which may be less stable',
+      name: 'receivePreReleaseDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Access Control`
   String get accessControl {
     return Intl.message(
@@ -1040,11 +1090,11 @@ class AppLocalizations {
     );
   }
 
-  /// `Clear FakeIP and DNS cache?`
-  String get clearCacheDesc {
+  /// `FakeIP and DNS cache cleared`
+  String get dnsCacheCleared {
     return Intl.message(
-      'Clear FakeIP and DNS cache?',
-      name: 'clearCacheDesc',
+      'FakeIP and DNS cache cleared',
+      name: 'dnsCacheCleared',
       desc: '',
       args: [],
     );
@@ -1060,21 +1110,21 @@ class AppLocalizations {
     );
   }
 
-  /// `Force kernel garbage collection? Experimental, use with caution.`
-  String get forceGCDesc {
+  /// `Firebase Cloud Messaging (FCM) is a cross-platform messaging solution. Its connection support depends on the device and network, so the results are for reference only.`
+  String get fcmTip {
     return Intl.message(
-      'Force kernel garbage collection? Experimental, use with caution.',
-      name: 'forceGCDesc',
+      'Firebase Cloud Messaging (FCM) is a cross-platform messaging solution. Its connection support depends on the device and network, so the results are for reference only.',
+      name: 'fcmTip',
       desc: '',
       args: [],
     );
   }
 
-  /// `FCM connection and support depend on the device itself, the results are for reference only. Due to system permission reasons, you need to disable "Allow bypass VPN" in settings to get accurate results`
-  String get fcmTip {
+  /// ` Due to system permission reasons, on Android you may need to disable "Allow bypass VPN" in network settings to get more accurate results`
+  String get fcmAndroidTip {
     return Intl.message(
-      'FCM connection and support depend on the device itself, the results are for reference only. Due to system permission reasons, you need to disable "Allow bypass VPN" in settings to get accurate results',
-      name: 'fcmTip',
+      ' Due to system permission reasons, on Android you may need to disable "Allow bypass VPN" in network settings to get more accurate results',
+      name: 'fcmAndroidTip',
       desc: '',
       args: [],
     );
@@ -1360,6 +1410,16 @@ class AppLocalizations {
     return Intl.message('Theme Color', name: 'themeColor', desc: '', args: []);
   }
 
+  /// `Dynamic color`
+  String get dynamicColor {
+    return Intl.message(
+      'Dynamic color',
+      name: 'dynamicColor',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Preview`
   String get preview {
     return Intl.message('Preview', name: 'preview', desc: '', args: []);
@@ -1603,6 +1663,16 @@ class AppLocalizations {
   /// `Selected`
   String get selected {
     return Intl.message('Selected', name: 'selected', desc: '', args: []);
+  }
+
+  /// `Current`
+  String get currentSelection {
+    return Intl.message(
+      'Current',
+      name: 'currentSelection',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Unable to update current profile`
@@ -2925,36 +2995,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Related Settings`
-  String get relatedSettings {
-    return Intl.message(
-      'Related Settings',
-      name: 'relatedSettings',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Clear DNS Cache`
-  String get flushDnsOnNetworkChange {
-    return Intl.message(
-      'Clear DNS Cache',
-      name: 'flushDnsOnNetworkChange',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Clear the DNS cache when the network changes`
-  String get flushDnsOnNetworkChangeDesc {
-    return Intl.message(
-      'Clear the DNS cache when the network changes',
-      name: 'flushDnsOnNetworkChangeDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Proxy Traffic Only`
   String get onlyStatisticsProxy {
     return Intl.message(
@@ -3265,16 +3305,6 @@ class AppLocalizations {
     );
   }
 
-  /// `DNS-related settings`
-  String get dnsDesc {
-    return Intl.message(
-      'DNS-related settings',
-      name: 'dnsDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Key`
   String get key {
     return Intl.message('Key', name: 'key', desc: '', args: []);
@@ -3460,26 +3490,6 @@ class AppLocalizations {
     return Intl.message(
       'Not Recommended',
       name: 'notRecommended',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Override DNS`
-  String get overrideDns {
-    return Intl.message(
-      'Override DNS',
-      name: 'overrideDns',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Override profile's DNS settings`
-  String get overrideDnsDesc {
-    return Intl.message(
-      'Override profile\'s DNS settings',
-      name: 'overrideDnsDesc',
       desc: '',
       args: [],
     );
@@ -4045,94 +4055,9 @@ class AppLocalizations {
     );
   }
 
-  /// `Status`
-  String get status {
-    return Intl.message('Status', name: 'status', desc: '', args: []);
-  }
-
-  /// `Uses system DNS when disabled`
-  String get statusDesc {
-    return Intl.message(
-      'Uses system DNS when disabled',
-      name: 'statusDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Prioritize DoH HTTP/3`
-  String get preferH3Desc {
-    return Intl.message(
-      'Prioritize DoH HTTP/3',
-      name: 'preferH3Desc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Cache Algorithm`
-  String get cacheAlgorithm {
-    return Intl.message(
-      'Cache Algorithm',
-      name: 'cacheAlgorithm',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Respect Rules`
-  String get respectRules {
-    return Intl.message(
-      'Respect Rules',
-      name: 'respectRules',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `DNS connections follow Rules`
-  String get respectRulesDesc {
-    return Intl.message(
-      'DNS connections follow Rules',
-      name: 'respectRulesDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `DNS Mode`
   String get dnsMode {
     return Intl.message('DNS Mode', name: 'dnsMode', desc: '', args: []);
-  }
-
-  /// `FakeIP Range`
-  String get fakeipRange {
-    return Intl.message(
-      'FakeIP Range',
-      name: 'fakeipRange',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `FakeIPv6 Range`
-  String get fakeipRangeV6 {
-    return Intl.message(
-      'FakeIPv6 Range',
-      name: 'fakeipRangeV6',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `FakeIP Filter Mode`
-  String get fakeIpFilterMode {
-    return Intl.message(
-      'FakeIP Filter Mode',
-      name: 'fakeIpFilterMode',
-      desc: '',
-      args: [],
-    );
   }
 
   /// `Specify FakeIP filter mode`
@@ -4143,201 +4068,6 @@ class AppLocalizations {
       desc: '',
       args: [],
     );
-  }
-
-  /// `Blacklist`
-  String get blacklist {
-    return Intl.message('Blacklist', name: 'blacklist', desc: '', args: []);
-  }
-
-  /// `Whitelist`
-  String get whitelist {
-    return Intl.message('Whitelist', name: 'whitelist', desc: '', args: []);
-  }
-
-  /// `FakeIP Filter`
-  String get fakeipFilter {
-    return Intl.message(
-      'FakeIP Filter',
-      name: 'fakeipFilter',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `FakeIP TTL`
-  String get fakeipTtl {
-    return Intl.message('FakeIP TTL', name: 'fakeipTtl', desc: '', args: []);
-  }
-
-  /// `Default Nameserver`
-  String get defaultNameserver {
-    return Intl.message(
-      'Default Nameserver',
-      name: 'defaultNameserver',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Resolve DNS servers`
-  String get defaultNameserverDesc {
-    return Intl.message(
-      'Resolve DNS servers',
-      name: 'defaultNameserverDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Nameserver`
-  String get nameserver {
-    return Intl.message('Nameserver', name: 'nameserver', desc: '', args: []);
-  }
-
-  /// `Resolve domain names`
-  String get nameserverDesc {
-    return Intl.message(
-      'Resolve domain names',
-      name: 'nameserverDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Use Hosts`
-  String get useHosts {
-    return Intl.message('Use Hosts', name: 'useHosts', desc: '', args: []);
-  }
-
-  /// `Use System Hosts`
-  String get useSystemHosts {
-    return Intl.message(
-      'Use System Hosts',
-      name: 'useSystemHosts',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Nameserver Policy`
-  String get nameserverPolicy {
-    return Intl.message(
-      'Nameserver Policy',
-      name: 'nameserverPolicy',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Specify domain-specific nameservers`
-  String get nameserverPolicyDesc {
-    return Intl.message(
-      'Specify domain-specific nameservers',
-      name: 'nameserverPolicyDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Proxy Nameserver`
-  String get proxyNameserver {
-    return Intl.message(
-      'Proxy Nameserver',
-      name: 'proxyNameserver',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Resolve proxy node domains`
-  String get proxyNameserverDesc {
-    return Intl.message(
-      'Resolve proxy node domains',
-      name: 'proxyNameserverDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Direct Nameserver`
-  String get directNameserver {
-    return Intl.message(
-      'Direct Nameserver',
-      name: 'directNameserver',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Resolve direct domains`
-  String get directNameserverDesc {
-    return Intl.message(
-      'Resolve direct domains',
-      name: 'directNameserverDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Direct DNS Follows Policy`
-  String get directNameserverFollowPolicy {
-    return Intl.message(
-      'Direct DNS Follows Policy',
-      name: 'directNameserverFollowPolicy',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Fallback`
-  String get fallback {
-    return Intl.message('Fallback', name: 'fallback', desc: '', args: []);
-  }
-
-  /// `Usually offshore DNS`
-  String get fallbackDesc {
-    return Intl.message(
-      'Usually offshore DNS',
-      name: 'fallbackDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Fallback Filter`
-  String get fallbackFilter {
-    return Intl.message(
-      'Fallback Filter',
-      name: 'fallbackFilter',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Fallback Concurrent`
-  String get fallbackConcurrent {
-    return Intl.message(
-      'Fallback Concurrent',
-      name: 'fallbackConcurrent',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Query default DNS and Fallback synchronously`
-  String get fallbackConcurrentDesc {
-    return Intl.message(
-      'Query default DNS and Fallback synchronously',
-      name: 'fallbackConcurrentDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `GeoIP Code`
-  String get geoipCode {
-    return Intl.message('GeoIP Code', name: 'geoipCode', desc: '', args: []);
   }
 
   /// `IP/CIDR`
@@ -4515,16 +4245,6 @@ class AppLocalizations {
     return Intl.message('Stack Mode', name: 'stackMode', desc: '', args: []);
   }
 
-  /// `Congestion Controller`
-  String get congestionController {
-    return Intl.message(
-      'Congestion Controller',
-      name: 'congestionController',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Strict Route`
   String get strictRoute {
     return Intl.message(
@@ -4570,10 +4290,10 @@ class AppLocalizations {
     return Intl.message('DNS Hijack', name: 'dnsHijack', desc: '', args: []);
   }
 
-  /// `Redirect DNS queries to internal DNS module`
+  /// `Take over system DNS and route it to the core`
   String get dnsHijackDesc {
     return Intl.message(
-      'Redirect DNS queries to internal DNS module',
+      'Take over system DNS and route it to the core',
       name: 'dnsHijackDesc',
       desc: '',
       args: [],
@@ -4765,6 +4485,51 @@ class AppLocalizations {
     return Intl.message(
       'Automatically bypass private network IP addresses',
       name: 'bypassPrivateRouteDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Profile Switching`
+  String get profileSwitchMode {
+    return Intl.message(
+      'Profile Switching',
+      name: 'profileSwitchMode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Hot Reload`
+  String get hotReload {
+    return Intl.message('Hot Reload', name: 'hotReload', desc: '', args: []);
+  }
+
+  /// `Keeps the core running for faster profile switching`
+  String get hotReloadDesc {
+    return Intl.message(
+      'Keeps the core running for faster profile switching',
+      name: 'hotReloadDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Cold Restart`
+  String get fullRestart {
+    return Intl.message(
+      'Cold Restart',
+      name: 'fullRestart',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Fully restarts the core for more thorough memory release`
+  String get fullRestartDesc {
+    return Intl.message(
+      'Fully restarts the core for more thorough memory release',
+      name: 'fullRestartDesc',
       desc: '',
       args: [],
     );
@@ -4970,19 +4735,14 @@ class AppLocalizations {
     );
   }
 
-  /// `Get Domestic IP`
-  String get switchToDomesticIp {
+  /// `IP Risk Alert`
+  String get ipRiskAlert {
     return Intl.message(
-      'Get Domestic IP',
-      name: 'switchToDomesticIp',
+      'IP Risk Alert',
+      name: 'ipRiskAlert',
       desc: '',
       args: [],
     );
-  }
-
-  /// `Listen`
-  String get listen {
-    return Intl.message('Listen', name: 'listen', desc: '', args: []);
   }
 
   /// `Undo`
@@ -5635,16 +5395,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Auto Set System DNS`
-  String get autoSetSystemDns {
-    return Intl.message(
-      'Auto Set System DNS',
-      name: 'autoSetSystemDns',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Details`
   String get details {
     return Intl.message('Details', name: 'details', desc: '', args: []);
@@ -5720,6 +5470,46 @@ class AppLocalizations {
     return Intl.message(
       'Remote Destination',
       name: 'remoteDestination',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Inbound`
+  String get inbound {
+    return Intl.message('Inbound', name: 'inbound', desc: '', args: []);
+  }
+
+  /// `{inbound} (user {user})`
+  String inboundWithUser(Object inbound, Object user) {
+    return Intl.message(
+      '$inbound (user $user)',
+      name: 'inboundWithUser',
+      desc: '',
+      args: [inbound, user],
+    );
+  }
+
+  /// `Internal traffic`
+  String get internalTraffic {
+    return Intl.message(
+      'Internal traffic',
+      name: 'internalTraffic',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Sniffed Host`
+  String get sniffHost {
+    return Intl.message('Sniffed Host', name: 'sniffHost', desc: '', args: []);
+  }
+
+  /// `Process Path`
+  String get processPath {
+    return Intl.message(
+      'Process Path',
+      name: 'processPath',
       desc: '',
       args: [],
     );
@@ -5900,10 +5690,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Use Global Script Override`
+  /// `Script per Profile`
   String get useGlobalScriptOverride {
     return Intl.message(
-      'Use Global Script Override',
+      'Script per Profile',
       name: 'useGlobalScriptOverride',
       desc: '',
       args: [],
@@ -6020,21 +5810,31 @@ class AppLocalizations {
     return Intl.message('Wrap Lines', name: 'lineWrap', desc: '', args: []);
   }
 
-  /// `Auto Sticky Header`
+  /// `Pin Expanded`
   String get autoStickyHeader {
     return Intl.message(
-      'Auto Sticky Header',
+      'Pin Expanded',
       name: 'autoStickyHeader',
       desc: '',
       args: [],
     );
   }
 
-  /// `Show Hidden Items`
+  /// `Show Hidden Groups`
   String get showHiddenItems {
     return Intl.message(
-      'Show Hidden Items',
+      'Show Hidden Groups',
       name: 'showHiddenItems',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Hide Unavailable Proxies`
+  String get hideTimeoutProxies {
+    return Intl.message(
+      'Hide Unavailable Proxies',
+      name: 'hideTimeoutProxies',
       desc: '',
       args: [],
     );
@@ -6280,9 +6080,34 @@ class AppLocalizations {
     );
   }
 
-  /// `Objects`
+  /// `Heap Objects`
   String get heapObjects {
-    return Intl.message('Objects', name: 'heapObjects', desc: '', args: []);
+    return Intl.message(
+      'Heap Objects',
+      name: 'heapObjects',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Freed {size}`
+  String memoryFreed(Object size) {
+    return Intl.message(
+      'Freed $size',
+      name: 'memoryFreed',
+      desc: '',
+      args: [size],
+    );
+  }
+
+  /// `Memory already optimal`
+  String get memoryAlreadyOptimal {
+    return Intl.message(
+      'Memory already optimal',
+      name: 'memoryAlreadyOptimal',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Profile & Rules`
@@ -8140,10 +7965,10 @@ class AppLocalizations {
     return Intl.message('MRS Lookup', name: 'mrsLookup', desc: '', args: []);
   }
 
-  /// `Find the GEODATA / RULE-SET rule sets for a domain or IP`
+  /// `Find the GEO / RULE-SET rule sets for a domain or IP`
   String get mrsLookupDesc {
     return Intl.message(
-      'Find the GEODATA / RULE-SET rule sets for a domain or IP',
+      'Find the GEO / RULE-SET rule sets for a domain or IP',
       name: 'mrsLookupDesc',
       desc: '',
       args: [],
@@ -8210,14 +8035,19 @@ class AppLocalizations {
     return Intl.message('via $ip', name: 'mrsVia', desc: '', args: [ip]);
   }
 
-  /// `Copy as GitHub Raw link`
-  String get mrsCopyRawLink {
-    return Intl.message(
-      'Copy as GitHub Raw link',
-      name: 'mrsCopyRawLink',
-      desc: '',
-      args: [],
-    );
+  /// `Tap action`
+  String get mrsTapAction {
+    return Intl.message('Tap action', name: 'mrsTapAction', desc: '', args: []);
+  }
+
+  /// `View rules`
+  String get mrsViewRules {
+    return Intl.message('View rules', name: 'mrsViewRules', desc: '', args: []);
+  }
+
+  /// `Copy URL`
+  String get mrsCopyUrl {
+    return Intl.message('Copy URL', name: 'mrsCopyUrl', desc: '', args: []);
   }
 
   /// `Resolve domains with DNS rules`
@@ -8335,20 +8165,20 @@ class AppLocalizations {
     );
   }
 
-  /// `Fake-IP · {reason}: returns a virtual address from {range}`
+  /// `Fake-IP · {reason}: will return a virtual address from {range}`
   String dnsQueryFakeIpOn(Object reason, Object range) {
     return Intl.message(
-      'Fake-IP · $reason: returns a virtual address from $range',
+      'Fake-IP · $reason: will return a virtual address from $range',
       name: 'dnsQueryFakeIpOn',
       desc: '',
       args: [reason, range],
     );
   }
 
-  /// `Fake-IP · {reason}: returns the real IP`
+  /// `Fake-IP · {reason}: will return the real IP`
   String dnsQueryFakeIpOff(Object reason) {
     return Intl.message(
-      'Fake-IP · $reason: returns the real IP',
+      'Fake-IP · $reason: will return the real IP',
       name: 'dnsQueryFakeIpOff',
       desc: '',
       args: [reason],
@@ -8415,70 +8245,70 @@ class AppLocalizations {
     );
   }
 
-  /// `Redir-Host: returns the real IP, domain restored on connect`
+  /// `Redir-Host: will return the real IP, domain restored on connect`
   String get dnsQueryRedirHost {
     return Intl.message(
-      'Redir-Host: returns the real IP, domain restored on connect',
+      'Redir-Host: will return the real IP, domain restored on connect',
       name: 'dnsQueryRedirHost',
       desc: '',
       args: [],
     );
   }
 
-  /// `Normal: returns the real IP, rules match by IP`
+  /// `Normal: will return the real IP, rules match by IP`
   String get dnsQueryNormalMode {
     return Intl.message(
-      'Normal: returns the real IP, rules match by IP',
+      'Normal: will return the real IP, rules match by IP',
       name: 'dnsQueryNormalMode',
       desc: '',
       args: [],
     );
   }
 
-  /// `Matched Hosts: returns {ips}`
+  /// `Matched Hosts: will return {ips}`
   String dnsQueryHostsHit(Object ips) {
     return Intl.message(
-      'Matched Hosts: returns $ips',
+      'Matched Hosts: will return $ips',
       name: 'dnsQueryHostsHit',
       desc: '',
       args: [ips],
     );
   }
 
-  /// `Via "{outbound}", the node resolves the domain`
+  /// `Final outbound "{outbound}", the node resolves the domain`
   String dnsQueryViaProxy(Object outbound) {
     return Intl.message(
-      'Via "$outbound", the node resolves the domain',
+      'Final outbound "$outbound", the node resolves the domain',
       name: 'dnsQueryViaProxy',
       desc: '',
       args: [outbound],
     );
   }
 
-  /// `Via "{outbound}", the node resolves the domain; Hosts not applied`
+  /// `Final outbound "{outbound}", the node resolves the domain; Hosts not applied`
   String dnsQueryViaProxyHosts(Object outbound) {
     return Intl.message(
-      'Via "$outbound", the node resolves the domain; Hosts not applied',
+      'Final outbound "$outbound", the node resolves the domain; Hosts not applied',
       name: 'dnsQueryViaProxyHosts',
       desc: '',
       args: [outbound],
     );
   }
 
-  /// `Via DIRECT, resolved locally by the core`
+  /// `Final outbound DIRECT, resolved locally by the core and connected directly`
   String get dnsQueryViaDirect {
     return Intl.message(
-      'Via DIRECT, resolved locally by the core',
+      'Final outbound DIRECT, resolved locally by the core and connected directly',
       name: 'dnsQueryViaDirect',
       desc: '',
       args: [],
     );
   }
 
-  /// `Via DIRECT, connects to the Hosts address`
+  /// `Final outbound DIRECT, connects to the Hosts address`
   String get dnsQueryViaDirectHosts {
     return Intl.message(
-      'Via DIRECT, connects to the Hosts address',
+      'Final outbound DIRECT, connects to the Hosts address',
       name: 'dnsQueryViaDirectHosts',
       desc: '',
       args: [],
@@ -9595,6 +9425,1225 @@ class AppLocalizations {
     return Intl.message('Result', name: 'iperfResult', desc: '', args: []);
   }
 
+  /// `See exactly where your traffic goes by day, week and month`
+  String get trafficStatsDesc {
+    return Intl.message(
+      'See exactly where your traffic goes by day, week and month',
+      name: 'trafficStatsDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Today`
+  String get today {
+    return Intl.message('Today', name: 'today', desc: '', args: []);
+  }
+
+  /// `This Week`
+  String get thisWeek {
+    return Intl.message('This Week', name: 'thisWeek', desc: '', args: []);
+  }
+
+  /// `This Month`
+  String get thisMonth {
+    return Intl.message('This Month', name: 'thisMonth', desc: '', args: []);
+  }
+
+  /// `Trend`
+  String get trafficTrend {
+    return Intl.message('Trend', name: 'trafficTrend', desc: '', args: []);
+  }
+
+  /// `Ranking`
+  String get trafficRanking {
+    return Intl.message('Ranking', name: 'trafficRanking', desc: '', args: []);
+  }
+
+  /// `Rule hits`
+  String get ruleHits {
+    return Intl.message('Rule hits', name: 'ruleHits', desc: '', args: []);
+  }
+
+  /// `{count, plural, one{{count} hit} other{{count} hits}}`
+  String hitCount(num count) {
+    return Intl.plural(
+      count,
+      one: '$count hit',
+      other: '$count hits',
+      name: 'hitCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `Process`
+  String get process {
+    return Intl.message('Process', name: 'process', desc: '', args: []);
+  }
+
+  /// `Node`
+  String get node {
+    return Intl.message('Node', name: 'node', desc: '', args: []);
+  }
+
+  /// `Traffic statistics`
+  String get trafficStatsEnable {
+    return Intl.message(
+      'Traffic statistics',
+      name: 'trafficStatsEnable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Record details`
+  String get trafficStatsDetail {
+    return Intl.message(
+      'Record details',
+      name: 'trafficStatsDetail',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Record domains, processes, nodes and rules. When off, only totals are kept`
+  String get trafficStatsDetailDesc {
+    return Intl.message(
+      'Record domains, processes, nodes and rules. When off, only totals are kept',
+      name: 'trafficStatsDetailDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show site icons`
+  String get trafficStatsSiteIcon {
+    return Intl.message(
+      'Show site icons',
+      name: 'trafficStatsSiteIcon',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Fetch icons from the sites first, use Google's icon service when a site has no sharp icon, and cache them locally`
+  String get trafficStatsSiteIconDesc {
+    return Intl.message(
+      'Fetch icons from the sites first, use Google\'s icon service when a site has no sharp icon, and cache them locally',
+      name: 'trafficStatsSiteIconDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Data retention`
+  String get trafficStatsRetention {
+    return Intl.message(
+      'Data retention',
+      name: 'trafficStatsRetention',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Clear all traffic statistics?`
+  String get trafficStatsClearTip {
+    return Intl.message(
+      'Clear all traffic statistics?',
+      name: 'trafficStatsClearTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Off by default. Once on, traffic is recorded on this device only`
+  String get trafficStatsDisabledTip {
+    return Intl.message(
+      'Off by default. Once on, traffic is recorded on this device only',
+      name: 'trafficStatsDisabledTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Subdomains`
+  String get subdomains {
+    return Intl.message('Subdomains', name: 'subdomains', desc: '', args: []);
+  }
+
+  /// `Check IP purity`
+  String get ipRiskCheck {
+    return Intl.message(
+      'Check IP purity',
+      name: 'ipRiskCheck',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Fraud score`
+  String get ipRiskScore {
+    return Intl.message('Fraud score', name: 'ipRiskScore', desc: '', args: []);
+  }
+
+  /// `Low risk`
+  String get ipRiskLow {
+    return Intl.message('Low risk', name: 'ipRiskLow', desc: '', args: []);
+  }
+
+  /// `Medium risk`
+  String get ipRiskMedium {
+    return Intl.message(
+      'Medium risk',
+      name: 'ipRiskMedium',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `High risk`
+  String get ipRiskHigh {
+    return Intl.message('High risk', name: 'ipRiskHigh', desc: '', args: []);
+  }
+
+  /// `Very high risk`
+  String get ipRiskVeryHigh {
+    return Intl.message(
+      'Very high risk',
+      name: 'ipRiskVeryHigh',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Hosting or proxy`
+  String get ipRiskHostingOrProxy {
+    return Intl.message(
+      'Hosting or proxy',
+      name: 'ipRiskHostingOrProxy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Datacenter`
+  String get ipRiskDatacenter {
+    return Intl.message(
+      'Datacenter',
+      name: 'ipRiskDatacenter',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Residential proxy`
+  String get ipRiskResidentialProxy {
+    return Intl.message(
+      'Residential proxy',
+      name: 'ipRiskResidentialProxy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Blacklist flags`
+  String get ipRiskBlacklist {
+    return Intl.message(
+      'Blacklist flags',
+      name: 'ipRiskBlacklist',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Proxy type`
+  String get ipRiskProxyType {
+    return Intl.message(
+      'Proxy type',
+      name: 'ipRiskProxyType',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Anonymizing VPN`
+  String get ipRiskAnonymousVpn {
+    return Intl.message(
+      'Anonymizing VPN',
+      name: 'ipRiskAnonymousVpn',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Tor exit node`
+  String get ipRiskTorExit {
+    return Intl.message(
+      'Tor exit node',
+      name: 'ipRiskTorExit',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Server`
+  String get ipRiskServer {
+    return Intl.message('Server', name: 'ipRiskServer', desc: '', args: []);
+  }
+
+  /// `Public proxy`
+  String get ipRiskPublicProxy {
+    return Intl.message(
+      'Public proxy',
+      name: 'ipRiskPublicProxy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Web proxy`
+  String get ipRiskWebProxy {
+    return Intl.message(
+      'Web proxy',
+      name: 'ipRiskWebProxy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Search engine robot`
+  String get ipRiskSearchRobot {
+    return Intl.message(
+      'Search engine robot',
+      name: 'ipRiskSearchRobot',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Hostname`
+  String get ipRiskHostname {
+    return Intl.message('Hostname', name: 'ipRiskHostname', desc: '', args: []);
+  }
+
+  /// `Enter an IP to check`
+  String get ipRiskHint {
+    return Intl.message(
+      'Enter an IP to check',
+      name: 'ipRiskHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enter a valid public IP`
+  String get ipRiskInvalid {
+    return Intl.message(
+      'Enter a valid public IP',
+      name: 'ipRiskInvalid',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Source`
+  String get ipRiskSource {
+    return Intl.message('Source', name: 'ipRiskSource', desc: '', args: []);
+  }
+
+  /// `Premium Residential IP`
+  String get ipRiskHomeBroadband {
+    return Intl.message(
+      'Premium Residential IP',
+      name: 'ipRiskHomeBroadband',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `About the fraud score`
+  String get ipRiskNoteTitle {
+    return Intl.message(
+      'About the fraud score',
+      name: 'ipRiskNoteTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Scamalytics can see web traffic from this IP directly. The score of {score} reflects the share of that traffic suspected to be fraudulent.`
+  String ipRiskNoteDirect(Object score) {
+    return Intl.message(
+      'Scamalytics can see web traffic from this IP directly. The score of $score reflects the share of that traffic suspected to be fraudulent.',
+      name: 'ipRiskNoteDirect',
+      desc: '',
+      args: [score],
+    );
+  }
+
+  /// `Scamalytics can't see web traffic from this IP directly. The score of {score} is estimated from the overall risk of IPs operated by {isp}.`
+  String ipRiskNoteIndirect(Object score, Object isp) {
+    return Intl.message(
+      'Scamalytics can\'t see web traffic from this IP directly. The score of $score is estimated from the overall risk of IPs operated by $isp.',
+      name: 'ipRiskNoteIndirect',
+      desc: '',
+      args: [score, isp],
+    );
+  }
+
+  /// `The fraud score (0–100) reflects the share of web traffic from this IP that Scamalytics suspects to be fraudulent.`
+  String get ipRiskNoteGeneric {
+    return Intl.message(
+      'The fraud score (0–100) reflects the share of web traffic from this IP that Scamalytics suspects to be fraudulent.',
+      name: 'ipRiskNoteGeneric',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Observed traffic`
+  String get ipRiskNoteAmount {
+    return Intl.message(
+      'Observed traffic',
+      name: 'ipRiskNoteAmount',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Operator traffic`
+  String get ipRiskNoteAmountIsp {
+    return Intl.message(
+      'Operator traffic',
+      name: 'ipRiskNoteAmountIsp',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Suspected fraud`
+  String get ipRiskNoteShare {
+    return Intl.message(
+      'Suspected fraud',
+      name: 'ipRiskNoteShare',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Low`
+  String get ipRiskAmountLow {
+    return Intl.message('Low', name: 'ipRiskAmountLow', desc: '', args: []);
+  }
+
+  /// `Medium`
+  String get ipRiskAmountMedium {
+    return Intl.message(
+      'Medium',
+      name: 'ipRiskAmountMedium',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `High`
+  String get ipRiskAmountHigh {
+    return Intl.message('High', name: 'ipRiskAmountHigh', desc: '', args: []);
+  }
+
+  /// `Very little`
+  String get ipRiskShareLittle {
+    return Intl.message(
+      'Very little',
+      name: 'ipRiskShareLittle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Some`
+  String get ipRiskShareSome {
+    return Intl.message('Some', name: 'ipRiskShareSome', desc: '', args: []);
+  }
+
+  /// `Almost all`
+  String get ipRiskShareAlmostAll {
+    return Intl.message(
+      'Almost all',
+      name: 'ipRiskShareAlmostAll',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Owner`
+  String get ipRiskNoteOwner {
+    return Intl.message('Owner', name: 'ipRiskNoteOwner', desc: '', args: []);
+  }
+
+  /// `Connection`
+  String get ipRiskNoteConnection {
+    return Intl.message(
+      'Connection',
+      name: 'ipRiskNoteConnection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Commercial server`
+  String get ipRiskCommercialServer {
+    return Intl.message(
+      'Commercial server',
+      name: 'ipRiskCommercialServer',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `May be relaying traffic from elsewhere; the actual user could be anywhere`
+  String get ipRiskNoteProxying {
+    return Intl.message(
+      'May be relaying traffic from elsewhere; the actual user could be anywhere',
+      name: 'ipRiskNoteProxying',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Web traffic from this IP is likely to come from fraudsters.`
+  String get ipRiskNoteWarningHigh {
+    return Intl.message(
+      'Web traffic from this IP is likely to come from fraudsters.',
+      name: 'ipRiskNoteWarningHigh',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Web traffic from this IP is very likely to come from fraudsters.`
+  String get ipRiskNoteWarningVeryHigh {
+    return Intl.message(
+      'Web traffic from this IP is very likely to come from fraudsters.',
+      name: 'ipRiskNoteWarningVeryHigh',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This assessment covers web traffic only; other traffic may carry a different risk.`
+  String get ipRiskNoteFootnote {
+    return Intl.message(
+      'This assessment covers web traffic only; other traffic may carry a different risk.',
+      name: 'ipRiskNoteFootnote',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Remaining`
+  String get remainingTraffic {
+    return Intl.message(
+      'Remaining',
+      name: 'remainingTraffic',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{count, plural, one{{count} provider} other{{count} providers}}`
+  String providersCount(num count) {
+    return Intl.plural(
+      count,
+      one: '$count provider',
+      other: '$count providers',
+      name: 'providersCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `Usage Style`
+  String get usageStyle {
+    return Intl.message('Usage Style', name: 'usageStyle', desc: '', args: []);
+  }
+
+  /// `Bars`
+  String get usageStyleBar {
+    return Intl.message('Bars', name: 'usageStyleBar', desc: '', args: []);
+  }
+
+  /// `Rings`
+  String get usageStyleRing {
+    return Intl.message('Rings', name: 'usageStyleRing', desc: '', args: []);
+  }
+
+  /// `Concentric Rings`
+  String get usageStyleConcentric {
+    return Intl.message(
+      'Concentric Rings',
+      name: 'usageStyleConcentric',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Subscription merge`
+  String get mergeProfile {
+    return Intl.message(
+      'Subscription merge',
+      name: 'mergeProfile',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Merge multiple subscriptions and manage routing in one place`
+  String get mergeProfileDesc {
+    return Intl.message(
+      'Merge multiple subscriptions and manage routing in one place',
+      name: 'mergeProfileDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `At least two profiles are needed to merge`
+  String get mergeProfileUnavailable {
+    return Intl.message(
+      'At least two profiles are needed to merge',
+      name: 'mergeProfileUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Members`
+  String get bundleMembers {
+    return Intl.message('Members', name: 'bundleMembers', desc: '', args: []);
+  }
+
+  /// `Tap to change the node prefix, drag to reorder`
+  String get bundleMembersDesc {
+    return Intl.message(
+      'Tap to change the node prefix, drag to reorder',
+      name: 'bundleMembersDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Identical nodes are kept once, earlier members first`
+  String get bundleDedupTip {
+    return Intl.message(
+      'Identical nodes are kept once, earlier members first',
+      name: 'bundleDedupTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add members`
+  String get addBundleMember {
+    return Intl.message(
+      'Add members',
+      name: 'addBundleMember',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Node prefix`
+  String get nodePrefix {
+    return Intl.message('Node prefix', name: 'nodePrefix', desc: '', args: []);
+  }
+
+  /// `Node prefix: {prefix}`
+  String nodePrefixValue(Object prefix) {
+    return Intl.message(
+      'Node prefix: $prefix',
+      name: 'nodePrefixValue',
+      desc: '',
+      args: [prefix],
+    );
+  }
+
+  /// `No prefix`
+  String get noNodePrefix {
+    return Intl.message('No prefix', name: 'noNodePrefix', desc: '', args: []);
+  }
+
+  /// `Last generation failed: {message}`
+  String bundleMemberFailed(Object message) {
+    return Intl.message(
+      'Last generation failed: $message',
+      name: 'bundleMemberFailed',
+      desc: '',
+      args: [message],
+    );
+  }
+
+  /// `Managed mode`
+  String get managedMode {
+    return Intl.message(
+      'Managed mode',
+      name: 'managedMode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Default options`
+  String get managedOptions {
+    return Intl.message(
+      'Default options',
+      name: 'managedOptions',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{enabled} of {total} enabled`
+  String managedOptionsDesc(Object enabled, Object total) {
+    return Intl.message(
+      '$enabled of $total enabled',
+      name: 'managedOptionsDesc',
+      desc: '',
+      args: [enabled, total],
+    );
+  }
+
+  /// `Version`
+  String get managedVersion {
+    return Intl.message('Version', name: 'managedVersion', desc: '', args: []);
+  }
+
+  /// `Built-in {version}`
+  String managedBundled(Object version) {
+    return Intl.message(
+      'Built-in $version',
+      name: 'managedBundled',
+      desc: '',
+      args: [version],
+    );
+  }
+
+  /// `Upstream {version}`
+  String managedSynced(Object version) {
+    return Intl.message(
+      'Upstream $version',
+      name: 'managedSynced',
+      desc: '',
+      args: [version],
+    );
+  }
+
+  /// `Sync from upstream`
+  String get syncFromUpstream {
+    return Intl.message(
+      'Sync from upstream',
+      name: 'syncFromUpstream',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Restore built-in version`
+  String get restoreBundled {
+    return Intl.message(
+      'Restore built-in version',
+      name: 'restoreBundled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Download the latest script from upstream and regenerate all merged subscriptions?`
+  String get managedSyncTip {
+    return Intl.message(
+      'Download the latest script from upstream and regenerate all merged subscriptions?',
+      name: 'managedSyncTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Restore the built-in script and regenerate all merged subscriptions?`
+  String get managedRestoreTip {
+    return Intl.message(
+      'Restore the built-in script and regenerate all merged subscriptions?',
+      name: 'managedRestoreTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Last generated`
+  String get lastGenerated {
+    return Intl.message(
+      'Last generated',
+      name: 'lastGenerated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{proxies} nodes · {duplicates} duplicates removed · {time}`
+  String bundleReportDesc(Object proxies, Object duplicates, Object time) {
+    return Intl.message(
+      '$proxies nodes · $duplicates duplicates removed · $time',
+      name: 'bundleReportDesc',
+      desc: '',
+      args: [proxies, duplicates, time],
+    );
+  }
+
+  /// `Regenerate`
+  String get regenerate {
+    return Intl.message('Regenerate', name: 'regenerate', desc: '', args: []);
+  }
+
+  /// `Generate`
+  String get generate {
+    return Intl.message('Generate', name: 'generate', desc: '', args: []);
+  }
+
+  /// `{count} profiles merged`
+  String bundleSummary(Object count) {
+    return Intl.message(
+      '$count profiles merged',
+      name: 'bundleSummary',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `{count} nodes`
+  String bundleProxies(Object count) {
+    return Intl.message(
+      '$count nodes',
+      name: 'bundleProxies',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `{count} failed`
+  String bundleFailures(Object count) {
+    return Intl.message(
+      '$count failed',
+      name: 'bundleFailures',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `Merged`
+  String get merged {
+    return Intl.message('Merged', name: 'merged', desc: '', args: []);
+  }
+
+  /// `This profile is part of "{label}". Deleting it removes it from the merged subscription.`
+  String deleteMemberTip(Object label) {
+    return Intl.message(
+      'This profile is part of "$label". Deleting it removes it from the merged subscription.',
+      name: 'deleteMemberTip',
+      desc: '',
+      args: [label],
+    );
+  }
+
+  /// `Add at least one member`
+  String get bundleNoMembers {
+    return Intl.message(
+      'Add at least one member',
+      name: 'bundleNoMembers',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `You can merge up to {count} subscriptions`
+  String bundleMemberLimit(Object count) {
+    return Intl.message(
+      'You can merge up to $count subscriptions',
+      name: 'bundleMemberLimit',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `Merged subscription {index}`
+  String mergedSubscriptionName(Object index) {
+    return Intl.message(
+      'Merged subscription $index',
+      name: 'mergedSubscriptionName',
+      desc: '',
+      args: [index],
+    );
+  }
+
+  /// `Already up to date`
+  String get managedUpToDate {
+    return Intl.message(
+      'Already up to date',
+      name: 'managedUpToDate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Subscription link`
+  String get bundleAddUrl {
+    return Intl.message(
+      'Subscription link',
+      name: 'bundleAddUrl',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Import as a new subscription and add it`
+  String get bundleAddUrlDesc {
+    return Intl.message(
+      'Import as a new subscription and add it',
+      name: 'bundleAddUrlDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Pending import`
+  String get bundlePendingImport {
+    return Intl.message(
+      'Pending import',
+      name: 'bundlePendingImport',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Collapse members`
+  String get bundleCollapse {
+    return Intl.message(
+      'Collapse members',
+      name: 'bundleCollapse',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show only the merged subscription in the list; tap the arrow on its card to expand`
+  String get bundleCollapseDesc {
+    return Intl.message(
+      'Show only the merged subscription in the list; tap the arrow on its card to expand',
+      name: 'bundleCollapseDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Expand`
+  String get bundleExpand {
+    return Intl.message('Expand', name: 'bundleExpand', desc: '', args: []);
+  }
+
+  /// `Generate proxy groups and rules with the built-in script`
+  String get managedModeDesc {
+    return Intl.message(
+      'Generate proxy groups and rules with the built-in script',
+      name: 'managedModeDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Disable QUIC has no effect with scripts enabled`
+  String get disableQuicManagedDesc {
+    return Intl.message(
+      'Disable QUIC has no effect with scripts enabled',
+      name: 'disableQuicManagedDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Manage routes`
+  String get addRoute {
+    return Intl.message('Manage routes', name: 'addRoute', desc: '', args: []);
+  }
+
+  /// `Edit route`
+  String get editRoute {
+    return Intl.message('Edit route', name: 'editRoute', desc: '', args: []);
+  }
+
+  /// `Rule sets`
+  String get ruleSets {
+    return Intl.message('Rule sets', name: 'ruleSets', desc: '', args: []);
+  }
+
+  /// `Add rule set`
+  String get addRuleSet {
+    return Intl.message('Add rule set', name: 'addRuleSet', desc: '', args: []);
+  }
+
+  /// `Search rule sets`
+  String get searchRuleSets {
+    return Intl.message(
+      'Search rule sets',
+      name: 'searchRuleSets',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Default target`
+  String get routeTarget {
+    return Intl.message(
+      'Default target',
+      name: 'routeTarget',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Block`
+  String get reject {
+    return Intl.message('Block', name: 'reject', desc: '', args: []);
+  }
+
+  /// `{count} rules`
+  String ruleCount(Object count) {
+    return Intl.message(
+      '$count rules',
+      name: 'ruleCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `Large rule sets use more memory`
+  String get largeRuleSetTip {
+    return Intl.message(
+      'Large rule sets use more memory',
+      name: 'largeRuleSetTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Select icon`
+  String get selectIcon {
+    return Intl.message('Select icon', name: 'selectIcon', desc: '', args: []);
+  }
+
+  /// `Search icons`
+  String get searchIcons {
+    return Intl.message(
+      'Search icons',
+      name: 'searchIcons',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Icon URL`
+  String get iconUrl {
+    return Intl.message('Icon URL', name: 'iconUrl', desc: '', args: []);
+  }
+
+  /// `Please check that the URL is correct`
+  String get checkUrlTip {
+    return Intl.message(
+      'Please check that the URL is correct',
+      name: 'checkUrlTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Name cannot contain commas or line breaks`
+  String get routeNameInvalid {
+    return Intl.message(
+      'Name cannot contain commas or line breaks',
+      name: 'routeNameInvalid',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Matched from top to bottom, drag to reorder`
+  String get groupOrderTip {
+    return Intl.message(
+      'Matched from top to bottom, drag to reorder',
+      name: 'groupOrderTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Search services`
+  String get searchServices {
+    return Intl.message(
+      'Search services',
+      name: 'searchServices',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Custom rule set URL`
+  String get customRuleSetUrl {
+    return Intl.message(
+      'Custom rule set URL',
+      name: 'customRuleSetUrl',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Built-in`
+  String get builtIn {
+    return Intl.message('Built-in', name: 'builtIn', desc: '', args: []);
+  }
+
+  /// `Built-in mode`
+  String get builtInManagedMode {
+    return Intl.message(
+      'Built-in mode',
+      name: 'builtInManagedMode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Rule Order`
+  String get ruleSort {
+    return Intl.message('Rule Order', name: 'ruleSort', desc: '', args: []);
+  }
+
+  /// `{count} rules, included in the {group} group`
+  String ruleCountIncluded(Object count, Object group) {
+    return Intl.message(
+      '$count rules, included in the $group group',
+      name: 'ruleCountIncluded',
+      desc: '',
+      args: [count, group],
+    );
+  }
+
+  /// `AI`
+  String get routeCategoryAi {
+    return Intl.message('AI', name: 'routeCategoryAi', desc: '', args: []);
+  }
+
+  /// `Streaming`
+  String get routeCategoryStreaming {
+    return Intl.message(
+      'Streaming',
+      name: 'routeCategoryStreaming',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Social`
+  String get routeCategorySocial {
+    return Intl.message(
+      'Social',
+      name: 'routeCategorySocial',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Gaming`
+  String get routeCategoryGaming {
+    return Intl.message(
+      'Gaming',
+      name: 'routeCategoryGaming',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Developer`
+  String get routeCategoryDeveloper {
+    return Intl.message(
+      'Developer',
+      name: 'routeCategoryDeveloper',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Finance`
+  String get routeCategoryFinance {
+    return Intl.message(
+      'Finance',
+      name: 'routeCategoryFinance',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Tech`
+  String get routeCategoryTech {
+    return Intl.message('Tech', name: 'routeCategoryTech', desc: '', args: []);
+  }
+
+  /// `Current`
+  String get inUse {
+    return Intl.message('Current', name: 'inUse', desc: '', args: []);
+  }
+
+  /// `Add {count}`
+  String routeAddCount(Object count) {
+    return Intl.message(
+      'Add $count',
+      name: 'routeAddCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `Remove {count}`
+  String routeRemoveCount(Object count) {
+    return Intl.message(
+      'Remove $count',
+      name: 'routeRemoveCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `Icon Sets`
+  String get iconSets {
+    return Intl.message('Icon Sets', name: 'iconSets', desc: '', args: []);
+  }
+
+  /// `Not a valid icon set`
+  String get invalidIconSet {
+    return Intl.message(
+      'Not a valid icon set',
+      name: 'invalidIconSet',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{count} icons`
+  String iconCount(Object count) {
+    return Intl.message(
+      '$count icons',
+      name: 'iconCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
   /// `Panel`
   String get networkMonitorTab {
     return Intl.message('Panel', name: 'networkMonitorTab', desc: '', args: []);
@@ -9908,7 +10957,7 @@ class AppLocalizations {
   /// `Apps that reach the Tailnet through this node (such as Rex) can't resolve or connect to Tailnet hosts while it is not connected. A brief gap right after updating or restarting Bettbox, or after a network change, is expected.`
   String get tailscaleNodePanelHint {
     return Intl.message(
-      "Apps that reach the Tailnet through this node (such as Rex) can't resolve or connect to Tailnet hosts while it is not connected. A brief gap right after updating or restarting Bettbox, or after a network change, is expected.",
+      'Apps that reach the Tailnet through this node (such as Rex) can\'t resolve or connect to Tailnet hosts while it is not connected. A brief gap right after updating or restarting Bettbox, or after a network change, is expected.',
       name: 'tailscaleNodePanelHint',
       desc: '',
       args: [],
@@ -9978,7 +11027,7 @@ class AppLocalizations {
   /// `Used to register automatically. A new key re-registers as a new device. Use a reusable, non-ephemeral key; devices from tagged keys don't belong to your account`
   String get tailscaleNodeAuthKeyDesc {
     return Intl.message(
-      "Used to register automatically. A new key re-registers as a new device. Use a reusable, non-ephemeral key; devices from tagged keys don't belong to your account",
+      'Used to register automatically. A new key re-registers as a new device. Use a reusable, non-ephemeral key; devices from tagged keys don\'t belong to your account',
       name: 'tailscaleNodeAuthKeyDesc',
       desc: '',
       args: [],
@@ -9988,7 +11037,7 @@ class AppLocalizations {
   /// `Sign-in method`
   String get tailscaleNodeAuthMode {
     return Intl.message(
-      "Sign-in method",
+      'Sign-in method',
       name: 'tailscaleNodeAuthMode',
       desc: '',
       args: [],
@@ -9998,7 +11047,7 @@ class AppLocalizations {
   /// `Browser sign-in`
   String get tailscaleNodeAuthModeLogin {
     return Intl.message(
-      "Browser sign-in",
+      'Browser sign-in',
       name: 'tailscaleNodeAuthModeLogin',
       desc: '',
       args: [],
@@ -10008,7 +11057,7 @@ class AppLocalizations {
   /// `Auth Key`
   String get tailscaleNodeAuthModeAuthKey {
     return Intl.message(
-      "Auth Key",
+      'Auth Key',
       name: 'tailscaleNodeAuthModeAuthKey',
       desc: '',
       args: [],
@@ -10018,7 +11067,7 @@ class AppLocalizations {
   /// `The two methods register as two separate devices and keep their own identity; switching back keeps the previous sign-in`
   String get tailscaleNodeAuthModeDesc {
     return Intl.message(
-      "The two methods register as two separate devices and keep their own identity; switching back keeps the previous sign-in",
+      'The two methods register as two separate devices and keep their own identity; switching back keeps the previous sign-in',
       name: 'tailscaleNodeAuthModeDesc',
       desc: '',
       args: [],
@@ -10028,7 +11077,7 @@ class AppLocalizations {
   /// `The node is online. After switching, this Mac joins the Tailnet as another device: its 100.x IP and MagicDNS name change, so ACLs, SSH and anything that reaches this device by IP or name need updating. The current identity is kept and is used again when you switch back.`
   String get tailscaleNodeSwitchModeTip {
     return Intl.message(
-      "The node is online. After switching, this Mac joins the Tailnet as another device: its 100.x IP and MagicDNS name change, so ACLs, SSH and anything that reaches this device by IP or name need updating. The current identity is kept and is used again when you switch back.",
+      'The node is online. After switching, this Mac joins the Tailnet as another device: its 100.x IP and MagicDNS name change, so ACLs, SSH and anything that reaches this device by IP or name need updating. The current identity is kept and is used again when you switch back.',
       name: 'tailscaleNodeSwitchModeTip',
       desc: '',
       args: [],
@@ -10038,7 +11087,7 @@ class AppLocalizations {
   /// `The node is online. A new Auth Key re-registers this Mac as a new device; its IP may change and the old device shows as offline in the Tailscale admin console.`
   String get tailscaleNodeAuthKeyChangeTip {
     return Intl.message(
-      "The node is online. A new Auth Key re-registers this Mac as a new device; its IP may change and the old device shows as offline in the Tailscale admin console.",
+      'The node is online. A new Auth Key re-registers this Mac as a new device; its IP may change and the old device shows as offline in the Tailscale admin console.',
       name: 'tailscaleNodeAuthKeyChangeTip',
       desc: '',
       args: [],
@@ -10048,7 +11097,7 @@ class AppLocalizations {
   /// `Enter an Auth Key first`
   String get tailscaleNodeAuthKeyRequired {
     return Intl.message(
-      "Enter an Auth Key first",
+      'Enter an Auth Key first',
       name: 'tailscaleNodeAuthKeyRequired',
       desc: '',
       args: [],
@@ -10058,7 +11107,7 @@ class AppLocalizations {
   /// `Auth Key registration failed: the key is invalid, already used or expired. Replace it`
   String get tailscaleNodeAuthKeyFailed {
     return Intl.message(
-      "Auth Key registration failed: the key is invalid, already used or expired. Replace it",
+      'Auth Key registration failed: the key is invalid, already used or expired. Replace it',
       name: 'tailscaleNodeAuthKeyFailed',
       desc: '',
       args: [],
@@ -10068,7 +11117,7 @@ class AppLocalizations {
   /// `Re-register`
   String get tailscaleNodeReRegister {
     return Intl.message(
-      "Re-register",
+      'Re-register',
       name: 'tailscaleNodeReRegister',
       desc: '',
       args: [],
@@ -10078,7 +11127,7 @@ class AppLocalizations {
   /// `Registers again with the current Auth Key as a new device; the IP may change`
   String get tailscaleNodeReRegisterTip {
     return Intl.message(
-      "Registers again with the current Auth Key as a new device; the IP may change",
+      'Registers again with the current Auth Key as a new device; the IP may change',
       name: 'tailscaleNodeReRegisterTip',
       desc: '',
       args: [],
@@ -10088,17 +11137,17 @@ class AppLocalizations {
   /// `Conflicting settings handled automatically`
   String get tailscaleNodeConflicts {
     return Intl.message(
-      "Conflicting settings handled automatically",
+      'Conflicting settings handled automatically',
       name: 'tailscaleNodeConflicts',
       desc: '',
       args: [],
     );
   }
 
-  /// `While the built-in node is on, these settings are ignored at runtime so Tailnet traffic reaches the node. Profiles and override scripts are not modified, and everything is restored when the node is off:`
+  /// `While the built-in node is on, these settings are ignored at runtime so Tailnet traffic reaches the node. Profiles and override scripts are not modified, and everything is restored when the node is off:\n• TUN route-exclude-address entries overlapping Tailnet ranges (that traffic would bypass the core)\n• 100.100.100.100 in DNS server lists (unreachable without the Tailscale App)\n• nameserver-policy entries pointing to 100.100.100.100, now resolved by the built-in node\n• hosts entries for Tailnet domains\n• Tailnet domains and ranges in the system proxy bypass list\nRules for Tailnet domains and ranges in your profile are unaffected; the built-in node's prepended rules match first. If you never customized these, nothing to do.`
   String get tailscaleNodeConflictsDesc {
     return Intl.message(
-      "While the built-in node is on, these settings are ignored at runtime so Tailnet traffic reaches the node. Profiles and override scripts are not modified, and everything is restored when the node is off:\n• TUN route-exclude-address entries overlapping Tailnet ranges (that traffic would bypass the core)\n• 100.100.100.100 in DNS server lists (unreachable without the Tailscale App)\n• nameserver-policy entries pointing to 100.100.100.100, now resolved by the built-in node\n• hosts entries for Tailnet domains\n• Tailnet domains and ranges in the system proxy bypass list\nRules for Tailnet domains and ranges in your profile are unaffected; the built-in node's prepended rules match first. If you never customized these, nothing to do.",
+      'While the built-in node is on, these settings are ignored at runtime so Tailnet traffic reaches the node. Profiles and override scripts are not modified, and everything is restored when the node is off:\n• TUN route-exclude-address entries overlapping Tailnet ranges (that traffic would bypass the core)\n• 100.100.100.100 in DNS server lists (unreachable without the Tailscale App)\n• nameserver-policy entries pointing to 100.100.100.100, now resolved by the built-in node\n• hosts entries for Tailnet domains\n• Tailnet domains and ranges in the system proxy bypass list\nRules for Tailnet domains and ranges in your profile are unaffected; the built-in node\'s prepended rules match first. If you never customized these, nothing to do.',
       name: 'tailscaleNodeConflictsDesc',
       desc: '',
       args: [],
@@ -10175,7 +11224,7 @@ class AppLocalizations {
     );
   }
 
-  /// `Two ways to reach your Tailnet`
+  /// `Two ways to reach your Tailnet\n\n• Tailscale App Coexistence: Tailnet traffic bypasses Bettbox and is handled by the Tailscale App installed on this device. The App must keep running; once it quits, the Tailnet is unreachable. Pick this if you already use the App and other devices also need to reach this one (ssh, file sharing, etc.).\n\n• Built-in Tailscale Node: the Bettbox core joins your Tailnet as a separate device (named "<hostname>-bettbox" by default), and Tailnet domains and ranges are forwarded to it by rules. No Tailscale App is needed, but TUN or the system proxy must be on. It is outbound only: other devices cannot reach this device through it.\n\nBoth on\n\nThe built-in node takes precedence: Tailnet ranges no longer bypass TUN, and the App mode MagicDNS server and proxy exceptions are ignored. If the App is still running, the system may route direct 100.x traffic to the App, while traffic passing through the core uses the built-in node. Usually you only need one of them.\n\nDo I need the Tailscale App?\n\n• App Coexistence only: yes.\n• Built-in node only: no.\n• Other devices need to reach this one (ssh, file sharing, etc.): yes, unless the app ships its own Tailscale (e.g. Rex Server). The built-in node does not accept incoming connections.\n• TUN is off and the program ignores the system proxy (e.g. ssh in a terminal): the built-in node cannot take over; use the App.\n\nSign-in\n\nWithout an Auth Key, tap "Sign in to Tailscale" and authorize in the browser. The login is stored locally and survives config reloads. With a tagged Auth Key the device shows up as the tag instead of your account, and services that only allow your account may reject it.`
   String get tailscaleGuideContent {
     return Intl.message(
       'Two ways to reach your Tailnet\n\n• Tailscale App Coexistence: Tailnet traffic bypasses Bettbox and is handled by the Tailscale App installed on this device. The App must keep running; once it quits, the Tailnet is unreachable. Pick this if you already use the App and other devices also need to reach this one (ssh, file sharing, etc.).\n\n• Built-in Tailscale Node: the Bettbox core joins your Tailnet as a separate device (named "<hostname>-bettbox" by default), and Tailnet domains and ranges are forwarded to it by rules. No Tailscale App is needed, but TUN or the system proxy must be on. It is outbound only: other devices cannot reach this device through it.\n\nBoth on\n\nThe built-in node takes precedence: Tailnet ranges no longer bypass TUN, and the App mode MagicDNS server and proxy exceptions are ignored. If the App is still running, the system may route direct 100.x traffic to the App, while traffic passing through the core uses the built-in node. Usually you only need one of them.\n\nDo I need the Tailscale App?\n\n• App Coexistence only: yes.\n• Built-in node only: no.\n• Other devices need to reach this one (ssh, file sharing, etc.): yes, unless the app ships its own Tailscale (e.g. Rex Server). The built-in node does not accept incoming connections.\n• TUN is off and the program ignores the system proxy (e.g. ssh in a terminal): the built-in node cannot take over; use the App.\n\nSign-in\n\nWithout an Auth Key, tap "Sign in to Tailscale" and authorize in the browser. The login is stored locally and survives config reloads. With a tagged Auth Key the device shows up as the tag instead of your account, and services that only allow your account may reject it.',
@@ -10195,7 +11244,7 @@ class AppLocalizations {
     );
   }
 
-  /// `Built-in Tailscale Node`
+  /// `Built-in Tailscale Node\n\nThe Bettbox core joins your Tailnet as a separate device (named "<hostname>-bettbox" by default), and Tailnet domains and ranges are forwarded to it by rules. All traffic on this device already passes through the Bettbox VPN, so no extra setup is needed.\n\nWhy there is no Tailscale App coexistence\n\nThe system allows only one VPN at a time. Once Bettbox starts, the Tailscale App's VPN is disconnected, and vice versa. To reach your Tailnet while Bettbox is running, use the built-in node.\n\nLimits\n\n• Outbound only: this device can reach the Tailnet, but other devices cannot reach this device through the built-in node.\n• If you need this device to be reachable, stop Bettbox and use the Tailscale App instead.\n\nSign-in\n\nWithout an Auth Key, tap "Sign in to Tailscale" and authorize in the browser. The login is stored locally and survives config reloads. With a tagged Auth Key the device shows up as the tag instead of your account, and services that only allow your account may reject it.`
   String get tailscaleGuideMobileContent {
     return Intl.message(
       'Built-in Tailscale Node\n\nThe Bettbox core joins your Tailnet as a separate device (named "<hostname>-bettbox" by default), and Tailnet domains and ranges are forwarded to it by rules. All traffic on this device already passes through the Bettbox VPN, so no extra setup is needed.\n\nWhy there is no Tailscale App coexistence\n\nThe system allows only one VPN at a time. Once Bettbox starts, the Tailscale App\'s VPN is disconnected, and vice versa. To reach your Tailnet while Bettbox is running, use the built-in node.\n\nLimits\n\n• Outbound only: this device can reach the Tailnet, but other devices cannot reach this device through the built-in node.\n• If you need this device to be reachable, stop Bettbox and use the Tailscale App instead.\n\nSign-in\n\nWithout an Auth Key, tap "Sign in to Tailscale" and authorize in the browser. The login is stored locally and survives config reloads. With a tagged Auth Key the device shows up as the tag instead of your account, and services that only allow your account may reject it.',
@@ -10258,7 +11307,7 @@ class AppLocalizations {
   /// `Full Proxy Chain in Tray Menu`
   String get trayShowProxyChain {
     return Intl.message(
-      "Full Proxy Chain in Tray Menu",
+      'Full Proxy Chain in Tray Menu',
       name: 'trayShowProxyChain',
       desc: '',
       args: [],
@@ -10268,7 +11317,7 @@ class AppLocalizations {
   /// `Show every level of the selected chain next to proxy groups in the tray menu, e.g. Fallback → Other → node. When off, only the selection and its final node are shown`
   String get trayShowProxyChainDesc {
     return Intl.message(
-      "Show every level of the selected chain next to proxy groups in the tray menu, e.g. Fallback → Other → node. When off, only the selection and its final node are shown",
+      'Show every level of the selected chain next to proxy groups in the tray menu, e.g. Fallback → Other → node. When off, only the selection and its final node are shown',
       name: 'trayShowProxyChainDesc',
       desc: '',
       args: [],
@@ -10278,7 +11327,7 @@ class AppLocalizations {
   /// `Tailnet access: Tailscale App coexistence or built-in node`
   String get tailscaleDesc {
     return Intl.message(
-      "Tailnet access: Tailscale App coexistence or built-in node",
+      'Tailnet access: Tailscale App coexistence or built-in node',
       name: 'tailscaleDesc',
       desc: '',
       args: [],
@@ -10288,7 +11337,7 @@ class AppLocalizations {
   /// `Tray Proxy Group`
   String get trayStatusGroup {
     return Intl.message(
-      "Tray Proxy Group",
+      'Tray Proxy Group',
       name: 'trayStatusGroup',
       desc: '',
       args: [],
@@ -10298,7 +11347,7 @@ class AppLocalizations {
   /// `Show the current selection of a chosen proxy group next to the tray icon (in the hover tooltip on Windows)`
   String get trayStatusGroupDesc {
     return Intl.message(
-      "Show the current selection of a chosen proxy group next to the tray icon (in the hover tooltip on Windows)",
+      'Show the current selection of a chosen proxy group next to the tray icon (in the hover tooltip on Windows)',
       name: 'trayStatusGroupDesc',
       desc: '',
       args: [],
@@ -10308,7 +11357,7 @@ class AppLocalizations {
   /// `Proxy group`
   String get trayStatusGroupName {
     return Intl.message(
-      "Proxy group",
+      'Proxy group',
       name: 'trayStatusGroupName',
       desc: '',
       args: [],
@@ -10318,7 +11367,7 @@ class AppLocalizations {
   /// `Not selected`
   String get trayStatusGroupNotSelected {
     return Intl.message(
-      "Not selected",
+      'Not selected',
       name: 'trayStatusGroupNotSelected',
       desc: '',
       args: [],
@@ -10328,7 +11377,7 @@ class AppLocalizations {
   /// `Not in current profile`
   String get trayStatusGroupMissing {
     return Intl.message(
-      "Not in current profile",
+      'Not in current profile',
       name: 'trayStatusGroupMissing',
       desc: '',
       args: [],
@@ -10338,7 +11387,7 @@ class AppLocalizations {
   /// `(hidden)`
   String get trayStatusGroupHidden {
     return Intl.message(
-      "(hidden)",
+      '(hidden)',
       name: 'trayStatusGroupHidden',
       desc: '',
       args: [],
@@ -10348,7 +11397,7 @@ class AppLocalizations {
   /// `Show group name`
   String get trayStatusShowName {
     return Intl.message(
-      "Show group name",
+      'Show group name',
       name: 'trayStatusShowName',
       desc: '',
       args: [],
@@ -10358,7 +11407,7 @@ class AppLocalizations {
   /// `Show node`
   String get trayStatusShowNode {
     return Intl.message(
-      "Show node",
+      'Show node',
       name: 'trayStatusShowNode',
       desc: '',
       args: [],
@@ -10368,7 +11417,7 @@ class AppLocalizations {
   /// `The node finally used along the selection chain`
   String get trayStatusShowNodeDesc {
     return Intl.message(
-      "The node finally used along the selection chain",
+      'The node finally used along the selection chain',
       name: 'trayStatusShowNodeDesc',
       desc: '',
       args: [],
@@ -10378,7 +11427,7 @@ class AppLocalizations {
   /// `Show full chain`
   String get trayStatusShowChain {
     return Intl.message(
-      "Show full chain",
+      'Show full chain',
       name: 'trayStatusShowChain',
       desc: '',
       args: [],
@@ -10388,7 +11437,7 @@ class AppLocalizations {
   /// `Every level down to the final node, e.g. Fallback → Other → node`
   String get trayStatusShowChainDesc {
     return Intl.message(
-      "Every level down to the final node, e.g. Fallback → Other → node",
+      'Every level down to the final node, e.g. Fallback → Other → node',
       name: 'trayStatusShowChainDesc',
       desc: '',
       args: [],
@@ -10398,7 +11447,7 @@ class AppLocalizations {
   /// `Position`
   String get trayStatusPosition {
     return Intl.message(
-      "Position",
+      'Position',
       name: 'trayStatusPosition',
       desc: '',
       args: [],
@@ -10408,7 +11457,7 @@ class AppLocalizations {
   /// `After speed`
   String get trayStatusAfterSpeed {
     return Intl.message(
-      "After speed",
+      'After speed',
       name: 'trayStatusAfterSpeed',
       desc: '',
       args: [],
@@ -10418,7 +11467,7 @@ class AppLocalizations {
   /// `Before speed`
   String get trayStatusBeforeSpeed {
     return Intl.message(
-      "Before speed",
+      'Before speed',
       name: 'trayStatusBeforeSpeed',
       desc: '',
       args: [],
@@ -10428,7 +11477,7 @@ class AppLocalizations {
   /// `Show node latency`
   String get trayStatusShowDelay {
     return Intl.message(
-      "Show node latency",
+      'Show node latency',
       name: 'trayStatusShowDelay',
       desc: '',
       args: [],
@@ -10438,7 +11487,7 @@ class AppLocalizations {
   /// `Show latency in parentheses after the final node, e.g. Node (86ms)`
   String get trayStatusShowDelayDesc {
     return Intl.message(
-      "Show latency in parentheses after the final node, e.g. Node (86ms)",
+      'Show latency in parentheses after the final node, e.g. Node (86ms)',
       name: 'trayStatusShowDelayDesc',
       desc: '',
       args: [],
@@ -10448,7 +11497,7 @@ class AppLocalizations {
   /// `Timeout`
   String get trayStatusDelayTimeout {
     return Intl.message(
-      "Timeout",
+      'Timeout',
       name: 'trayStatusDelayTimeout',
       desc: '',
       args: [],
@@ -10458,7 +11507,7 @@ class AppLocalizations {
   /// `Preview`
   String get trayStatusPreview {
     return Intl.message(
-      "Preview",
+      'Preview',
       name: 'trayStatusPreview',
       desc: '',
       args: [],
@@ -10468,7 +11517,7 @@ class AppLocalizations {
   /// `Nothing to show with the current options`
   String get trayStatusPreviewEmpty {
     return Intl.message(
-      "Nothing to show with the current options",
+      'Nothing to show with the current options',
       name: 'trayStatusPreviewEmpty',
       desc: '',
       args: [],
@@ -10478,7 +11527,7 @@ class AppLocalizations {
   /// `Click a node to pin it; click again to auto-select`
   String get trayPinHintAuto {
     return Intl.message(
-      "Click a node to pin it; click again to auto-select",
+      'Click a node to pin it; click again to auto-select',
       name: 'trayPinHintAuto',
       desc: '',
       args: [],
@@ -10488,7 +11537,7 @@ class AppLocalizations {
   /// `Pinned; click the locked node to auto-select`
   String get trayPinHintPinned {
     return Intl.message(
-      "Pinned; click the locked node to auto-select",
+      'Pinned; click the locked node to auto-select',
       name: 'trayPinHintPinned',
       desc: '',
       args: [],
@@ -10498,7 +11547,7 @@ class AppLocalizations {
   /// `Rule mode shows the chosen group; Global mode routes all traffic through GLOBAL, so GLOBAL is always shown; Direct mode bypasses proxy groups and shows only DIRECT (no chain or delay). Switching modes keeps your chosen group.`
   String get trayStatusModeDesc {
     return Intl.message(
-      "Rule mode shows the chosen group; Global mode routes all traffic through GLOBAL, so GLOBAL is always shown; Direct mode bypasses proxy groups and shows only DIRECT (no chain or delay). Switching modes keeps your chosen group.",
+      'Rule mode shows the chosen group; Global mode routes all traffic through GLOBAL, so GLOBAL is always shown; Direct mode bypasses proxy groups and shows only DIRECT (no chain or delay). Switching modes keeps your chosen group.',
       name: 'trayStatusModeDesc',
       desc: '',
       args: [],
@@ -10528,7 +11577,7 @@ class AppLocalizations {
   /// `Built from current settings and selection; speed values are samples`
   String get trayStatusPreviewDesc {
     return Intl.message(
-      "Built from current settings and selection; speed values are samples",
+      'Built from current settings and selection; speed values are samples',
       name: 'trayStatusPreviewDesc',
       desc: '',
       args: [],
@@ -10610,288 +11659,410 @@ class AppLocalizations {
     );
   }
 
-  String get tailscaleGroups => Intl.message(
-    "Tailscale groups",
-    name: 'tailscaleGroups',
-    desc: '',
-    args: [],
-  );
+  /// `Tailscale groups`
+  String get tailscaleGroups {
+    return Intl.message(
+      'Tailscale groups',
+      name: 'tailscaleGroups',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleGroupsDesc => Intl.message(
-    "Each group is a separate device in your Tailnet. The default group handles the Tailnet catch-all rules and MagicDNS; other groups only take the devices assigned to them and their custom rules, which come before the catch-all rules. Tailscale nodes from the profile are listed here too and can be overridden.",
-    name: 'tailscaleGroupsDesc',
-    desc: '',
-    args: [],
-  );
+  /// `Each group is a separate device in your Tailnet. The default group is the profile's first Tailscale node, or the first group when the profile has none; it handles the Tailnet catch-all rules and MagicDNS. Other groups only take the devices assigned to them and their custom rules, which come before the catch-all rules. Tailscale nodes from the profile are listed here too: they can be set as the default group or overridden.`
+  String get tailscaleGroupsDesc {
+    return Intl.message(
+      'Each group is a separate device in your Tailnet. The default group is the profile\'s first Tailscale node, or the first group when the profile has none; it handles the Tailnet catch-all rules and MagicDNS. Other groups only take the devices assigned to them and their custom rules, which come before the catch-all rules. Tailscale nodes from the profile are listed here too: they can be set as the default group or overridden.',
+      name: 'tailscaleGroupsDesc',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleGroupAdd => Intl.message(
-    "Add group",
-    name: 'tailscaleGroupAdd',
-    desc: '',
-    args: [],
-  );
+  /// `Add group`
+  String get tailscaleGroupAdd {
+    return Intl.message(
+      'Add group',
+      name: 'tailscaleGroupAdd',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleGroupName =>
-      Intl.message("Name", name: 'tailscaleGroupName', desc: '', args: []);
+  /// `Name`
+  String get tailscaleGroupName {
+    return Intl.message('Name', name: 'tailscaleGroupName', desc: '', args: []);
+  }
 
-  String get tailscaleGroupNameDesc => Intl.message(
-    "Outbound name used in rules",
-    name: 'tailscaleGroupNameDesc',
-    desc: '',
-    args: [],
-  );
+  /// `Outbound name used in rules`
+  String get tailscaleGroupNameDesc {
+    return Intl.message(
+      'Outbound name used in rules',
+      name: 'tailscaleGroupNameDesc',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleGroupNameExists => Intl.message(
-    "Name already in use",
-    name: 'tailscaleGroupNameExists',
-    desc: '',
-    args: [],
-  );
+  /// `Name already in use`
+  String get tailscaleGroupNameExists {
+    return Intl.message(
+      'Name already in use',
+      name: 'tailscaleGroupNameExists',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleGroupDefault => Intl.message(
-    "Default",
-    name: 'tailscaleGroupDefault',
-    desc: '',
-    args: [],
-  );
+  /// `Default`
+  String get tailscaleGroupDefault {
+    return Intl.message(
+      'Default',
+      name: 'tailscaleGroupDefault',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleGroupSetDefault => Intl.message(
-    "Set as default group",
-    name: 'tailscaleGroupSetDefault',
-    desc: '',
-    args: [],
-  );
+  /// `Set as default group`
+  String get tailscaleGroupSetDefault {
+    return Intl.message(
+      'Set as default group',
+      name: 'tailscaleGroupSetDefault',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleGroupSetDefaultDesc => Intl.message(
-    "Tailnet catch-all rules and MagicDNS go to this group",
-    name: 'tailscaleGroupSetDefaultDesc',
-    desc: '',
-    args: [],
-  );
+  /// `Tailnet catch-all rules and MagicDNS go to this group`
+  String get tailscaleGroupSetDefaultDesc {
+    return Intl.message(
+      'Tailnet catch-all rules and MagicDNS go to this group',
+      name: 'tailscaleGroupSetDefaultDesc',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleGroupDelete => Intl.message(
-    "Delete group",
-    name: 'tailscaleGroupDelete',
-    desc: '',
-    args: [],
-  );
+  /// `Delete group`
+  String get tailscaleGroupDelete {
+    return Intl.message(
+      'Delete group',
+      name: 'tailscaleGroupDelete',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleGroupDeleteTip => Intl.message(
-    "Its devices and rules fall back to the default group. The device in the Tailscale admin console is not removed automatically.",
-    name: 'tailscaleGroupDeleteTip',
-    desc: '',
-    args: [],
-  );
+  /// `Its devices and rules fall back to the default group. The device in the Tailscale admin console is not removed automatically.`
+  String get tailscaleGroupDeleteTip {
+    return Intl.message(
+      'Its devices and rules fall back to the default group. The device in the Tailscale admin console is not removed automatically.',
+      name: 'tailscaleGroupDeleteTip',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleGroupProfile => Intl.message(
-    "Profile",
-    name: 'tailscaleGroupProfile',
-    desc: '',
-    args: [],
-  );
+  /// `Profile`
+  String get tailscaleGroupProfile {
+    return Intl.message(
+      'Profile',
+      name: 'tailscaleGroupProfile',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleGroupOverride => Intl.message(
-    "Override",
-    name: 'tailscaleGroupOverride',
-    desc: '',
-    args: [],
-  );
+  /// `Override`
+  String get tailscaleGroupOverride {
+    return Intl.message(
+      'Override',
+      name: 'tailscaleGroupOverride',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleGroupOverrideDesc => Intl.message(
-    "When on, the node with this name in the profile is replaced at runtime by the settings here; the profile itself is not changed. Bettbox keeps a separate identity for it, so sign in once after turning this on.",
-    name: 'tailscaleGroupOverrideDesc',
-    desc: '',
-    args: [],
-  );
+  /// `When on, the node with this name in the profile is replaced at runtime by the settings here; the profile itself is not changed. Bettbox keeps a separate identity for it, so sign in once after turning this on.`
+  String get tailscaleGroupOverrideDesc {
+    return Intl.message(
+      'When on, the node with this name in the profile is replaced at runtime by the settings here; the profile itself is not changed. Bettbox keeps a separate identity for it, so sign in once after turning this on.',
+      name: 'tailscaleGroupOverrideDesc',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleGroupNotInProfile => Intl.message(
-    "Not in the current profile; override is inactive",
-    name: 'tailscaleGroupNotInProfile',
-    desc: '',
-    args: [],
-  );
+  /// `Not in the current profile; override is inactive`
+  String get tailscaleGroupNotInProfile {
+    return Intl.message(
+      'Not in the current profile; override is inactive',
+      name: 'tailscaleGroupNotInProfile',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleGroupProfileReadonly => Intl.message(
-    "Settings come from the profile. Turn on override to edit them here.",
-    name: 'tailscaleGroupProfileReadonly',
-    desc: '',
-    args: [],
-  );
+  /// `Settings come from the profile. Turn on override to edit them here.`
+  String get tailscaleGroupProfileReadonly {
+    return Intl.message(
+      'Settings come from the profile. Turn on override to edit them here.',
+      name: 'tailscaleGroupProfileReadonly',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleGroupDirect => Intl.message(
-    "Direct",
-    name: 'tailscaleGroupDirect',
-    desc: '',
-    args: [],
-  );
+  /// `Direct`
+  String get tailscaleGroupDirect {
+    return Intl.message(
+      'Direct',
+      name: 'tailscaleGroupDirect',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleGroupViaDesc => Intl.message(
-    "Control plane, DERP and UDP of this group go through the selected proxy; without UDP support only DERP relay is used",
-    name: 'tailscaleGroupViaDesc',
-    desc: '',
-    args: [],
-  );
+  /// `Control plane, DERP and UDP of this group go through the selected proxy; without UDP support only DERP relay is used`
+  String get tailscaleGroupViaDesc {
+    return Intl.message(
+      'Control plane, DERP and UDP of this group go through the selected proxy; without UDP support only DERP relay is used',
+      name: 'tailscaleGroupViaDesc',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleGroupAuthKeyInherit => Intl.message(
-    "Leave empty to use the default group's key. The same key still registers a separate device and must be reusable",
-    name: 'tailscaleGroupAuthKeyInherit',
-    desc: '',
-    args: [],
-  );
+  /// `Leave empty to use the default group's key. The same key still registers a separate device and must be reusable`
+  String get tailscaleGroupAuthKeyInherit {
+    return Intl.message(
+      'Leave empty to use the default group\'s key. The same key still registers a separate device and must be reusable',
+      name: 'tailscaleGroupAuthKeyInherit',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleGroupRules => Intl.message(
-    "Custom rules",
-    name: 'tailscaleGroupRules',
-    desc: '',
-    args: [],
-  );
+  /// `Custom rules`
+  String get tailscaleGroupRules {
+    return Intl.message(
+      'Custom rules',
+      name: 'tailscaleGroupRules',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleGroupRulesDesc => Intl.message(
-    "Each as TYPE,VALUE, e.g. DOMAIN-SUFFIX,example.ts.net or IP-CIDR,100.100.1.0/24,no-resolve. The target is this group; they come before the default group's catch-all rules",
-    name: 'tailscaleGroupRulesDesc',
-    desc: '',
-    args: [],
-  );
+  /// `Each as TYPE,VALUE, e.g. DOMAIN-SUFFIX,example.ts.net or IP-CIDR,100.100.1.0/24,no-resolve. The target is this group; they come before the default group's catch-all rules`
+  String get tailscaleGroupRulesDesc {
+    return Intl.message(
+      'Each as TYPE,VALUE, e.g. DOMAIN-SUFFIX,example.ts.net or IP-CIDR,100.100.1.0/24,no-resolve. The target is this group; they come before the default group\'s catch-all rules',
+      name: 'tailscaleGroupRulesDesc',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleGroupRulesInvalid => Intl.message(
-    "Invalid, ignored",
-    name: 'tailscaleGroupRulesInvalid',
-    desc: '',
-    args: [],
-  );
+  /// `Invalid, ignored`
+  String get tailscaleGroupRulesInvalid {
+    return Intl.message(
+      'Invalid, ignored',
+      name: 'tailscaleGroupRulesInvalid',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscalePeerGroup => Intl.message(
-    "Connect through",
-    name: 'tailscalePeerGroup',
-    desc: '',
-    args: [],
-  );
+  /// `Connect through`
+  String get tailscalePeerGroup {
+    return Intl.message(
+      'Connect through',
+      name: 'tailscalePeerGroup',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleProfileWarning => Intl.message(
-    "Profiles define their own Tailscale nodes",
-    name: 'tailscaleProfileWarning',
-    desc: '',
-    args: [],
-  );
+  /// `Profiles define their own Tailscale nodes`
+  String get tailscaleProfileWarning {
+    return Intl.message(
+      'Profiles define their own Tailscale nodes',
+      name: 'tailscaleProfileWarning',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleProfileStateDirConflict => Intl.message(
-    "Same state-dir as a Bettbox group; the two nodes will keep replacing each other",
-    name: 'tailscaleProfileStateDirConflict',
-    desc: '',
-    args: [],
-  );
+  /// `Same state-dir as a Bettbox group; the two nodes will keep replacing each other`
+  String get tailscaleProfileStateDirConflict {
+    return Intl.message(
+      'Same state-dir as a Bettbox group; the two nodes will keep replacing each other',
+      name: 'tailscaleProfileStateDirConflict',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleProfileRulesShadowed => Intl.message(
-    "Rules point to it, but they come after Bettbox's Tailnet rules, so Tailnet domains and ranges are matched by the built-in node first. Turn on override and assign devices or rules here instead",
-    name: 'tailscaleProfileRulesShadowed',
-    desc: '',
-    args: [],
-  );
+  /// `Rules point to it, but they come after Bettbox's Tailnet rules, so Tailnet domains and ranges are matched by the built-in node first. Turn on override and assign devices or rules here instead`
+  String get tailscaleProfileRulesShadowed {
+    return Intl.message(
+      'Rules point to it, but they come after Bettbox\'s Tailnet rules, so Tailnet domains and ranges are matched by the built-in node first. Turn on override and assign devices or rules here instead',
+      name: 'tailscaleProfileRulesShadowed',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleProfileHostnameConflict => Intl.message(
-    "Same device name as a Bettbox group; the one registered later is renamed with -1",
-    name: 'tailscaleProfileHostnameConflict',
-    desc: '',
-    args: [],
-  );
+  /// `Same device name as a Bettbox group; the one registered later is renamed with -1`
+  String get tailscaleProfileHostnameConflict {
+    return Intl.message(
+      'Same device name as a Bettbox group; the one registered later is renamed with -1',
+      name: 'tailscaleProfileHostnameConflict',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleProfileNameConflict => Intl.message(
-    "Same name as a Bettbox group; the profile definition wins and the group is not injected",
-    name: 'tailscaleProfileNameConflict',
-    desc: '',
-    args: [],
-  );
+  /// `Same name as a Bettbox group; the profile definition wins and the group is not injected`
+  String get tailscaleProfileNameConflict {
+    return Intl.message(
+      'Same name as a Bettbox group; the profile definition wins and the group is not injected',
+      name: 'tailscaleProfileNameConflict',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleProfileCurrent => Intl.message(
-    "current",
-    name: 'tailscaleProfileCurrent',
-    desc: '',
-    args: [],
-  );
+  /// `current`
+  String get tailscaleProfileCurrent {
+    return Intl.message(
+      'current',
+      name: 'tailscaleProfileCurrent',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscalePeerUnassigned => Intl.message(
-    "Not taken over (default group)",
-    name: 'tailscalePeerUnassigned',
-    desc: '',
-    args: [],
-  );
+  /// `Not taken over (default group)`
+  String get tailscalePeerUnassigned {
+    return Intl.message(
+      'Not taken over (default group)',
+      name: 'tailscalePeerUnassigned',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleGroupDevices => Intl.message(
-    "Devices",
-    name: 'tailscaleGroupDevices',
-    desc: '',
-    args: [],
-  );
+  /// `Devices`
+  String get tailscaleGroupDevices {
+    return Intl.message(
+      'Devices',
+      name: 'tailscaleGroupDevices',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleGroupDevicesDesc => Intl.message(
-    "Checked: this group takes over the device; rules for its name and IPs point to this group and come before all Tailnet catch-all rules. A device belongs to one group at most, so checking moves it here.\nUnchecked: no device-specific rules; the default group's catch-all rules (*.ts.net, 100.64.0.0/10) handle it.\nBettbox's own nodes on this machine cannot be taken over.",
-    name: 'tailscaleGroupDevicesDesc',
-    desc: '',
-    args: [],
-  );
+  /// `Checked: this group takes over the device; rules for its name and IPs point to this group and come before all Tailnet catch-all rules. A device belongs to one group at most, so checking moves it here.\nUnchecked: no device-specific rules; the default group's catch-all rules (*.ts.net, 100.64.0.0/10) handle it.\nBettbox's own nodes on this machine cannot be taken over.`
+  String get tailscaleGroupDevicesDesc {
+    return Intl.message(
+      'Checked: this group takes over the device; rules for its name and IPs point to this group and come before all Tailnet catch-all rules. A device belongs to one group at most, so checking moves it here.\nUnchecked: no device-specific rules; the default group\'s catch-all rules (*.ts.net, 100.64.0.0/10) handle it.\nBettbox\'s own nodes on this machine cannot be taken over.',
+      name: 'tailscaleGroupDevicesDesc',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleGroupDevicesDefaultDesc => Intl.message(
-    "This is the default group: unchecked devices also connect through it via the catch-all rules. Checking pins the device here with rules before the catch-all rules, so it stays here if the default group changes later.\nChecking moves the device from its current group; Bettbox's own nodes cannot be taken over.",
-    name: 'tailscaleGroupDevicesDefaultDesc',
-    desc: '',
-    args: [],
-  );
+  /// `This is the default group: unchecked devices also connect through it via the catch-all rules. Checking pins the device here with rules before the catch-all rules, so it stays here if the default group changes later.\nChecking moves the device from its current group; Bettbox's own nodes cannot be taken over.`
+  String get tailscaleGroupDevicesDefaultDesc {
+    return Intl.message(
+      'This is the default group: unchecked devices also connect through it via the catch-all rules. Checking pins the device here with rules before the catch-all rules, so it stays here if the default group changes later.\nChecking moves the device from its current group; Bettbox\'s own nodes cannot be taken over.',
+      name: 'tailscaleGroupDevicesDefaultDesc',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscalePeerChecked => Intl.message(
-    "Taken over by this group",
-    name: 'tailscalePeerChecked',
-    desc: '',
-    args: [],
-  );
+  /// `Taken over by this group`
+  String get tailscalePeerChecked {
+    return Intl.message(
+      'Taken over by this group',
+      name: 'tailscalePeerChecked',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscalePeerOwnedBy => Intl.message(
-    "Taken over by another group",
-    name: 'tailscalePeerOwnedBy',
-    desc: '',
-    args: [],
-  );
+  /// `Taken over by another group`
+  String get tailscalePeerOwnedBy {
+    return Intl.message(
+      'Taken over by another group',
+      name: 'tailscalePeerOwnedBy',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscalePeerMoveHint => Intl.message(
-    "check to move it here",
-    name: 'tailscalePeerMoveHint',
-    desc: '',
-    args: [],
-  );
+  /// `check to move it here`
+  String get tailscalePeerMoveHint {
+    return Intl.message(
+      'check to move it here',
+      name: 'tailscalePeerMoveHint',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscalePeerFallback => Intl.message(
-    "Not taken over, default group handles it",
-    name: 'tailscalePeerFallback',
-    desc: '',
-    args: [],
-  );
+  /// `Not taken over, default group handles it`
+  String get tailscalePeerFallback {
+    return Intl.message(
+      'Not taken over, default group handles it',
+      name: 'tailscalePeerFallback',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscalePeerSelfNode => Intl.message(
-    "Bettbox node on this machine, cannot be taken over",
-    name: 'tailscalePeerSelfNode',
-    desc: '',
-    args: [],
-  );
+  /// `Bettbox node on this machine, cannot be taken over`
+  String get tailscalePeerSelfNode {
+    return Intl.message(
+      'Bettbox node on this machine, cannot be taken over',
+      name: 'tailscalePeerSelfNode',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleGroupCustomDevices => Intl.message(
-    "Custom devices",
-    name: 'tailscaleGroupCustomDevices',
-    desc: '',
-    args: [],
-  );
+  /// `Custom devices`
+  String get tailscaleGroupCustomDevices {
+    return Intl.message(
+      'Custom devices',
+      name: 'tailscaleGroupCustomDevices',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleGroupCustomDevicesDesc => Intl.message(
-    "Devices not in the list (offline or not in the Tailnet yet): enter a MagicDNS name or IP and this group takes it over. Uncheck to remove.",
-    name: 'tailscaleGroupCustomDevicesDesc',
-    desc: '',
-    args: [],
-  );
+  /// `Devices not in the list (offline or not in the Tailnet yet): enter a MagicDNS name or IP and this group takes it over. Uncheck to remove.`
+  String get tailscaleGroupCustomDevicesDesc {
+    return Intl.message(
+      'Devices not in the list (offline or not in the Tailnet yet): enter a MagicDNS name or IP and this group takes it over. Uncheck to remove.',
+      name: 'tailscaleGroupCustomDevicesDesc',
+      desc: '',
+      args: [],
+    );
+  }
 
-  String get tailscaleNodeAuthKeyPending => Intl.message(
-    "Auth key registration not finished yet, retrying automatically (not a key problem)",
-    name: 'tailscaleNodeAuthKeyPending',
-    desc: '',
-    args: [],
-  );
+  /// `Auth key registration not finished yet, retrying automatically (not a key problem)`
+  String get tailscaleNodeAuthKeyPending {
+    return Intl.message(
+      'Auth key registration not finished yet, retrying automatically (not a key problem)',
+      name: 'tailscaleNodeAuthKeyPending',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

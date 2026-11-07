@@ -3,7 +3,6 @@ import 'package:bett_box/models/clash_config.dart';
 import 'package:bett_box/models/config.dart';
 import 'package:bett_box/providers/providers.dart';
 import 'package:bett_box/state.dart';
-import 'package:bett_box/views/config/dns.dart';
 import 'package:bett_box/views/config/general.dart';
 import 'package:bett_box/views/config/network.dart';
 import 'package:bett_box/views/config/ntp.dart';
@@ -87,40 +86,6 @@ class _ConfigViewState extends State<ConfigView> {
         delegate: NextDelegate(
           title: 'Tailscale',
           builder: (_) => const TailscaleListView(),
-          blur: false,
-        ),
-      ),
-      ListItem.next(
-        title: const Text('DNS'),
-        subtitle: Text(appLocalizations.dnsDesc),
-        leading: const Icon(Icons.dns),
-        delegate: NextDelegate(
-          title: 'DNS',
-          actions: [
-            Consumer(
-              builder: (_, ref, _) {
-                return IconButton(
-                  onPressed: () async {
-                    final res = await globalState.showMessage(
-                      title: appLocalizations.reset,
-                      message: TextSpan(text: appLocalizations.resetTip),
-                    );
-                    if (res != true) {
-                      return;
-                    }
-                    ref
-                        .read(patchClashConfigProvider.notifier)
-                        .updateState(
-                          (state) => state.copyWith(dns: defaultDns),
-                        );
-                  },
-                  tooltip: appLocalizations.reset,
-                  icon: const Icon(Icons.replay),
-                );
-              },
-            ),
-          ],
-          builder: (_) => const DnsListView(),
           blur: false,
         ),
       ),

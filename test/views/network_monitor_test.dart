@@ -101,8 +101,8 @@ void main() {
       const MaterialApp(
         home: Row(
           children: [
-            ProcessIcon(process: 'Test', processPath: processPath),
-            ProcessIcon(process: 'Test', processPath: processPath),
+            ConnectionProcessIcon(process: 'Test', processPath: processPath),
+            ConnectionProcessIcon(process: 'Test', processPath: processPath),
           ],
         ),
       ),
@@ -136,7 +136,7 @@ void main() {
 
     await tester.pumpWidget(
       const MaterialApp(
-        home: ProcessIcon(process: 'Test', processPath: processPath),
+        home: ConnectionProcessIcon(process: 'Test', processPath: processPath),
       ),
     );
     await tester.pump();
@@ -169,7 +169,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      const MaterialApp(home: ProcessIcon(process: process)),
+      const MaterialApp(home: ConnectionProcessIcon(process: process)),
     );
     await tester.pump(const Duration(milliseconds: 130));
 
@@ -194,7 +194,7 @@ void main() {
         home: StatefulBuilder(
           builder: (context, setState) {
             update = setState;
-            return ProcessIcon(process: 'Test', processPath: path);
+            return ConnectionProcessIcon(process: 'Test', processPath: path);
           },
         ),
       ),

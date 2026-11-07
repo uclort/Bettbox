@@ -35,24 +35,37 @@ class AboutView extends StatelessWidget {
       _LinkTile(
         title: 'Github Releases',
         icon: Icons.star,
-        onTap: () =>
-            globalState.openUrl('https://github.com/$updateRepository/releases'),
+        onTap: () => globalState.openUrl(
+          'https://github.com/$updateRepository/releases',
+        ),
       ),
       _LinkTile(
         title: appLocalizations.checkUpdate,
         icon: Icons.refresh,
         external: false,
         onTap: () => _checkUpdate(context),
+        // BETTBOX-CUSTOM: 齿轮打开更新设置（自动更新 / 接收预览版）。
+        trailing: IconButton(
+          tooltip: appLocalizations.updateSettings,
+          visualDensity: VisualDensity.compact,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints.tightFor(width: 32, height: 32),
+          iconSize: 18,
+          icon: const Icon(Icons.settings_outlined),
+          onPressed: () => globalState.showCommonDialog<void>(
+            child: const UpdateSettingsDialog(),
+          ),
+        ),
       ),
       _LinkTile(
         title: 'Telegram Group',
         icon: Icons.forum_outlined,
-        onTap: () => globalState.openUrl('https://telegram.me/appshub_chat'),
+        onTap: () => globalState.openUrl('https://t.me/bettbox_chat'),
       ),
       _LinkTile(
         title: 'Channel',
         icon: Icons.campaign_outlined,
-        onTap: () => globalState.openUrl('https://telegram.me/appshub_channel'),
+        onTap: () => globalState.openUrl('https://t.me/appshub_channel'),
       ),
       _LinkTile(
         prefix: 'Forked from',
@@ -141,6 +154,42 @@ class AboutView extends StatelessWidget {
         avatar: 'assets/images/avatars/wfion.png',
         name: 'wfion',
       ),
+      const Contributor(
+        avatar: 'assets/images/avatars/uclort.jpg',
+        name: 'uclort',
+      ),
+      const Contributor(
+        avatar: 'assets/images/avatars/Catapult291.jpg',
+        name: 'Catapult291',
+      ),
+      const Contributor(
+        avatar: 'assets/images/avatars/fig0ut.jpg',
+        name: 'fig0ut',
+      ),
+      const Contributor(
+        avatar: 'assets/images/avatars/HarwoodKinnav.jpg',
+        name: 'HarwoodKinnav',
+      ),
+      const Contributor(
+        avatar: 'assets/images/avatars/aaANDkk.jpg',
+        name: 'aaANDkk',
+      ),
+      const Contributor(
+        avatar: 'assets/images/avatars/YumeYuka.jpg',
+        name: 'YumeYuka',
+      ),
+      const Contributor(
+        avatar: 'assets/images/avatars/jasonsamtago.jpg',
+        name: 'jasonsamtago',
+      ),
+      const Contributor(
+        avatar: 'assets/images/avatars/argsno.jpg',
+        name: 'argsno',
+      ),
+      const Contributor(
+        avatar: 'assets/images/avatars/suplzzz.jpg',
+        name: 'suplzzz',
+      ),
     ]..shuffle();
     return generateSection(
       separated: false,
@@ -227,6 +276,54 @@ class AboutView extends StatelessWidget {
       ..._buildMoreSection(context),
     ];
     return generateListView(items);
+  }
+}
+
+/// BETTBOX-CUSTOM: 关于页“检查更新”齿轮打开的更新设置。
+class UpdateSettingsDialog extends ConsumerWidget {
+  const UpdateSettingsDialog({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final setting = ref.watch(
+      appSettingProvider.select(
+        (state) => (state.autoCheckUpdate, state.receivePreRelease),
+      ),
+    );
+    final notifier = ref.read(appSettingProvider.notifier);
+    return CommonDialog(
+      title: appLocalizations.updateSettings,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(appLocalizations.confirm),
+        ),
+      ],
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SwitchListTile(
+            key: const ValueKey('update-settings-auto-update'),
+            title: Text(appLocalizations.appAutoUpdate),
+            subtitle: Text(appLocalizations.appAutoUpdateDesc),
+            value: setting.$1,
+            onChanged: (value) => notifier.updateState(
+              (state) => state.copyWith(autoCheckUpdate: value),
+            ),
+          ),
+          SwitchListTile(
+            key: const ValueKey('update-settings-pre-release'),
+            title: Text(appLocalizations.receivePreRelease),
+            subtitle: Text(appLocalizations.receivePreReleaseDesc),
+            value: setting.$2,
+            onChanged: (value) => notifier.updateState(
+              (state) => state.copyWith(receivePreRelease: value),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -406,6 +503,7 @@ class _LinkTile extends StatelessWidget {
   final IconData icon;
   final bool external;
   final VoidCallback onTap;
+  final Widget? trailing;
 
   const _LinkTile({
     this.prefix,
@@ -413,6 +511,7 @@ class _LinkTile extends StatelessWidget {
     required this.icon,
     this.external = true,
     required this.onTap,
+    this.trailing,
   });
 
   @override
@@ -438,11 +537,12 @@ class _LinkTile extends StatelessWidget {
                   child: Icon(icon, size: 19, color: colorScheme.primary),
                 ),
                 const Spacer(),
-                Icon(
-                  external ? Icons.arrow_outward : Icons.arrow_forward,
-                  size: 16,
-                  color: colorScheme.onSurfaceVariant.opacity50,
-                ),
+                trailing ??
+                    Icon(
+                      external ? Icons.arrow_outward : Icons.arrow_forward,
+                      size: 16,
+                      color: colorScheme.onSurfaceVariant.opacity50,
+                    ),
               ],
             ),
             const SizedBox(height: 8),

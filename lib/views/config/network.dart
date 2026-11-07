@@ -142,35 +142,6 @@ class SystemProxyItem extends ConsumerWidget {
   }
 }
 
-class AutoSetSystemDnsItem extends ConsumerWidget {
-  const AutoSetSystemDnsItem({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final canSet =
-        ref.watch(runTimeProvider.select((state) => state != null)) &&
-        ref.watch(realTunEnableProvider);
-    final autoSetSystemDns = ref.watch(
-      networkSettingProvider.select((state) => state.autoSetSystemDns),
-    );
-    return ListItem.switchItem(
-      title: Text(appLocalizations.autoSetSystemDns),
-      delegate: SwitchDelegate(
-        value: autoSetSystemDns,
-        onChanged: canSet
-            ? (bool value) async {
-                ref
-                    .read(networkSettingProvider.notifier)
-                    .updateState(
-                      (state) => state.copyWith(autoSetSystemDns: value),
-                    );
-              }
-            : null,
-      ),
-    );
-  }
-}
-
 class StrictRouteItem extends ConsumerWidget {
   const StrictRouteItem({super.key});
 
@@ -332,45 +303,6 @@ class TunStackItem extends ConsumerWidget {
   }
 }
 
-class TunCongestionControllerItem extends ConsumerWidget {
-  const TunCongestionControllerItem({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final (stack, congestionController) = ref.watch(
-      patchClashConfigProvider.select(
-        (state) => (state.tun.stack, state.tun.congestionController),
-      ),
-    );
-
-    if (stack != TunStack.mips) {
-      return const SizedBox.shrink();
-    }
-
-    return ListItem.options(
-      title: Text(appLocalizations.congestionController),
-      subtitle: Text(congestionController.name),
-      delegate: OptionsDelegate<CongestionController>(
-        value: congestionController,
-        options: CongestionController.values,
-        textBuilder: (value) => value.name,
-        onChanged: (value) async {
-          if (value == null) {
-            return;
-          }
-          ref
-              .read(patchClashConfigProvider.notifier)
-              .updateState(
-                (state) => state.copyWith.tun(congestionController: value),
-              );
-          await _handleNetworkConfigChange(ref);
-        },
-        title: appLocalizations.congestionController,
-      ),
-    );
-  }
-}
-
 class MtuItem extends ConsumerWidget {
   const MtuItem({super.key});
 
@@ -502,6 +434,45 @@ class MtuItem extends ConsumerWidget {
           }
         },
         title: 'MTU',
+      ),
+    );
+  }
+}
+
+class ProfileSwitchModeItem extends ConsumerWidget {
+  const ProfileSwitchModeItem({super.key});
+
+  String _text(ProfileSwitchMode mode) => switch (mode) {
+    ProfileSwitchMode.hotReload => appLocalizations.hotReload,
+    ProfileSwitchMode.fullRestart => appLocalizations.fullRestart,
+  };
+
+  String _desc(ProfileSwitchMode mode) => switch (mode) {
+    ProfileSwitchMode.hotReload => appLocalizations.hotReloadDesc,
+    ProfileSwitchMode.fullRestart => appLocalizations.fullRestartDesc,
+  };
+
+  @override
+  Widget build(BuildContext context, ref) {
+    final mode = ref.watch(
+      networkSettingProvider.select((state) => state.profileSwitchMode),
+    );
+
+    return ListItem.options(
+      title: Text(appLocalizations.profileSwitchMode),
+      subtitle: Text(_text(mode)),
+      delegate: OptionsDelegate<ProfileSwitchMode>(
+        value: mode,
+        options: ProfileSwitchMode.values,
+        textBuilder: _text,
+        subtitleBuilder: _desc,
+        onChanged: (value) {
+          if (value == null) return;
+          ref
+              .read(networkSettingProvider.notifier)
+              .updateState((state) => state.copyWith(profileSwitchMode: value));
+        },
+        title: appLocalizations.profileSwitchMode,
       ),
     );
   }
@@ -688,11 +659,6 @@ class NetworkListView extends ConsumerWidget {
     final vpnSystemProxy =
         system.isAndroid &&
         ref.watch(vpnSettingProvider.select((state) => state.systemProxy));
-    final isMipsStack = ref.watch(
-      patchClashConfigProvider.select(
-        (state) => state.tun.stack == TunStack.mips,
-      ),
-    );
     final networkItems = [
       if (system.isAndroid) ...generateSection(items: const [VPNItem()]),
       if (system.isAndroid)
@@ -713,14 +679,13 @@ class NetworkListView extends ConsumerWidget {
         title: appLocalizations.options,
         items: [
           if (system.isDesktop) const TUNItem(),
-          if (system.isLinux) const AutoSetSystemDnsItem(),
           if (!system.isAndroid) const StrictRouteItem(),
           const IcmpForwardingItem(),
-          const DnsHijackItem(),
+          if (system.isDesktop) const DnsHijackItem(),
           const EndpointIndependentNatItem(),
-          const TunStackItem(),
-          if (isMipsStack) const TunCongestionControllerItem(),
+          if (!AppIdentity.isLite) const TunStackItem(),
           const MtuItem(),
+          if (system.isDesktop) const ProfileSwitchModeItem(),
           const BypassPrivateRouteItem(),
         ],
       ),

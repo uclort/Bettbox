@@ -85,7 +85,7 @@ class Proxy extends ProxyPlatform {
         cmdList.add(
           ["gsettings", "set", "org.gnome.system.proxy", "mode", "manual"],
         );
-        final ignoreHosts = "\"['${bypassDomain.join("', '")}']\"";
+        final ignoreHosts = _gnomeIgnoreHosts(bypassDomain);
         cmdList.add(
           [
             "gsettings",
@@ -150,6 +150,25 @@ class Proxy extends ProxyPlatform {
     } catch (_) {
       return false;
     }
+  }
+
+  String _gnomeIgnoreHosts(List<String> bypassDomain) {
+    final hosts = bypassDomain.map((host) {
+      final prefix = RegExp(r'^(\d{1,3}(?:\.\d{1,3}){0,2})\.\*$')
+          .firstMatch(host)
+          ?.group(1);
+      if (prefix != null) {
+        final octets = prefix.split(".");
+        final address = [...octets, ...List.filled(4 - octets.length, "0")];
+        return "${address.join(".")}/${octets.length * 8}";
+      }
+      if (host.startsWith("[") && host.endsWith("]")) {
+        return host.substring(1, host.length - 1);
+      }
+      return host;
+    }).map(
+        (host) => "'${host.replaceAll(r"\", r"\\").replaceAll("'", r"\'")}'");
+    return "[${hosts.join(", ")}]";
   }
 
   Future<bool> _stopProxyWithLinux() async {
@@ -228,7 +247,7 @@ class Proxy extends ProxyPlatform {
             [
               "-setproxybypassdomains",
               dev,
-              bypassDomain.join(","),
+              ...bypassDomain.isEmpty ? ["Empty"] : bypassDomain,
             ],
           ),
         ]);
@@ -262,7 +281,7 @@ class Proxy extends ProxyPlatform {
           ),
           Process.run(
             "/usr/sbin/networksetup",
-            ["-setproxybypassdomains", dev, ""],
+            ["-setproxybypassdomains", dev, "Empty"],
           ),
         ]);
       }

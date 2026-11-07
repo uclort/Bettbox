@@ -45,11 +45,16 @@ abstract class Metadata with _$Metadata {
   const factory Metadata({
     @Default(0) int uid,
     @Default('') String network,
+    @Default('') String type,
     @Default('') String sourceIP,
     @Default('') String sourcePort,
     @Default('') String destinationIP,
     @Default('') String destinationPort,
     @Default('') String host,
+    @Default('') String sniffHost,
+    @Default('') String inboundName,
+    @Default('') String inboundPort,
+    @Default('') String inboundUser,
     DnsMode? dnsMode,
     @Default('') String process,
     @Default('') String processPath,
@@ -535,6 +540,58 @@ extension ColorSchemesExt on ColorSchemes {
   }
 }
 
+@freezed
+abstract class IpRiskCheck with _$IpRiskCheck {
+  const factory IpRiskCheck({
+    required IpRiskGroup group,
+    required String name,
+    bool? hit,
+  }) = _IpRiskCheck;
+
+  factory IpRiskCheck.fromJson(Map<String, Object?> json) =>
+      _$IpRiskCheckFromJson(json);
+}
+
+@freezed
+abstract class IpRiskNote with _$IpRiskNote {
+  const factory IpRiskNote({
+    bool? direct,
+    @Default('') String isp,
+    IpRiskAmount? amount,
+    IpRiskShare? share,
+    @Default('') String operatorName,
+    IpRiskLevel? operatorLevel,
+    @Default('') String ownerName,
+    IpRiskLevel? ownerLevel,
+    IpRiskConnection? connection,
+    IpRiskLevel? warning,
+  }) = _IpRiskNote;
+
+  factory IpRiskNote.fromJson(Map<String, Object?> json) =>
+      _$IpRiskNoteFromJson(json);
+}
+
+@freezed
+abstract class IpRisk with _$IpRisk {
+  const factory IpRisk({
+    required String ip,
+    required int score,
+    required IpRiskLevel level,
+    @Default('') String hostname,
+    @Default('') String asn,
+    @Default('') String isp,
+    @Default('') String organization,
+    @Default('') String country,
+    @Default('') String countryCode,
+    @Default('') String region,
+    @Default('') String city,
+    @Default([]) List<IpRiskCheck> checks,
+    IpRiskNote? note,
+  }) = _IpRisk;
+
+  factory IpRisk.fromJson(Map<String, Object?> json) => _$IpRiskFromJson(json);
+}
+
 class IpInfo {
   final String ip;
   final String countryCode;
@@ -560,10 +617,10 @@ class IpInfo {
     this.asDomain,
     this.continent,
     this.continentCode,
-  }) : countryCode = _normalizeCountryCode(countryCode, country, province),
-       country = _normalizeCountry(
+  }) : countryCode = normalizeCountryCode(countryCode, country, province),
+       country = normalizeCountry(
          country,
-         _normalizeCountryCode(countryCode, country, province),
+         normalizeCountryCode(countryCode, country, province),
          province,
        );
 
@@ -609,11 +666,11 @@ class IpInfo {
     return false;
   }
 
-  static String _normalizeCountryCode(
-    String countryCode,
+  static String normalizeCountryCode(
+    String countryCode, [
     String? country,
     String? province,
-  ) {
+  ]) {
     final clean = countryCode.trim().toUpperCase();
     if (clean.length == 2 && RegExp(r'^[A-Z]{2}$').hasMatch(clean)) {
       if (clean == 'CN') {
@@ -651,7 +708,7 @@ class IpInfo {
     return clean;
   }
 
-  static String? _normalizeCountry(
+  static String? normalizeCountry(
     String? country, [
     String? countryCode,
     String? province,
@@ -1176,6 +1233,58 @@ abstract class Script with _$Script {
 
 final volatileScriptPattern = RegExp(r'\bDate\b|Math\s*\.\s*random');
 
+@freezed
+abstract class RouteRuleSet with _$RouteRuleSet {
+  const factory RouteRuleSet({
+    required String tag,
+    @Default('geosite') String type,
+    String? name,
+    String? icon,
+    int? count,
+  }) = _RouteRuleSet;
+
+  factory RouteRuleSet.fromJson(Map<String, Object?> json) =>
+      _$RouteRuleSetFromJson(json);
+}
+
+extension RouteRuleSetExt on RouteRuleSet {
+  String get key => '$type:$tag';
+
+  String get label => name ?? tag;
+}
+
+@freezed
+abstract class RouteService with _$RouteService {
+  const factory RouteService({
+    required String name,
+    String? icon,
+    @Default([]) List<String> sets,
+    @Default([]) List<String> keywords,
+    @Default([]) List<String> groups,
+    @JsonKey(unknownEnumValue: RouteCategory.other)
+    @Default(RouteCategory.other)
+    RouteCategory category,
+  }) = _RouteService;
+
+  factory RouteService.fromJson(Map<String, Object?> json) =>
+      _$RouteServiceFromJson(json);
+}
+
+@freezed
+abstract class RouteCatalog with _$RouteCatalog {
+  const factory RouteCatalog({
+    @Default([]) List<String> targets,
+    @Default([]) List<String> reserved,
+    @Default({}) Map<String, RouteCategory> groupCategories,
+    @Default([]) List<String> icons,
+    @Default([]) List<RouteService> services,
+    @Default([]) List<RouteRuleSet> sets,
+  }) = _RouteCatalog;
+
+  factory RouteCatalog.fromJson(Map<String, Object?> json) =>
+      _$RouteCatalogFromJson(json);
+}
+
 extension ScriptExt on Script {
   Future<String> readContent() async {
     if (content.isNotEmpty) return content;
@@ -1205,4 +1314,27 @@ extension ScriptExt on Script {
       await file.delete();
     }
   }
+}
+
+@freezed
+abstract class IconSetIcon with _$IconSetIcon {
+  const factory IconSetIcon({required String name, required String url}) =
+      _IconSetIcon;
+
+  factory IconSetIcon.fromJson(Map<String, Object?> json) =>
+      _$IconSetIconFromJson(json);
+}
+
+@freezed
+abstract class IconSet with _$IconSet {
+  const factory IconSet({
+    required String id,
+    required String name,
+    @Default('') String url,
+    @Default([]) List<IconSetIcon> icons,
+    DateTime? lastUpdateTime,
+  }) = _IconSet;
+
+  factory IconSet.fromJson(Map<String, Object?> json) =>
+      _$IconSetFromJson(json);
 }

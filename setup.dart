@@ -133,7 +133,10 @@ class Build {
     return 'gcc';
   }
 
-  static String getTags(BuildItem buildItem) {
+  static String getTags(BuildItem buildItem, {bool lite = false}) {
+    if (lite) {
+      return 'no_easytier,no_tailscale,no_zerotier,no_fake_tcp,with_low_memory';
+    }
     final baseTags = 'with_gvisor';
     if (buildItem.target == Target.android &&
         buildItem.archName == 'armeabi-v7a') {
@@ -141,6 +144,12 @@ class Build {
     }
     return baseTags;
   }
+
+  static String tagsMarkerPath(BuildItem buildItem) => join(
+    outDir,
+    '.tags',
+    '${buildItem.target.name}-${buildItem.archName ?? buildItem.arch?.name}',
+  );
 
   static Future<void> exec(
     List<String> executable, {
@@ -181,6 +190,7 @@ class Build {
     required Target target,
     Arch? arch,
     bool compatible = false,
+    bool lite = false,
   }) async {
     final isLib = mode == Mode.lib;
 
@@ -224,7 +234,7 @@ class Build {
         env['CGO_ENABLED'] = '0';
       }
 
-      final buildTags = getTags(item);
+      final buildTags = getTags(item, lite: lite);
 
       await exec(
         ['go', 'mod', 'tidy'],
@@ -249,6 +259,9 @@ class Build {
         environment: env,
         workingDirectory: _coreDir,
       );
+      final marker = File(tagsMarkerPath(item));
+      marker.parent.createSync(recursive: true);
+      marker.writeAsStringSync(buildTags);
     }
 
     return corePaths;
@@ -492,6 +505,29 @@ class AssetDownloadItem {
   const AssetDownloadItem({required this.url, required this.fileName});
 }
 
+final _managedVersionPattern = RegExp(
+  r'^//\s*@version\s+(\d+)\s*$',
+  multiLine: true,
+);
+
+Future<void> _bumpManagedScriptVersion() async {
+  const path = 'assets/scripts/managed.js';
+  final file = File(path);
+  final current = await file.readAsString();
+  final currentVersion = _managedVersionPattern.firstMatch(current)?.group(1);
+  if (currentVersion == null) return;
+  final now = DateTime.now().toUtc();
+  final day =
+      '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
+  final today = int.parse('${day}01');
+  final next = int.parse(currentVersion) + 1;
+  final version = today > next ? today : next;
+  await file.writeAsString(
+    current.replaceFirst(_managedVersionPattern, '// @version $version'),
+  );
+  print('managed.js version $currentVersion -> $version');
+}
+
 class BuildCommand extends Command {
   Target target;
 
@@ -541,6 +577,13 @@ class BuildCommand extends Command {
       'ensure',
       help: 'Skip build if output artifact already exists',
     );
+    if (target == Target.android) {
+      argParser.addFlag(
+        'lite',
+        help:
+            'Build the Lite variant without easytier, tailscale, zerotier, fake-tcp and gVisor',
+      );
+    }
   }
 
   @override
@@ -602,6 +645,7 @@ class BuildCommand extends Command {
     String args = '',
     required String env,
     required String suffix,
+    bool lite = false,
   }) async {
     final sentryDsn = Platform.environment['SENTRY_DSN'] ?? '';
     final sentryArg = sentryDsn.isNotEmpty
@@ -617,6 +661,7 @@ class BuildCommand extends Command {
         : '';
 
     final appDevArg = Build.isDev ? ' --build-dart-define=APP_DEV=true' : '';
+    final appLiteArg = lite ? ' --build-dart-define=APP_LITE=true' : '';
 
     final customBuildArgs = <String>[];
     for (final name in [
@@ -633,7 +678,7 @@ class BuildCommand extends Command {
     await Build.exec(
       name: name,
       Build.getExecutable(
-        'flutter_distributor package --skip-clean --platform ${target.name} --targets $targets --flutter-build-args=verbose$args$sentryArg$suffixArg$ipinfoArg --build-dart-define=APP_ENV=$env$appDevArg${customBuildArgs.join()}',
+        'flutter_distributor package --skip-clean --platform ${target.name} --targets $targets --flutter-build-args=verbose$args$sentryArg$suffixArg$ipinfoArg --build-dart-define=APP_ENV=$env$appDevArg$appLiteArg${customBuildArgs.join()}',
       ),
     );
   }
@@ -719,9 +764,23 @@ class BuildCommand extends Command {
     return _latestModified(sources);
   }
 
-  bool _outputsAreFresh(Arch? arch) {
+  bool _outputsAreFresh(Arch? arch, bool lite) {
     final outputs = _expectedOutputs(arch);
     if (outputs.isEmpty || !outputs.every((path) => File(path).existsSync())) {
+      return false;
+    }
+
+    final tagsMatch = Build.buildItems
+        .where((item) {
+          return item.target == target &&
+              (arch == null ? true : item.arch == arch);
+        })
+        .every((item) {
+          final marker = File(Build.tagsMarkerPath(item));
+          return marker.existsSync() &&
+              marker.readAsStringSync() == Build.getTags(item, lite: lite);
+        });
+    if (!tagsMatch) {
       return false;
     }
 
@@ -746,6 +805,7 @@ class BuildCommand extends Command {
       ensure: argResults?['ensure'] ?? false,
       compatible: argResults?['compatible'] ?? false,
       coreHash: argResults?['core-hash'] as String?,
+      lite: target == Target.android && (argResults?['lite'] ?? false),
     );
   }
 
@@ -757,6 +817,7 @@ class BuildCommand extends Command {
     bool ensure = false,
     bool compatible = false,
     String? coreHash,
+    bool lite = false,
   }) async {
     if (compatible && target != Target.windows && target != Target.linux) {
       throw '--compatible is only supported for windows and linux';
@@ -790,7 +851,7 @@ class BuildCommand extends Command {
     }
 
     if (ensure && actualOut != 'app') {
-      if (_outputsAreFresh(arch)) {
+      if (_outputsAreFresh(arch, lite)) {
         print('${target.name} output already exists');
         return;
       }
@@ -801,6 +862,7 @@ class BuildCommand extends Command {
       arch: arch,
       mode: mode,
       compatible: compatible,
+      lite: lite,
     );
 
     if (actualOut == 'core-only') {
@@ -826,6 +888,8 @@ class BuildCommand extends Command {
       return;
     }
 
+    await _bumpManagedScriptVersion();
+
     final String desc = compatible ? '$archName-compatible' : (archName ?? '');
 
     String appAssetSuffix = '';
@@ -839,14 +903,15 @@ class BuildCommand extends Command {
       case Target.linux:
         break;
       case Target.android:
+        final variant = lite ? 'android-lite' : 'android';
         if (archName == 'universal') {
-          appAssetSuffix = 'android-universal.apk';
+          appAssetSuffix = '$variant-universal.apk';
         } else if (arch == Arch.arm64) {
-          appAssetSuffix = 'android-arm64-v8a.apk';
+          appAssetSuffix = '$variant-arm64-v8a.apk';
         } else if (arch == Arch.arm) {
-          appAssetSuffix = 'android-armeabi-v7a.apk';
+          appAssetSuffix = '$variant-armeabi-v7a.apk';
         } else if (arch == Arch.amd64) {
-          appAssetSuffix = 'android-x86_64.apk';
+          appAssetSuffix = '$variant-x86_64.apk';
         }
         break;
     }
@@ -900,8 +965,8 @@ class BuildCommand extends Command {
             .toList();
 
         final buildArgs = archName == 'universal'
-            ? ' --build-target-platform ${defaultTargets.join(",")} --description universal'
-            : ',split-per-abi --build-target-platform ${defaultTargets.join(",")}';
+            ? ' --build-target-platform ${defaultTargets.join(",")} --description ${lite ? 'lite-universal' : 'universal'}'
+            : ',split-per-abi --build-target-platform ${defaultTargets.join(",")}${lite ? ' --description lite' : ''}';
 
         _buildDistributor(
           target: target,
@@ -909,6 +974,7 @@ class BuildCommand extends Command {
           args: buildArgs,
           env: env,
           suffix: appAssetSuffix,
+          lite: lite,
         );
         return;
       case Target.macos:

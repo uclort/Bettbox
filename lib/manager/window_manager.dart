@@ -205,7 +205,7 @@ class _WindowContainerState extends ConsumerState<WindowManager>
   }
 
   @override
-  Future<void> dispose() async {
+  void dispose() {
     _autoLaunchSub?.close();
     windowManager.removeListener(this);
     windowExtManager.removeListener(this);
@@ -227,7 +227,7 @@ class WindowHeaderContainer extends StatelessWidget {
         final isMobileView = ref.watch(isMobileViewProvider);
         return Material(
           color: isMobileView
-              ? context.colorScheme.surfaceContainer
+              ? context.colorScheme.pageColor
               : Colors.transparent,
           child: Stack(
             children: [

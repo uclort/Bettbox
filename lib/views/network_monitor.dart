@@ -44,7 +44,7 @@ Future<Map<String, Object?>> _addMonitorOverrideRule(
       ? [...rule.overrideRules]
       : [...rule.addedRules];
   if (type == OverrideRuleType.override && rules.isEmpty) {
-    final raw = await globalState.getProfileConfig(profileId);
+    final raw = await globalState.getProfileSnippet(profileId);
     rules = [...ClashConfigSnippet.fromJson(raw).rule];
   }
   final duplicate = rules.any((item) => item.value.trim() == value);
@@ -1195,7 +1195,7 @@ class _NetworkMonitorViewState extends ConsumerState<NetworkMonitorView> {
     if (_trackerFacet == MonitorTrackerFacet.process &&
         item != null &&
         system.isMacOS) {
-      return ProcessIcon(
+      return ConnectionProcessIcon(
         key: ValueKey('${item.metadata.process}\n${item.metadata.processPath}'),
         process: item.metadata.process,
         processPath: item.metadata.processPath,

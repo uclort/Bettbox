@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Build
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.HapticFeedbackConstants
@@ -15,6 +16,7 @@ import com.appshub.bettbox.plugins.AppPlugin
 import com.appshub.bettbox.plugins.ServicePlugin
 import com.appshub.bettbox.plugins.TilePlugin
 import com.appshub.bettbox.plugins.VpnPlugin
+import com.appshub.bettbox.widget.HomeWidgets
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.FlutterEngineGroup
@@ -47,12 +49,14 @@ class MainActivity : FlutterActivity() {
         }
         super.onCreate(savedInstanceState)
         AppPlugin.handleAppUpdateIntent(intent)
+        HomeWidgets.handleIntent(intent)
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
         AppPlugin.handleAppUpdateIntent(intent)
+        HomeWidgets.handleIntent(intent)
     }
 
     override fun onResume() {

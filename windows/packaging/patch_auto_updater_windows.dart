@@ -107,5 +107,27 @@ void main(List<String> arguments) {
     );
     updaterFile.writeAsStringSync(updaterSource);
   }
+  // BETTBOX-CUSTOM: 切换正式版 / 预览版更新源会再次调用 SetFeedURL；
+  // WinSparkle 在检查时读取 appcast 地址，初始化后只需更新地址，不能重复 init。
+  const initGuard = 'bettboxWinSparkleInitialized';
+  if (!updaterSource.contains(initGuard)) {
+    const setFeedEntry =
+        'void AutoUpdater::SetFeedURL(std::string feedURL) {\n'
+        '  win_sparkle_set_appcast_url(feedURL.c_str());\n';
+    if (!updaterSource.contains(setFeedEntry)) {
+      throw StateError('无法定位 WinSparkle SetFeedURL 入口。');
+    }
+    updaterSource = updaterSource.replaceFirst(
+      setFeedEntry,
+      '${setFeedEntry}'
+      '  // BETTBOX-CUSTOM: 更新源切换只改 appcast，避免重复初始化 WinSparkle。\n'
+      '  static bool $initGuard = false;\n'
+      '  if ($initGuard) {\n'
+      '    return;\n'
+      '  }\n'
+      '  $initGuard = true;\n',
+    );
+    updaterFile.writeAsStringSync(updaterSource);
+  }
   print('auto_updater_windows 已切换到 WinSparkle $winsparkleArch。');
 }

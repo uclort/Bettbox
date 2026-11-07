@@ -12,13 +12,14 @@ void main() {
     autoUpdateDuration: const Duration(hours: 24),
     selectedMap: const {'代理': '节点'},
     unfoldSet: const {'代理'},
+    scriptId: 'script',
   );
 
   test('WebDAV 只导出配置与覆写脚本，不导出本机选择和设置', () {
     final config = Config(
       profiles: [profile],
       currentProfileId: profile.id,
-      scriptProps: const ScriptProps(currentId: 'script', scripts: [script]),
+      scriptProps: const ScriptProps(scripts: [script]),
       themeProps: defaultThemeProps,
       networkProps: const NetworkProps(systemProxy: true),
       vpnProps: const VpnProps(enable: true),
@@ -30,10 +31,11 @@ void main() {
     expect(json['currentProfileId'], isNull);
     expect(json['networkProps'], isNull);
     expect(json['vpnProps'], isNull);
-    expect(json['scriptProps']['currentId'], isNull);
+    expect(json['scriptProps']['scripts'], hasLength(1));
     expect(json['profiles'][0]['currentGroupName'], isNull);
     expect(json['profiles'][0]['selectedMap'], isEmpty);
     expect(json['profiles'][0]['unfoldSet'], isEmpty);
+    expect(json['profiles'][0]['scriptId'], isNull);
   });
 
   test('WebDAV 恢复保留本机节点、展开状态和脚本选择', () {
@@ -42,17 +44,14 @@ void main() {
       currentGroupName: null,
       selectedMap: const {},
       unfoldSet: const {},
+      scriptId: null,
     );
     final mergedProfiles = mergeWebDavProfiles([incomingProfile], [profile]);
-    final mergedScripts = mergeWebDavScripts(
-      const ScriptProps(scripts: [script]),
-      const ScriptProps(currentId: 'script', scripts: [script]),
-    );
 
     expect(mergedProfiles.single.label, '远端配置');
     expect(mergedProfiles.single.currentGroupName, profile.currentGroupName);
     expect(mergedProfiles.single.selectedMap, profile.selectedMap);
     expect(mergedProfiles.single.unfoldSet, profile.unfoldSet);
-    expect(mergedScripts.currentId, 'script');
+    expect(mergedProfiles.single.scriptId, 'script');
   });
 }

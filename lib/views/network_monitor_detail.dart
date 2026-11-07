@@ -136,7 +136,7 @@ extension _NetworkMonitorDetail on _NetworkMonitorViewState {
               child: Row(
                 children: [
                   if (system.isMacOS)
-                    ProcessIcon(
+                    ConnectionProcessIcon(
                       key: ValueKey(
                         '${item.metadata.process}\n${item.metadata.processPath}',
                       ),

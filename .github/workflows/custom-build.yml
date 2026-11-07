@@ -22,6 +22,12 @@ on:
         required: false
         default: false
         type: boolean
+      # BETTBOX-CUSTOM: 预览版只写入 `-pre` 更新源，仅推送给开启“接收预览版”的用户。
+      prerelease:
+        description: 发布为预览版（Pre-release）
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -1303,6 +1309,7 @@ jobs:
           KERNEL_SHA: ${{ needs.inspect.outputs.kernel_sha }}
           MACOS_ARM64_ONLY: ${{ inputs.macos_arm64_only || false }}
           ANDROID_ONLY: ${{ inputs.android_only || false }}
+          PRERELEASE: ${{ inputs.prerelease || false }}
         run: |
           set -euo pipefail
           mapfile -d '' assets < <(
@@ -1359,10 +1366,19 @@ jobs:
             git push origin "refs/tags/${RELEASE_TAG}"
           fi
 
+          release_args=(--title "Bettbox ${FINAL_APP_VERSION}")
+          if [[ "${PRERELEASE}" == "true" ]]; then
+            release_args=(
+              --title "Bettbox ${FINAL_APP_VERSION} 预览版"
+              --prerelease
+              --latest=false
+            )
+          fi
+
           gh release create "${RELEASE_TAG}" "${assets[@]}" \
             --repo "${GITHUB_REPOSITORY}" \
             --verify-tag \
-            --title "Bettbox ${FINAL_APP_VERSION}" \
+            "${release_args[@]}" \
             --notes-file "${notes_file}"
 
       - name: 更新应用内更新源
@@ -1377,6 +1393,7 @@ jobs:
           FEED_BRANCH: custom-update-feed
           MACOS_ARM64_ONLY: ${{ inputs.macos_arm64_only || false }}
           ANDROID_ONLY: ${{ inputs.android_only || false }}
+          PRERELEASE: ${{ inputs.prerelease || false }}
         run: |
           set -euo pipefail
 
@@ -1495,7 +1512,7 @@ jobs:
               'published_at': os.environ['published_at'],
               'body': json.loads(Path(os.environ['RELEASE_JSON']).read_text(encoding='utf-8'))['body'],
               'draft': False,
-              'prerelease': False,
+              'prerelease': os.environ['PRERELEASE'] == 'true',
               'assets': [{
                   'name': asset,
                   'size': int(os.environ['ANDROID_LENGTH']),
@@ -1508,6 +1525,18 @@ jobs:
               file.write('\n')
           PY
           fi
+
+          # BETTBOX-CUSTOM: `-pre` 更新源给开启“接收预览版”的用户。
+          # 正式版同时写入正式源与预览源；预览版只写入预览源，不影响正式版用户。
+          for feed_file in "${feed_source}"/*; do
+            pre_feed_file="${feed_file%.*}-pre.${feed_file##*.}"
+            if [[ "${PRERELEASE}" == "true" ]]; then
+              mv "${feed_file}" "${pre_feed_file}"
+            else
+              cp "${feed_file}" "${pre_feed_file}"
+            fi
+          done
+          ls -1 "${feed_source}"
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -1530,9 +1559,14 @@ jobs:
         shell: bash
         env:
           RELEASE_TAG: ${{ needs.inspect.outputs.release_tag }}
+          PRERELEASE: ${{ inputs.prerelease || false }}
         run: |
           {
             echo "## 构建已发布"
             echo
             echo "Release：\`${RELEASE_TAG}\`"
+            if [[ "${PRERELEASE}" == "true" ]]; then
+              echo
+              echo "已发布为预览版，仅写入 \`-pre\` 更新源。"
+            fi
           } >> "${GITHUB_STEP_SUMMARY}"

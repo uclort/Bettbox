@@ -41,7 +41,8 @@ class _AndroidStartButtonState extends ConsumerState<AndroidStartButton> {
 
   Future<void> _handleStart() async {
     if (_isDisabled) return;
-    final newState = ref.read(runTimeProvider) == null;
+    final newState =
+        ref.read(isSmartStoppedProvider) || ref.read(runTimeProvider) == null;
     setState(() {
       _isDisabled = true;
       _optimisticStart = newState;
@@ -71,7 +72,8 @@ class _AndroidStartButtonState extends ConsumerState<AndroidStartButton> {
     final isLoading = _isDisabled || isRestarting;
     return FloatingActionButton(
       heroTag: null,
-      onPressed: isLoading || isSmartStopped ? null : _handleStart,
+      // 上游：智能暂停时点击即恢复内核。
+      onPressed: isLoading ? null : _handleStart,
       child: isLoading
           ? const SizedBox(
               width: 24,

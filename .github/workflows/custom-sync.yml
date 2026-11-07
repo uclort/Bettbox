@@ -2,6 +2,13 @@ name: 同步内核并构建 Bettbox 自定义版
 
 on:
   workflow_dispatch:
+    inputs:
+      # BETTBOX-CUSTOM: 透传给 custom-build.yml，发布为预览版并只写入 `-pre` 更新源。
+      prerelease:
+        description: 触发的构建发布为预览版（Pre-release）
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   actions: write
@@ -402,6 +409,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PACKAGE_COMMIT: ${{ steps.package.outputs.commit }}
+          PRERELEASE: ${{ inputs.prerelease || false }}
         run: |
           set -euo pipefail
           remote_commit=""
@@ -425,7 +433,8 @@ jobs:
             --repo "${GITHUB_REPOSITORY}" \
             --ref "${BETTBOX_PACKAGE_BRANCH}" \
             --field force=false \
-            --field target_commit="${PACKAGE_COMMIT}"
+            --field target_commit="${PACKAGE_COMMIT}" \
+            --field prerelease="${PRERELEASE}"
 
       - name: 写入同步摘要
         if: always()

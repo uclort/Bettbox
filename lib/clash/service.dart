@@ -7,7 +7,6 @@ import 'package:bett_box/clash/interface.dart';
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/helper/helper.dart';
-import 'package:bett_box/models/core.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/utils/frame_codec.dart';
 import 'package:bett_box/utils/platform_check.dart';
@@ -51,9 +50,7 @@ class ClashService extends ClashHandlerInterface {
     _transportType = await PlatformChecker.getRecommendedTransport();
 
     if (_transportType == TransportType.unixSocket) {
-      final random = Random().nextInt(10000);
-      final tempDir = Directory.systemTemp.path;
-      _socketPath = p.join(tempDir, 'Bettbox_$random.sock');
+      _socketPath = _newSocketPath();
       commonPrint.log('Using Unix Domain Socket: $_socketPath');
     } else {
       _tcpPort = PlatformChecker.getRandomPort();
@@ -88,6 +85,10 @@ class ClashService extends ClashHandlerInterface {
 
         serverCompleter.complete(server);
         await for (final socket in server) {
+          if (_activeSocket != null && !isStarting) {
+            socket.destroy();
+            continue;
+          }
           await _destroySocket();
           _activeSocket = socket;
           socketCompleter.complete(socket);
@@ -96,7 +97,7 @@ class ClashService extends ClashHandlerInterface {
               .transform(FrameDecoderTransformer())
               .listen(
                 (data) {
-                  handleResult(ActionResult.fromJson(json.decode(data)));
+                  handleResultMessage(data);
                 },
                 onError: (error) {
                   if (_isDestroying || globalState.isExiting) return;
@@ -121,16 +122,18 @@ class ClashService extends ClashHandlerInterface {
     );
   }
 
+  String _newSocketPath() {
+    final token = Random.secure().nextInt(1 << 32).toRadixString(16);
+    return p.join(Directory.systemTemp.path, 'Bettbox_$token.sock');
+  }
+
   Future<void> _rebindTransport() async {
     await _destroySocket();
     await (await serverCompleter.future).close();
     await _deleteSocketFile();
     serverCompleter = Completer();
     if (_transportType == TransportType.unixSocket) {
-      _socketPath = p.join(
-        Directory.systemTemp.path,
-        'Bettbox_${Random().nextInt(10000)}.sock',
-      );
+      _socketPath = _newSocketPath();
     }
     _initServer();
     await serverCompleter.future;

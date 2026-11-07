@@ -56,11 +56,25 @@ class CustomAppUpdater with UpdaterListener {
   DateTime? _lastDesktopCheck;
   bool _androidUpdateRunning = false;
   bool _androidDialogVisible = false;
+  String? _nativeFeedUrl;
 
   bool get supportsNativeUpdater =>
       isCustomUpdateBuild &&
       customUpdateFeedUrl.isNotEmpty &&
       (system.isMacOS || system.isWindows);
+
+  /// BETTBOX-CUSTOM: 按“接收预览版”切换 Sparkle / WinSparkle 的 appcast。
+  /// macOS 由 delegate 在每次检查时读取；Windows 的补丁保证只初始化一次 WinSparkle。
+  Future<void> _applyNativeFeed() async {
+    final feedUrl = customUpdateFeedUrlFor(
+      customUpdateFeedUrl,
+      receivePreRelease: globalState.config.appSetting.receivePreRelease,
+    );
+    if (feedUrl == _nativeFeedUrl) return;
+    await autoUpdater.setFeedURL(feedUrl);
+    _nativeFeedUrl = feedUrl;
+    commonPrint.log('应用更新源：$feedUrl');
+  }
 
   Future<void> initialize() async {
     if (_initialized) return;
@@ -83,7 +97,7 @@ class CustomAppUpdater with UpdaterListener {
         _configureWindowsAppVersion();
       }
       autoUpdater.addListener(this);
-      await autoUpdater.setFeedURL(customUpdateFeedUrl);
+      await _applyNativeFeed();
       await autoUpdater.setScheduledCheckInterval(0);
     }
     _initialized = true;
@@ -245,6 +259,7 @@ class CustomAppUpdater with UpdaterListener {
     }
     _lastDesktopCheck = now;
     _manualCheck = manual;
+    await _applyNativeFeed();
     await autoUpdater.checkForUpdates(inBackground: !manual);
   }
 

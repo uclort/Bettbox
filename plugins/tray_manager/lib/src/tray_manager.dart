@@ -106,6 +106,11 @@ class TrayManager {
 
   bool get isMenuOpen => _menuOpenState.isOpen;
 
+  bool _isMenuOutdated = false;
+
+  /// 菜单打开期间结构变化而未能原位更新，关闭后需要重建。
+  bool get isMenuOutdated => _isMenuOutdated;
+
   bool _isOptionKeyPressed = false;
 
   bool get isOptionKeyPressed => _isOptionKeyPressed;
@@ -372,9 +377,11 @@ class TrayManager {
     final bool willKeepOpen = keepMenuOpen && isMenuOpen;
     if (willKeepOpen) {
       if (_menu == null || !reuseOpenMenuItemIds(_menu!, menu)) {
+        _isMenuOutdated = true;
         return;
       }
     }
+    _isMenuOutdated = false;
     _menu = menu;
     final Map<String, dynamic> arguments = {
       'menu': _menuToJson(menu),

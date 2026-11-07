@@ -762,7 +762,10 @@ class Tray {
         testUrl: group.testUrl,
         groupName: group.name,
         onDelayUpdated: _supportsTrayTemplate
-            ? () => appController.updateTray(false, true)
+            ? () async {
+                if (!trayManager.isMenuOpen) return;
+                await appController.updateTray(false, true);
+              }
             : null,
       );
     } catch (e) {

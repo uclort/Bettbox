@@ -76,7 +76,9 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
       }
     });
     ref.listenManual(profilesProvider, (prev, next) {
-      if (prev == null || !next.hasAddedOrChanged(prev)) return;
+      if (prev == null) return;
+      globalState.appController.syncBundles(prev, next);
+      if (!next.hasAddedOrChanged(prev)) return;
       globalState.appController.autoBackupDebounce();
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -88,6 +90,7 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
     if (window == null) {
       return;
     }
+    // BETTBOX-CUSTOM: macOS 由托管 DNS 状态同步；Linux 跟随上游系统 DNS 接管。
     ref.listenManual(managedMacOSDnsStateProvider, (prev, next) async {
       if (prev == next) {
         return;
@@ -96,21 +99,12 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
     });
 
     if (system.isLinux) {
-      ref.listenManual(runTimeProvider, (prev, next) async {
-        if (prev == next) return;
-        await _syncLinuxSystemDns();
+      ref.listenManual(systemDnsTakeoverProvider, (prev, next) async {
+        if (prev == next) {
+          return;
+        }
+        await system.updateDns(!next);
       });
-      ref.listenManual(realTunEnableProvider, (prev, next) async {
-        if (prev == next) return;
-        await _syncLinuxSystemDns();
-      });
-      ref.listenManual(
-        networkSettingProvider.select((state) => state.autoSetSystemDns),
-        (prev, next) async {
-          if (prev == next) return;
-          await _syncLinuxSystemDns();
-        },
-      );
     }
 
     ref.listenManual(currentBrightnessProvider, (prev, next) {
@@ -121,14 +115,6 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
     }, fireImmediately: true);
   }
 
-
-  Future<void> _syncLinuxSystemDns() async {
-    if (!system.isLinux) return;
-    final isStart = ref.read(runTimeProvider) != null;
-    final tunEnabled = ref.read(realTunEnableProvider);
-    final autoSet = ref.read(networkSettingProvider).autoSetSystemDns;
-    await system.updateDns(!(isStart && tunEnabled && autoSet));
-  }
 
   @override
   void dispose() {
@@ -444,6 +430,14 @@ class _SidebarOverlayState extends State<_SidebarOverlay> {
   }
 
   @override
+  void dispose() {
+    _entry
+      ..remove()
+      ..dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Overlay(initialEntries: [_entry]);
   }
@@ -563,7 +557,7 @@ class AppSidebarContainer extends ConsumerWidget {
         ? 132.0
         : requiredWidth <= 136.0
         ? 148.0
-        : 156.0;
+        : math.max(156.0, (requiredWidth + 8.0).ceilToDouble());
     if (system.isMacOS) return itemsWidth;
     final brandPainter = TextPainter(
       text: TextSpan(

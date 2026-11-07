@@ -27,6 +27,7 @@ import com.appshub.bettbox.extensions.awaitResult
 import com.appshub.bettbox.extensions.getActionIntent
 import com.appshub.bettbox.models.Package
 import com.appshub.bettbox.services.AppUpdateDownloadService
+import com.appshub.bettbox.widget.HomeWidgets
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -221,10 +222,36 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         }
     }
 
+    fun invokeHomeWidget(method: String, argument: Any): Boolean {
+        if (!::channel.isInitialized) return false
+        android.os.Handler(android.os.Looper.getMainLooper()).post {
+            runCatching { channel.invokeMethod(method, argument) }
+        }
+        return true
+    }
+
     override fun onMethodCall(call: MethodCall, result: Result) {
         when (call.method) {
+            "updateHomeWidget" -> {
+                val data = call.arguments as? String
+                if (data != null) HomeWidgets.save(BettboxApplication.getAppContext(), data)
+                result.success(null)
+            }
+
+            "hasHomeWidgets" -> {
+                result.success(HomeWidgets.hasWidgets(BettboxApplication.getAppContext()))
+            }
+
+            "consumeHomeWidgetAction" -> {
+                result.success(HomeWidgets.consumePendingAction())
+            }
+
             "moveTaskToBack" -> {
                 activityRef?.get()?.moveTaskToBack(true)
+                result.success(true)
+            }
+            "notifyLowMemory" -> {
+                GlobalState.notifyLowMemory()
                 result.success(true)
             }
             "updateExcludeFromRecents" -> {
@@ -740,6 +767,8 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         if (requestCode == VPN_PERMISSION_REQUEST_CODE && resultCode == FlutterActivity.RESULT_OK) {
             GlobalState.initServiceEngine()
             vpnCallBack?.invoke()
+        } else if (requestCode == VPN_PERMISSION_REQUEST_CODE) {
+            ServicePlugin.notifyVpnStartFailed()
         }
         return true
     }

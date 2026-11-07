@@ -188,7 +188,7 @@ extension _NetworkMonitorMobile on _NetworkMonitorViewState {
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
             child: Row(
               children: [
-                ProcessIcon(
+                ConnectionProcessIcon(
                   key: ValueKey(
                     '${item.metadata.process}\n${item.metadata.processPath}',
                   ),

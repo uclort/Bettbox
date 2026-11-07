@@ -12,6 +12,8 @@ class App {
   Function()? onExit;
   FutureOr<void> Function()? onSystemWake;
   Function()? onAppUpdateNotificationOpened;
+  void Function(String action)? onHomeWidgetAction;
+  void Function(bool active)? onHomeWidgetsChanged;
 
   App._internal() {
     methodChannel = const MethodChannel('app');
@@ -26,6 +28,10 @@ class App {
         await onSystemWake?.call();
       case 'appUpdateNotificationOpened':
         await onAppUpdateNotificationOpened?.call();
+      case 'homeWidgetAction':
+        onHomeWidgetAction?.call(call.arguments as String);
+      case 'homeWidgetsChanged':
+        onHomeWidgetsChanged?.call(call.arguments as bool);
       case 'getText':
         try {
           return Intl.message(call.arguments as String);
@@ -50,6 +56,10 @@ class App {
 
   Future<bool?> moveTaskToBack() async {
     return await methodChannel.invokeMethod<bool>('moveTaskToBack');
+  }
+
+  Future<void> notifyLowMemory() async {
+    await methodChannel.invokeMethod<bool>('notifyLowMemory');
   }
 
   Future<List<Package>> getPackages({bool forceRefresh = false}) async {
@@ -153,6 +163,18 @@ class App {
       'useDarkIcon': useDarkIcon,
     });
     return result ?? false;
+  }
+
+  Future<void> updateHomeWidget(String data) async {
+    await methodChannel.invokeMethod('updateHomeWidget', data);
+  }
+
+  Future<bool> hasHomeWidgets() async {
+    return await methodChannel.invokeMethod<bool>('hasHomeWidgets') ?? false;
+  }
+
+  Future<String?> consumeHomeWidgetAction() async {
+    return await methodChannel.invokeMethod<String>('consumeHomeWidgetAction');
   }
 
   Future<bool> isAndroidTV() async {

@@ -396,6 +396,11 @@ void TrayManagerPlugin::_UpdateMenuLabels(HMENU menu, flutter::EncodableMap args
   for (int i = 0; i < min_count; i++) {
     flutter::EncodableMap item_map =
         std::get<flutter::EncodableMap>(items[i]);
+    // 上游：分隔线没有文字和状态，原位更新时跳过。
+    auto* type = std::get_if<std::string>(ValueOrNull(item_map, "type"));
+    if (type != nullptr && *type == "separator") {
+      continue;
+    }
     std::string raw_label =
         std::get<std::string>(item_map.at(flutter::EncodableValue("label")));
     std::string label = WithMnemonic(raw_label, item_map);

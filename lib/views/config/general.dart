@@ -69,7 +69,7 @@ class _UaItemState extends ConsumerState<UaItem> {
       ),
       onTap: () async {
         final notifier = ref.read(patchClashConfigProvider.notifier);
-        final result = await globalState.showCommonDialog<_UaOption>(
+        final result = await globalState.showAdaptiveSheet<_UaOption>(
           child: _UaDialog(isCustom: isCustom),
         );
 
@@ -210,7 +210,7 @@ class TestUrlItem extends ConsumerWidget {
         child: Text(testUrl),
       ),
       onTap: () async {
-        await globalState.showCommonDialog(
+        await globalState.showAdaptiveSheet(
           child: _TestUrlDialog(currentUrl: testUrl),
         );
       },
@@ -732,11 +732,21 @@ class _PortDialogState extends ConsumerState<_PortDialog> {
     _tProxyPortController = TextEditingController(text: vm5.e.toString());
   }
 
+  @override
+  void dispose() {
+    _mixedPortController.dispose();
+    _portController.dispose();
+    _socksPortController.dispose();
+    _redirPortController.dispose();
+    _tProxyPortController.dispose();
+    super.dispose();
+  }
+
   Future<void> _handleReset() async {
     final res = await globalState.showMessage(
       message: TextSpan(text: appLocalizations.resetTip),
     );
-    if (res != true) {
+    if (res != true || !mounted) {
       return;
     }
     ref

@@ -92,7 +92,7 @@ class System {
   }
 
   Future<void> updateDns(bool restore) async {
-    await macOS?.updateDns(restore);
+    await macOS?.restoreDns();
     await linux?.updateDns(restore);
   }
 
@@ -1005,7 +1005,7 @@ String? parseMacOSTunRouteConflict(String output) {
 class MacOS {
   static MacOS? _instance;
   static const _dnsBackupFileName = 'macos_system_dns_backup.json';
-  static const _hijackDns = '223.5.5.5';
+  static const _hijackDns = '223.5.5.5'; // BETTBOX-CUSTOM: macOS DNS 托管
   final Lock _dnsLock = Lock();
 
   MacOS._internal();
@@ -1192,6 +1192,11 @@ class MacOS {
         : output.split('\n');
   }
 
+  Future<void> restoreDns() {
+    return _dnsLock.synchronized(_restoreDns);
+  }
+
+  // BETTBOX-CUSTOM: macOS 开启 TUN 时托管当前网络服务 DNS（上游已移除该能力，只保留残留清理）。
   Future<void> updateDns(bool restore, {String? serviceName}) {
     return _dnsLock.synchronized(() async {
       if (restore) {
