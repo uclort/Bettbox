@@ -34,6 +34,7 @@
 - Windows 按住 Alt 打开托盘菜单后，松开 Alt 菜单立即关闭
 - 内置 Tailscale 直连节点在部分网络下无法登录、连不上（`fetch control key` 超时）：连 Tailscale 控制面、登录与 DERP 中继时不再发送会被这些网络丢弃的后量子密钥交换
 - Tailscale 页面有节点连不上时，其他节点的状态和设备列表要等约 30 秒才显示
+- Tailscale 设备列表里本机的 Bettbox 节点已连接却显示离线
 - 关闭 IPv6 后 TUN 仍因检测到公网 IPv6 而接管 IPv6 流量
 - macOS 在有公网 IPv6 的网络下开启 TUN 失败、无法联网（`add route: ff02:1::/32: network is unreachable`），订阅排除 `ff02::fb` 等组播地址时触发
 

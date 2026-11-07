@@ -382,8 +382,18 @@ mixin _TailscaleStatusMixin<T extends ConsumerStatefulWidget>
         if (key.isNotEmpty) byKey.putIfAbsent(key, () => peer);
       }
     }
+    // BETTBOX-CUSTOM: 本机节点以自身状态为准：已连接即在线。其他节点看到的在线标记来自控制面，
+    // 可能滞后或与本机实际状态不一致（实测 Direct 看到的本机 Proxy 节点显示离线）。
     for (final self in selfPeers().values) {
-      byKey.putIfAbsent(tailscalePeerKey(self), () => self);
+      final key = tailscalePeerKey(self);
+      final seen = byKey[key];
+      byKey[key] = TailscalePeer(
+        hostName: seen?.hostName ?? '',
+        dnsName: self.dnsName,
+        os: seen?.os.isNotEmpty == true ? seen!.os : self.os,
+        ips: self.ips,
+        online: true,
+      );
     }
     final peers = byKey.values.toList()
       ..sort((a, b) {
