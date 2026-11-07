@@ -272,6 +272,8 @@ func updateConfig(params *UpdateParams) {
 		general.Tun.DNSHijack = *params.Tun.DNSHijack
 		general.Tun.Stack = *params.Tun.Stack
 		general.Tun.DisableICMPForwarding = *params.Tun.DisableICMPForwarding
+		// BETTBOX-CUSTOM: 运行中更新排除地址后同样处理 macOS 链路本地/组播排除。
+		sanitizeTunScopedExclude(&general.Tun)
 	}
 
 	updateListeners()
@@ -502,6 +504,8 @@ func prepareSetup(params *SetupParams) (*preparedSetup, error) {
 		return nil, err
 	}
 	ensureTunInet6(cfg)
+	// BETTBOX-CUSTOM: macOS 扩大落在链路本地/组播网段的 IPv6 排除，避免 TUN 路由添加失败。
+	sanitizeTunScopedExclude(&cfg.General.Tun)
 	prepared := &preparedSetup{key: key, rawCfg: rawCfg, cfg: cfg, global: global}
 	if params.Patch != nil {
 		prepared.profileRouteExclude = params.Patch.profileRouteExclude

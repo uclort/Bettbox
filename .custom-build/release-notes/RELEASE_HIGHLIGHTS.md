@@ -32,6 +32,7 @@
 - Tailscale 「重新注册」改为重建节点，卡住的 Auth Key 节点可以恢复；macOS 节点连上后持续检查系统 DNS 是否仍返回「无记录」并反复清理系统缓存（覆盖约 5 分钟的否定缓存窗口），清理信号由内核进程直接发给 mDNSResponder、过程可在「日志」页查看，「刷新 DNS 缓存」也会一并清系统缓存，不再出现节点已恢复、Rex 等应用仍解析不到 Tailnet 主机而要手动 `killall -HUP mDNSResponder`
 - 内置 Tailscale 节点重载配置后出现重复设备（Duplicate node key）；退出后重新登录设备名变成系统主机名
 - Windows 按住 Alt 打开托盘菜单后，松开 Alt 菜单立即关闭
+- macOS 在有公网 IPv6 的网络下开启 TUN 失败、无法联网（`add route: ff02:1::/32: network is unreachable`），订阅排除 `ff02::fb` 等组播地址时触发
 
 ## 移除
 

@@ -164,6 +164,7 @@
 - 等待网络稳定后迁移托管 DNS、关闭旧连接、重建 Mihomo resolver 的 DoH/DoT 连接池、刷新 DNS/Fake-IP，并按需停止监听后重建 TUN；桌面 IPC 的 `resetConnections` 方法名与 Dart 调用保持一致，恢复任务支持代际取消和一次重试。
 - 启动 TUN 前检查其他 VPN 遗留的 `1.0.0.0/8` utun 路由；发现冲突时保持关闭并提示接口。
 - macOS TUN 关闭竞态的 `ENOTSOCK` 按标准关闭处理，避免旧批量读协程日志风暴和 CPU 满载；Mixed/GVisor 所需方法集继续保留，并兼容 sing-tun 新增的 Darwin `BatchSize` 接口。
+- 上游 1.19.8 的 `core/tun_ipv6.go` 在检测到公网 IPv6 时自动给 TUN 加 IPv6 地址（不看 `ipv6` 设置）。macOS 内核会把 `fe80::/10`、`ff00::/8` 地址的第 3、4 字节当作网卡编号，订阅里排除 `ff02::fb/128` 等地址时，sing-tun 补集出的 `ff02:1::/32` 等路由添加失败（`add route: ff02:1::/32: network is unreachable`），TUN 起不来。`core/tun_scoped_exclude.go` 的 `sanitizeTunScopedExclude` 仅在 macOS 把落在这两个网段内的 `route-exclude-address` / `inet6-route-exclude-address` 扩大到整段，并在 `core/common.go` 的配置准备和运行中更新 TUN 两处调用；回归为 `core/tun_scoped_exclude_test.go`（含用 sing-tun `BuildAutoRouteRanges` 校验路由不带网卡编号）。
 - 主要测试为 `test/application/macos_network_recovery_test.dart`、`test/controller/macos_tun_startup_test.dart`、`test/models/clash_config_test.dart` 及 `core/Clash.Meta/listener/sing_tun` 定向测试。
 
 ### macOS 与 Windows 托盘

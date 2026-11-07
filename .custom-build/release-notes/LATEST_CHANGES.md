@@ -6,6 +6,7 @@
 - 关于页「检查更新」右上角新增齿轮，可设置「自动更新」（默认开）和「接收预览版」（默认关）。关闭自动更新后启动时不再检查（自定义版也不再做 28 天强制检查）；开启接收预览版后，macOS / Windows / Android 都会改用预览通道，能收到预览版和之后的正式版。
 - 自定义 Snell v6 升级到 OpenSnell `970499c`：与官方 v6.0.0 写分块、零块填充、ConnectV2 和半关闭行为对齐，修复与官方服务端复用会话时断开；v6 现在允许 `reuse`，obfs 与上游一致（拒绝 tls/http，允许 shadow-tls、restls、jls）。
 - 修复合并后 `MainActivity.kt` 重复导入 `android.content.Intent` 导致 Android 编译失败（Conflicting import）。
+- 修复 macOS 在有公网 IPv6 的网络下开启 TUN 失败、无法联网（`add route: ff02:1::/32: network is unreachable`）：上游新版会自动给 TUN 加 IPv6，订阅中排除 `ff02::fb` 等组播/链路本地地址时生成的路由被 macOS 拒绝；现将这类排除扩大到整个组播/链路本地网段。
 - 修复 Windows 更新器网络回归测试偶发失败：测试服务改为原子写入端口文件，探针读到非空端口才继续（此前可能读到空文件报 `You cannot call a method on a null-valued expression`）。
 
 ### 2026-11-05 macOS 彻底清理 Tailscale 的 DNS 否定缓存
