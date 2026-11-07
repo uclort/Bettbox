@@ -431,15 +431,20 @@ mixin _TailscaleStatusMixin<T extends ConsumerStatefulWidget>
     if (statusLoading) return;
     statusLoading = true;
     if (!silent && mounted) setState(() {});
+    final names = List.of(statusNames);
+    // BETTBOX-CUSTOM: 各节点并行查询、到一个显示一个；连不上控制面的节点要等满超时（约 30 秒），
+    // 逐个等待会让已连上节点的状态和设备列表一直出不来。
     final result = <String, TailscaleNodeStatus>{};
-    for (final name in statusNames) {
-      result[name] = await clashCore.getTailscaleStatus(name);
-    }
+    await Future.wait(
+      names.map((name) async {
+        final status = await clashCore.getTailscaleStatus(name);
+        result[name] = status;
+        if (mounted) setState(() => statuses[name] = status);
+      }),
+    );
     if (!mounted) return;
     setState(() {
-      statuses
-        ..clear()
-        ..addAll(result);
+      statuses.removeWhere((name, _) => !result.containsKey(name));
       statusLoading = false;
     });
     onStatusesUpdated();

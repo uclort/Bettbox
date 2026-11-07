@@ -6,6 +6,9 @@ godebug default=go1.20
 
 replace github.com/metacubex/mihomo => ./Clash.Meta
 
+// BETTBOX-CUSTOM: metacubex/tls v0.1.9 副本，新增按 SNI 收窄曲线的钩子（Tailscale 不发 ML-KEM），见 tailscale_tls.go。
+replace github.com/metacubex/tls => ./third_party/metacubex-tls
+
 require (
 	github.com/appshubcc/go-iperf3 v0.1.0
 	github.com/metacubex/mihomo v0.0.0-00010101000000-000000000000
@@ -38,7 +41,7 @@ require (
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/gobwas/ws v1.4.0 // indirect
-	github.com/gofrs/uuid/v5 v5.4.0 // indirect
+	github.com/gofrs/uuid/v5 v5.4.0
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/btree v1.1.3 // indirect
