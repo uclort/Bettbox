@@ -352,7 +352,10 @@ class NetworkMonitorSnapshotReader {
     return {
       'requests': requests.map(monitorTrackerToJson).toList(),
       'connections': withSpeed.map(monitorTrackerToJson).toList(),
-      'logs': logs.map((log) => log.toJson()).toList(),
+      // BETTBOX-CUSTOM: 上游 Log 改为 `time`（ISO），面板按 `dateTime` 显示本地日期时间（含毫秒）。
+      'logs': logs
+          .map((log) => {...log.toJson(), 'dateTime': log.dateTime})
+          .toList(),
     };
   }
 }
@@ -874,6 +877,13 @@ Object? normalizeMonitorValue(Object? value) {
   return value;
 }
 
+/// BETTBOX-CUSTOM: 日志只带 `time`（ISO）时转成本地「年-月-日 时:分:秒.毫秒」。
+String _monitorLogTime(Object? value) {
+  final time = value == null ? null : DateTime.tryParse(value.toString());
+  if (time == null) return '';
+  return time.toLocal().toString().substring(0, 23);
+}
+
 class MonitorLog {
   final String level;
   final String payload;
@@ -890,7 +900,7 @@ class MonitorLog {
     return MonitorLog(
       level: map['LogLevel']?.toString() ?? 'info',
       payload: map['Payload']?.toString() ?? '',
-      dateTime: map['dateTime']?.toString() ?? '',
+      dateTime: map['dateTime']?.toString() ?? _monitorLogTime(map['time']),
     );
   }
 }

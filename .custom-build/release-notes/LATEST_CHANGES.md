@@ -9,6 +9,7 @@
 - 修复 macOS 在有公网 IPv6 的网络下开启 TUN 失败、无法联网（`add route: ff02:1::/32: network is unreachable`）：上游新版会自动给 TUN 加 IPv6，订阅中排除 `ff02::fb` 等组播/链路本地地址时生成的路由被 macOS 拒绝；现将这类排除扩大到整个组播/链路本地网段。
 - 修复内置 Tailscale 直连节点在部分网络下无法登录、连不上（`fetch control key … context deadline exceeded`）：这些网络会丢弃发往 Tailscale 服务器、带后量子密钥交换（X25519MLKEM768）的 TLS 握手。现在连 Tailscale 控制面、登录和 DERP 中继时只用经典曲线（X25519 等），其他连接不变。
 - 修复 Tailscale 页面有节点连不上时，其他已连接节点的状态和设备列表要等约 30 秒才出现：各节点改为并行查询、返回一个显示一个。
+- 修复网络面板的日志不显示时间：现在每条日志显示完整的日期和时间（精确到毫秒）。
 - 修复 Tailscale 设备列表里本机的 Bettbox 节点（如 `…-proxy`）已连接却显示离线：本机节点改按自身连接状态显示。
 - 关闭 IPv6 后，TUN 不再因为检测到公网 IPv6 自动加 IPv6 地址（上游新版不看 IPv6 开关），IPv6 流量不再进 TUN，与 1.19.7 一致；运行中切换 IPv6 开关也会同步。
 - 修复 Windows 更新器网络回归测试偶发失败：测试服务改为原子写入端口文件，探针读到非空端口才继续（此前可能读到空文件报 `You cannot call a method on a null-valued expression`）。

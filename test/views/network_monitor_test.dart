@@ -50,6 +50,18 @@ void main() {
     await AppLocalizations.load(const Locale('zh', 'CN'));
   });
 
+  test('面板日志显示本地日期时间（上游 Log 只序列化 time）', () {
+    final time = DateTime(2026, 11, 7, 13, 4, 27, 123);
+    final log = Log(payload: '[TCP] test', time: time);
+    final expected = '2026-11-07 13:04:27.123';
+    expect(MonitorLog.fromJson(log.toJson()).dateTime, expected);
+    expect(
+      MonitorLog.fromJson({...log.toJson(), 'dateTime': log.dateTime}).dateTime,
+      expected,
+    );
+    expect(MonitorLog.fromJson(const {'Payload': 'x'}).dateTime, '');
+  });
+
   testWidgets('HarmonyOS Sans 使用正常宽度的空格字形', (tester) async {
     final loader = FontLoader('HarmonyOS_Sans_Test')
       ..addFont(rootBundle.load('assets/fonts/HarmonyOS_Sans_SC_Regular.ttf'));
