@@ -5,6 +5,7 @@
 - WebDAV 同步跟随上游改为每个配置文件独立选择覆写脚本，同步时不覆盖本机的脚本选择。
 - 关于页「检查更新」右上角新增齿轮，可设置「自动更新」（默认开）和「接收预览版」（默认关）。关闭自动更新后启动时不再检查（自定义版也不再做 28 天强制检查）；开启接收预览版后，macOS / Windows / Android 都会改用预览通道，能收到预览版和之后的正式版。
 - 自定义 Snell v6 升级到 OpenSnell `970499c`：与官方 v6.0.0 写分块、零块填充、ConnectV2 和半关闭行为对齐，修复与官方服务端复用会话时断开；v6 现在允许 `reuse`，obfs 与上游一致（拒绝 tls/http，允许 shadow-tls、restls、jls）。
+- 修复合并后 `MainActivity.kt` 重复导入 `android.content.Intent` 导致 Android 编译失败（Conflicting import）。
 
 ### 2026-11-05 macOS 彻底清理 Tailscale 的 DNS 否定缓存
 
