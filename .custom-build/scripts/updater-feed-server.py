@@ -29,5 +29,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
 if __name__ == '__main__':
     server = http.server.HTTPServer(('127.0.0.1', 0), Handler)
-    Path(sys.argv[1]).write_text(str(server.server_port), encoding='ascii')
+    # 先写临时文件再原子改名，避免探针读到已创建但尚未写入的空端口文件。
+    port_file = Path(sys.argv[1])
+    temporary = port_file.with_name(port_file.name + '.tmp')
+    temporary.write_text(str(server.server_port), encoding='ascii')
+    temporary.replace(port_file)
     server.serve_forever()

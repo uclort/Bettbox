@@ -18,9 +18,14 @@ $portFile = Join-Path $Source "probe-port-$platform.txt"
 Remove-Item $portFile -Force -ErrorAction SilentlyContinue
 $server = Start-Process python -ArgumentList @("`"$serverSource`"","`"$portFile`"") -PassThru -WindowStyle Hidden
 try {
-  for ($attempt = 0; $attempt -lt 100 -and -not (Test-Path $portFile); $attempt++) { if ($server.HasExited) { throw 'WinSparkle 测试 HTTP 服务提前退出' }; Start-Sleep -Milliseconds 100 }
-  if (-not (Test-Path $portFile)) { throw 'WinSparkle 测试 HTTP 服务启动失败' }
-  $port = (Get-Content $portFile -Raw).Trim()
+  # 端口文件可能已创建但尚未写完，读到非空端口才继续。
+  $port = ''
+  for ($attempt = 0; $attempt -lt 100 -and -not $port; $attempt++) {
+    if ($server.HasExited) { throw 'WinSparkle 测试 HTTP 服务提前退出' }
+    if (Test-Path $portFile) { $port = "$(Get-Content $portFile -Raw -ErrorAction SilentlyContinue)".Trim() }
+    if (-not $port) { Start-Sleep -Milliseconds 100 }
+  }
+  if (-not $port) { throw 'WinSparkle 测试 HTTP 服务启动失败' }
   foreach ($mode in @('gzip','deflate','flaky')) {
     Write-Output "WinSparkle $platform 网络回归：$mode"
     & $probe (Join-Path $Source "$platform/Release/WinSparkle.dll") "http://127.0.0.1:$port/$mode"
