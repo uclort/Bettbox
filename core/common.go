@@ -222,6 +222,12 @@ func updateConfig(params *UpdateParams) {
 	if params.IPv6 != nil {
 		general.IPv6 = *params.IPv6
 		resolver.DisableIPv6 = !general.IPv6
+		// BETTBOX-CUSTOM: 运行中切换 IPv6 时同步 TUN 的 IPv6 地址（关闭即移除，同 mihomo parseIPV6）。
+		if general.IPv6 {
+			ensureTunInet6(currentConfig)
+		} else {
+			general.Tun.Inet6Address = nil
+		}
 	}
 	if params.ExternalController != nil {
 		currentConfig.Controller.ExternalController = *params.ExternalController

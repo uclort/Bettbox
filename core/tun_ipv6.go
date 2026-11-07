@@ -33,7 +33,8 @@ var hasGlobalIPv6 = func() bool {
 }
 
 func ensureTunInet6(cfg *config.Config) {
-	if patchForAndroid || len(cfg.General.Tun.Inet6Address) > 0 || !hasGlobalIPv6() {
+	// BETTBOX-CUSTOM: 关闭 IPv6 时不给 TUN 自动加 IPv6 地址，IPv6 流量不进 TUN（同 1.19.7）。
+	if patchForAndroid || !cfg.General.IPv6 || len(cfg.General.Tun.Inet6Address) > 0 || !hasGlobalIPv6() {
 		return
 	}
 	cfg.General.Tun.Inet6Address = config.DefaultRawConfig().Tun.Inet6Address

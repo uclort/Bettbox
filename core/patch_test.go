@@ -672,14 +672,17 @@ func TestEnsureTunInet6(t *testing.T) {
 	previousAndroid, previousCheck := patchForAndroid, hasGlobalIPv6
 	defer func() { patchForAndroid, hasGlobalIPv6 = previousAndroid, previousCheck }()
 
+	// BETTBOX-CUSTOM: ipv6: false 时不自动加 TUN IPv6 地址。
 	cases := []struct {
 		android bool
+		ipv6    bool
 		global  bool
 		want    int
 	}{
-		{false, true, 1},
-		{false, false, 0},
-		{true, true, 0},
+		{false, true, true, 1},
+		{false, true, false, 0},
+		{true, true, true, 0},
+		{false, false, true, 0},
 	}
 	for _, item := range cases {
 		patchForAndroid = item.android
@@ -691,9 +694,10 @@ func TestEnsureTunInet6(t *testing.T) {
 		if len(cfg.General.Tun.Inet6Address) != 0 {
 			t.Fatalf("ipv6: false should clear inet6-address")
 		}
+		cfg.General.IPv6 = item.ipv6
 		ensureTunInet6(cfg)
 		if got := len(cfg.General.Tun.Inet6Address); got != item.want {
-			t.Errorf("android=%t global=%t: inet6-address count = %d, want %d", item.android, item.global, got, item.want)
+			t.Errorf("android=%t ipv6=%t global=%t: inet6-address count = %d, want %d", item.android, item.ipv6, item.global, got, item.want)
 		}
 	}
 }

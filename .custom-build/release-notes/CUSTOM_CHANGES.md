@@ -168,6 +168,7 @@
 - 启动 TUN 前检查其他 VPN 遗留的 `1.0.0.0/8` utun 路由；发现冲突时保持关闭并提示接口。
 - macOS TUN 关闭竞态的 `ENOTSOCK` 按标准关闭处理，避免旧批量读协程日志风暴和 CPU 满载；Mixed/GVisor 所需方法集继续保留，并兼容 sing-tun 新增的 Darwin `BatchSize` 接口。
 - 上游 1.19.8 的 `core/tun_ipv6.go` 在检测到公网 IPv6 时自动给 TUN 加 IPv6 地址（不看 `ipv6` 设置）。macOS 内核会把 `fe80::/10`、`ff00::/8` 地址的第 3、4 字节当作网卡编号，订阅里排除 `ff02::fb/128` 等地址时，sing-tun 补集出的 `ff02:1::/32` 等路由添加失败（`add route: ff02:1::/32: network is unreachable`），TUN 起不来。`core/tun_scoped_exclude.go` 的 `sanitizeTunScopedExclude` 仅在 macOS 把落在这两个网段内的 `route-exclude-address` / `inet6-route-exclude-address` 扩大到整段，并在 `core/common.go` 的配置准备和运行中更新 TUN 两处调用；回归为 `core/tun_scoped_exclude_test.go`（含用 sing-tun `BuildAutoRouteRanges` 校验路由不带网卡编号）。
+- 2026-11-07 关闭 IPv6 时 TUN 不加 IPv6 地址：上游 `ensureTunInet6` 不看 `ipv6` 设置，只要有公网 IPv6 就给 TUN 加 `fdfe:dcba:9876::1/126`，关了 IPv6 后 IPv6 流量仍进 TUN。改为 `!cfg.General.IPv6` 时直接返回（`core/tun_ipv6.go`，网络变化触发的 `ensureRunningTunInet6` 同样受约束）；`updateConfig` 运行中切换 `IPv6` 时同步：开启调用 `ensureTunInet6`，关闭清空 `Tun.Inet6Address`（与 mihomo `parseIPV6` 一致），随后 `updateListeners` 重建 TUN。行为回到 1.19.7：关闭 IPv6 时 IPv6 流量不经 TUN，按系统路由直接出去。上游测试 `patch_test.go` 中 ipv6 关闭仍加地址的用例已改为期望不加，并补 ipv6 开启的用例。
 - 主要测试为 `test/application/macos_network_recovery_test.dart`、`test/controller/macos_tun_startup_test.dart`、`test/models/clash_config_test.dart` 及 `core/Clash.Meta/listener/sing_tun` 定向测试。
 
 ### macOS 与 Windows 托盘
