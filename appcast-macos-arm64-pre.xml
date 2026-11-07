@@ -6,9 +6,9 @@
     <description>Bettbox 自定义版本更新源</description>
     <language>zh-CN</language>
     <item>
-      <title>Bettbox 1.19.8+2090000264</title>
-      <pubDate>Sat, 07 Nov 2026 05:01:18 +0000</pubDate>
-      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.8+2090000264</link>
+      <title>Bettbox 1.19.8+2090000265</title>
+      <pubDate>Sat, 07 Nov 2026 05:28:10 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.8+2090000265</link>
       <description><![CDATA[<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https:;">
@@ -56,6 +56,8 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>Windows 按住 Alt 打开托盘菜单后，松开 Alt 菜单立即关闭</li>
 <li>内置 Tailscale 直连节点在部分网络下无法登录、连不上（<code class="notranslate">fetch control key</code> 超时）：连 Tailscale 控制面、登录与 DERP 中继时不再发送会被这些网络丢弃的后量子密钥交换</li>
 <li>Tailscale 页面有节点连不上时，其他节点的状态和设备列表要等约 30 秒才显示</li>
+<li>Tailscale 设备列表里本机的 Bettbox 节点已连接却显示离线</li>
+<li>网络面板的日志不显示时间，现显示完整日期与时间（精确到毫秒）</li>
 <li>关闭 IPv6 后 TUN 仍因检测到公网 IPv6 而接管 IPv6 流量</li>
 <li>macOS 在有公网 IPv6 的网络下开启 TUN 失败、无法联网（<code class="notranslate">add route: ff02:1::/32: network is unreachable</code>），订阅排除 <code class="notranslate">ff02::fb</code> 等组播地址时触发</li>
 </ul>
@@ -73,11 +75,11 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>自定义 Mihomo 内核：Snell v6（OpenSnell <code class="notranslate">970499c</code>，对齐官方 v6.0.0 写分块、零块填充与 ConnectV2，修复与官方服务端复用会话断开）、direct proxy 跟随接口 DNS、Tailscale 出站状态接口</li>
 </ul>
 <hr>
-<p dir="auto">构建版本 <code class="notranslate">1.19.8+2090000264</code>，提交 <code class="notranslate">ecdec4f9ad8c</code>，自定义内核 <code class="notranslate">4a94696a6ea0</code>。Windows 与 macOS 安装包未做商业代码签名；Android 使用 Bettbox 自定义版固定 Release 签名。</p>
-<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.8%2B2090000264">查看完整发布页</a></footer></body></html>]]></description>
-      <sparkle:version>2090000264</sparkle:version>
-      <sparkle:shortVersionString>1.19.8+2090000264</sparkle:shortVersionString>
-      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.8+2090000264/Bettbox-1.19.8-macos-arm64.dmg" length="73952436" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="PaIJX5BZaTkQkUnQFrj0GthjT9iCjhwZKfg6YXp4lDVMR1Xv5+Ew0tU+4/V0l2/szeK14UmQFSIScmL+bn5WCQ==" />
+<p dir="auto">构建版本 <code class="notranslate">1.19.8+2090000265</code>，提交 <code class="notranslate">700f610e9070</code>，自定义内核 <code class="notranslate">4a94696a6ea0</code>。Windows 与 macOS 安装包未做商业代码签名；Android 使用 Bettbox 自定义版固定 Release 签名。</p>
+<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.8%2B2090000265">查看完整发布页</a></footer></body></html>]]></description>
+      <sparkle:version>2090000265</sparkle:version>
+      <sparkle:shortVersionString>1.19.8+2090000265</sparkle:shortVersionString>
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.8+2090000265/Bettbox-1.19.8-macos-arm64.dmg" length="73952024" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="kNw/mGtOViS/rVHcG8SnaZbDzac5q8MOxC6W9MnlDKy+XiRHuID8/Qu0ls3Umd64yjo70dHviw4rPeIVv3BrCQ==" />
     </item>
   </channel>
 </rss>
