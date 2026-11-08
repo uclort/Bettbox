@@ -55,7 +55,6 @@ _AppSettingProps _$AppSettingPropsFromJson(
   enableNavBarHapticFeedback:
       json['enableNavBarHapticFeedback'] as bool? ?? true,
   autoCheckUpdate: json['autoCheckUpdate'] as bool? ?? true,
-  receivePreRelease: json['receivePreRelease'] as bool? ?? false,
   trayShowProxyChain: json['trayShowProxyChain'] as bool? ?? false,
   trayStatusGroupEnable: json['trayStatusGroupEnable'] as bool? ?? false,
   trayStatusGroupName: json['trayStatusGroupName'] as String? ?? '',
@@ -162,7 +161,6 @@ Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
       'startSwitchOffLabel': instance.startSwitchOffLabel,
       'enableNavBarHapticFeedback': instance.enableNavBarHapticFeedback,
       'autoCheckUpdate': instance.autoCheckUpdate,
-      'receivePreRelease': instance.receivePreRelease,
       'trayShowProxyChain': instance.trayShowProxyChain,
       'trayStatusGroupEnable': instance.trayStatusGroupEnable,
       'trayStatusGroupName': instance.trayStatusGroupName,

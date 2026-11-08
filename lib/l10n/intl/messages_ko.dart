@@ -1517,10 +1517,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "rainbowScheme": MessageLookupByLibrary.simpleMessage("레인보우"),
     "realTimeSpeed": MessageLookupByLibrary.simpleMessage("실시간 속도"),
-    "receivePreRelease": MessageLookupByLibrary.simpleMessage("프리릴리스 받기"),
-    "receivePreReleaseDesc": MessageLookupByLibrary.simpleMessage(
-      "프리릴리스 업데이트도 받습니다 (불안정할 수 있음)",
-    ),
     "reclaimableMemory": MessageLookupByLibrary.simpleMessage("회수 가능"),
     "recovery": MessageLookupByLibrary.simpleMessage("복구"),
     "recoveryAll": MessageLookupByLibrary.simpleMessage("모든 데이터 복구"),

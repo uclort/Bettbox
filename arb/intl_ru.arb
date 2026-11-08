@@ -115,8 +115,6 @@
   "updateSettings": "Настройки обновлений",
   "appAutoUpdate": "Автообновление",
   "appAutoUpdateDesc": "Проверять новые версии при запуске и уведомлять",
-  "receivePreRelease": "Получать предварительные версии",
-  "receivePreReleaseDesc": "Также получать pre-release обновления, они могут быть нестабильны",
   "accessControl": "Маршрутизация приложений",
   "accessControlDesc": "Белый и чёрный списки приложений",
   "clearCacheTitle": "Очистить кэш",

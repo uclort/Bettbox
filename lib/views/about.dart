@@ -44,7 +44,7 @@ class AboutView extends StatelessWidget {
         icon: Icons.refresh,
         external: false,
         onTap: () => _checkUpdate(context),
-        // BETTBOX-CUSTOM: 齿轮打开更新设置（自动更新 / 接收预览版）。
+        // BETTBOX-CUSTOM: 齿轮打开更新设置（自动更新）。
         trailing: IconButton(
           tooltip: appLocalizations.updateSettings,
           visualDensity: VisualDensity.compact,
@@ -285,10 +285,8 @@ class UpdateSettingsDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final setting = ref.watch(
-      appSettingProvider.select(
-        (state) => (state.autoCheckUpdate, state.receivePreRelease),
-      ),
+    final autoCheckUpdate = ref.watch(
+      appSettingProvider.select((state) => state.autoCheckUpdate),
     );
     final notifier = ref.read(appSettingProvider.notifier);
     return CommonDialog(
@@ -307,18 +305,9 @@ class UpdateSettingsDialog extends ConsumerWidget {
             key: const ValueKey('update-settings-auto-update'),
             title: Text(appLocalizations.appAutoUpdate),
             subtitle: Text(appLocalizations.appAutoUpdateDesc),
-            value: setting.$1,
+            value: autoCheckUpdate,
             onChanged: (value) => notifier.updateState(
               (state) => state.copyWith(autoCheckUpdate: value),
-            ),
-          ),
-          SwitchListTile(
-            key: const ValueKey('update-settings-pre-release'),
-            title: Text(appLocalizations.receivePreRelease),
-            subtitle: Text(appLocalizations.receivePreReleaseDesc),
-            value: setting.$2,
-            onChanged: (value) => notifier.updateState(
-              (state) => state.copyWith(receivePreRelease: value),
             ),
           ),
         ],

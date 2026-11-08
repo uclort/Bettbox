@@ -1514,10 +1514,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "rainbowScheme": MessageLookupByLibrary.simpleMessage("レインボー"),
     "realTimeSpeed": MessageLookupByLibrary.simpleMessage("リアルタイム速度"),
-    "receivePreRelease": MessageLookupByLibrary.simpleMessage("プレリリースを受け取る"),
-    "receivePreReleaseDesc": MessageLookupByLibrary.simpleMessage(
-      "プレリリース版も受け取ります（不安定な場合があります）",
-    ),
     "reclaimableMemory": MessageLookupByLibrary.simpleMessage("回収可能"),
     "recovery": MessageLookupByLibrary.simpleMessage("復元"),
     "recoveryAll": MessageLookupByLibrary.simpleMessage("すべてのデータを復元"),

@@ -115,8 +115,6 @@
   "updateSettings": "تنظیمات بروزرسانی",
   "appAutoUpdate": "بروزرسانی خودکار",
   "appAutoUpdateDesc": "بررسی نسخه جدید هنگام اجرا و اطلاع‌رسانی",
-  "receivePreRelease": "دریافت نسخه‌های پیش‌انتشار",
-  "receivePreReleaseDesc": "بروزرسانی‌های پیش‌انتشار نیز دریافت شود (ممکن است ناپایدار باشد)",
   "accessControl": "کنترل دسترسی",
   "accessControlDesc": "لیست سفید و سیاه دسترسی برنامه‌ها",
   "clearCacheTitle": "پاکسازی حافظه پنهان",

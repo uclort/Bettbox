@@ -1828,12 +1828,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "rainbowScheme": MessageLookupByLibrary.simpleMessage("رنگین‌کمان"),
     "realTimeSpeed": MessageLookupByLibrary.simpleMessage("سرعت لحظه‌ای"),
-    "receivePreRelease": MessageLookupByLibrary.simpleMessage(
-      "دریافت نسخه‌های پیش‌انتشار",
-    ),
-    "receivePreReleaseDesc": MessageLookupByLibrary.simpleMessage(
-      "بروزرسانی‌های پیش‌انتشار نیز دریافت شود (ممکن است ناپایدار باشد)",
-    ),
     "reclaimableMemory": MessageLookupByLibrary.simpleMessage("قابل بازیافت"),
     "recovery": MessageLookupByLibrary.simpleMessage("بازیابی"),
     "recoveryAll": MessageLookupByLibrary.simpleMessage("بازیابی تمام داده‌ها"),

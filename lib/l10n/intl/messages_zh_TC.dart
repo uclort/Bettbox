@@ -1369,10 +1369,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "rainbowScheme": MessageLookupByLibrary.simpleMessage("彩虹"),
     "realTimeSpeed": MessageLookupByLibrary.simpleMessage("實時速度"),
-    "receivePreRelease": MessageLookupByLibrary.simpleMessage("接收預覽版"),
-    "receivePreReleaseDesc": MessageLookupByLibrary.simpleMessage(
-      "同時接收預覽版（Pre-release）更新，可能不夠穩定",
-    ),
     "reclaimableMemory": MessageLookupByLibrary.simpleMessage("可回收"),
     "recovery": MessageLookupByLibrary.simpleMessage("還原"),
     "recoveryAll": MessageLookupByLibrary.simpleMessage("還原所有資料"),

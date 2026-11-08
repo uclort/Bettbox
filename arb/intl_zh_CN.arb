@@ -115,8 +115,6 @@
   "updateSettings": "更新设置",
   "appAutoUpdate": "自动更新",
   "appAutoUpdateDesc": "启动时自动检查并提示新版本",
-  "receivePreRelease": "接收预览版",
-  "receivePreReleaseDesc": "同时接收预览版（Pre-release）更新，可能不够稳定",
   "accessControl": "分应用代理",
   "accessControlDesc": "配置应用访问黑白名单",
   "clearCacheTitle": "清理缓存",

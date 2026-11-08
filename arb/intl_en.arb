@@ -115,8 +115,6 @@
   "updateSettings": "Update Settings",
   "appAutoUpdate": "Auto Update",
   "appAutoUpdateDesc": "Check for new versions on launch and notify",
-  "receivePreRelease": "Receive Pre-releases",
-  "receivePreReleaseDesc": "Also receive pre-release updates, which may be less stable",
   "accessControl": "Access Control",
   "accessControlDesc": "App allowlist and blocklist",
   "clearCacheTitle": "Clear Cache",

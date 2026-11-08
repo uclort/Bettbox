@@ -1040,26 +1040,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Receive Pre-releases`
-  String get receivePreRelease {
-    return Intl.message(
-      'Receive Pre-releases',
-      name: 'receivePreRelease',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Also receive pre-release updates, which may be less stable`
-  String get receivePreReleaseDesc {
-    return Intl.message(
-      'Also receive pre-release updates, which may be less stable',
-      name: 'receivePreReleaseDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Access Control`
   String get accessControl {
     return Intl.message(

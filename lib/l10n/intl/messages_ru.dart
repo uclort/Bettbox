@@ -1886,12 +1886,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "rainbowScheme": MessageLookupByLibrary.simpleMessage("Радуга"),
     "realTimeSpeed": MessageLookupByLibrary.simpleMessage("Текущая скорость"),
-    "receivePreRelease": MessageLookupByLibrary.simpleMessage(
-      "Получать предварительные версии",
-    ),
-    "receivePreReleaseDesc": MessageLookupByLibrary.simpleMessage(
-      "Также получать pre-release обновления, они могут быть нестабильны",
-    ),
     "reclaimableMemory": MessageLookupByLibrary.simpleMessage("К возврату"),
     "recovery": MessageLookupByLibrary.simpleMessage("Восстановить"),
     "recoveryAll": MessageLookupByLibrary.simpleMessage("Все данные"),

@@ -63,13 +63,10 @@ class CustomAppUpdater with UpdaterListener {
       customUpdateFeedUrl.isNotEmpty &&
       (system.isMacOS || system.isWindows);
 
-  /// BETTBOX-CUSTOM: 按“接收预览版”切换 Sparkle / WinSparkle 的 appcast。
+  /// BETTBOX-CUSTOM: Sparkle / WinSparkle 使用自定义 appcast（只有正式版）。
   /// macOS 由 delegate 在每次检查时读取；Windows 的补丁保证只初始化一次 WinSparkle。
   Future<void> _applyNativeFeed() async {
-    final feedUrl = customUpdateFeedUrlFor(
-      customUpdateFeedUrl,
-      receivePreRelease: globalState.config.appSetting.receivePreRelease,
-    );
+    const feedUrl = customUpdateFeedUrl;
     if (feedUrl == _nativeFeedUrl) return;
     await autoUpdater.setFeedURL(feedUrl);
     _nativeFeedUrl = feedUrl;

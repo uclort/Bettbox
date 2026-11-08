@@ -1803,12 +1803,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "rainbowScheme": MessageLookupByLibrary.simpleMessage("Rainbow"),
     "realTimeSpeed": MessageLookupByLibrary.simpleMessage("Real-time Speed"),
-    "receivePreRelease": MessageLookupByLibrary.simpleMessage(
-      "Receive Pre-releases",
-    ),
-    "receivePreReleaseDesc": MessageLookupByLibrary.simpleMessage(
-      "Also receive pre-release updates, which may be less stable",
-    ),
     "reclaimableMemory": MessageLookupByLibrary.simpleMessage("Reclaimable"),
     "recovery": MessageLookupByLibrary.simpleMessage("Restore"),
     "recoveryAll": MessageLookupByLibrary.simpleMessage("Restore All Data"),

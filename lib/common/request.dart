@@ -353,19 +353,12 @@ class Request {
     return _decompressIfNeeded(data, response.headers);
   }
 
-  Future<Map<String, dynamic>?> checkForUpdate({
-    bool receivePreRelease = false,
-  }) async {
+  Future<Map<String, dynamic>?> checkForUpdate() async {
     if (isCustomUpdateBuild) {
       if (system.isAndroid && customUpdateFeedUrl.isNotEmpty) {
-        return _checkForCustomUpdateFeed(
-          customUpdateFeedUrlFor(
-            customUpdateFeedUrl,
-            receivePreRelease: receivePreRelease,
-          ),
-        );
+        return _checkForCustomUpdateFeed(customUpdateFeedUrl);
       }
-      return _checkForCustomUpdate(receivePreRelease: receivePreRelease);
+      return _checkForCustomUpdate();
     }
 
     try {
@@ -447,9 +440,7 @@ class Request {
     return latest;
   }
 
-  Future<Map<String, dynamic>?> _checkForCustomUpdate({
-    required bool receivePreRelease,
-  }) async {
+  Future<Map<String, dynamic>?> _checkForCustomUpdate() async {
     try {
       final response = await _dio.get<List<dynamic>>(
         'https://api.github.com/repos/$customUpdateRepository/releases',
@@ -466,7 +457,6 @@ class Request {
       );
       final latest = latestCustomRelease(
         (response.data ?? const <dynamic>[]).whereType<Map<String, dynamic>>(),
-        receivePreRelease: receivePreRelease,
       );
       if (latest == null) return null;
       return _filterCustomRelease(latest);
@@ -800,37 +790,18 @@ class Request {
 
 final request = Request();
 
-/// BETTBOX-CUSTOM: 预览版更新源与正式版同目录，文件名在扩展名前追加 `-pre`，
-/// 例如 `appcast-macos-arm64.xml` → `appcast-macos-arm64-pre.xml`。
-/// 预览版源在每次发布（正式版或预览版）时都会更新，始终指向两者中最新的一版。
-String customUpdateFeedUrlFor(
-  String feedUrl, {
-  required bool receivePreRelease,
-}) {
-  if (!receivePreRelease || feedUrl.isEmpty) return feedUrl;
-  final queryIndex = feedUrl.indexOf(RegExp(r'[?#]'));
-  final path = queryIndex < 0 ? feedUrl : feedUrl.substring(0, queryIndex);
-  final suffix = queryIndex < 0 ? '' : feedUrl.substring(queryIndex);
-  final slash = path.lastIndexOf('/');
-  final dot = path.lastIndexOf('.');
-  if (dot <= slash + 1) return '$path-pre$suffix';
-  return '${path.substring(0, dot)}-pre${path.substring(dot)}$suffix';
-}
-
-/// BETTBOX-CUSTOM: GitHub API 回退路径按设置决定是否纳入预览版 Release。
+/// BETTBOX-CUSTOM: 自定义构建只发布正式版；GitHub API 回退路径取最新发布的
+/// 正式 Release，跳过草稿与历史遗留的预览版。
 Map<String, dynamic>? latestCustomRelease(
-  Iterable<Map<String, dynamic>> releases, {
-  required bool receivePreRelease,
-}) {
+  Iterable<Map<String, dynamic>> releases,
+) {
   DateTime publishedAt(Map<String, dynamic> release) =>
       DateTime.tryParse(release['published_at']?.toString() ?? '') ??
       DateTime.fromMillisecondsSinceEpoch(0);
   final candidates =
       releases
           .where((release) => release['draft'] != true)
-          .where(
-            (release) => receivePreRelease || release['prerelease'] != true,
-          )
+          .where((release) => release['prerelease'] != true)
           .toList()
         ..sort((a, b) => publishedAt(b).compareTo(publishedAt(a)));
   return candidates.firstOrNull;

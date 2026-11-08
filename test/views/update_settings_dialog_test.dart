@@ -21,7 +21,7 @@ void main() {
     await AppLocalizations.load(const Locale('zh', 'CN'));
   });
 
-  testWidgets('更新设置默认开启自动更新、关闭预览版，切换写回设置', (tester) async {
+  testWidgets('更新设置默认开启自动更新、没有预览版开关，切换写回设置', (tester) async {
     final container = ProviderContainer(
       overrides: [
         appSettingProvider.overrideWith(_FakeAppSetting.new),
@@ -38,21 +38,16 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('自动更新'), findsOneWidget);
-    expect(find.text('接收预览版'), findsOneWidget);
+    // 只发布正式版，不再提供“接收预览版”开关
+    expect(find.byType(SwitchListTile), findsOneWidget);
     SwitchListTile tile(String key) =>
         tester.widget<SwitchListTile>(find.byKey(ValueKey(key)));
     expect(tile('update-settings-auto-update').value, isTrue);
-    expect(tile('update-settings-pre-release').value, isFalse);
 
-    await tester.tap(find.byKey(const ValueKey('update-settings-pre-release')));
-    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('update-settings-auto-update')));
     await tester.pumpAndSettle();
 
-    final setting = container.read(appSettingProvider);
-    expect(setting.receivePreRelease, isTrue);
-    expect(setting.autoCheckUpdate, isFalse);
-    expect(tile('update-settings-pre-release').value, isTrue);
+    expect(container.read(appSettingProvider).autoCheckUpdate, isFalse);
     expect(tile('update-settings-auto-update').value, isFalse);
   });
 }

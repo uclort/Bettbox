@@ -115,8 +115,6 @@
   "updateSettings": "업데이트 설정",
   "appAutoUpdate": "자동 업데이트",
   "appAutoUpdateDesc": "실행 시 새 버전을 확인하고 알림",
-  "receivePreRelease": "프리릴리스 받기",
-  "receivePreReleaseDesc": "프리릴리스 업데이트도 받습니다 (불안정할 수 있음)",
   "accessControl": "액세스 제어",
   "accessControlDesc": "앱 허용/차단 목록 설정",
   "clearCacheTitle": "캐시 지우기",

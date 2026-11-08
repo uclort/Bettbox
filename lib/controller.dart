@@ -1901,9 +1901,7 @@ class AppController {
     if (customAppUpdater.supportsNativeUpdater) {
       await customAppUpdater.checkDesktopUpdate(manual: false);
     } else {
-      final res = await request.checkForUpdate(
-        receivePreRelease: appSetting.receivePreRelease,
-      );
+      final res = await request.checkForUpdate();
       if (res != null) {
         checkUpdateResultHandle(data: res);
       }
@@ -1918,9 +1916,7 @@ class AppController {
       return;
     }
 
-    final data = await request.checkForUpdate(
-      receivePreRelease: _ref.read(appSettingProvider).receivePreRelease,
-    );
+    final data = await request.checkForUpdate();
     await checkUpdateResultHandle(data: data, handleError: manual);
   }
 
@@ -1928,7 +1924,7 @@ class AppController {
     Map<String, dynamic>? data,
     bool handleError = false,
   }) async {
-    // BETTBOX-CUSTOM: 自定义构建的预览版同样需要自动提示更新，更新通道由设置控制。
+    // BETTBOX-CUSTOM: 自定义构建一律按正式版发布（版本号可能带上游的 -pre 后缀），同样自动提示更新。
     if (globalState.isPre && !isCustomUpdateBuild && !handleError) {
       return;
     }

@@ -115,8 +115,6 @@
   "updateSettings": "アップデート設定",
   "appAutoUpdate": "自動アップデート",
   "appAutoUpdateDesc": "起動時に新しいバージョンを確認して通知",
-  "receivePreRelease": "プレリリースを受け取る",
-  "receivePreReleaseDesc": "プレリリース版も受け取ります（不安定な場合があります）",
   "accessControl": "アクセス制御",
   "accessControlDesc": "アプリのアクセスリスト設定",
   "clearCacheTitle": "キャッシュ削除",
