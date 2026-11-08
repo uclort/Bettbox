@@ -267,6 +267,10 @@ class TailscaleProfileNode {
   );
 }
 
+/// 与内核一致：type 不区分大小写（内核 merge 时用 EqualFold 判断 Tailscale 节点）。
+bool _isTailscaleProxy(Map proxy) =>
+    proxy['type']?.toString().trim().toLowerCase() == 'tailscale';
+
 /// 一个配置文件的预读取结果与可能影响内置节点的项。
 class TailscaleProfileScan {
   const TailscaleProfileScan({
@@ -294,7 +298,7 @@ class TailscaleProfileScan {
   }) {
     final nodes = [
       for (final proxy in (config['proxies'] as List?) ?? const [])
-        if (proxy is Map && proxy['type'] == 'tailscale')
+        if (proxy is Map && _isTailscaleProxy(proxy))
           TailscaleProfileNode.fromProxy(proxy),
     ].where((node) => node.name.isNotEmpty).toList();
     final names = {for (final node in nodes) node.name};
@@ -862,6 +866,20 @@ extension TailscalePropsExt on TailscaleProps {
       nodeGroups.where((g) => g.id != id).toList(),
       defaultName: removed.name == defaultGroup ? '' : null,
     );
+  }
+
+  /// 配置文件里的节点已从配置中删除时，一并删掉为它保存的覆写组，
+  /// 避免节点不存在了、设置页里还留着一个无法生效又删不掉的策略组。
+  /// profileNodeNames 是全部配置文件里出现的 Tailscale 节点名；只在全部配置文件
+  /// 都成功读取时调用（读取失败不能证明节点已被删除）。
+  TailscaleProps pruneProfileGroups(Set<String> profileNodeNames) {
+    var result = this;
+    for (final group in nodeGroups) {
+      if (group.profile && !profileNodeNames.contains(group.name)) {
+        result = result.removeGroup(group.id);
+      }
+    }
+    return result;
   }
 
   /// 手动指定默认组（自己添加的组或配置文件里的节点，按名称）；空为自动。

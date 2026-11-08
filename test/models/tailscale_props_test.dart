@@ -353,6 +353,34 @@ void main() {
     expect(tailscaleSlug('代理'), tailscaleSlug('代理'));
   });
 
+  // BETTBOX-CUSTOM: 配置文件删掉 Tailscale 节点后，残留的覆写组随扫描一起清理。
+  test('配置文件节点删除后清理残留的覆写组', () {
+    final scan = TailscaleProfileScan.fromConfig(
+      profileId: '1',
+      label: 'Uclort',
+      current: true,
+      config: {
+        'proxies': [
+          {'name': 'TS', 'type': 'TailScale'},
+        ],
+      },
+    );
+    // type 与内核一致，不区分大小写
+    expect(scan.nodes.map((n) => n.name), ['TS']);
+    final group = scan.nodes.single.toGroup();
+    final props = const TailscaleProps(nodeEnable: true, groupsVersion: 1)
+        .updateGroup(group.id, group)
+        .setDefaultGroup(group.name);
+    expect(props.pruneProfileGroups({'TS'}).groupById(group.id), isNotNull);
+    // 节点已不在任何配置文件里：删除覆写组，默认组回退到自动选择
+    final pruned = props.pruneProfileGroups({'other'});
+    expect(pruned.groupById(group.id), isNull);
+    expect(pruned.defaultGroup, isEmpty);
+    expect(pruned.nodeGroups, isEmpty);
+    // 没有可清理的组时返回原对象，调用方据此跳过写入
+    expect(identical(props.pruneProfileGroups({'TS'}), props), isTrue);
+  });
+
   // BETTBOX-CUSTOM: 不再内置默认策略组：全新安装开启内置节点时列表为空，等配置文件节点或手动添加。
   test('全新安装不生成内置策略组', () {
     const props = TailscaleProps(nodeEnable: true, groupsVersion: 1);

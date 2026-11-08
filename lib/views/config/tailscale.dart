@@ -252,9 +252,19 @@ class TailscaleNodeItem extends ConsumerWidget {
 }
 
 // BETTBOX-CUSTOM: 预读取全部配置文件（含覆写脚本结果），找出自定义的 Tailscale 节点。
-Future<List<TailscaleProfileScan>> _scanTailscaleProfiles() async {
+// complete 为 false 表示有配置文件读取失败：这时不能断定某个配置文件的节点已被删除，
+// 调用方不应据此清理保存的覆写组。
+class _TailscaleProfileScans {
+  const _TailscaleProfileScans(this.scans, {required this.complete});
+
+  final List<TailscaleProfileScan> scans;
+  final bool complete;
+}
+
+Future<_TailscaleProfileScans> _scanTailscaleProfiles() async {
   final config = globalState.config;
   final scans = <TailscaleProfileScan>[];
+  var complete = true;
   for (final profile in config.profiles) {
     try {
       final raw = await globalState.getProfileConfig(
@@ -269,9 +279,11 @@ Future<List<TailscaleProfileScan>> _scanTailscaleProfiles() async {
           config: raw,
         ),
       );
-    } catch (_) {}
+    } catch (_) {
+      complete = false;
+    }
   }
-  return scans;
+  return _TailscaleProfileScans(scans, complete: complete);
 }
 
 /// 配置文件里的节点在列表中的条目：已保存的覆写设置，或按配置文件参数生成的只读组。
@@ -615,12 +627,31 @@ class _TailscaleNodeSettingsState extends ConsumerState<_TailscaleNodeSettings>
   }
 
   Future<void> _loadScans() async {
-    final scans = await _scanTailscaleProfiles();
+    final result = await _scanTailscaleProfiles();
     if (!mounted) return;
-    setState(() => _scans = scans);
-    if (scans.any((scan) => scan.current && scan.nodes.isNotEmpty)) {
+    setState(() => _scans = result.scans);
+    _pruneProfileGroups(result);
+    if (result.scans.any((scan) => scan.current && scan.nodes.isNotEmpty)) {
       refreshStatus(silent: true);
     }
+  }
+
+  /// BETTBOX-CUSTOM: 配置文件里的 Tailscale 节点被删除后，设置里不再保留它的覆写组。
+  /// 只有全部配置文件都读取成功时才清理，避免临时读取失败把设置误删；节点还在任意
+  /// 一个配置文件里时保留设置（切换配置文件后仍然可用）。
+  void _pruneProfileGroups(_TailscaleProfileScans result) {
+    if (!result.complete || result.scans.isEmpty) return;
+    final names = {
+      for (final scan in result.scans)
+        for (final node in scan.nodes) node.name,
+    };
+    final props = ref.read(networkSettingProvider).tailscale;
+    final pruned = props.pruneProfileGroups(names);
+    if (identical(pruned, props)) return;
+    // 节点已不在任何配置文件里，运行时本来就不会注入它，这里无需重载内核。
+    ref
+        .read(networkSettingProvider.notifier)
+        .updateState((state) => state.copyWith(tailscale: pruned));
   }
 
   @override
@@ -1345,20 +1376,21 @@ class _TailscaleGroupPageState extends ConsumerState<_TailscaleGroupPage>
         ),
         _rulesEntry(group),
         ..._deviceItems(props, group),
-        // 默认组也可以删除：删掉后由 effectiveDefaultName 自动回退（配置文件节点 → 第一个自己添加的组）。
-        if (!group.profile)
-          ListItem(
-            leading: Icon(
-              Icons.delete_outline,
-              color: context.colorScheme.error,
-            ),
-            title: Text(
-              appLocalizations.tailscaleGroupDelete,
-              style: TextStyle(color: context.colorScheme.error),
-            ),
-            onTap: () => _delete(group),
-          ),
       ],
+      // 默认组也可以删除：删掉后由 effectiveDefaultName 自动回退（配置文件节点 → 第一个自己添加的组）。
+      // 配置文件里的节点已从配置中删除时，残留的覆写组也允许删除。
+      if (!group.profile || profileNode == null)
+        ListItem(
+          leading: Icon(
+            Icons.delete_outline,
+            color: context.colorScheme.error,
+          ),
+          title: Text(
+            appLocalizations.tailscaleGroupDelete,
+            style: TextStyle(color: context.colorScheme.error),
+          ),
+          onTap: () => _delete(group),
+        ),
     ]);
   }
 }
