@@ -6,9 +6,9 @@
     <description>Bettbox 自定义版本更新源</description>
     <language>zh-CN</language>
     <item>
-      <title>Bettbox 1.19.8+2090000265</title>
-      <pubDate>Sat, 07 Nov 2026 05:28:10 +0000</pubDate>
-      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.8+2090000265</link>
+      <title>Bettbox 1.19.8+2090000269</title>
+      <pubDate>Sun, 08 Nov 2026 01:52:05 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.8+2090000269</link>
       <description><![CDATA[<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https:;">
@@ -32,7 +32,7 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>侧边栏图标、面板标题等界面自定义，隐藏策略组，Inline Provider 内容查看</li>
 <li>Android 应用权限页，本地网络权限运行时申请</li>
 <li>应用内更新：Android 下载并安装，桌面端使用自定义更新源</li>
-<li>更新设置：关于页「检查更新」旁的齿轮可开关「自动更新」（默认开）与「接收预览版」（默认关），开启后通过预览通道收到预览版</li>
+<li>更新设置：关于页「检查更新」旁的齿轮可开关「自动更新」（默认开），关闭后启动时不再检查更新</li>
 </ul>
 <h2 dir="auto">优化</h2>
 <ul dir="auto">
@@ -57,6 +57,7 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>内置 Tailscale 直连节点在部分网络下无法登录、连不上（<code class="notranslate">fetch control key</code> 超时）：连 Tailscale 控制面、登录与 DERP 中继时不再发送会被这些网络丢弃的后量子密钥交换</li>
 <li>Tailscale 页面有节点连不上时，其他节点的状态和设备列表要等约 30 秒才显示</li>
 <li>Tailscale 设备列表里本机的 Bettbox 节点已连接却显示离线</li>
+<li>配置文件里删掉 Tailscale 节点后，Tailscale 设置里仍留着它的策略组（开过覆写时无法删除）；现在打开设置时会核对全部配置文件并自动清理，节点还在其他配置文件里则保留设置</li>
 <li>网络面板的日志不显示时间，现显示完整日期与时间（精确到毫秒）</li>
 <li>关闭 IPv6 后 TUN 仍因检测到公网 IPv6 而接管 IPv6 流量</li>
 <li>macOS 在有公网 IPv6 的网络下开启 TUN 失败、无法联网（<code class="notranslate">add route: ff02:1::/32: network is unreachable</code>），订阅排除 <code class="notranslate">ff02::fb</code> 等组播地址时触发</li>
@@ -64,6 +65,7 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <h2 dir="auto">移除</h2>
 <ul dir="auto">
 <li>跟随上游移除独立 DNS 设置页、「网络切换时刷新 DNS」与「自动设置系统 DNS」开关（macOS 虚拟网卡的系统 DNS 托管保留）</li>
+<li>移除预览版通道与「接收预览版」开关：所有版本都以正式版发布；之前开过该开关的设备照常升级到新版本</li>
 </ul>
 <h2 dir="auto">兼容性变更</h2>
 <ul dir="auto">
@@ -75,11 +77,11 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>自定义 Mihomo 内核：Snell v6（OpenSnell <code class="notranslate">970499c</code>，对齐官方 v6.0.0 写分块、零块填充与 ConnectV2，修复与官方服务端复用会话断开）、direct proxy 跟随接口 DNS、Tailscale 出站状态接口</li>
 </ul>
 <hr>
-<p dir="auto">构建版本 <code class="notranslate">1.19.8+2090000265</code>，提交 <code class="notranslate">700f610e9070</code>，自定义内核 <code class="notranslate">4a94696a6ea0</code>。Windows 与 macOS 安装包未做商业代码签名；Android 使用 Bettbox 自定义版固定 Release 签名。</p>
-<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.8%2B2090000265">查看完整发布页</a></footer></body></html>]]></description>
-      <sparkle:version>2090000265</sparkle:version>
-      <sparkle:shortVersionString>1.19.8+2090000265</sparkle:shortVersionString>
-      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.8+2090000265/Bettbox-1.19.8-macos-amd64.dmg" length="76249047" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="zokI0fPjEuIX7o2R1+IUVyElMKYlgrhzfisunKAj/AginFUP2rBHorenBx4c4jO2zyrgZDuwoOkUCp4CN0HHAg==" />
+<p dir="auto">构建版本 <code class="notranslate">1.19.8+2090000269</code>，提交 <code class="notranslate">4727b22185ee</code>，自定义内核 <code class="notranslate">4a94696a6ea0</code>。Windows 与 macOS 安装包未做商业代码签名；Android 使用 Bettbox 自定义版固定 Release 签名。</p>
+<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.8%2B2090000269">查看完整发布页</a></footer></body></html>]]></description>
+      <sparkle:version>2090000269</sparkle:version>
+      <sparkle:shortVersionString>1.19.8+2090000269</sparkle:shortVersionString>
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.8+2090000269/Bettbox-1.19.8-macos-amd64.dmg" length="76245200" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="TBEqR9W94K58LLAVjWVlxWf9hy+b82LtqJcCNz5q2qEVms2VTnKt0TU6ch3gPJeC/0D8AWEUFiKjD9lWz8JOAQ==" />
     </item>
   </channel>
 </rss>

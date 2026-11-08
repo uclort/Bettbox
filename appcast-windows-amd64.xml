@@ -6,9 +6,9 @@
     <description>Bettbox 自定义版本更新源</description>
     <language>zh-CN</language>
     <item>
-      <title>Bettbox 1.19.7+2090000258</title>
-      <pubDate>Thu, 05 Nov 2026 08:34:23 +0000</pubDate>
-      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7+2090000258</link>
+      <title>Bettbox 1.19.8+2090000269</title>
+      <pubDate>Sun, 08 Nov 2026 01:52:05 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.8+2090000269</link>
       <description><![CDATA[<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https:;">
@@ -19,7 +19,7 @@ h1,h2,h3 { line-height: 1.35; } h1 { font-size: 22px; } h2 { font-size: 18px; } 
 pre { white-space: pre-wrap; } code { font-size: .92em; }
 img,table { max-width: 100%; } table { border-collapse: collapse; } td,th { border: 1px solid #888; padding: 6px; }
 a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; padding-top: 12px; }
-</style></head><body><p dir="auto">基于上游 Bettbox <code class="notranslate">1.19.7+2026102201</code>（<code class="notranslate">main@1fb8806fdf82</code>）构建。</p>
+</style></head><body><p dir="auto">基于上游 Bettbox <code class="notranslate">1.19.8+2026102201</code>（<code class="notranslate">main@554d0856dae0</code>）构建。</p>
 <h2 dir="auto">新增</h2>
 <ul dir="auto">
 <li>内置 Tailscale 节点：内核作为独立设备加入 Tailnet，支持浏览器登录或 Auth Key 两种接入方式、设备列表与出口节点；桌面端另有「Tailscale App 共存」开关；设置入口位于「内核配置 → Tailscale」</li>
@@ -32,6 +32,7 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>侧边栏图标、面板标题等界面自定义，隐藏策略组，Inline Provider 内容查看</li>
 <li>Android 应用权限页，本地网络权限运行时申请</li>
 <li>应用内更新：Android 下载并安装，桌面端使用自定义更新源</li>
+<li>更新设置：关于页「检查更新」旁的齿轮可开关「自动更新」（默认开），关闭后启动时不再检查更新</li>
 </ul>
 <h2 dir="auto">优化</h2>
 <ul dir="auto">
@@ -40,6 +41,7 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>macOS 网络切换、睡眠唤醒后自动恢复 TUN、DNS 与系统代理</li>
 <li>内核重启与配置切换串行执行，避免启动竞态</li>
 <li>内置 Tailscale 节点在更新订阅、重载配置时不再重启，Tailnet 连接不中断；配置生效后提前启动</li>
+<li>同步上游 Bettbox 1.19.8 测试版：配置切换方式、智能停止、流量统计等；WebDAV 同步按配置文件保留各自的覆写脚本选择</li>
 <li>开启内置 Tailscale 节点后，订阅中让 Tailnet 绕开节点的配置（TUN 排除网段、MagicDNS 服务器、hosts 等）在运行时自动忽略，不修改订阅</li>
 </ul>
 <h2 dir="auto">修复</h2>
@@ -52,25 +54,34 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>Tailscale 「重新注册」改为重建节点，卡住的 Auth Key 节点可以恢复；macOS 节点连上后持续检查系统 DNS 是否仍返回「无记录」并反复清理系统缓存（覆盖约 5 分钟的否定缓存窗口），清理信号由内核进程直接发给 mDNSResponder、过程可在「日志」页查看，「刷新 DNS 缓存」也会一并清系统缓存，不再出现节点已恢复、Rex 等应用仍解析不到 Tailnet 主机而要手动 <code class="notranslate">killall -HUP mDNSResponder</code></li>
 <li>内置 Tailscale 节点重载配置后出现重复设备（Duplicate node key）；退出后重新登录设备名变成系统主机名</li>
 <li>Windows 按住 Alt 打开托盘菜单后，松开 Alt 菜单立即关闭</li>
+<li>内置 Tailscale 直连节点在部分网络下无法登录、连不上（<code class="notranslate">fetch control key</code> 超时）：连 Tailscale 控制面、登录与 DERP 中继时不再发送会被这些网络丢弃的后量子密钥交换</li>
+<li>Tailscale 页面有节点连不上时，其他节点的状态和设备列表要等约 30 秒才显示</li>
+<li>Tailscale 设备列表里本机的 Bettbox 节点已连接却显示离线</li>
+<li>配置文件里删掉 Tailscale 节点后，Tailscale 设置里仍留着它的策略组（开过覆写时无法删除）；现在打开设置时会核对全部配置文件并自动清理，节点还在其他配置文件里则保留设置</li>
+<li>网络面板的日志不显示时间，现显示完整日期与时间（精确到毫秒）</li>
+<li>关闭 IPv6 后 TUN 仍因检测到公网 IPv6 而接管 IPv6 流量</li>
+<li>macOS 在有公网 IPv6 的网络下开启 TUN 失败、无法联网（<code class="notranslate">add route: ff02:1::/32: network is unreachable</code>），订阅排除 <code class="notranslate">ff02::fb</code> 等组播地址时触发</li>
 </ul>
 <h2 dir="auto">移除</h2>
 <ul dir="auto">
-<li>无</li>
+<li>跟随上游移除独立 DNS 设置页、「网络切换时刷新 DNS」与「自动设置系统 DNS」开关（macOS 虚拟网卡的系统 DNS 托管保留）</li>
+<li>移除预览版通道与「接收预览版」开关：所有版本都以正式版发布；之前开过该开关的设备照常升级到新版本</li>
 </ul>
 <h2 dir="auto">兼容性变更</h2>
 <ul dir="auto">
 <li>与上游共用同一份配置格式，自定义项默认关闭，升级后行为保持不变</li>
+<li>自定义 Snell v6 现在允许 <code class="notranslate">reuse</code>，obfs 与上游一致（拒绝 tls / http，允许 shadow-tls、restls、jls）</li>
 </ul>
 <h2 dir="auto">内核</h2>
 <ul dir="auto">
-<li>自定义 Mihomo 内核：Snell v6、direct proxy 跟随接口 DNS、Tailscale 出站状态接口</li>
+<li>自定义 Mihomo 内核：Snell v6（OpenSnell <code class="notranslate">970499c</code>，对齐官方 v6.0.0 写分块、零块填充与 ConnectV2，修复与官方服务端复用会话断开）、direct proxy 跟随接口 DNS、Tailscale 出站状态接口</li>
 </ul>
 <hr>
-<p dir="auto">构建版本 <code class="notranslate">1.19.7+2090000258</code>，提交 <code class="notranslate">ee3dcaba28a9</code>，自定义内核 <code class="notranslate">ac540f8ec6ff</code>。Windows 与 macOS 安装包未做商业代码签名；Android 使用 Bettbox 自定义版固定 Release 签名。</p>
-<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.7%2B2090000258">查看完整发布页</a></footer></body></html>]]></description>
-      <sparkle:version>2090000258</sparkle:version>
-      <sparkle:shortVersionString>1.19.7+2090000258</sparkle:shortVersionString>
-      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.7+2090000258/Bettbox-1.19.7-windows-amd64-setup.exe" length="44690293" type="application/octet-stream" sparkle:os="windows" sparkle:dsaSignature="MDwCHGeBi6tm6tfRWW9MMw6qMXsVK+Yxb+6JierVXHkCHFkj7qgb9NBHaM3HvROq1hyXPazTQ8dNZ/H+t/g=" />
+<p dir="auto">构建版本 <code class="notranslate">1.19.8+2090000269</code>，提交 <code class="notranslate">4727b22185ee</code>，自定义内核 <code class="notranslate">4a94696a6ea0</code>。Windows 与 macOS 安装包未做商业代码签名；Android 使用 Bettbox 自定义版固定 Release 签名。</p>
+<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.8%2B2090000269">查看完整发布页</a></footer></body></html>]]></description>
+      <sparkle:version>2090000269</sparkle:version>
+      <sparkle:shortVersionString>1.19.8+2090000269</sparkle:shortVersionString>
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.8+2090000269/Bettbox-1.19.8-windows-amd64-setup.exe" length="45295833" type="application/octet-stream" sparkle:os="windows" sparkle:dsaSignature="MD0CHAZvyR3b0F6tHQ7tzrwVjLbOX5vWphukD3kIAf8CHQCZAtj91aWBBP1XOrrOnAPDKl3irADdwKX3SNYa" />
     </item>
   </channel>
 </rss>
