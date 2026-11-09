@@ -6,9 +6,9 @@
     <description>Bettbox 自定义版本更新源</description>
     <language>zh-CN</language>
     <item>
-      <title>Bettbox 1.19.8+2090000269</title>
-      <pubDate>Sun, 08 Nov 2026 01:52:05 +0000</pubDate>
-      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.8+2090000269</link>
+      <title>Bettbox 1.19.8+2090000270</title>
+      <pubDate>Mon, 09 Nov 2026 01:20:29 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.8+2090000270</link>
       <description><![CDATA[<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https:;">
@@ -46,6 +46,7 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 </ul>
 <h2 dir="auto">修复</h2>
 <ul dir="auto">
+<li>Android 关闭 IPv6 时，夸克网盘等直接连 IPv6 地址的应用加载失败（如搜索提示「加载异常」），虚拟网卡的 IPv6 现在跟随开关</li>
 <li>macOS 静默启动时窗口闪现</li>
 <li>Tailscale 共存时控制面域名返回真实 IP，Rex 等内嵌 tsnet 的应用登录不再无响应</li>
 <li>Tailscale 代理通道所选代理不支持 UDP 时节点启动失败（Rebind IPv4 failed），现改为经 DERP 中继连接</li>
@@ -77,11 +78,11 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>自定义 Mihomo 内核：Snell v6（OpenSnell <code class="notranslate">970499c</code>，对齐官方 v6.0.0 写分块、零块填充与 ConnectV2，修复与官方服务端复用会话断开）、direct proxy 跟随接口 DNS、Tailscale 出站状态接口</li>
 </ul>
 <hr>
-<p dir="auto">构建版本 <code class="notranslate">1.19.8+2090000269</code>，提交 <code class="notranslate">4727b22185ee</code>，自定义内核 <code class="notranslate">4a94696a6ea0</code>。Windows 与 macOS 安装包未做商业代码签名；Android 使用 Bettbox 自定义版固定 Release 签名。</p>
-<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.8%2B2090000269">查看完整发布页</a></footer></body></html>]]></description>
-      <sparkle:version>2090000269</sparkle:version>
-      <sparkle:shortVersionString>1.19.8+2090000269</sparkle:shortVersionString>
-      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.8+2090000269/Bettbox-1.19.8-macos-arm64.dmg" length="73943742" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="aocwZ5mQY4fNHEliQj05dJKYBeG0VFmT+495aL/4H2OmiYuJfApZ5KT/xlfTt0Wz6bX/dWFgZ4IGJBkqNrZtDA==" />
+<p dir="auto">构建版本 <code class="notranslate">1.19.8+2090000270</code>，提交 <code class="notranslate">8588b1cdc857</code>，自定义内核 <code class="notranslate">4a94696a6ea0</code>。Windows 与 macOS 安装包未做商业代码签名；Android 使用 Bettbox 自定义版固定 Release 签名。</p>
+<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.8%2B2090000270">查看完整发布页</a></footer></body></html>]]></description>
+      <sparkle:version>2090000270</sparkle:version>
+      <sparkle:shortVersionString>1.19.8+2090000270</sparkle:shortVersionString>
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.8+2090000270/Bettbox-1.19.8-macos-arm64.dmg" length="73941638" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="uSbiNnnPAnhhzcZUK4JA6WX8lqgbZtNVbwDOMpNxek/MRLOQDxWleCxgkRkT39ljfuWkW+Lj3K9DLKgvrSBaCQ==" />
     </item>
   </channel>
 </rss>
