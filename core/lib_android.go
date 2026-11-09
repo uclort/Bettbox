@@ -139,7 +139,7 @@ func handleStartTun(fd int, callback unsafe.Pointer) bool {
 		}
 		tunHandler.Store(handler)
 		initTunHook()
-		tunListener, _ := t.Start(fd, currentConfig.General.Tun.Device, currentConfig.General.Tun.Stack, currentConfig.General.Tun.DisableICMPForwarding, uint32(currentConfig.General.Tun.MTU), currentConfig.General.Tun.CongestionController)
+		tunListener, _ := t.Start(fd, currentConfig.General.Tun.Device, currentConfig.General.Tun.Stack, currentConfig.General.Tun.DisableICMPForwarding, uint32(currentConfig.General.Tun.MTU), currentConfig.General.IPv6, currentConfig.General.Tun.CongestionController)
 		if tunListener == nil {
 			tunHandler.Store(nil)
 			handler.close()
@@ -187,11 +187,12 @@ func handleGetAndroidVpnOptions() string {
 		log.Warnln("[APP] handleGetAndroidVpnOptions called before setupConfig")
 		return ""
 	}
+	// BETTBOX-CUSTOM: VpnService 的 IPv6 地址和路由跟随 ipv6 开关，见 state.TunIpv6Address。
 	options := state.AndroidVpnOptions{
 		Enable:                state.CurrentState.VpnProps.Enable,
 		Port:                  currentConfig.General.MixedPort,
 		Ipv4Address:           state.DefaultIpv4Address,
-		Ipv6Address:           state.DefaultIpv6Address,
+		Ipv6Address:           state.TunIpv6Address(currentConfig.General.IPv6),
 		AccessControl:         state.CurrentState.VpnProps.AccessControl,
 		SystemProxy:           state.CurrentState.VpnProps.SystemProxy,
 		AllowBypass:           state.CurrentState.VpnProps.AllowBypass,

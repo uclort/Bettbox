@@ -24,6 +24,7 @@
 
 ## 修复
 
+- Android 关闭 IPv6 时，夸克网盘等直接连 IPv6 地址的应用加载失败（如搜索提示「加载异常」），虚拟网卡的 IPv6 现在跟随开关
 - macOS 静默启动时窗口闪现
 - Tailscale 共存时控制面域名返回真实 IP，Rex 等内嵌 tsnet 的应用登录不再无响应
 - Tailscale 代理通道所选代理不支持 UDP 时节点启动失败（Rebind IPv4 failed），现改为经 DERP 中继连接
