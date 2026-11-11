@@ -302,47 +302,30 @@ class _MonitorRuleDialogState extends State<_MonitorRuleDialog> {
   }
 
   Future<void> _addOverride() async {
-    var type = OverrideRuleType.added;
-    final selected = await showDialog<OverrideRuleType>(
+    // BETTBOX-CUSTOM: 上游 1.19.8 移除了「覆盖原始规则」模式，只能附加到原始规则。
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('添加覆写'),
-          content: SegmentedButton<OverrideRuleType>(
-            segments: const [
-              ButtonSegment(
-                value: OverrideRuleType.added,
-                label: Text('附加到原始规则'),
-              ),
-              ButtonSegment(
-                value: OverrideRuleType.override,
-                label: Text('覆盖原始规则'),
-              ),
-            ],
-            selected: {type},
-            onSelectionChanged: (value) =>
-                setDialogState(() => type = value.first),
+      builder: (context) => AlertDialog(
+        title: const Text('添加覆写'),
+        content: const Text('规则将附加到当前配置的原始规则之前。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('取消'),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('取消'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, type),
-              child: const Text('确认添加'),
-            ),
-          ],
-        ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('确认添加'),
+          ),
+        ],
       ),
     );
-    if (selected == null || !mounted) return;
+    if (confirmed != true || !mounted) return;
     setState(() => _saving = true);
     try {
       var result = normalizeMonitorMap(
         await widget.runAction('addOverrideRule', {
               'rule': _rule,
-              'type': selected.name,
               'force': false,
             }) ??
             const {},
@@ -369,7 +352,6 @@ class _MonitorRuleDialogState extends State<_MonitorRuleDialog> {
         result = normalizeMonitorMap(
           await widget.runAction('addOverrideRule', {
                 'rule': _rule,
-                'type': selected.name,
                 'force': true,
               }) ??
               const {},

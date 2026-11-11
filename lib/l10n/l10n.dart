@@ -230,6 +230,16 @@ class AppLocalizations {
     return Intl.message('Restart App', name: 'restartApp', desc: '', args: []);
   }
 
+  /// `Background Watermark`
+  String get backgroundWatermark {
+    return Intl.message(
+      'Background Watermark',
+      name: 'backgroundWatermark',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Outbound Mode`
   String get outboundMode {
     return Intl.message(
@@ -495,10 +505,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Disable QUIC to resolve specific network issues`
+  /// `Disable QUIC to mitigate specific network issues`
   String get disableQuicDesc {
     return Intl.message(
-      'Disable QUIC to resolve specific network issues',
+      'Disable QUIC to mitigate specific network issues',
       name: 'disableQuicDesc',
       desc: '',
       args: [],
@@ -670,26 +680,6 @@ class AppLocalizations {
     return Intl.message(
       'Show network speed in menu bar',
       name: 'enableTraySpeedDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Exclude China`
-  String get excludeChina {
-    return Intl.message(
-      'Exclude China',
-      name: 'excludeChina',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Allow China QUIC instead of blocking all`
-  String get excludeChinaDesc {
-    return Intl.message(
-      'Allow China QUIC instead of blocking all',
-      name: 'excludeChinaDesc',
       desc: '',
       args: [],
     );
@@ -3475,16 +3465,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Override Config`
-  String get overrideTestUrl {
-    return Intl.message(
-      'Override Config',
-      name: 'overrideTestUrl',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `NTP`
   String get ntp {
     return Intl.message('NTP', name: 'ntp', desc: '', args: []);
@@ -4220,6 +4200,16 @@ class AppLocalizations {
     return Intl.message('No Icon', name: 'noIcon', desc: '', args: []);
   }
 
+  /// `Network Interface`
+  String get networkInterface {
+    return Intl.message(
+      'Network Interface',
+      name: 'networkInterface',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Stack Mode`
   String get stackMode {
     return Intl.message('Stack Mode', name: 'stackMode', desc: '', args: []);
@@ -4365,10 +4355,10 @@ class AppLocalizations {
     return Intl.message('Icon', name: 'icon', desc: '', args: []);
   }
 
-  /// `Icon Configuration`
+  /// `Icon Settings`
   String get iconConfiguration {
     return Intl.message(
-      'Icon Configuration',
+      'Icon Settings',
       name: 'iconConfiguration',
       desc: '',
       args: [],
@@ -4610,16 +4600,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Copied package name`
-  String get copiedPackageName {
-    return Intl.message(
-      'Copied package name',
-      name: 'copiedPackageName',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Success`
   String get success {
     return Intl.message('Success', name: 'success', desc: '', args: []);
@@ -4803,26 +4783,6 @@ class AppLocalizations {
   /// `No Resolve`
   String get noResolve {
     return Intl.message('No Resolve', name: 'noResolve', desc: '', args: []);
-  }
-
-  /// `Original Rules`
-  String get getOriginRules {
-    return Intl.message(
-      'Original Rules',
-      name: 'getOriginRules',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Override Original Rules`
-  String get overrideOriginRules {
-    return Intl.message(
-      'Override Original Rules',
-      name: 'overrideOriginRules',
-      desc: '',
-      args: [],
-    );
   }
 
   /// `Append to Original Rules`
@@ -5258,6 +5218,16 @@ class AppLocalizations {
   /// `No {label}`
   String nullTip(Object label) {
     return Intl.message('No $label', name: 'nullTip', desc: '', args: [label]);
+  }
+
+  /// `No UDP connections`
+  String get nullUdpConnections {
+    return Intl.message(
+      'No UDP connections',
+      name: 'nullUdpConnections',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Override Script`
@@ -10314,10 +10284,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Show only the merged subscription in the list; tap the arrow on its card to expand`
+  /// `When enabled, only merged subscription info is shown in the list; tap the bottom-right corner of the card to expand or collapse`
   String get bundleCollapseDesc {
     return Intl.message(
-      'Show only the merged subscription in the list; tap the arrow on its card to expand',
+      'When enabled, only merged subscription info is shown in the list; tap the bottom-right corner of the card to expand or collapse',
       name: 'bundleCollapseDesc',
       desc: '',
       args: [],
@@ -10459,6 +10429,26 @@ class AppLocalizations {
     return Intl.message(
       'Matched from top to bottom, drag to reorder',
       name: 'groupOrderTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Region groups`
+  String get regionGroups {
+    return Intl.message(
+      'Region groups',
+      name: 'regionGroups',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Regions without matching nodes are skipped; nodes that match no region go to 其他节点 (other nodes)`
+  String get regionGroupsTip {
+    return Intl.message(
+      'Regions without matching nodes are skipped; nodes that match no region go to 其他节点 (other nodes)',
+      name: 'regionGroupsTip',
       desc: '',
       args: [],
     );
@@ -12039,6 +12029,46 @@ class AppLocalizations {
     return Intl.message(
       'Auth key registration not finished yet, retrying automatically (not a key problem)',
       name: 'tailscaleNodeAuthKeyPending',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Lock Node`
+  String get lockProxy {
+    return Intl.message('Lock Node', name: 'lockProxy', desc: '', args: []);
+  }
+
+  /// `Unlock`
+  String get unlockProxy {
+    return Intl.message('Unlock', name: 'unlockProxy', desc: '', args: []);
+  }
+
+  /// `Add Region`
+  String get addRegion {
+    return Intl.message('Add Region', name: 'addRegion', desc: '', args: []);
+  }
+
+  /// `Region Name`
+  String get regionName {
+    return Intl.message('Region Name', name: 'regionName', desc: '', args: []);
+  }
+
+  /// `Matching Regex`
+  String get regionRegex {
+    return Intl.message(
+      'Matching Regex',
+      name: 'regionRegex',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Invalid regular expression`
+  String get regexInvalid {
+    return Intl.message(
+      'Invalid regular expression',
+      name: 'regexInvalid',
       desc: '',
       args: [],
     );

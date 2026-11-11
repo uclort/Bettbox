@@ -36,7 +36,6 @@ abstract class SetupParams with _$SetupParams {
   const factory SetupParams({
     @JsonKey(name: 'selected-map') required Map<String, String> selectedMap,
     @JsonKey(name: 'test-url') required String testUrl,
-    @JsonKey(name: 'override-test-url') @Default(true) bool overrideTestUrl,
     @JsonKey(name: 'profile-path') @Default('') String profilePath,
     @JsonKey(name: 'age-secret-key') @Default('') String ageSecretKey,
     @JsonKey(name: 'scripted-config') @Default('') String scriptedConfig,

@@ -1005,6 +1005,23 @@ class Utils {
     ];
   }
 
+  Future<List<CoreInterface>> getNetworkInterfaces() async {
+    final interfaces = await NetworkInterface.list(includeLoopback: false);
+    final result = <CoreInterface>[
+      for (final interface in interfaces)
+        if (interface.addresses.isNotEmpty &&
+            !_virtualInterfaceRegExp.hasMatch(interface.name) &&
+            !_bridgeInterfaceRegExp.hasMatch(interface.name))
+          CoreInterface(
+            name: interface.name,
+            addresses: [
+              for (final address in interface.addresses) address.address,
+            ],
+          ),
+    ];
+    return result..sort((a, b) => a.name.compareTo(b.name));
+  }
+
   Future<NetworkInfo> getNetworkInfo() async {
     try {
       if (system.isAndroid) {

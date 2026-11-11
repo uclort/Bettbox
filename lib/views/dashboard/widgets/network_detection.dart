@@ -200,7 +200,13 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
                   context,
                   Text(
                     ipInfo.ip,
-                    style: context.textTheme.bodyMedium?.toLight.adjustSize(1),
+                    style: context.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      height: 1.2,
+                      fontFeatures: const [
+                        FontFeature.tabularFigures(),
+                      ],
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -243,7 +249,7 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           SizedBox(
-                            height: globalState.measure.bodyMediumHeight + 2,
+                            height: globalState.measure.titleMediumHeight + 2,
                             child: Align(
                               alignment: AlignmentDirectional.centerStart,
                               child: ipText,
@@ -268,7 +274,7 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
                     Padding(
                       padding: baseInfoEdgeInsets.copyWith(top: 0),
                       child: SizedBox(
-                        height: globalState.measure.bodyMediumHeight + 2,
+                        height: globalState.measure.titleMediumHeight + 2,
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.baseline,
                           textBaseline: TextBaseline.alphabetic,

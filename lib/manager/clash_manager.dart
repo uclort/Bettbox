@@ -138,10 +138,11 @@ class _ClashContainerState extends ConsumerState<ClashManager>
 
   void _refreshDelaySort() {
     if (!mounted || delayTestCoordinator.isTesting) return;
-    final sortType = ref.read(
-      proxiesStyleSettingProvider.select((state) => state.sortType),
-    );
-    if (sortType != ProxiesSortType.delay) return;
+    final proxiesStyle = ref.read(proxiesStyleSettingProvider);
+    if (proxiesStyle.sortType != ProxiesSortType.delay &&
+        !proxiesStyle.hideTimeoutProxies) {
+      return;
+    }
     globalState.appController.addSortNum();
   }
 

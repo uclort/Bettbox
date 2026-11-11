@@ -3,7 +3,9 @@ import 'dart:math' as math;
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/widgets/widgets.dart';
+import 'package:bett_box/providers/providers.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'connections_count.dart';
@@ -46,13 +48,13 @@ Widget buildDashboardTile(DashboardTile tile) {
     DashboardWidget.memoryInfo => MemoryInfo(size: size),
     DashboardWidget.connectionsCount => ConnectionsCount(size: size),
     // BETTBOX-CUSTOM: 启动卡片只展示运行时长，桌面不提供独立启停。
-    DashboardWidget.startButton => const RunTime(),
+    DashboardWidget.startButton => const DashboardRunTime(),
     DashboardWidget.toolboxShortcut => ToolboxShortcut(size: size),
     _ => widget.widget.child,
   };
 }
 
-class DashboardDecor extends StatelessWidget {
+class DashboardDecor extends ConsumerWidget {
   final Widget mark;
   final bool bottom;
   final double angle;
@@ -112,7 +114,11 @@ class DashboardDecor extends StatelessWidget {
   );
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final visible = ref.watch(
+      appSettingProvider.select((state) => state.dashboardWatermark),
+    );
+    if (!visible) return child;
     final offset = -size * 0.17;
     return Stack(
       children: [
@@ -303,32 +309,55 @@ class _TrendLinePainter extends CustomPainter {
 class DashboardChip extends StatelessWidget {
   final IconData icon;
   final String label;
+  final VoidCallback? onTap;
 
-  const DashboardChip({super.key, required this.icon, required this.label});
+  const DashboardChip({
+    super.key,
+    required this.icon,
+    required this.label,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final primary = context.colorScheme.primary;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: primary.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13, color: primary),
-          const SizedBox(width: 4),
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: context.textTheme.labelSmall?.copyWith(color: primary),
-            ),
+    final content = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 13, color: primary),
+        const SizedBox(width: 4),
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.textTheme.labelSmall?.copyWith(color: primary),
           ),
-        ],
+        ),
+      ],
+    );
+
+    if (onTap == null) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: primary.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: content,
+      );
+    }
+
+    return Material(
+      color: primary.withValues(alpha: 0.1),
+      borderRadius: BorderRadius.circular(8),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: content,
+        ),
       ),
     );
   }

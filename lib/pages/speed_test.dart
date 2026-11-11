@@ -108,7 +108,14 @@ double _computePeak(
 }
 
 class SpeedTestPage extends ConsumerStatefulWidget {
-  const SpeedTestPage({super.key});
+  final String initialProxy;
+  final SheetType type;
+
+  const SpeedTestPage({
+    super.key,
+    this.initialProxy = '',
+    this.type = SheetType.page,
+  });
 
   @override
   ConsumerState<SpeedTestPage> createState() => _SpeedTestPageState();
@@ -120,7 +127,7 @@ class _SpeedTestPageState extends ConsumerState<SpeedTestPage>
   late final Animation<double> _introSweep;
   late final AnimationController _spinner;
   SpeedTestSettings _settings = const SpeedTestSettings();
-  String _proxy = '';
+  late String _proxy = widget.initialProxy;
   SpeedTestState? _state;
   SpeedTestState? _probe;
   bool _probing = false;
@@ -493,119 +500,129 @@ class _SpeedTestPageState extends ConsumerState<SpeedTestPage>
       ),
     );
 
-    return CommonScaffold(
-      title: appLocalizations.speedTest,
-      actions: [
-        _ProviderSelector(
-          value: _settings.provider,
-          enabled: !_testing,
-          onChanged: (provider) {
-            if (_testing) return;
-            _updateSettings(_settings.copyWith(provider: provider));
-          },
-        ),
-        IconButton(
-          tooltip: appLocalizations.speedTestHistory,
-          onPressed: _openHistory,
-          icon: const Icon(Icons.history_rounded),
-        ),
-        IconButton(
-          tooltip: appLocalizations.speedTestSettings,
-          onPressed: _testing ? null : _openSettings,
-          icon: const Icon(Icons.settings_outlined),
-        ),
-      ],
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final wide = constraints.maxWidth >= 840;
-          final availableHeight = constraints.hasBoundedHeight
-              ? constraints.maxHeight
-              : null;
-          final heroWidth = wide
-              ? (min(constraints.maxWidth - 48, 1160.0) - 20) * 11 / 20 - 40
-              : constraints.maxWidth - 72;
-          final scale = _speedTestHeroScale(
-            width: heroWidth,
-            availableHeight: availableHeight,
-          );
-          final hero = _HeroPanel(
-            settings: _settings,
-            state: current,
-            introSweep: _introSweep,
-            spinner: _spinner,
-            introRunning: _introRunning,
-            probing: _probing,
-            testing: _testing,
-            scale: scale,
-            onStart: _start,
-            onStop: clashCore.cancelSpeedTest,
-            onMultiThreadChanged: _testing || _introRunning
-                ? null
-                : (value) {
-                    _updateSettings(_settings.copyWith(multiThread: value));
-                    globalState.showNotifier(
-                      '${appLocalizations.speedTestConnections}: ${value ? appLocalizations.speedTestMultiThread : appLocalizations.speedTestSingleThread}',
-                    );
-                  },
-          );
-          final heroSurface = ToolSurface(
-            padding: EdgeInsets.symmetric(
-              horizontal: (20 * scale).roundToDouble(),
-              vertical: (18 * scale).roundToDouble(),
-            ),
-            child: hero,
-          );
-          if (wide) {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1160),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        flex: 11,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [heroSurface],
-                        ),
-                      ),
-                      const SizedBox(width: 20),
-                      Expanded(
-                        flex: 9,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            outbound,
-                            if (chart != null) ...[
-                              const SizedBox(height: 12),
-                              chart,
-                            ],
-                            const SizedBox(height: 16),
-                            credit,
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            children: [
-              outbound,
-              const SizedBox(height: 12),
-              heroSurface,
-              if (chart != null) ...[const SizedBox(height: 12), chart],
-              const SizedBox(height: 16),
-              credit,
-            ],
-          );
+    final actions = <Widget>[
+      _ProviderSelector(
+        value: _settings.provider,
+        enabled: !_testing,
+        onChanged: (provider) {
+          if (_testing) return;
+          _updateSettings(_settings.copyWith(provider: provider));
         },
       ),
+      IconButton(
+        tooltip: appLocalizations.speedTestHistory,
+        onPressed: _openHistory,
+        icon: const Icon(Icons.history_rounded),
+      ),
+      IconButton(
+        tooltip: appLocalizations.speedTestSettings,
+        onPressed: _testing ? null : _openSettings,
+        icon: const Icon(Icons.settings_outlined),
+      ),
+    ];
+    final body = LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 840;
+        final availableHeight = constraints.hasBoundedHeight
+            ? constraints.maxHeight
+            : null;
+        final heroWidth = wide
+            ? (min(constraints.maxWidth - 48, 1160.0) - 20) * 11 / 20 - 40
+            : constraints.maxWidth - 72;
+        final scale = _speedTestHeroScale(
+          width: heroWidth,
+          availableHeight: availableHeight,
+        );
+        final hero = _HeroPanel(
+          settings: _settings,
+          state: current,
+          introSweep: _introSweep,
+          spinner: _spinner,
+          introRunning: _introRunning,
+          probing: _probing,
+          testing: _testing,
+          scale: scale,
+          onStart: _start,
+          onStop: clashCore.cancelSpeedTest,
+          onMultiThreadChanged: _testing || _introRunning
+              ? null
+              : (value) {
+                  _updateSettings(_settings.copyWith(multiThread: value));
+                  globalState.showNotifier(
+                    '${appLocalizations.speedTestConnections}: ${value ? appLocalizations.speedTestMultiThread : appLocalizations.speedTestSingleThread}',
+                  );
+                },
+        );
+        final heroSurface = ToolSurface(
+          padding: EdgeInsets.symmetric(
+            horizontal: (20 * scale).roundToDouble(),
+            vertical: (18 * scale).roundToDouble(),
+          ),
+          child: hero,
+        );
+        if (wide) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1160),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 11,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [heroSurface],
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      flex: 9,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          outbound,
+                          if (chart != null) ...[
+                            const SizedBox(height: 12),
+                            chart,
+                          ],
+                          const SizedBox(height: 16),
+                          credit,
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          children: [
+            outbound,
+            const SizedBox(height: 12),
+            heroSurface,
+            if (chart != null) ...[const SizedBox(height: 12), chart],
+            const SizedBox(height: 16),
+            credit,
+          ],
+        );
+      },
+    );
+    if (widget.type != SheetType.page) {
+      return AdaptiveSheetScaffold(
+        type: widget.type,
+        title: appLocalizations.speedTest,
+        actions: actions,
+        body: body,
+      );
+    }
+    return CommonScaffold(
+      title: appLocalizations.speedTest,
+      actions: actions,
+      body: body,
     );
   }
 

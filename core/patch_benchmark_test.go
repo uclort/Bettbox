@@ -197,11 +197,7 @@ func selectGlobalTargetOld(groups []map[string]any, rules []string) string {
 
 func applyPatchRulesMergeOld(rules []string, overrideRules *PatchRules, prependRules []string) []string {
 	if overrideRules != nil {
-		if overrideRules.Override {
-			rules = overrideRules.Rules
-		} else {
-			rules = append(append([]string{}, overrideRules.Rules...), rules...)
-		}
+		rules = append(append([]string{}, overrideRules.Rules...), rules...)
 	}
 	if len(prependRules) > 0 {
 		rules = append(append([]string{}, prependRules...), rules...)
@@ -210,29 +206,18 @@ func applyPatchRulesMergeOld(rules []string, overrideRules *PatchRules, prependR
 }
 
 func applyPatchRulesMergeNew(rules []string, overrideRules *PatchRules, prependRules []string) []string {
-	hasOverride := overrideRules != nil
-	hasPrepend := len(prependRules) > 0
-	if hasOverride || hasPrepend {
-		if hasOverride && overrideRules.Override {
-			total := len(prependRules) + len(overrideRules.Rules)
-			merged := make([]string, 0, total)
-			merged = append(merged, prependRules...)
-			merged = append(merged, overrideRules.Rules...)
-			return merged
-		} else {
-			var overrideSlice []string
-			if hasOverride {
-				overrideSlice = overrideRules.Rules
-			}
-			total := len(prependRules) + len(overrideSlice) + len(rules)
-			merged := make([]string, 0, total)
-			merged = append(merged, prependRules...)
-			merged = append(merged, overrideSlice...)
-			merged = append(merged, rules...)
-			return merged
-		}
+	var overrideSlice []string
+	if overrideRules != nil {
+		overrideSlice = overrideRules.Rules
 	}
-	return rules
+	if len(prependRules) == 0 && len(overrideSlice) == 0 {
+		return rules
+	}
+	merged := make([]string, 0, len(prependRules)+len(overrideSlice)+len(rules))
+	merged = append(merged, prependRules...)
+	merged = append(merged, overrideSlice...)
+	merged = append(merged, rules...)
+	return merged
 }
 
 func BenchmarkParseRule_Old(b *testing.B) {
@@ -344,8 +329,7 @@ func BenchmarkApplyPatch_RuleMerge_Old(b *testing.B) {
 	}
 	prepend := []string{"DOMAIN,vip.com,PROXY", "DOMAIN,cdn.com,DIRECT"}
 	override := &PatchRules{
-		Override: false,
-		Rules:    []string{"DOMAIN-KEYWORD,google,PROXY", "DOMAIN-KEYWORD,youtube,PROXY"},
+		Rules: []string{"DOMAIN-KEYWORD,google,PROXY", "DOMAIN-KEYWORD,youtube,PROXY"},
 	}
 	b.ResetTimer()
 	b.ReportAllocs()
@@ -361,8 +345,7 @@ func BenchmarkApplyPatch_RuleMerge_New(b *testing.B) {
 	}
 	prepend := []string{"DOMAIN,vip.com,PROXY", "DOMAIN,cdn.com,DIRECT"}
 	override := &PatchRules{
-		Override: false,
-		Rules:    []string{"DOMAIN-KEYWORD,google,PROXY", "DOMAIN-KEYWORD,youtube,PROXY"},
+		Rules: []string{"DOMAIN-KEYWORD,google,PROXY", "DOMAIN-KEYWORD,youtube,PROXY"},
 	}
 	b.ResetTimer()
 	b.ReportAllocs()

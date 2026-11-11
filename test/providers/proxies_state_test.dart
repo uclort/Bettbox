@@ -278,7 +278,6 @@ void main() {
         delayMap: {
           'u': {for (var i = 0; i < 9000; i++) 'node-$i': 9000 - i},
         },
-        overrideTestUrl: true,
         defaultTestUrl: 'u',
       );
       final sorted = sortProxies(
@@ -494,7 +493,6 @@ void main() {
           allGroups: groups,
           selectedMap: const {},
           delayMap: delayMap,
-          overrideTestUrl: false,
           defaultTestUrl: url,
         ).getGroup(group)!.all.map((proxy) => proxy.name).toList();
 
@@ -512,6 +510,18 @@ void main() {
         visible({
           url: {'a': -1, 'b': -1},
         }, group: 'H'),
+        ['a', 'b'],
+      );
+      expect(
+        hideTimeoutProxies(
+          groups: groups,
+          allGroups: groups,
+          selectedMap: const {'H': 'a'},
+          delayMap: {
+            url: {'a': -1, 'b': -1},
+          },
+          defaultTestUrl: url,
+        ).getGroup('H')!.all.map((proxy) => proxy.name).toList(),
         ['a', 'b'],
       );
     });

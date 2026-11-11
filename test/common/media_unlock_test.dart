@@ -35,15 +35,15 @@ void main() {
       expect(MediaPlatform.perplexity.defaultName, 'Perplexity');
       expect(MediaPlatform.perplexity.category, MediaCategory.ai);
 
-      expect(MediaPlatform.tencent.defaultName, 'Tencent(CN)');
+      expect(MediaPlatform.tencent.defaultName, 'Tencent');
       expect(MediaPlatform.tencent.category, MediaCategory.china);
-      expect(MediaPlatform.alibaba.defaultName, 'Alibaba(CN)');
+      expect(MediaPlatform.alibaba.defaultName, 'Alibaba');
       expect(MediaPlatform.alibaba.category, MediaCategory.china);
-      expect(MediaPlatform.netease.defaultName, 'Netease(CN)');
+      expect(MediaPlatform.netease.defaultName, 'Netease');
       expect(MediaPlatform.netease.category, MediaCategory.china);
-      expect(MediaPlatform.douyin.defaultName, 'Douyin(CN)');
+      expect(MediaPlatform.douyin.defaultName, 'Douyin');
       expect(MediaPlatform.douyin.category, MediaCategory.china);
-      expect(MediaPlatform.bilibili.defaultName, 'Bilibili(CN)');
+      expect(MediaPlatform.bilibili.defaultName, 'Bilibili');
       expect(MediaPlatform.bilibili.category, MediaCategory.china);
 
       expect(MediaPlatform.netflix.category, MediaCategory.streaming);

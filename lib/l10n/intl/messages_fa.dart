@@ -222,6 +222,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "add": MessageLookupByLibrary.simpleMessage("افزودن"),
     "addBundleMember": MessageLookupByLibrary.simpleMessage("افزودن اعضا"),
     "addProfile": MessageLookupByLibrary.simpleMessage("افزودن پروفایل"),
+    "addRegion": MessageLookupByLibrary.simpleMessage("افزودن منطقه"),
     "addRoute": MessageLookupByLibrary.simpleMessage("مدیریت مسیرها"),
     "addRule": MessageLookupByLibrary.simpleMessage("افزودن قانون"),
     "addRuleSet": MessageLookupByLibrary.simpleMessage("افزودن مجموعه قوانین"),
@@ -383,6 +384,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "فاصله بروزرسانی خودکار (دقیقه)",
     ),
     "back": MessageLookupByLibrary.simpleMessage("بازگشت"),
+    "backgroundWatermark": MessageLookupByLibrary.simpleMessage(
+      "نشان پس‌زمینه",
+    ),
     "backup": MessageLookupByLibrary.simpleMessage("پشتیبان‌گیری"),
     "backupAndRecovery": MessageLookupByLibrary.simpleMessage(
       "پشتیبان‌گیری و بازیابی",
@@ -430,7 +434,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "bundleCollapse": MessageLookupByLibrary.simpleMessage("جمع کردن اعضا"),
     "bundleCollapseDesc": MessageLookupByLibrary.simpleMessage(
-      "در فهرست فقط اشتراک ادغام‌شده نمایش داده می‌شود؛ برای باز کردن روی پیکان کارت بزنید",
+      "در صورت فعال بودن، فقط اطلاعات اشتراک ادغام‌شده در فهرست نمایش داده می‌شود؛ برای باز یا بسته کردن، گوشه پایین سمت راست کارت را لمس کنید",
     ),
     "bundleDedupTip": MessageLookupByLibrary.simpleMessage(
       "گره‌های یکسان فقط یک بار نگه داشته می‌شوند و اعضای اول اولویت دارند",
@@ -555,9 +559,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "controlSecretDesc": MessageLookupByLibrary.simpleMessage(
       "رمز عبور دسترسی به RESTful API",
     ),
-    "copiedPackageName": MessageLookupByLibrary.simpleMessage(
-      "نام پکیج کپی شد",
-    ),
     "copiedToClipboard": MessageLookupByLibrary.simpleMessage(
       "در کلیپ‌بورد کپی شد",
     ),
@@ -646,7 +647,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "direct": MessageLookupByLibrary.simpleMessage("مستقیم"),
     "disableQuic": MessageLookupByLibrary.simpleMessage("غیرفعال‌سازی QUIC"),
     "disableQuicDesc": MessageLookupByLibrary.simpleMessage(
-      "غیرفعال‌سازی QUIC برای رفع مشکلات شبکه",
+      "غیرفعال‌سازی QUIC برای کاهش مشکلات شبکه",
     ),
     "disableQuicManagedDesc": MessageLookupByLibrary.simpleMessage(
       "با فعال بودن اسکریپت، غیرفعال‌سازی QUIC اعمال نمی‌شود",
@@ -769,10 +770,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "entries": MessageLookupByLibrary.simpleMessage("مورد"),
     "exclude": MessageLookupByLibrary.simpleMessage("پنهان‌سازی از پس‌زمینه"),
-    "excludeChina": MessageLookupByLibrary.simpleMessage("استثنای چین"),
-    "excludeChinaDesc": MessageLookupByLibrary.simpleMessage(
-      "مجاز ساختن QUIC چین به جای مسدودی کامل",
-    ),
     "excludeDesc": MessageLookupByLibrary.simpleMessage(
       "پنهان کردن برنامه از لیست برنامه‌های اخیر",
     ),
@@ -871,9 +868,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "استفاده از لودر کم‌مصرف داده‌های GEO",
     ),
     "geodataUse": MessageLookupByLibrary.simpleMessage("بارگذاری GEO"),
-    "getOriginRules": MessageLookupByLibrary.simpleMessage(
-      "دریافت قوانین اصلی",
-    ),
     "global": MessageLookupByLibrary.simpleMessage("سراسر جهان"),
     "go": MessageLookupByLibrary.simpleMessage("رفتن"),
     "goDownload": MessageLookupByLibrary.simpleMessage("رفتن به دانلود"),
@@ -928,8 +922,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "icmpForwardingDesc": MessageLookupByLibrary.simpleMessage(
       "پشتیبانی از پینگ ICMP در صورت فعال بودن",
     ),
-    "icon": MessageLookupByLibrary.simpleMessage("تصویر"),
-    "iconConfiguration": MessageLookupByLibrary.simpleMessage("تنظیمات تصویر"),
+    "icon": MessageLookupByLibrary.simpleMessage("آیکون"),
+    "iconConfiguration": MessageLookupByLibrary.simpleMessage("تنظیمات آیکون"),
     "iconConfigurationDesc": MessageLookupByLibrary.simpleMessage(
       "سفارشی‌سازی آیکون‌های ICON گروه پروکسی",
     ),
@@ -1267,6 +1261,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "بازیابی داده‌ها از فایل محلی",
     ),
     "locate": MessageLookupByLibrary.simpleMessage("موقعیت"),
+    "lockProxy": MessageLookupByLibrary.simpleMessage("قفل کردن گره"),
     "log": MessageLookupByLibrary.simpleMessage("گزارش"),
     "logAiSearch": MessageLookupByLibrary.simpleMessage("جستجوی هوش مصنوعی"),
     "logLevel": MessageLookupByLibrary.simpleMessage("سطح گزارش"),
@@ -1539,6 +1534,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkFixDesc": MessageLookupByLibrary.simpleMessage(
       "رفع مشکل آیکون کره زمین شبکه سیستم",
     ),
+    "networkInterface": MessageLookupByLibrary.simpleMessage("رابط شبکه"),
     "networkMatch": MessageLookupByLibrary.simpleMessage("تطبیق شبکه"),
     "networkMatchHint": MessageLookupByLibrary.simpleMessage(
       "IP یا CIDR یا Gateway:IP/CIDR",
@@ -1626,6 +1622,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "هیچ پروفایلی یافت نشد. لطفاً یکی اضافه کنید",
     ),
     "nullTip": m53,
+    "nullUdpConnections": MessageLookupByLibrary.simpleMessage(
+      "هیچ اتصال UDP وجود ندارد",
+    ),
     "numberRangeInvalid": m54,
     "numberTip": m55,
     "oneColumn": MessageLookupByLibrary.simpleMessage("۱ ستون"),
@@ -1678,15 +1677,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "overrideNtpDesc": MessageLookupByLibrary.simpleMessage(
       "جایگزینی تنظیمات NTP پروفایل",
     ),
-    "overrideOriginRules": MessageLookupByLibrary.simpleMessage(
-      "جایگزینی قوانین اصلی",
-    ),
     "overrideSniffer": MessageLookupByLibrary.simpleMessage("اورراید Sniffer"),
     "overrideSnifferDesc": MessageLookupByLibrary.simpleMessage(
       "جایگزینی تنظیمات Sniffer پروفایل",
-    ),
-    "overrideTestUrl": MessageLookupByLibrary.simpleMessage(
-      "جایگزینی آدرس تست",
     ),
     "overrideTunnel": MessageLookupByLibrary.simpleMessage("اورراید تونل"),
     "overrideTunnelDesc": MessageLookupByLibrary.simpleMessage(
@@ -1865,6 +1858,15 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "regExp": MessageLookupByLibrary.simpleMessage("عبارت باقاعده (RegEx)"),
     "regenerate": MessageLookupByLibrary.simpleMessage("ساخت دوباره"),
+    "regexInvalid": MessageLookupByLibrary.simpleMessage(
+      "قالب عبارت باقاعده نامعتبر است",
+    ),
+    "regionGroups": MessageLookupByLibrary.simpleMessage("گروه‌های منطقه‌ای"),
+    "regionGroupsTip": MessageLookupByLibrary.simpleMessage(
+      "منطقه‌هایی که گره منطبق ندارند ساخته نمی‌شوند؛ گره‌هایی که با هیچ منطقه‌ای منطبق نیستند به 其他节点 (سایر گره‌ها) می‌روند",
+    ),
+    "regionName": MessageLookupByLibrary.simpleMessage("نام منطقه"),
+    "regionRegex": MessageLookupByLibrary.simpleMessage("عبارت باقاعده منطبق"),
     "reject": MessageLookupByLibrary.simpleMessage("مسدود کردن"),
     "remainingTraffic": MessageLookupByLibrary.simpleMessage("باقی‌مانده"),
     "remote": MessageLookupByLibrary.simpleMessage("از راه دور"),
@@ -2529,6 +2531,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "حذف تاخیرهای اضافی دست‌تکانی",
     ),
     "unknown": MessageLookupByLibrary.simpleMessage("نامشخص"),
+    "unlockProxy": MessageLookupByLibrary.simpleMessage("باز کردن قفل"),
     "unlocked": MessageLookupByLibrary.simpleMessage("تکمیل شد"),
     "unnamed": MessageLookupByLibrary.simpleMessage("بدون نام"),
     "unpin": MessageLookupByLibrary.simpleMessage("برداشتن پین"),

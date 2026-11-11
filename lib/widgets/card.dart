@@ -98,6 +98,14 @@ const _darkShadows = [
   ),
 ];
 
+const _lightSubtleShadows = [
+  BoxShadow(color: Color(0x0E000000), offset: Offset(0, 1.5), blurRadius: 3),
+];
+
+const _darkSubtleShadows = [
+  BoxShadow(color: Color(0x30000000), offset: Offset(0, 1.5), blurRadius: 3.5),
+];
+
 class CommonCard extends StatelessWidget {
   const CommonCard({
     super.key,
@@ -113,6 +121,7 @@ class CommonCard extends StatelessWidget {
     this.info,
     this.clipBehavior = Clip.antiAlias,
     this.elevated = true,
+    this.subtle = false,
   }) : isSelected = isSelected ?? false;
 
   final bool enterAnimated;
@@ -127,12 +136,12 @@ class CommonCard extends StatelessWidget {
   final double? radius;
   final Clip clipBehavior;
   final bool elevated;
+  final bool subtle;
 
   // final WidgetStateProperty<Color?>? backgroundColor;
   // final WidgetStateProperty<BorderSide?>? borderSide;
 
   BorderSide getBorderSide(BuildContext context, Set<WidgetState> states) {
-    if (elevated && !isSelected) return BorderSide.none;
     final colorScheme = context.colorScheme;
     final hoverColor = isSelected
         ? colorScheme.primary.opacity80
@@ -145,32 +154,40 @@ class CommonCard extends StatelessWidget {
         strokeAlign: BorderSide.strokeAlignInside,
       );
     }
+    if (elevated && !isSelected && !subtle) return BorderSide.none;
     final isLight = colorScheme.brightness == Brightness.light;
+    final alpha = isSelected
+        ? 1.0
+        : (subtle
+              ? (isLight ? 0.35 : 0.15)
+              : (elevated ? (isLight ? 0.65 : 0.35) : (isLight ? 0.8 : 0.4)));
     return BorderSide(
       color: isSelected
           ? colorScheme.primary
-          : colorScheme.outlineVariant.withValues(
-              alpha: elevated ? (isLight ? 0.65 : 0.35) : (isLight ? 0.8 : 0.4),
-            ),
+          : colorScheme.outlineVariant.withValues(alpha: alpha),
       strokeAlign: BorderSide.strokeAlignInside,
     );
   }
 
   Color? getBackgroundColor(BuildContext context, Set<WidgetState> states) {
     final colorScheme = context.colorScheme;
-    if (isSelected) {
-      return type == CommonCardType.filled
-          ? colorScheme.secondaryContainer.opacity80
-          : colorScheme.secondaryContainer;
-    }
     final isLight = colorScheme.brightness == Brightness.light;
-    return isLight
-        ? Color.lerp(
-            colorScheme.surface,
-            colorScheme.surfaceContainerLowest,
-            0.5,
-          )
-        : colorScheme.surfaceContainerHigh;
+    final base = isSelected
+        ? (type == CommonCardType.filled
+              ? colorScheme.secondaryContainer.opacity80
+              : colorScheme.secondaryContainer)
+        : (isLight
+              ? Color.lerp(
+                  colorScheme.surface,
+                  colorScheme.surfaceContainerLowest,
+                  0.5,
+                )
+              : colorScheme.surfaceContainerHigh);
+    final tint = states.contains(WidgetState.pressed)
+        ? 0.07
+        : (states.contains(WidgetState.hovered) ? 0.03 : 0.0);
+    if (base == null || tint == 0) return base;
+    return Color.alphaBlend(colorScheme.primary.withValues(alpha: tint), base);
   }
 
   @override
@@ -203,41 +220,105 @@ class CommonCard extends StatelessWidget {
     final shape = RoundedSuperellipseBorder(
       borderRadius: BorderRadius.circular(actualRadius),
     );
-    Widget card = OutlinedButton(
-      onLongPress: onLongPress,
-      clipBehavior: clipBehavior,
-      style: ButtonStyle(
-        padding: const WidgetStatePropertyAll(EdgeInsets.zero),
-        shape: WidgetStatePropertyAll(shape),
-        iconColor: WidgetStatePropertyAll(context.colorScheme.primary),
-        iconSize: WidgetStateProperty.all(20),
-        backgroundColor: WidgetStateProperty.resolveWith(
-          (states) => getBackgroundColor(context, states),
+    Widget buildCard(WidgetStatesController? controller) {
+      Widget card = OutlinedButton(
+        statesController: controller,
+        onLongPress: onLongPress,
+        clipBehavior: clipBehavior,
+        style: ButtonStyle(
+          padding: const WidgetStatePropertyAll(EdgeInsets.zero),
+          shape: WidgetStatePropertyAll(shape),
+          iconColor: WidgetStatePropertyAll(context.colorScheme.primary),
+          iconSize: WidgetStateProperty.all(20),
+          backgroundColor: WidgetStateProperty.resolveWith(
+            (states) => getBackgroundColor(context, states),
+          ),
+          side: WidgetStateProperty.resolveWith(
+            (states) => getBorderSide(context, states),
+          ),
+          overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+          splashFactory: NoSplash.splashFactory,
+          minimumSize: WidgetStatePropertyAll(isInteractive ? null : Size.zero),
+          tapTargetSize: isInteractive
+              ? null
+              : MaterialTapTargetSize.shrinkWrap,
         ),
-        side: WidgetStateProperty.resolveWith(
-          (states) => getBorderSide(context, states),
-        ),
-        minimumSize: WidgetStatePropertyAll(isInteractive ? null : Size.zero),
-        tapTargetSize: isInteractive ? null : MaterialTapTargetSize.shrinkWrap,
-      ),
-      onPressed: onPressed,
-      child: childWidget,
-    );
-
-    if (elevated) {
-      card = DecoratedBox(
-        decoration: ShapeDecoration(
-          shape: shape,
-          shadows: isLight ? _lightShadows : _darkShadows,
-        ),
-        child: card,
+        onPressed: onPressed,
+        child: childWidget,
       );
+
+      final hasShadows = elevated || subtle;
+      if (hasShadows) {
+        final isPureBlack =
+            !isLight && context.colorScheme.surface == Colors.black;
+        final shadows = subtle
+            ? (isPureBlack
+                  ? null
+                  : (isLight ? _lightSubtleShadows : _darkSubtleShadows))
+            : (isLight ? _lightShadows : _darkShadows);
+        if (shadows != null) {
+          card = DecoratedBox(
+            decoration: ShapeDecoration(shape: shape, shadows: shadows),
+            child: card,
+          );
+        }
+      }
+      return card;
     }
+
+    final card = isInteractive
+        ? _CardPressScale(builder: buildCard)
+        : buildCard(null);
 
     return switch (enterAnimated) {
       true => FadeScaleEnterBox(child: card),
       false => card,
     };
+  }
+}
+
+class _CardPressScale extends StatefulWidget {
+  const _CardPressScale({required this.builder});
+
+  final Widget Function(WidgetStatesController controller) builder;
+
+  @override
+  State<_CardPressScale> createState() => _CardPressScaleState();
+}
+
+class _CardPressScaleState extends State<_CardPressScale> {
+  final _controller = WidgetStatesController();
+  bool _pressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_handleStates);
+  }
+
+  void _handleStates() {
+    final pressed = _controller.value.contains(WidgetState.pressed);
+    if (pressed == _pressed) return;
+    setState(() => _pressed = pressed);
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_handleStates);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedScale(
+      scale: _pressed ? 0.98 : 1.0,
+      duration: _pressed
+          ? const Duration(milliseconds: 100)
+          : const Duration(milliseconds: 260),
+      curve: _pressed ? Curves.easeOut : Curves.easeOutBack,
+      child: widget.builder(_controller),
+    );
   }
 }
 

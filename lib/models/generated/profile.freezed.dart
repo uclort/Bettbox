@@ -1861,7 +1861,7 @@ $OverrideRuleCopyWith<$Res> get rule {
 /// @nodoc
 mixin _$OverrideRule {
 
- OverrideRuleType get type; List<Rule> get overrideRules; List<Rule> get addedRules;
+ List<Rule> get addedRules;
 /// Create a copy of OverrideRule
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1875,20 +1875,20 @@ $OverrideRuleCopyWith<OverrideRule> get copyWith => _$OverrideRuleCopyWithImpl<O
 @override
 bool operator ==(Object other) {
   final _this = this as OverrideRule;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is OverrideRule&&(identical(other.type, _this.type) || other.type == _this.type)&&const DeepCollectionEquality().equals(other.overrideRules, _this.overrideRules)&&const DeepCollectionEquality().equals(other.addedRules, _this.addedRules));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OverrideRule&&const DeepCollectionEquality().equals(other.addedRules, _this.addedRules));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as OverrideRule;
-  return Object.hash(runtimeType,_this.type,const DeepCollectionEquality().hash(_this.overrideRules),const DeepCollectionEquality().hash(_this.addedRules));
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.addedRules));
 }
 
 @override
 String toString() {
   final _this = this as OverrideRule;
-  return 'OverrideRule(type: ${_this.type}, overrideRules: ${_this.overrideRules}, addedRules: ${_this.addedRules})';
+  return 'OverrideRule(addedRules: ${_this.addedRules})';
 }
 
 
@@ -1899,7 +1899,7 @@ abstract mixin class $OverrideRuleCopyWith<$Res>  {
   factory $OverrideRuleCopyWith(OverrideRule value, $Res Function(OverrideRule) _then) = _$OverrideRuleCopyWithImpl;
 @useResult
 $Res call({
- OverrideRuleType type, List<Rule> overrideRules, List<Rule> addedRules
+ List<Rule> addedRules
 });
 
 
@@ -1916,11 +1916,9 @@ class _$OverrideRuleCopyWithImpl<$Res>
 
 /// Create a copy of OverrideRule
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? type = null,Object? overrideRules = null,Object? addedRules = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? addedRules = null,}) {
   return _then(OverrideRule(
-type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
-as OverrideRuleType,overrideRules: null == overrideRules ? _self.overrideRules : overrideRules // ignore: cast_nullable_to_non_nullable
-as List<Rule>,addedRules: null == addedRules ? _self.addedRules : addedRules // ignore: cast_nullable_to_non_nullable
+addedRules: null == addedRules ? _self.addedRules : addedRules // ignore: cast_nullable_to_non_nullable
 as List<Rule>,
   ));
 }
@@ -2006,10 +2004,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( OverrideRuleType type,  List<Rule> overrideRules,  List<Rule> addedRules)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Rule> addedRules)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _OverrideRule() when $default != null:
-return $default(_that.type,_that.overrideRules,_that.addedRules);case _:
+return $default(_that.addedRules);case _:
   return orElse();
 
 }
@@ -2027,10 +2025,10 @@ return $default(_that.type,_that.overrideRules,_that.addedRules);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( OverrideRuleType type,  List<Rule> overrideRules,  List<Rule> addedRules)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Rule> addedRules)  $default,) {final _that = this;
 switch (_that) {
 case _OverrideRule():
-return $default(_that.type,_that.overrideRules,_that.addedRules);case _:
+return $default(_that.addedRules);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -2047,10 +2045,10 @@ return $default(_that.type,_that.overrideRules,_that.addedRules);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( OverrideRuleType type,  List<Rule> overrideRules,  List<Rule> addedRules)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Rule> addedRules)?  $default,) {final _that = this;
 switch (_that) {
 case _OverrideRule() when $default != null:
-return $default(_that.type,_that.overrideRules,_that.addedRules);case _:
+return $default(_that.addedRules);case _:
   return null;
 
 }
@@ -2062,16 +2060,8 @@ return $default(_that.type,_that.overrideRules,_that.addedRules);case _:
 @JsonSerializable()
 
 class _OverrideRule implements OverrideRule {
-  const _OverrideRule({this.type = OverrideRuleType.added,  List<Rule> overrideRules = const [],  List<Rule> addedRules = const []}): _overrideRules = overrideRules,_addedRules = addedRules;
+  const _OverrideRule({ List<Rule> addedRules = const []}): _addedRules = addedRules;
   factory _OverrideRule.fromJson(Map<String, dynamic> json) => _$OverrideRuleFromJson(json);
-
-@override@JsonKey() final  OverrideRuleType type;
- final  List<Rule> _overrideRules;
-@override@JsonKey() List<Rule> get overrideRules {
-  if (_overrideRules is EqualUnmodifiableListView) return _overrideRules;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_overrideRules);
-}
 
  final  List<Rule> _addedRules;
 @override@JsonKey() List<Rule> get addedRules {
@@ -2094,18 +2084,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _OverrideRule&&(identical(other.type, type) || other.type == type)&&const DeepCollectionEquality().equals(other.overrideRules, _overrideRules)&&const DeepCollectionEquality().equals(other.addedRules, _addedRules));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _OverrideRule&&const DeepCollectionEquality().equals(other.addedRules, _addedRules));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,type,const DeepCollectionEquality().hash(_overrideRules),const DeepCollectionEquality().hash(_addedRules));
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_addedRules));
 }
 
 @override
 String toString() {
-    return 'OverrideRule(type: $type, overrideRules: $overrideRules, addedRules: $addedRules)';
+    return 'OverrideRule(addedRules: $addedRules)';
 }
 
 
@@ -2116,7 +2106,7 @@ abstract mixin class _$OverrideRuleCopyWith<$Res> implements $OverrideRuleCopyWi
   factory _$OverrideRuleCopyWith(_OverrideRule value, $Res Function(_OverrideRule) _then) = __$OverrideRuleCopyWithImpl;
 @override @useResult
 $Res call({
- OverrideRuleType type, List<Rule> overrideRules, List<Rule> addedRules
+ List<Rule> addedRules
 });
 
 
@@ -2133,11 +2123,9 @@ class __$OverrideRuleCopyWithImpl<$Res>
 
 /// Create a copy of OverrideRule
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? type = null,Object? overrideRules = null,Object? addedRules = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? addedRules = null,}) {
   return _then(_OverrideRule(
-type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
-as OverrideRuleType,overrideRules: null == overrideRules ? _self._overrideRules : overrideRules // ignore: cast_nullable_to_non_nullable
-as List<Rule>,addedRules: null == addedRules ? _self._addedRules : addedRules // ignore: cast_nullable_to_non_nullable
+addedRules: null == addedRules ? _self._addedRules : addedRules // ignore: cast_nullable_to_non_nullable
 as List<Rule>,
   ));
 }

@@ -45,13 +45,12 @@ type InitParams struct {
 }
 
 type SetupParams struct {
-	SelectedMap     map[string]string `json:"selected-map"`
-	TestURL         string            `json:"test-url"`
-	OverrideTestUrl bool              `json:"override-test-url"`
-	ProfilePath     string            `json:"profile-path"`
-	AgeSecretKey    string            `json:"age-secret-key"`
-	ScriptedConfig  string            `json:"scripted-config"`
-	Patch           *PatchParams      `json:"patch"`
+	SelectedMap    map[string]string `json:"selected-map"`
+	TestURL        string            `json:"test-url"`
+	ProfilePath    string            `json:"profile-path"`
+	AgeSecretKey   string            `json:"age-secret-key"`
+	ScriptedConfig string            `json:"scripted-config"`
+	Patch          *PatchParams      `json:"patch"`
 }
 
 type SetupResult struct {

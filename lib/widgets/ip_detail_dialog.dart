@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/models.dart';
@@ -92,10 +93,12 @@ class _IpDetailDialogState extends ConsumerState<_IpDetailDialog> {
   bool _riskFailed = false;
   bool _editing = false;
   int _riskSerial = 0;
+  final _cancelToken = CancelToken();
   final _ipController = TextEditingController();
 
   @override
   void dispose() {
+    _cancelToken.cancel();
     _ipController.dispose();
     super.dispose();
   }
@@ -149,7 +152,10 @@ class _IpDetailDialogState extends ConsumerState<_IpDetailDialog> {
       return;
     }
 
-    final res = await request.queryIpDetail(widget.ip);
+    final res = await request.queryIpDetail(
+      widget.ip,
+      cancelToken: _cancelToken,
+    );
     if (!mounted) return;
     await _afterEntrance();
     if (!mounted) return;
@@ -264,7 +270,11 @@ class _IpDetailDialogState extends ConsumerState<_IpDetailDialog> {
 
   Future<void> _fetchRisk(String ip, {bool force = false}) async {
     final serial = ++_riskSerial;
-    final res = await request.queryIpRisk(ip, force: force);
+    final res = await request.queryIpRisk(
+      ip,
+      force: force,
+      cancelToken: _cancelToken,
+    );
     if (!mounted) return;
     await _afterEntrance();
     if (!mounted || serial != _riskSerial) return;

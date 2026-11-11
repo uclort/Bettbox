@@ -7,23 +7,25 @@ import 'package:bett_box/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+bool showVpnRestartTip(WidgetRef ref) {
+  if (!system.isAndroid) return false;
+  final isVpnEnabled = ref.read(vpnSettingProvider).enable;
+  final isCoreRunning = ref.read(runTimeProvider) != null;
+  if (!isVpnEnabled || !isCoreRunning) return false;
+  globalState.showNotifier(
+    appLocalizations.vpnTip,
+    actionLabel: appLocalizations.restart,
+    showCountdown: true,
+    onAction: () async {
+      await globalState.appController.restartCore();
+      globalState.showNotifier(appLocalizations.success);
+    },
+  );
+  return true;
+}
+
 Future<void> _handleNetworkConfigChange(WidgetRef ref) async {
-  if (system.isAndroid) {
-    final isVpnEnabled = ref.read(vpnSettingProvider).enable;
-    final isCoreRunning = ref.read(runTimeProvider) != null;
-    if (isVpnEnabled && isCoreRunning) {
-      globalState.showNotifier(
-        appLocalizations.vpnTip,
-        actionLabel: appLocalizations.restart,
-        showCountdown: true,
-        onAction: () async {
-          await globalState.appController.restartCore();
-          globalState.showNotifier(appLocalizations.success);
-        },
-      );
-      return;
-    }
-  }
+  if (showVpnRestartTip(ref)) return;
   globalState.appController.updateClashConfig();
 }
 
@@ -299,6 +301,52 @@ class TunStackItem extends ConsumerWidget {
         },
         title: appLocalizations.stackMode,
       ),
+    );
+  }
+}
+
+class NetworkInterfaceItem extends ConsumerWidget {
+  const NetworkInterfaceItem({super.key});
+
+  @override
+  Widget build(BuildContext context, ref) {
+    final interfaceName = ref.watch(
+      patchClashConfigProvider.select((state) => state.interfaceName),
+    );
+
+    return ListItem(
+      title: Text(appLocalizations.networkInterface),
+      subtitle: Text(
+        interfaceName.isEmpty ? appLocalizations.auto : interfaceName,
+      ),
+      onTap: () async {
+        final interfaces = await utils.getNetworkInterfaces();
+        if (!context.mounted) return;
+        final addresses = {
+          for (final item in interfaces) item.name: item.addresses.join(', '),
+        };
+        final options = [
+          '',
+          if (interfaceName.isNotEmpty && !addresses.containsKey(interfaceName))
+            interfaceName,
+          ...addresses.keys,
+        ];
+        final value = await globalState.showAdaptiveSheet<String>(
+          nested: isInBottomSheet(context),
+          child: OptionsDialog<String>(
+            title: appLocalizations.networkInterface,
+            options: options,
+            value: interfaceName,
+            textBuilder: (value) =>
+                value.isEmpty ? appLocalizations.auto : value,
+            subtitleBuilder: (value) => addresses[value] ?? '',
+          ),
+        );
+        if (value == null || value == interfaceName) return;
+        ref
+            .read(patchClashConfigProvider.notifier)
+            .updateState((state) => state.copyWith(interfaceName: value));
+      },
     );
   }
 }
@@ -683,6 +731,7 @@ class NetworkListView extends ConsumerWidget {
           const IcmpForwardingItem(),
           if (system.isDesktop) const DnsHijackItem(),
           const EndpointIndependentNatItem(),
+          if (system.isDesktop) const NetworkInterfaceItem(),
           if (!AppIdentity.isLite) const TunStackItem(),
           const MtuItem(),
           if (system.isDesktop) const ProfileSwitchModeItem(),

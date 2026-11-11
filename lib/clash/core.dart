@@ -540,6 +540,22 @@ class ClashCore {
     return CoreStatus.fromJson(Map<String, dynamic>.from(decoded));
   }
 
+  Future<List<CoreInterface>> getInterfaces() async {
+    final value = await clashInterface.getInterfaces();
+    if (value.isEmpty) {
+      return [];
+    }
+    final decoded = json.decode(value);
+    if (decoded is! List) {
+      return [];
+    }
+    return [
+      for (final item in decoded)
+        if (item is Map)
+          CoreInterface.fromJson(Map<String, dynamic>.from(item)),
+    ];
+  }
+
   SpeedTestState? _decodeSpeedTestState(String value) {
     if (value.isEmpty) {
       return null;
@@ -810,14 +826,27 @@ class ClashCore {
     );
   }
 
-  Future<int> startToolProxy() async {
+  int _toolProxyUsers = 0;
+
+  Future<int> startToolProxy({bool acquire = true}) async {
+    if (acquire) _toolProxyUsers++;
     final value = await clashInterface.toolboxInvoke(
       ActionMethod.startToolProxy,
     );
     return int.tryParse(value) ?? 0;
   }
 
+  String toolProxyRoute(String proxyName, int port) {
+    final user = utf8
+        .encode(proxyName)
+        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+        .join();
+    return 'PROXY $user:x@127.0.0.1:$port';
+  }
+
   Future<void> stopToolProxy() async {
+    if (_toolProxyUsers > 0) _toolProxyUsers--;
+    if (_toolProxyUsers > 0) return;
     await clashInterface.toolboxInvoke(ActionMethod.stopToolProxy);
   }
 

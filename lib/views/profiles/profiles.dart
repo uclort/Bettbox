@@ -12,6 +12,7 @@ import 'package:bett_box/views/profiles/merge_profile.dart';
 import 'package:bett_box/views/profiles/override_profile.dart';
 import 'package:bett_box/views/profiles/scripts.dart';
 import 'package:bett_box/widgets/widgets.dart';
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -50,6 +51,12 @@ class _ProfilesViewState extends ConsumerState<ProfilesView>
   String? _expandingId;
 
   void _toggleExpanded(String id) {
+    if (system.isAndroid &&
+        ref.read(
+          appSettingProvider.select((s) => s.enableNavBarHapticFeedback),
+        )) {
+      HapticFeedback.selectionClick();
+    }
     setState(() {
       if (_expanded.remove(id)) {
         if (_expandingId == id) _expandingId = null;
@@ -297,7 +304,10 @@ class _ProfilesViewState extends ConsumerState<ProfilesView>
           final isMobileView = ref.watch(isMobileViewProvider);
           final profiles = profilesSelectorState.profiles;
           if (profiles.isEmpty) {
-            return NullStatus(label: appLocalizations.nullProfileDesc);
+            return NullStatus(
+              label: appLocalizations.nullProfileDesc,
+              icon: Icons.description_outlined,
+            );
           }
           final folded = profiles.collapsedMemberIds;
           final topLevel = profiles
@@ -699,6 +709,7 @@ class ProfileItem extends StatelessWidget {
     BuildContext context,
     List<MapEntry<String, SubscriptionInfo>> usages,
   ) {
+    final top = usages.length > 2 ? 2.5 : 6.0;
     return Table(
       columnWidths: const {
         0: MinColumnWidth(IntrinsicColumnWidth(), FractionColumnWidth(0.3)),
@@ -708,7 +719,7 @@ class ProfileItem extends StatelessWidget {
       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
       children: [
         for (final (index, usage) in usages.indexed)
-          _buildBarRow(context, usage, index > 0 ? 7 : 0),
+          _buildBarRow(context, usage, index > 0 ? top : 0),
       ],
     );
   }
@@ -723,7 +734,7 @@ class ProfileItem extends StatelessWidget {
     return Row(
       children: [
         RingChart(
-          size: 36,
+          size: 38,
           strokeWidth: 4,
           total: 1,
           trackColor: primary.withValues(alpha: 0.15),
@@ -742,9 +753,11 @@ class ProfileItem extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildProviderName(context, usage.key),
+              const SizedBox(height: 1),
               FittedBox(
                 fit: BoxFit.scaleDown,
                 alignment: Alignment.centerLeft,
@@ -814,6 +827,7 @@ class ProfileItem extends StatelessWidget {
         const SizedBox(width: 14),
         Expanded(
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               for (final (index, usage) in usages.indexed) ...[
                 if (index > 0) const SizedBox(height: 2),
@@ -866,14 +880,19 @@ class ProfileItem extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 8),
-        switch (profile.usageStyle) {
-          ProfileUsageStyle.bar => _buildBarUsages(context, shown),
-          ProfileUsageStyle.ring => _buildRingUsages(context, shown),
-          ProfileUsageStyle.concentric => _buildConcentricUsages(
-            context,
-            shown,
+        SizedBox(
+          height: 52,
+          child: Center(
+            child: switch (profile.usageStyle) {
+              ProfileUsageStyle.bar => _buildBarUsages(context, shown),
+              ProfileUsageStyle.ring => _buildRingUsages(context, shown),
+              ProfileUsageStyle.concentric => _buildConcentricUsages(
+                context,
+                shown,
+              ),
+            },
           ),
-        },
+        ),
         const SizedBox(height: 8),
         _buildBottomText(context, bottomText),
       ],
@@ -1163,11 +1182,22 @@ class ProfileItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isTV = globalState.isAndroidTV;
-    return CommonCard(
+    final card = CommonCard(
       isSelected: profile.id == groupValue,
       onPressed: isTV ? null : () => onChanged(profile.id),
       onLongPress: isTV ? null : () => _handlePreviewRuntimeConfig(context),
       child: isTV ? _buildTVLayout(context) : _buildNormalLayout(context),
+    );
+    if (isTV) return card;
+    return GestureDetector(
+      onSecondaryTapUp: profile.isUpdating
+          ? null
+          : (details) => showContextMenu(
+              context,
+              position: details.globalPosition,
+              items: _buildMenuItems(context),
+            ),
+      child: card,
     );
   }
 }

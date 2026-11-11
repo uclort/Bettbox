@@ -123,24 +123,21 @@ class _ThemeModeItem extends ConsumerWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-        child: SegmentedButton<ThemeMode>(
-          showSelectedIcon: false,
-          expandedInsets: EdgeInsets.zero,
-          segments: [
+        child: SegmentButtonGroup<ThemeMode>(
+          maxWidth: 480,
+          options: [
             for (final item in themeModeItems)
-              ButtonSegment(
+              SegmentOption(
                 value: item.themeMode,
                 icon: Icon(item.iconData),
-                label: Text(item.label),
+                label: item.label,
               ),
           ],
-          selected: {themeMode},
-          onSelectionChanged: (selection) {
+          selected: themeMode,
+          onSelected: (mode) {
             ref
                 .read(themeSettingProvider.notifier)
-                .updateState(
-                  (state) => state.copyWith(themeMode: selection.first),
-                );
+                .updateState((state) => state.copyWith(themeMode: mode));
           },
         ),
       ),

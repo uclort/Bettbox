@@ -215,19 +215,16 @@ class _MergeProfileViewState extends ConsumerState<MergeProfileView> {
                   style: context.textTheme.titleSmall,
                 ),
                 const SizedBox(height: 8),
-                SegmentedButton<ProfileUsageStyle>(
-                  segments: [
+                SegmentButtonGroup<ProfileUsageStyle>(
+                  options: [
                     for (final style in ProfileUsageStyle.values)
-                      ButtonSegment(
+                      SegmentOption(
                         value: style,
-                        label: Text(style.localizedName),
+                        label: style.localizedName,
                       ),
                   ],
-                  selected: {_usageStyle},
-                  showSelectedIcon: false,
-                  expandedInsets: EdgeInsets.zero,
-                  onSelectionChanged: (selection) =>
-                      update(() => _usageStyle = selection.first),
+                  selected: _usageStyle,
+                  onSelected: (style) => update(() => _usageStyle = style),
                 ),
                 const SizedBox(height: 20),
                 Row(
@@ -268,24 +265,6 @@ class _MergeProfileViewState extends ConsumerState<MergeProfileView> {
     await appController.safeRun(
       () => appController.generateBundle(id, refresh: true),
       silence: false,
-    );
-  }
-
-  Future<void> _handleSyncScript() => syncManagedScript(context, ref);
-
-  Future<void> _handleRestoreScript() async {
-    final res = await globalState.showMessage(
-      title: appLocalizations.restoreBundled,
-      message: TextSpan(text: appLocalizations.managedRestoreTip),
-    );
-    if (res != true) return;
-    final restored = await globalState.appController.safeRun<bool>(() async {
-      await ManagedScript.restore();
-      return true;
-    }, silence: false);
-    if (restored != true || !mounted) return;
-    globalState.appController.updateManagedSetting(
-      (state) => state.copyWith(syncedVersion: null),
     );
   }
 
@@ -561,7 +540,6 @@ class _MergeProfileViewState extends ConsumerState<MergeProfileView> {
   Widget _buildManaged(BuildContext context) {
     final props = ref.watch(managedSettingProvider);
     final defaults = _defaults;
-    final syncedVersion = ManagedScript.syncedVersion(props);
     final enabled = defaults?.entries
         .where((entry) => props.options[entry.key] ?? entry.value)
         .length;
@@ -582,29 +560,6 @@ class _MergeProfileViewState extends ConsumerState<MergeProfileView> {
                   ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => showManagedOptions(context),
-          ),
-          ListItem(
-            title: Text(appLocalizations.managedVersion),
-            subtitle: Text(
-              syncedVersion == null
-                  ? appLocalizations.managedBundled(ManagedScript.bundledVersion)
-                  : appLocalizations.managedSynced(syncedVersion),
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (syncedVersion != null)
-                  IconButton(
-                    onPressed: _handleRestoreScript,
-                    tooltip: appLocalizations.restoreBundled,
-                    icon: const Icon(Icons.restore),
-                  ),
-                TextButton(
-                  onPressed: _handleSyncScript,
-                  child: Text(appLocalizations.syncFromUpstream),
-                ),
-              ],
-            ),
           ),
         ]),
       ],

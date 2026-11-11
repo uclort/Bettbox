@@ -6,8 +6,8 @@ import 'package:bett_box/models/models.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 
+import 'constant.dart';
 import 'path.dart';
-import 'print.dart';
 import 'request.dart';
 import 'route_icon.dart';
 import 'string.dart';
@@ -16,11 +16,12 @@ const managedScriptId = 'managed';
 const managedAnchorGroup = 'AdBlock';
 const _managedScriptAsset = 'assets/scripts/managed.js';
 const _routeCatalogAsset = 'assets/scripts/routing.json';
-const _managedScriptUrl = 'https://example.com/bettbox/managed.js';
-const _routeCatalogUrl = 'https://example.com/bettbox/routing.json';
-const _placeholderHost = 'example.com';
+const _managedScriptUrl =
+    'https://raw.githubusercontent.com/$repository/main/$_managedScriptAsset';
+const _routeCatalogUrl =
+    'https://raw.githubusercontent.com/$repository/main/$_routeCatalogAsset';
 const _routeIconBaseUrl =
-    'https://cdn.jsdmirror.com/gh/appshubcc/Qure_Style_SVG@main/icon/svg/';
+    'https://cdn.jsdelivr.net/gh/appshubcc/Qure_Style_SVG@main/icon/svg/';
 const _routeIconCommonDir = 'common/';
 const _routeIconAssetDir = 'assets/route_svg/';
 final _versionPattern = RegExp(r'^//\s*@version\s+(\d+)\s*$', multiLine: true);
@@ -57,12 +58,13 @@ String bundlePrefixOf(String label) {
   return _prefixPattern.firstMatch(text.substring(start))?.group(0) ?? text;
 }
 
-const _mirrorHost = 'cdn.jsdmirror.com';
+const _mirrorHost = 'cdn.jsdelivr.net';
 const _jsdelivrHosts = {
   'cdn.jsdelivr.net',
   'fastly.jsdelivr.net',
   'gcore.jsdelivr.net',
   'testingcf.jsdelivr.net',
+  'cdn.jsdmirror.com',
 };
 
 String mirrorUrl(String url) {
@@ -119,14 +121,27 @@ String routeIconValue(String url) {
       : path;
 }
 
+List<String> managedRegions(
+  RouteCatalog catalog,
+  List<String>? enabled, [
+  List<CustomRegion> customRegions = const [],
+]) => [
+  for (final region in catalog.regions)
+    if (enabled?.contains(region.name) ?? region.preset) region.name,
+  for (final region in customRegions)
+    if (enabled?.contains(region.name) ?? true) region.name,
+];
+
 List<String> orderManagedGroups({
   required List<String> presets,
   required List<String> customs,
   required List<String> saved,
+  List<String> regions = const [],
 }) {
   final groups = [...presets];
   final anchor = groups.indexOf(managedAnchorGroup);
   groups.insertAll(anchor < 0 ? groups.length : anchor, customs);
+  groups.addAll(regions);
   if (saved.isEmpty) return groups;
   final rank = {for (final (index, name) in saved.indexed) name: index};
   var last = -1.0;
@@ -216,15 +231,96 @@ class RouteCatalogIndex {
   final Map<String, RouteRuleSet> sets;
   final Map<String, String> icons;
   final Set<String> _names;
+  final Map<String, String> _aliases;
+  final List<String> _sortedAliasKeys;
+  final Map<String, String> _serviceSets;
 
   RouteCatalogIndex(this.catalog)
     : sets = {for (final set in catalog.sets) set.key: set},
       icons = routeIconIndex(catalog.icons),
-      _names = catalog.icons.toSet();
+      _names = catalog.icons.toSet(),
+      _aliases = _buildAliases(catalog, catalog.icons.toSet()),
+      _sortedAliasKeys = _buildSortedAliasKeys(
+        _buildAliases(catalog, catalog.icons.toSet()),
+      ),
+      _serviceSets = {
+        for (final service in catalog.services)
+          if (service.icon case final icon? when icon.isNotEmpty)
+            for (final key in service.sets) key: icon,
+      };
 
-  String? autoIcon(String name, Iterable<String> keys) =>
-      matchRouteIcon(name, icons) ??
-      keys.map((key) => sets[key]?.icon).nonNulls.firstOrNull;
+  static Map<String, String> _buildAliases(
+    RouteCatalog catalog,
+    Set<String> names,
+  ) {
+    final map = <String, String>{};
+    void put(String key, String? icon) {
+      if (icon == null || icon.isEmpty || !names.contains(icon)) return;
+      final clean = key.trim().toLowerCase();
+      if (clean.isNotEmpty) map.putIfAbsent(clean, () => icon);
+    }
+
+    for (final region in catalog.regions) {
+      put(region.name, region.icon);
+    }
+    for (final service in catalog.services) {
+      put(service.name, service.icon);
+      for (final keyword in service.keywords) {
+        put(keyword, service.icon);
+      }
+    }
+    for (final MapEntry(:key, :value) in defaultRouteAliases.entries) {
+      put(key, value);
+    }
+    return map;
+  }
+
+  static List<String> _buildSortedAliasKeys(Map<String, String> aliases) =>
+      aliases.keys.toList()..sort((a, b) => b.length.compareTo(a.length));
+
+  String? _matchName(String name) {
+    final clean = name.trim().toLowerCase();
+    if (clean.isEmpty) return null;
+    if (_aliases[clean] case final icon?) return icon;
+    final tokens = routeWordPattern
+        .allMatches(clean)
+        .map((m) => m.group(0) ?? '')
+        .where((s) => s.isNotEmpty)
+        .toList();
+    for (final key in _sortedAliasKeys) {
+      if (routeHanPattern.hasMatch(key)) {
+        if (clean.contains(key)) return _aliases[key];
+      } else {
+        if (tokens.contains(key)) return _aliases[key];
+      }
+    }
+    for (final token in tokens) {
+      if (_aliases[token] case final icon?) return icon;
+    }
+    if (matchRouteIcon(clean, icons) case final icon?) return icon;
+    for (final token in tokens) {
+      if (token.length < 2) continue;
+      if (matchRouteIcon(token, icons) case final icon?) return icon;
+    }
+    return null;
+  }
+
+  String? autoIcon(String name, Iterable<String> keys) {
+    if (_matchName(name) case final icon?) return icon;
+    for (final key in keys) {
+      if (CustomRuleSet.parse(key) case final custom?) {
+        if (_matchName(custom.name) case final icon?) return icon;
+      }
+      if (_serviceSets[key] case final icon?) return icon;
+      if (sets[key]?.icon case final icon? when icon.isNotEmpty) return icon;
+      if (_catalogSetPattern.firstMatch(key) case final match?) {
+        if (match.group(2) case final tag? when tag.isNotEmpty) {
+          if (_matchName(tag) case final icon?) return icon;
+        }
+      }
+    }
+    return null;
+  }
 
   String? iconOf(CustomRoute route) {
     final icon = route.icon;
@@ -303,6 +399,8 @@ class ManagedScript {
     ];
   }
 
+  static const _customVersionPrefix = 'custom:';
+
   static String _bundledVersion = '';
 
   static String get bundledVersion => _bundledVersion;
@@ -310,14 +408,31 @@ class ManagedScript {
   static String? parseVersion(String content) =>
       _versionPattern.firstMatch(content)?.group(1);
 
+  static Future<String> readBundled() =>
+      rootBundle.loadString(_managedScriptAsset);
+
   static Future<void> loadBundledVersion() async {
-    final content = await rootBundle.loadString(_managedScriptAsset);
+    final content = await readBundled();
     _bundledVersion = parseVersion(content) ?? '';
   }
 
+  static int compareVersions(String a, String b) {
+    final numA = BigInt.tryParse(a);
+    final numB = BigInt.tryParse(b);
+    if (numA != null && numB != null) {
+      return numA.compareTo(numB);
+    }
+    return a.compareTo(b);
+  }
+
+  static bool isCustom(ManagedProps props) =>
+      props.syncedVersion?.startsWith(_customVersionPrefix) ?? false;
+
   static String? syncedVersion(ManagedProps props) {
     final version = props.syncedVersion;
-    if (version == null || version.compareTo(bundledVersion) <= 0) {
+    if (version == null) return null;
+    if (version.startsWith(_customVersionPrefix)) return version;
+    if (compareVersions(version, bundledVersion) < 0) {
       return null;
     }
     return version;
@@ -331,26 +446,55 @@ class ManagedScript {
       final file = File(await appPath.getScriptPath(managedScriptId));
       if (await file.exists()) return file.readAsString();
     }
-    return rootBundle.loadString(_managedScriptAsset);
+    return readBundled();
   }
 
-  static Future<Script> script(ManagedProps props) async {
-    final raw = await read(props);
+  static Future<Script> script(
+    ManagedProps props, {
+    String? raw,
+    bool bundled = false,
+  }) async {
+    final source = raw ?? (bundled ? await readBundled() : await read(props));
     final routes = await _routes(props);
     final prelude = [
       if (routes.isNotEmpty) 'const bettboxRoutes = ${jsonEncode(routes)};',
+      if (props.regions case final regions?)
+        'const bettboxRegions = ${jsonEncode(regions)};',
+      if (props.customRegions.isNotEmpty)
+        'const bettboxCustomRegions = ${jsonEncode([
+          for (final cr in props.customRegions)
+            {
+              'name': cr.name,
+              'regex': cr.regex,
+              'icon': ?routeIconUrl(
+                defaultRouteAliases[cr.name.trim().toLowerCase()] ??
+                    defaultRouteAliases[cr.name.trim()],
+              ),
+            },
+        ])};',
       if (props.order.isNotEmpty)
         'const bettboxOrder = ${jsonEncode(props.order)};',
     ];
-    final content = prelude.isEmpty ? raw : '${prelude.join('\n')}\n$raw';
+    final content = prelude.isEmpty ? source : '${prelude.join('\n')}\n$source';
     return Script(
       id: managedScriptId,
       label: managedScriptId,
       content: content,
       customOptions: props.options,
       digest: content.toMd5(),
-      volatile: volatileScriptPattern.hasMatch(raw),
+      volatile: volatileScriptPattern.hasMatch(source),
     );
+  }
+
+  static Future<String?> save(String content) async {
+    final normalized = content.replaceAll(RegExp(r'\r\n?'), '\n');
+    final bundled = (await readBundled()).replaceAll(RegExp(r'\r\n?'), '\n');
+    if (normalized == bundled) {
+      await restore();
+      return null;
+    }
+    await _write(File(await appPath.getScriptPath(managedScriptId)), content);
+    return '$_customVersionPrefix${normalized.toMd5()}';
   }
 
   static Future<void> _write(File file, String content) async {
@@ -362,31 +506,28 @@ class ManagedScript {
     await temp.rename(file.path);
   }
 
-  static bool _isPlaceholder(String url) =>
-      Uri.tryParse(url)?.host == _placeholderHost;
-
-  static Future<String?> _fetchCatalog() async {
-    if (_isPlaceholder(_routeCatalogUrl)) return null;
-    try {
-      final res = await request.getTextResponseForUrl(
-        mirrorUrl(_routeCatalogUrl),
-      );
-      final content = res.data;
-      if (content is! String) return null;
-      final index = await _parseCatalog(content);
-      if (index.catalog.sets.isEmpty) return null;
-      return content;
-    } catch (e) {
-      commonPrint.warn('[Managed] Route catalog sync skipped: $e');
-      return null;
+  static Future<String> _fetchCatalog() async {
+    final res = await request.getTextResponseForUrl(
+      mirrorUrl(_routeCatalogUrl),
+    );
+    final content = res.data;
+    if (content is! String) {
+      throw 'Invalid route catalog';
     }
+    final index = await _parseCatalog(content);
+    if (index.catalog.sets.isEmpty) {
+      throw 'Invalid route catalog';
+    }
+    return content;
   }
 
-  static Future<String> sync(ManagedProps props) async {
-    if (_isPlaceholder(_managedScriptUrl)) return version(props);
-    final res = await request.getTextResponseForUrl(
-      mirrorUrl(_managedScriptUrl),
-    );
+  static Future<({bool updated, String? syncedVersion})> sync(
+    ManagedProps props,
+  ) async {
+    final (res, catalog) = await (
+      request.getTextResponseForUrl(mirrorUrl(_managedScriptUrl)),
+      _fetchCatalog(),
+    ).wait;
     final content = res.data;
     final next = content is String ? parseVersion(content) : null;
     if (content is! String ||
@@ -394,19 +535,26 @@ class ManagedScript {
         !content.contains('function main')) {
       throw 'Invalid script';
     }
-    final catalog = await _fetchCatalog();
-    final current = version(props);
     final scriptChanged = content != await read(props);
-    final catalogChanged =
-        catalog != null && catalog != await _readCatalog(props);
-    if (!scriptChanged && !catalogChanged) return current;
+    final catalogChanged = catalog != await _readCatalog(props);
+    if (!scriptChanged && !catalogChanged && !isCustom(props)) {
+      return (updated: false, syncedVersion: syncedVersion(props));
+    }
+    final (bundledScript, bundledCatalog) = await (
+      readBundled(),
+      rootBundle.loadString(_routeCatalogAsset, cache: false),
+    ).wait;
+    if (content == bundledScript && catalog == bundledCatalog) {
+      await restore();
+      return (updated: true, syncedVersion: null);
+    }
     if (scriptChanged) {
       await _write(File(await appPath.getScriptPath(managedScriptId)), content);
     }
-    if (catalog != null && catalogChanged) {
+    if (catalogChanged) {
       await _write(await _catalogFile(), catalog);
     }
-    return next;
+    return (updated: true, syncedVersion: next);
   }
 
   static Future<void> restore() async {

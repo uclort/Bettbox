@@ -5,8 +5,9 @@ import 'package:bett_box/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class RunTime extends ConsumerWidget {
-  const RunTime({super.key});
+// BETTBOX-CUSTOM: 仪表盘启动卡片只展示运行时长；上游 1.19.8 新增同名 RunTime provider，故改名。
+class DashboardRunTime extends ConsumerWidget {
+  const DashboardRunTime({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

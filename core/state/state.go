@@ -9,14 +9,6 @@ var DefaultIpv4Address = "198.51.100.1/30"
 var DefaultDnsAddress = "198.51.100.2"
 var DefaultIpv6Address = "fdfe:dcba:9876::1/126"
 
-// BETTBOX-CUSTOM: Android TUN 的 IPv6 地址跟随 ipv6 开关；关闭时返回空串，VpnService 不加 IPv6 地址和路由，应用才能回退 IPv4。
-func TunIpv6Address(ipv6Enabled bool) string {
-	if !ipv6Enabled {
-		return ""
-	}
-	return DefaultIpv6Address
-}
-
 type AndroidVpnOptions struct {
 	Enable                bool           `json:"enable"`
 	Port                  int            `json:"port"`

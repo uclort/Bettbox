@@ -48,7 +48,7 @@ final class ConfigStateProvider
   }
 }
 
-String _$configStateHash() => r'686e7078aee130b5cef1d5728d9fa5319534fd12';
+String _$configStateHash() => r'd4e8a017e3065c96b4c309ee3415fb5fd5e3d334';
 
 @ProviderFor(currentGroupsState)
 final currentGroupsStateProvider = CurrentGroupsStateProvider._();
@@ -831,7 +831,7 @@ final class SortedGroupProxiesProvider
 }
 
 String _$sortedGroupProxiesHash() =>
-    r'1bd3bcbd085a31091125c00dac75dba27f7bfd03';
+    r'5e631c8fd12ed454c3b1430d50aa3a706600845a';
 
 final class SortedGroupProxiesFamily extends $Family
     with
@@ -1446,7 +1446,7 @@ final class GetRealTestUrlProvider
   }
 }
 
-String _$getRealTestUrlHash() => r'f2ac58afa6b99fbdab493e730e771ffd80440198';
+String _$getRealTestUrlHash() => r'2e3aeb2fbaf4f62c016a3a8a4f712f75e93a2686';
 
 final class GetRealTestUrlFamily extends $Family
     with $FunctionalFamilyOverride<String, String?> {
@@ -2546,11 +2546,11 @@ final needSetupProvider = NeedSetupProvider._();
 final class NeedSetupProvider
     extends
         $FunctionalProvider<
-          VM4<String?, String?, String?, bool>,
-          VM4<String?, String?, String?, bool>,
-          VM4<String?, String?, String?, bool>
+          VM5<String?, String?, String?, bool, String>,
+          VM5<String?, String?, String?, bool, String>,
+          VM5<String?, String?, String?, bool, String>
         >
-    with $Provider<VM4<String?, String?, String?, bool>> {
+    with $Provider<VM5<String?, String?, String?, bool, String>> {
   NeedSetupProvider._()
     : super(
         from: null,
@@ -2567,26 +2567,30 @@ final class NeedSetupProvider
 
   @$internal
   @override
-  $ProviderElement<VM4<String?, String?, String?, bool>> $createElement(
+  $ProviderElement<VM5<String?, String?, String?, bool, String>> $createElement(
     $ProviderPointer pointer,
   ) => $ProviderElement(pointer);
 
   @override
-  VM4<String?, String?, String?, bool> create(Ref ref) {
+  VM5<String?, String?, String?, bool, String> create(Ref ref) {
     return needSetup(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(VM4<String?, String?, String?, bool> value) {
+  Override overrideWithValue(
+    VM5<String?, String?, String?, bool, String> value,
+  ) {
     return $ProviderOverride(
       origin: this,
       providerOverride:
-          $SyncValueProvider<VM4<String?, String?, String?, bool>>(value),
+          $SyncValueProvider<VM5<String?, String?, String?, bool, String>>(
+            value,
+          ),
     );
   }
 }
 
-String _$needSetupHash() => r'd19ca776ae1dcdeb61cd006750a1fd6135e3e9cd';
+String _$needSetupHash() => r'fbc3483db13b60f4ef1095d2aef279183cec9b69';
 
 @ProviderFor(currentBrightness)
 final currentBrightnessProvider = CurrentBrightnessProvider._();

@@ -9,7 +9,6 @@ part of '../core.dart';
 _SetupParams _$SetupParamsFromJson(Map<String, dynamic> json) => _SetupParams(
   selectedMap: Map<String, String>.from(json['selected-map'] as Map),
   testUrl: json['test-url'] as String,
-  overrideTestUrl: json['override-test-url'] as bool? ?? true,
   profilePath: json['profile-path'] as String? ?? '',
   ageSecretKey: json['age-secret-key'] as String? ?? '',
   scriptedConfig: json['scripted-config'] as String? ?? '',
@@ -20,7 +19,6 @@ Map<String, dynamic> _$SetupParamsToJson(_SetupParams instance) =>
     <String, dynamic>{
       'selected-map': instance.selectedMap,
       'test-url': instance.testUrl,
-      'override-test-url': instance.overrideTestUrl,
       'profile-path': instance.profilePath,
       'age-secret-key': instance.ageSecretKey,
       'scripted-config': instance.scriptedConfig,
@@ -366,6 +364,7 @@ const _$ActionMethodEnumMap = {
   ActionMethod.getMode: 'getMode',
   ActionMethod.parseExternalProviderContent: 'parseExternalProviderContent',
   ActionMethod.getCoreStatus: 'getCoreStatus',
+  ActionMethod.getInterfaces: 'getInterfaces',
   ActionMethod.startSpeedTest: 'startSpeedTest',
   ActionMethod.cancelSpeedTest: 'cancelSpeedTest',
   ActionMethod.probeSpeedTest: 'probeSpeedTest',

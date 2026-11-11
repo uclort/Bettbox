@@ -133,7 +133,11 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     _saveWidgets(widgets);
   }
 
-  List<Widget> _buildActions(bool showStartSwitch, bool isDark) {
+  List<Widget> _buildActions(
+    bool showStartSwitch,
+    ThemeMode themeMode,
+    bool watermark,
+  ) {
     return [
       _buildIsEdit((isEdit) {
         if (!isEdit) return const SizedBox.shrink();
@@ -192,14 +196,26 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                 onPressed: _handleUpdateIsEdit,
               ),
               PopupMenuItemData(
-                icon: isDark ? Icons.light_mode : Icons.dark_mode,
-                label: isDark ? appLocalizations.light : appLocalizations.dark,
+                icon: switch (themeMode) {
+                  ThemeMode.system => Icons.auto_mode,
+                  ThemeMode.light => Icons.light_mode,
+                  ThemeMode.dark => Icons.dark_mode,
+                },
+                label: switch (themeMode) {
+                  ThemeMode.system => appLocalizations.auto,
+                  ThemeMode.light => appLocalizations.light,
+                  ThemeMode.dark => appLocalizations.dark,
+                },
                 onPressed: () {
                   ref
                       .read(themeSettingProvider.notifier)
                       .updateState(
                         (state) => state.copyWith(
-                          themeMode: isDark ? ThemeMode.light : ThemeMode.dark,
+                          themeMode: switch (themeMode) {
+                            ThemeMode.system => ThemeMode.light,
+                            ThemeMode.light => ThemeMode.dark,
+                            ThemeMode.dark => ThemeMode.system,
+                          },
                         ),
                       );
                 },
@@ -208,6 +224,20 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                 icon: Icons.title,
                 label: appLocalizations.customDashboardTitle,
                 onPressed: _showEditTitleDialog,
+              ),
+              PopupMenuItemData(
+                icon: watermark
+                    ? Icons.check_circle_rounded
+                    : Icons.circle_outlined,
+                label: appLocalizations.backgroundWatermark,
+                onPressed: () {
+                  ref
+                      .read(appSettingProvider.notifier)
+                      .updateState(
+                        (state) =>
+                            state.copyWith(dashboardWatermark: !watermark),
+                      );
+                },
               ),
               PopupMenuItemData(
                 icon: Icons.restart_alt,
@@ -255,6 +285,10 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   }
 
   Future<void> _handleRestartCore() async {
+    if (system.isAndroid) {
+      await system.restartApp();
+      return;
+    }
     final result = await globalState.showMessage(
       title: appLocalizations.restartCoreTitle,
       message: TextSpan(text: appLocalizations.restartCoreDesc),
@@ -295,10 +329,11 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
         (state) => (state.dashboardTitle, state.showStartSwitch),
       ),
     );
-    final isDark = ref.watch(
-      currentBrightnessProvider.select(
-        (brightness) => brightness == Brightness.dark,
-      ),
+    final themeMode = ref.watch(
+      themeSettingProvider.select((state) => state.themeMode),
+    );
+    final watermark = ref.watch(
+      appSettingProvider.select((state) => state.dashboardWatermark),
     );
 
     final spacing = 12.mAp;
@@ -322,7 +357,8 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
         inset: math.max(0, (page.maxWidth - dashboardMaxGridWidth) / 2),
         isMobileView: isMobileView,
         showStartSwitch: showStartSwitch,
-        isDark: isDark,
+        themeMode: themeMode,
+        watermark: watermark,
         spacing: spacing,
         children: children,
       ),
@@ -334,7 +370,8 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     required double inset,
     required bool isMobileView,
     required bool showStartSwitch,
-    required bool isDark,
+    required ThemeMode themeMode,
+    required bool watermark,
     required double spacing,
     required List<DashboardTile> children,
   }) {
@@ -361,7 +398,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
             : EmojiText(title),
       ),
       actions: [
-        ..._buildActions(showStartSwitch, isDark),
+        ..._buildActions(showStartSwitch, themeMode, watermark),
         if (inset > 4) SizedBox(width: inset - 4),
       ],
       // BETTBOX-CUSTOM: Android 首页保留悬浮总开关。

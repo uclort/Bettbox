@@ -238,8 +238,11 @@ Future<void> delayTest(
   Future<void> runTest() async {
     final appController = globalState.appController;
     final currentGroups = appController.getCurrentGroups();
+    final testProxies = (groupName != null && groupName.isNotEmpty)
+        ? currentGroups.getGroup(groupName)?.all ?? proxies
+        : proxies;
     final targets = <DelayTestTarget>{};
-    for (final proxy in proxies) {
+    for (final proxy in testProxies) {
       if (_isNonTestableProxy(proxy)) {
         continue;
       }

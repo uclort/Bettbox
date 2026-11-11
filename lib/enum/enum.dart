@@ -284,6 +284,7 @@ enum ActionMethod {
   getMode,
   parseExternalProviderContent,
   getCoreStatus,
+  getInterfaces,
   startSpeedTest,
   cancelSpeedTest,
   probeSpeedTest,
@@ -442,7 +443,7 @@ enum DashboardWidget {
     platforms: [SupportPlatform.Android],
   ),
   startButton(
-    GridItem(crossAxisCellCount: 4, isDeletable: false, child: RunTime()),
+    GridItem(crossAxisCellCount: 4, isDeletable: false, child: DashboardRunTime()),
   );
 
   final GridItem widget;
@@ -613,8 +614,6 @@ extension RuleActionExt on RuleAction {
     RuleAction.RULE_SET,
   ].contains(this);
 }
-
-enum OverrideRuleType { override, added }
 
 enum RuleTarget { DIRECT, REJECT }
 

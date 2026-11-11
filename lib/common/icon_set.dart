@@ -13,7 +13,12 @@ String iconSearchKey(String value) =>
     value.toLowerCase().replaceAll(_iconSearchPattern, '');
 
 String iconFileStem(String value) {
-  final name = Uri.decodeComponent(value.substring(value.lastIndexOf('/') + 1));
+  var name = value.substring(value.lastIndexOf('/') + 1);
+  try {
+    name = Uri.decodeComponent(name);
+  } catch (_) {
+    name = name.replaceAll('%', '');
+  }
   return name.toLowerCase().endsWith('.svg')
       ? name.substring(0, name.length - 4)
       : name;

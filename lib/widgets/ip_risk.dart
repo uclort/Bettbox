@@ -140,7 +140,8 @@ class IpRiskScore extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _scoreColor(risk.score);
+    final score = risk.displayScore;
+    final color = _scoreColor(score);
     final muted = context.textTheme.labelSmall?.copyWith(
       color: context.colorScheme.onSurfaceVariant,
     );
@@ -176,7 +177,7 @@ class IpRiskScore extends StatelessWidget {
                   textBaseline: TextBaseline.alphabetic,
                   children: [
                     Text(
-                      '${risk.score}',
+                      '$score',
                       style: context.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: _tone(context, color),
@@ -206,7 +207,7 @@ class IpRiskScore extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 6),
-        IpRiskScoreBar(score: risk.score),
+        IpRiskScoreBar(score: score),
         const SizedBox(height: 4),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -300,7 +301,7 @@ class IpRiskChecks extends StatelessWidget {
       for (final group in IpRiskGroup.values)
         (group, risk.checks.where((check) => check.group == group).toList()),
     ].where((entry) => entry.$2.isNotEmpty).toList();
-    final isHome = risk.checks.every((check) => check.hit != true);
+    final isHome = risk.isHomeBroadband;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -364,7 +365,7 @@ Future<void> showIpRiskNote(IpRisk risk) async {
             child: Text(appLocalizations.confirm),
           ),
         ],
-        child: IpRiskNoteView(risk: risk),
+        child: IpRiskNoteView(risk: risk.normalized),
       ),
     ),
   );
@@ -377,7 +378,7 @@ class IpRiskNoteView extends StatelessWidget {
 
   String get _basis {
     final note = risk.note;
-    final score = risk.score;
+    final score = risk.displayScore;
     final isp = note?.isp ?? '';
     return switch (note?.direct) {
       true => appLocalizations.ipRiskNoteDirect(score),

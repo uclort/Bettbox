@@ -64,7 +64,6 @@ Future<void> main(List<String> args) async {
     globalState.initApp(version),
     clashCore.preload(),
     loadBundledRouteIcons(),
-    ManagedScript.loadBundledVersion(),
   ]);
 
   try {

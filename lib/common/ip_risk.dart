@@ -191,7 +191,7 @@ IpRisk? parseScamalytics(String ip, String html) {
   );
   final country =
       IpInfo.normalizeCountry(info['Country Name'], countryCode, region) ?? '';
-  return IpRisk(
+  final risk = IpRisk(
     ip: ip,
     score: score.clamp(0, 100),
     level: _level(riskText, score),
@@ -211,4 +211,5 @@ IpRisk? parseScamalytics(String ip, String html) {
     ],
     note: _note(body),
   );
+  return risk.normalized;
 }

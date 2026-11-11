@@ -168,6 +168,7 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
                         hideTimeoutProxies: !hideTimeoutProxies,
                       ),
                     );
+                globalState.appController.addSortNum();
               },
             ),
           ],
@@ -275,7 +276,16 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
           : null,
       searchState: AppBarSearchState(onSearch: _onSearch),
       body: switch (hasGroups) {
-        false => NullStatus(label: appLocalizations.noProxy),
+        false => NullStatus(
+          label: appLocalizations.noProxy,
+          icon: Icons.cloud_off_outlined,
+          description: appLocalizations.noProxyDesc,
+          action: FilledButton.tonalIcon(
+            onPressed: globalState.appController.toProfiles,
+            icon: const Icon(Icons.add, size: 18),
+            label: Text(appLocalizations.addProfile),
+          ),
+        ),
         true => switch (proxiesType) {
           ProxiesType.tab => ProxiesTabView(key: _proxiesTabKey),
           ProxiesType.list => ProxiesListView(key: _proxiesListKey),

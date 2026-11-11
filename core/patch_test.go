@@ -87,6 +87,22 @@ func TestApplyPatchGeneral(t *testing.T) {
 	}
 }
 
+func TestApplyPatchInterfaceName(t *testing.T) {
+	rawCfg := parsePatchProfile(t, "interface-name: profile0\n")
+	if _, err := applyPatch(rawCfg, patchParams(t, `{"general":{"mode":"rule"}}`)); err != nil {
+		t.Fatal(err)
+	}
+	if rawCfg.Interface != "profile0" {
+		t.Errorf("profile interface-name should be kept, got %q", rawCfg.Interface)
+	}
+	if _, err := applyPatch(rawCfg, patchParams(t, `{"general":{"interface-name":"en0"}}`)); err != nil {
+		t.Fatal(err)
+	}
+	if rawCfg.Interface != "en0" {
+		t.Errorf("patched interface-name should override, got %q", rawCfg.Interface)
+	}
+}
+
 func TestApplyPatchTunDNSMode(t *testing.T) {
 	rawCfg := parsePatchProfile(t, "tun:\n  dns-mode: native\n")
 	if _, err := applyPatch(rawCfg, patchParams(t, `{"general":{"tun":{"enable":true,"stack":"system"}}}`)); err != nil {

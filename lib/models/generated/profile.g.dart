@@ -160,14 +160,6 @@ Map<String, dynamic> _$OverrideDataToJson(_OverrideData instance) =>
 
 _OverrideRule _$OverrideRuleFromJson(Map<String, dynamic> json) =>
     _OverrideRule(
-      type:
-          $enumDecodeNullable(_$OverrideRuleTypeEnumMap, json['type']) ??
-          OverrideRuleType.added,
-      overrideRules:
-          (json['overrideRules'] as List<dynamic>?)
-              ?.map((e) => Rule.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          const [],
       addedRules:
           (json['addedRules'] as List<dynamic>?)
               ?.map((e) => Rule.fromJson(e as Map<String, dynamic>))
@@ -176,13 +168,4 @@ _OverrideRule _$OverrideRuleFromJson(Map<String, dynamic> json) =>
     );
 
 Map<String, dynamic> _$OverrideRuleToJson(_OverrideRule instance) =>
-    <String, dynamic>{
-      'type': _$OverrideRuleTypeEnumMap[instance.type]!,
-      'overrideRules': instance.overrideRules,
-      'addedRules': instance.addedRules,
-    };
-
-const _$OverrideRuleTypeEnumMap = {
-  OverrideRuleType.override: 'override',
-  OverrideRuleType.added: 'added',
-};
+    <String, dynamic>{'addedRules': instance.addedRules};

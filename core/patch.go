@@ -26,8 +26,7 @@ type PatchHost struct {
 }
 
 type PatchRules struct {
-	Override bool     `json:"override"`
-	Rules    []string `json:"rules"`
+	Rules []string `json:"rules"`
 }
 
 type PatchParams struct {
@@ -55,7 +54,7 @@ const defaultHealthCheckTimeout = 5000
 
 const (
 	bettboxRuleSetSuffix  = "_bettbox"
-	bettboxRuleSetBaseURL = "https://cdn.jsdmirror.com/gh/appshubcc/bett-rules@meta/geo/"
+	bettboxRuleSetBaseURL = "https://cdn.jsdelivr.net/gh/appshubcc/bett-rules@meta/geo/"
 )
 
 var ruleSetReference = regexp.MustCompile(`(?i)\bRULE-SET,\s*([^,()\s]+)`)
@@ -153,27 +152,16 @@ func applyPatch(raw *config.RawConfig, params *PatchParams) (string, error) {
 	patchProxyGroups(raw, params)
 
 	rules := raw.Rule
-	hasOverride := params.OverrideRules != nil
-	hasPrepend := len(params.PrependRules) > 0
-	if hasOverride || hasPrepend {
-		if hasOverride && params.OverrideRules.Override {
-			total := len(params.PrependRules) + len(params.OverrideRules.Rules)
-			merged := make([]string, 0, total)
-			merged = append(merged, params.PrependRules...)
-			merged = append(merged, params.OverrideRules.Rules...)
-			rules = merged
-		} else {
-			var overrideSlice []string
-			if hasOverride {
-				overrideSlice = params.OverrideRules.Rules
-			}
-			total := len(params.PrependRules) + len(overrideSlice) + len(rules)
-			merged := make([]string, 0, total)
-			merged = append(merged, params.PrependRules...)
-			merged = append(merged, overrideSlice...)
-			merged = append(merged, rules...)
-			rules = merged
-		}
+	var overrideSlice []string
+	if params.OverrideRules != nil {
+		overrideSlice = params.OverrideRules.Rules
+	}
+	if len(params.PrependRules) > 0 || len(overrideSlice) > 0 {
+		merged := make([]string, 0, len(params.PrependRules)+len(overrideSlice)+len(rules))
+		merged = append(merged, params.PrependRules...)
+		merged = append(merged, overrideSlice...)
+		merged = append(merged, rules...)
+		rules = merged
 	}
 
 	patchProxies(raw)

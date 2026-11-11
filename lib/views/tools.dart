@@ -115,7 +115,7 @@ List<ToolsShortcut> getToolsShortcuts(
       if (entries.contains(entry))
         ?switch (entry) {
           SidebarFlyoutEntry.resources => ToolsShortcut(
-            icon: const Icon(Icons.storage),
+            icon: const Icon(Icons.storage_outlined),
             title: appLocalizations.resources,
             subtitle: appLocalizations.resourcesDesc,
             builder: (_) => const ResourcesView(),
@@ -132,25 +132,25 @@ List<ToolsShortcut> getToolsShortcuts(
             PageLabel.toolbox,
           ),
           SidebarFlyoutEntry.theme => ToolsShortcut(
-            icon: const Icon(Icons.style),
+            icon: const Icon(Icons.style_outlined),
             title: appLocalizations.theme,
             subtitle: appLocalizations.themeDesc,
             builder: (_) => const ThemeView(),
           ),
           SidebarFlyoutEntry.backupAndRecovery => ToolsShortcut(
-            icon: const Icon(Icons.cloud_sync),
+            icon: const Icon(Icons.cloud_sync_outlined),
             title: appLocalizations.backupAndRecovery,
             subtitle: appLocalizations.backupAndRecoveryDesc,
             builder: (_) => const BackupAndRecovery(),
           ),
           SidebarFlyoutEntry.hotkeyManagement => ToolsShortcut(
-            icon: const Icon(Icons.keyboard),
+            icon: const Icon(Icons.keyboard_outlined),
             title: appLocalizations.hotkeyManagement,
             subtitle: appLocalizations.hotkeyManagementDesc,
             builder: (_) => const HotKeyView(),
           ),
           SidebarFlyoutEntry.loopback => ToolsShortcut(
-            icon: const Icon(Icons.lock),
+            icon: const Icon(Icons.lock_outlined),
             title: appLocalizations.loopback,
             subtitle: appLocalizations.loopbackDesc,
             onTap: () {
@@ -162,7 +162,7 @@ List<ToolsShortcut> getToolsShortcuts(
             },
           ),
           SidebarFlyoutEntry.basicConfig => ToolsShortcut(
-            icon: const Icon(Icons.developer_board_rounded),
+            icon: const Icon(Icons.developer_board_outlined),
             title: appLocalizations.basicConfig,
             subtitle: appLocalizations.basicConfigDesc,
             builder: (_) => const ConfigView(),
@@ -174,13 +174,13 @@ List<ToolsShortcut> getToolsShortcuts(
             builder: (_) => const OtherSettingView(),
           ),
           SidebarFlyoutEntry.application => ToolsShortcut(
-            icon: const Icon(Icons.settings),
+            icon: const Icon(Icons.settings_outlined),
             title: appLocalizations.application,
             subtitle: appLocalizations.applicationDesc,
             builder: (_) => const ApplicationSettingView(),
           ),
           SidebarFlyoutEntry.about => ToolsShortcut(
-            icon: const Icon(Icons.info),
+            icon: const Icon(Icons.info_outline),
             title: appLocalizations.about,
             builder: (_) => const AboutView(),
           ),
@@ -336,7 +336,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         title: appLocalizations.theme,
         subtitle: appLocalizations.themeDesc,
         category: settingsCategory,
-        leading: const Icon(Icons.style),
+        leading: const Icon(Icons.style_outlined),
         onTap: (context, _) =>
             _pushPage(context, appLocalizations.theme, const ThemeView()),
       ),
@@ -344,7 +344,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         title: appLocalizations.backupAndRecovery,
         subtitle: appLocalizations.backupAndRecoveryDesc,
         category: settingsCategory,
-        leading: const Icon(Icons.cloud_sync),
+        leading: const Icon(Icons.cloud_sync_outlined),
         onTap: (context, _) => _pushPage(
           context,
           appLocalizations.backupAndRecovery,
@@ -356,7 +356,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
           title: appLocalizations.hotkeyManagement,
           subtitle: appLocalizations.hotkeyManagementDesc,
           category: settingsCategory,
-          leading: const Icon(Icons.keyboard),
+          leading: const Icon(Icons.keyboard_outlined),
           onTap: (context, _) => _pushPage(
             context,
             appLocalizations.hotkeyManagement,
@@ -368,7 +368,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
           title: appLocalizations.loopback,
           subtitle: appLocalizations.loopbackDesc,
           category: settingsCategory,
-          leading: const Icon(Icons.lock),
+          leading: const Icon(Icons.lock_outlined),
           onTap: (context, _) {
             windows?.runas(
               '"${join(dirname(Platform.resolvedExecutable), "WindowsLoopbackManager.exe")}"',
@@ -382,7 +382,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
           title: appLocalizations.accessControl,
           subtitle: appLocalizations.accessControlDesc,
           category: settingsCategory,
-          leading: const Icon(Icons.view_list),
+          leading: const Icon(Icons.view_list_outlined),
           onTap: (context, _) => _pushPage(
             context,
             appLocalizations.appAccessControl,
@@ -393,7 +393,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         title: appLocalizations.basicConfig,
         subtitle: appLocalizations.basicConfigDesc,
         category: settingsCategory,
-        leading: const Icon(Icons.developer_board_rounded),
+        leading: const Icon(Icons.developer_board_outlined),
         onTap: (context, _) => _pushPage(
           context,
           appLocalizations.basicConfig,
@@ -415,7 +415,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         title: appLocalizations.application,
         subtitle: appLocalizations.applicationDesc,
         category: settingsCategory,
-        leading: const Icon(Icons.settings),
+        leading: const Icon(Icons.settings_outlined),
         onTap: (context, _) => _pushPage(
           context,
           appLocalizations.application,
@@ -425,7 +425,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
       _SearchItem(
         title: appLocalizations.disclaimer,
         category: otherCategory,
-        leading: const Icon(Icons.gavel),
+        leading: const Icon(Icons.gavel_outlined),
         onTap: (context, _) async {
           final accepted = await globalState.appController.showDisclaimer();
           if (!accepted) {
@@ -436,14 +436,14 @@ class _ToolViewState extends ConsumerState<ToolsView> {
       _SearchItem(
         title: appLocalizations.about,
         category: otherCategory,
-        leading: const Icon(Icons.info),
+        leading: const Icon(Icons.info_outline),
         onTap: (context, _) =>
             _pushPage(context, appLocalizations.about, const AboutView()),
       ),
       _SearchItem(
         title: appLocalizations.developerMode,
         category: otherCategory,
-        leading: const Icon(Icons.developer_board),
+        leading: const Icon(Icons.developer_board_outlined),
         onTap: (context, _) => _pushPage(
           context,
           appLocalizations.developerMode,
@@ -698,16 +698,6 @@ class _ToolViewState extends ConsumerState<ToolsView> {
       _SearchItem(
         title: appLocalizations.disableQuic,
         subtitle: appLocalizations.disableQuicDesc,
-        category: otherSettingsCategory,
-        onTap: (context, _) => _pushPage(
-          context,
-          appLocalizations.otherSettings,
-          const OtherSettingView(),
-        ),
-      ),
-      _SearchItem(
-        title: appLocalizations.excludeChina,
-        subtitle: appLocalizations.excludeChinaDesc,
         category: otherSettingsCategory,
         onTap: (context, _) => _pushPage(
           context,
@@ -1032,6 +1022,16 @@ class _ToolViewState extends ConsumerState<ToolsView> {
           const NetworkListView(),
         ),
       ),
+      if (system.isDesktop)
+        _SearchItem(
+          title: appLocalizations.networkInterface,
+          category: networkCategory,
+          onTap: (context, _) => _pushPage(
+            context,
+            appLocalizations.network,
+            const NetworkListView(),
+          ),
+        ),
       if (!AppIdentity.isLite)
         _SearchItem(
           title: appLocalizations.stackMode,
@@ -1442,8 +1442,11 @@ class _ToolViewState extends ConsumerState<ToolsView> {
   }
 }
 
-class _LocaleItem extends ConsumerWidget {
+class _LocaleItem extends ConsumerWidget implements HasLeadingWidget {
   const _LocaleItem();
+
+  @override
+  bool get hasLeading => true;
 
   static final List<Locale> _localeOptions = _getOrderedLocales();
   static const Map<String, String> _nativeLocaleNames = {
@@ -1507,13 +1510,20 @@ class _LocaleItem extends ConsumerWidget {
   }
 }
 
-class _ThemeItem extends StatelessWidget {
+abstract class _ToolsItem extends StatelessWidget implements HasLeadingWidget {
+  const _ToolsItem();
+
+  @override
+  bool get hasLeading => true;
+}
+
+class _ThemeItem extends _ToolsItem {
   const _ThemeItem();
 
   @override
   Widget build(BuildContext context) {
     return ListItem.next(
-      leading: const Icon(Icons.style),
+      leading: const Icon(Icons.style_outlined),
       title: Text(appLocalizations.theme),
       subtitle: Text(appLocalizations.themeDesc),
       delegate: NextDelegate(
@@ -1524,13 +1534,13 @@ class _ThemeItem extends StatelessWidget {
   }
 }
 
-class _BackupItem extends StatelessWidget {
+class _BackupItem extends _ToolsItem {
   const _BackupItem();
 
   @override
   Widget build(BuildContext context) {
     return ListItem.next(
-      leading: const Icon(Icons.cloud_sync),
+      leading: const Icon(Icons.cloud_sync_outlined),
       title: Text(appLocalizations.backupAndRecovery),
       subtitle: Text(appLocalizations.backupAndRecoveryDesc),
       delegate: NextDelegate(
@@ -1541,13 +1551,13 @@ class _BackupItem extends StatelessWidget {
   }
 }
 
-class _HotkeyItem extends StatelessWidget {
+class _HotkeyItem extends _ToolsItem {
   const _HotkeyItem();
 
   @override
   Widget build(BuildContext context) {
     return ListItem.next(
-      leading: const Icon(Icons.keyboard),
+      leading: const Icon(Icons.keyboard_outlined),
       title: Text(appLocalizations.hotkeyManagement),
       subtitle: Text(appLocalizations.hotkeyManagementDesc),
       delegate: NextDelegate(
@@ -1558,13 +1568,13 @@ class _HotkeyItem extends StatelessWidget {
   }
 }
 
-class _LoopbackItem extends StatelessWidget {
+class _LoopbackItem extends _ToolsItem {
   const _LoopbackItem();
 
   @override
   Widget build(BuildContext context) {
     return ListItem(
-      leading: const Icon(Icons.lock),
+      leading: const Icon(Icons.lock_outlined),
       title: Text(appLocalizations.loopback),
       subtitle: Text(appLocalizations.loopbackDesc),
       onTap: () {
@@ -1578,13 +1588,13 @@ class _LoopbackItem extends StatelessWidget {
   }
 }
 
-class _AccessItem extends StatelessWidget {
+class _AccessItem extends _ToolsItem {
   const _AccessItem();
 
   @override
   Widget build(BuildContext context) {
     return ListItem.next(
-      leading: const Icon(Icons.view_list),
+      leading: const Icon(Icons.view_list_outlined),
       title: Text(appLocalizations.accessControl),
       subtitle: Text(appLocalizations.accessControlDesc),
       delegate: NextDelegate(
@@ -1595,13 +1605,13 @@ class _AccessItem extends StatelessWidget {
   }
 }
 
-class _ConfigItem extends StatelessWidget {
+class _ConfigItem extends _ToolsItem {
   const _ConfigItem();
 
   @override
   Widget build(BuildContext context) {
     return ListItem.next(
-      leading: const Icon(Icons.developer_board_rounded),
+      leading: const Icon(Icons.developer_board_outlined),
       title: Text(appLocalizations.basicConfig),
       subtitle: Text(appLocalizations.basicConfigDesc),
       delegate: NextDelegate(
@@ -1612,7 +1622,7 @@ class _ConfigItem extends StatelessWidget {
   }
 }
 
-class _OtherSettingItem extends StatelessWidget {
+class _OtherSettingItem extends _ToolsItem {
   const _OtherSettingItem();
 
   @override
@@ -1629,13 +1639,13 @@ class _OtherSettingItem extends StatelessWidget {
   }
 }
 
-class _SettingItem extends StatelessWidget {
+class _SettingItem extends _ToolsItem {
   const _SettingItem();
 
   @override
   Widget build(BuildContext context) {
     return ListItem.next(
-      leading: const Icon(Icons.settings),
+      leading: const Icon(Icons.settings_outlined),
       title: Text(appLocalizations.application),
       subtitle: Text(appLocalizations.applicationDesc),
       delegate: NextDelegate(
@@ -1646,13 +1656,13 @@ class _SettingItem extends StatelessWidget {
   }
 }
 
-class _DisclaimerItem extends StatelessWidget {
+class _DisclaimerItem extends _ToolsItem {
   const _DisclaimerItem();
 
   @override
   Widget build(BuildContext context) {
     return ListItem(
-      leading: const Icon(Icons.gavel),
+      leading: const Icon(Icons.gavel_outlined),
       title: Text(appLocalizations.disclaimer),
       onTap: () async {
         final isDisclaimerAccepted = await globalState.appController
@@ -1665,13 +1675,13 @@ class _DisclaimerItem extends StatelessWidget {
   }
 }
 
-class _InfoItem extends StatelessWidget {
+class _InfoItem extends _ToolsItem {
   const _InfoItem();
 
   @override
   Widget build(BuildContext context) {
     return ListItem.next(
-      leading: const Icon(Icons.info),
+      leading: const Icon(Icons.info_outline),
       title: Text(appLocalizations.about),
       delegate: NextDelegate(
         title: appLocalizations.about,
@@ -1681,13 +1691,13 @@ class _InfoItem extends StatelessWidget {
   }
 }
 
-class _DeveloperItem extends StatelessWidget {
+class _DeveloperItem extends _ToolsItem {
   const _DeveloperItem();
 
   @override
   Widget build(BuildContext context) {
     return ListItem.next(
-      leading: const Icon(Icons.developer_board),
+      leading: const Icon(Icons.developer_board_outlined),
       title: Text(appLocalizations.developerMode),
       delegate: NextDelegate(
         title: appLocalizations.developerMode,

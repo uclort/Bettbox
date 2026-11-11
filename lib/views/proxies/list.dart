@@ -34,6 +34,7 @@ class ProxiesListViewState extends State<ProxiesListView> {
         if (state.groups.isEmpty) {
           return NullStatus(
             label: appLocalizations.nullTip(appLocalizations.proxies),
+            icon: Icons.cloud_off_outlined,
           );
         }
 
@@ -492,6 +493,8 @@ class _GroupHeader extends ConsumerWidget {
     final labelLightStyle = textTheme.labelMedium?.toLight;
 
     return CommonCard(
+      radius: 20.0,
+      subtle: true,
       elevated: false,
       type: CommonCardType.filled,
       onPressed: onToggle,
@@ -542,7 +545,7 @@ class _GroupHeader extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const SizedBox(width: 6),
-                  _PressScaleWrapper(
+                  PressScale(
                     child: SizedBox.square(
                       dimension: 36,
                       child: IconButton(
@@ -559,7 +562,7 @@ class _GroupHeader extends ConsumerWidget {
                     builder: (_, _) {
                       final isTestingThisGroup = delayTestCoordinator
                           .isTestingGroup(group.name);
-                      return _PressScaleWrapper(
+                      return PressScale(
                         enabled: !delayTestCoordinator.isTesting,
                         child: SizedBox(
                           width: 44,
@@ -589,7 +592,7 @@ class _GroupHeader extends ConsumerWidget {
                   const SizedBox(width: 6),
                 ],
               ),
-            _PressScaleWrapper(
+            PressScale(
               child: SizedBox.square(
                 dimension: 36,
                 child: showFilled
@@ -643,47 +646,12 @@ class _GroupHeader extends ConsumerWidget {
   }
 
   Future<void> _delayTest(BuildContext context) async {
-    await delayTest(group.all, testUrl: group.testUrl, groupName: group.name);
-  }
-}
-
-class _PressScaleWrapper extends StatefulWidget {
-  final Widget child;
-  final bool enabled;
-
-  const _PressScaleWrapper({required this.child, this.enabled = true});
-
-  @override
-  State<_PressScaleWrapper> createState() => _PressScaleWrapperState();
-}
-
-class _PressScaleWrapperState extends State<_PressScaleWrapper> {
-  bool _isPressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final scale = (widget.enabled && _isPressed) ? 0.92 : 1.0;
-    return Listener(
-      onPointerDown: (_) {
-        if (!widget.enabled) return;
-        setState(() => _isPressed = true);
-      },
-      onPointerUp: (_) {
-        if (_isPressed) {
-          setState(() => _isPressed = false);
-        }
-      },
-      onPointerCancel: (_) {
-        if (_isPressed) {
-          setState(() => _isPressed = false);
-        }
-      },
-      child: AnimatedScale(
-        scale: scale,
-        duration: const Duration(milliseconds: 100),
-        curve: Curves.easeOutCubic,
-        child: widget.child,
-      ),
+    final currentGroups = globalState.appController.getCurrentGroups();
+    final targetGroup = currentGroups.getGroup(group.name) ?? group;
+    await delayTest(
+      targetGroup.all,
+      testUrl: targetGroup.testUrl,
+      groupName: targetGroup.name,
     );
   }
 }

@@ -207,6 +207,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "add": MessageLookupByLibrary.simpleMessage("新增"),
     "addBundleMember": MessageLookupByLibrary.simpleMessage("添加成員"),
     "addProfile": MessageLookupByLibrary.simpleMessage("新增配置"),
+    "addRegion": MessageLookupByLibrary.simpleMessage("新增地區"),
     "addRoute": MessageLookupByLibrary.simpleMessage("分流管理"),
     "addRule": MessageLookupByLibrary.simpleMessage("新增規則"),
     "addRuleSet": MessageLookupByLibrary.simpleMessage("新增規則集"),
@@ -308,6 +309,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoUpdate": MessageLookupByLibrary.simpleMessage("自動更新"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage("自動更新間隔（分鐘）"),
     "back": MessageLookupByLibrary.simpleMessage("返回"),
+    "backgroundWatermark": MessageLookupByLibrary.simpleMessage("背景浮水印"),
     "backup": MessageLookupByLibrary.simpleMessage("備份"),
     "backupAndRecovery": MessageLookupByLibrary.simpleMessage("備份與還原"),
     "backupAndRecoveryDesc": MessageLookupByLibrary.simpleMessage(
@@ -341,7 +343,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "bundleAddUrlDesc": MessageLookupByLibrary.simpleMessage("匯入為新訂閱並加入成員"),
     "bundleCollapse": MessageLookupByLibrary.simpleMessage("收起成員訂閱"),
     "bundleCollapseDesc": MessageLookupByLibrary.simpleMessage(
-      "配置列表中只顯示合併訂閱，點按卡片右下角展開",
+      "開啟後配置列表中只顯示合併後的訂閱資訊，點按卡片右下角可展開或收起",
     ),
     "bundleDedupTip": MessageLookupByLibrary.simpleMessage(
       "內容相同的節點只保留一份，按成員順序優先",
@@ -430,7 +432,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "controlSecretDesc": MessageLookupByLibrary.simpleMessage(
       "RESTful API 的存取密碼",
     ),
-    "copiedPackageName": MessageLookupByLibrary.simpleMessage("已複製包名"),
     "copiedToClipboard": MessageLookupByLibrary.simpleMessage("已複製到剪貼簿"),
     "copy": MessageLookupByLibrary.simpleMessage("複製"),
     "copyEnvVar": MessageLookupByLibrary.simpleMessage("複製環境變數"),
@@ -497,7 +498,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "direct": MessageLookupByLibrary.simpleMessage("直連"),
     "disableQuic": MessageLookupByLibrary.simpleMessage("禁用QUIC"),
     "disableQuicDesc": MessageLookupByLibrary.simpleMessage(
-      "停用 QUIC 以解決特定網路問題",
+      "停用 QUIC 以緩解特定網路問題",
     ),
     "disableQuicManagedDesc": MessageLookupByLibrary.simpleMessage(
       "啟用腳本時停用 QUIC 功能不生效",
@@ -596,10 +597,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "entries": MessageLookupByLibrary.simpleMessage("個項目"),
     "exclude": MessageLookupByLibrary.simpleMessage("背景隱藏"),
-    "excludeChina": MessageLookupByLibrary.simpleMessage("排除國內"),
-    "excludeChinaDesc": MessageLookupByLibrary.simpleMessage(
-      "放行中國 QUIC 流量而非全部停用",
-    ),
     "excludeDesc": MessageLookupByLibrary.simpleMessage("從最近任務中隱藏應用程式"),
     "existsTip": m19,
     "exit": MessageLookupByLibrary.simpleMessage("退出"),
@@ -672,7 +669,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "geodataLoader": MessageLookupByLibrary.simpleMessage("GEO 節能"),
     "geodataLoaderDesc": MessageLookupByLibrary.simpleMessage("使用 GEO 低記憶體載入器"),
     "geodataUse": MessageLookupByLibrary.simpleMessage("GEO載入"),
-    "getOriginRules": MessageLookupByLibrary.simpleMessage("獲取原始規則"),
     "global": MessageLookupByLibrary.simpleMessage("全域"),
     "go": MessageLookupByLibrary.simpleMessage("前往"),
     "goDownload": MessageLookupByLibrary.simpleMessage("前往下載"),
@@ -709,8 +705,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "icmpForwardingDesc": MessageLookupByLibrary.simpleMessage(
       "開啟後將支援 ICMP Ping",
     ),
-    "icon": MessageLookupByLibrary.simpleMessage("圖片"),
-    "iconConfiguration": MessageLookupByLibrary.simpleMessage("圖片設定"),
+    "icon": MessageLookupByLibrary.simpleMessage("圖示"),
+    "iconConfiguration": MessageLookupByLibrary.simpleMessage("圖示設定"),
     "iconConfigurationDesc": MessageLookupByLibrary.simpleMessage(
       "自訂代理組 ICON 圖示",
     ),
@@ -760,7 +756,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "ipRiskAmountMedium": MessageLookupByLibrary.simpleMessage("中等"),
     "ipRiskAnonymousVpn": MessageLookupByLibrary.simpleMessage("匿名 VPN"),
     "ipRiskBlacklist": MessageLookupByLibrary.simpleMessage("黑名單標記"),
-    "ipRiskCheck": MessageLookupByLibrary.simpleMessage("檢測純淨度"),
+    "ipRiskCheck": MessageLookupByLibrary.simpleMessage("純淨度檢測"),
     "ipRiskCommercialServer": MessageLookupByLibrary.simpleMessage("商業伺服器"),
     "ipRiskDatacenter": MessageLookupByLibrary.simpleMessage("資料中心"),
     "ipRiskHigh": MessageLookupByLibrary.simpleMessage("高風險"),
@@ -958,6 +954,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "localPingUnreachable": MessageLookupByLibrary.simpleMessage("目標無法連線"),
     "localRecoveryDesc": MessageLookupByLibrary.simpleMessage("透過檔案還原資料"),
     "locate": MessageLookupByLibrary.simpleMessage("定位"),
+    "lockProxy": MessageLookupByLibrary.simpleMessage("鎖定節點"),
     "log": MessageLookupByLibrary.simpleMessage("日誌"),
     "logAiSearch": MessageLookupByLibrary.simpleMessage("AI 搜尋"),
     "logLevel": MessageLookupByLibrary.simpleMessage("日誌等級"),
@@ -1166,6 +1163,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "networkFix": MessageLookupByLibrary.simpleMessage("網路修復"),
     "networkFixDesc": MessageLookupByLibrary.simpleMessage("修復系統網路檢測地球圖示問題"),
+    "networkInterface": MessageLookupByLibrary.simpleMessage("網卡選擇"),
     "networkMatch": MessageLookupByLibrary.simpleMessage("網路匹配"),
     "networkMatchHint": MessageLookupByLibrary.simpleMessage(
       "輸入 IP、CIDR 或 Gateway:IP/CIDR",
@@ -1225,6 +1223,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "ntpStatusDesc": MessageLookupByLibrary.simpleMessage("開啟 NTP 時間服務"),
     "nullProfileDesc": MessageLookupByLibrary.simpleMessage("沒有設定檔，請先新增設定檔"),
     "nullTip": m53,
+    "nullUdpConnections": MessageLookupByLibrary.simpleMessage("暫無 UDP 連線"),
     "numberRangeInvalid": m54,
     "numberTip": m55,
     "oneColumn": MessageLookupByLibrary.simpleMessage("一列"),
@@ -1263,12 +1262,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "overrideNtpDesc": MessageLookupByLibrary.simpleMessage(
       "開啟後將覆蓋設定中的 NTP 選項",
     ),
-    "overrideOriginRules": MessageLookupByLibrary.simpleMessage("覆蓋原始規則"),
     "overrideSniffer": MessageLookupByLibrary.simpleMessage("覆寫 Sniffer"),
     "overrideSnifferDesc": MessageLookupByLibrary.simpleMessage(
       "開啟後將覆蓋設定中的 Sniffer 選項",
     ),
-    "overrideTestUrl": MessageLookupByLibrary.simpleMessage("覆蓋配置"),
     "overrideTunnel": MessageLookupByLibrary.simpleMessage("覆寫 Tunnel"),
     "overrideTunnelDesc": MessageLookupByLibrary.simpleMessage(
       "開啟後將覆蓋設定中的 Tunnel 選項",
@@ -1392,6 +1389,13 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "regExp": MessageLookupByLibrary.simpleMessage("正規表示式"),
     "regenerate": MessageLookupByLibrary.simpleMessage("重新生成"),
+    "regexInvalid": MessageLookupByLibrary.simpleMessage("規則運算式格式錯誤"),
+    "regionGroups": MessageLookupByLibrary.simpleMessage("地區分組"),
+    "regionGroupsTip": MessageLookupByLibrary.simpleMessage(
+      "沒有符合節點的地區不會產生策略組，未符合任何地區的節點歸入「其他节点」",
+    ),
+    "regionName": MessageLookupByLibrary.simpleMessage("國家名稱"),
+    "regionRegex": MessageLookupByLibrary.simpleMessage("匹配正則"),
     "reject": MessageLookupByLibrary.simpleMessage("攔截"),
     "remainingTraffic": MessageLookupByLibrary.simpleMessage("剩餘流量"),
     "remote": MessageLookupByLibrary.simpleMessage("遠端"),
@@ -2038,6 +2042,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "unifiedDelay": MessageLookupByLibrary.simpleMessage("統一延遲"),
     "unifiedDelayDesc": MessageLookupByLibrary.simpleMessage("去除交握解析等額外延遲"),
     "unknown": MessageLookupByLibrary.simpleMessage("未知"),
+    "unlockProxy": MessageLookupByLibrary.simpleMessage("解除鎖定"),
     "unlocked": MessageLookupByLibrary.simpleMessage("已完成"),
     "unnamed": MessageLookupByLibrary.simpleMessage("未命名"),
     "unpin": MessageLookupByLibrary.simpleMessage("取消置頂"),

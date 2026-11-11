@@ -33,9 +33,8 @@ func Start(fd int, device string, stack constant.TUNStack, disableIcmpForwarding
 	}
 	prefix4 = append(prefix4, tempPrefix4)
 	var prefix6 []netip.Prefix
-	// BETTBOX-CUSTOM: IPv6 地址跟随 ipv6 开关（上游 1.19.8 改为无条件添加，关闭 IPv6 时应用的 IPv6 连接进 TUN 后被拒绝，无法回退 IPv4）。
-	if ipv6Address := state.TunIpv6Address(ipv6Enabled); ipv6Address != "" {
-		tempPrefix6, err := netip.ParsePrefix(ipv6Address)
+	if ipv6Enabled {
+		tempPrefix6, err := netip.ParsePrefix(state.DefaultIpv6Address)
 		if err != nil {
 			log.Errorln("startTUN error: %v", err)
 			return nil, err

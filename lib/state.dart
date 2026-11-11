@@ -50,9 +50,7 @@ class GlobalState {
       _config ??
       Config(
         themeProps: defaultThemeProps,
-        patchClashConfig: system.isAndroid
-            ? const ClashConfig(findProcessMode: FindProcessMode.always)
-            : defaultClashConfig,
+        patchClashConfig: defaultClashConfig,
         networkProps: defaultNetworkProps,
         appSetting: defaultAppSettingProps,
       );
@@ -228,13 +226,12 @@ class GlobalState {
     if (system.isAndroid) {
       _isAndroidTV = await app.isAndroidTV();
     }
+    await ManagedScript.loadBundledVersion();
     config =
         await preferences.getConfig() ??
         Config(
           themeProps: defaultThemeProps,
-          patchClashConfig: system.isAndroid
-              ? const ClashConfig(findProcessMode: FindProcessMode.always)
-              : defaultClashConfig,
+          patchClashConfig: defaultClashConfig,
           networkProps: defaultNetworkProps,
           appSetting: defaultAppSettingProps,
         );
@@ -425,10 +422,7 @@ class GlobalState {
   Future<void> _checkAndRunBackgroundCoreGc() async {
     if (!backgroundMode.value) return;
     try {
-      await clashCore.requestGc(
-        forceFreeOSMemory: system.isAndroid,
-        purge: false,
-      );
+      await clashCore.requestGc(forceFreeOSMemory: true, purge: false);
     } catch (e) {
       commonPrint.debug('Background requestGc ignored: $e');
     }
@@ -745,6 +739,20 @@ class GlobalState {
       await prefs.remove(customDashboardTitleKey);
     }
     await prefs?.remove(customSidebarIconKey);
+
+    final synced = config.managedProps.syncedVersion;
+    if (synced != null &&
+        ManagedScript.bundledVersion.isNotEmpty &&
+        !ManagedScript.isCustom(config.managedProps) &&
+        ManagedScript.compareVersions(synced, ManagedScript.bundledVersion) <
+            0) {
+      await ManagedScript.restore();
+      config = config.copyWith(
+        managedProps: config.managedProps.copyWith(syncedVersion: null),
+      );
+      await preferences.saveConfig(config);
+      this.config = config;
+    }
   }
 
   CoreState getCoreState() {
@@ -770,7 +778,6 @@ class GlobalState {
     final params = SetupParams(
       selectedMap: targetProfile?.selectedMap ?? {},
       testUrl: config.appSetting.testUrl,
-      overrideTestUrl: config.overrideTestUrl,
     );
     if (targetProfile == null) {
       return params;
@@ -825,8 +832,8 @@ class GlobalState {
 
   Future<String> _writeScriptedConfig(Profile profile) async {
     if (!_scriptActive(profile)) return '';
+    final managed = profile.runsManagedScript;
     try {
-      final managed = profile.runsManagedScript;
       final script = managed
           ? await ManagedScript.script(config.managedProps)
           : config.scriptProps.scriptOf(profile);
@@ -835,7 +842,99 @@ class GlobalState {
     } catch (e) {
       commonPrint.error('Script execution failed: $e');
       showNotifier('${appLocalizations.profileParseErrorDesc}: $e');
+      if (managed && ManagedScript.syncedVersion(config.managedProps) != null) {
+        return await writeBundledManagedConfig(profile);
+      }
       return '';
+    }
+  }
+
+  Future<String> writeBundledManagedConfig(Profile profile) async {
+    try {
+      final fallback = await ManagedScript.script(
+        config.managedProps,
+        bundled: true,
+      );
+      return await writeScriptedConfig(profile, fallback, managed: true);
+    } catch (e) {
+      commonPrint.error('Bundled managed script execution failed: $e');
+      return '';
+    }
+  }
+
+  Future<void> validateScript(Script script, {required bool managed}) async {
+    Profile? profile = config.currentProfile;
+    if (profile == null || profile.bundle != null || !await profile.check()) {
+      profile = null;
+      for (final item in config.profiles) {
+        if (item.bundle == null && await item.check()) {
+          profile = item;
+          break;
+        }
+      }
+    }
+    if (profile == null) {
+      final stamp = DateTime.now().microsecondsSinceEpoch;
+      final relayPath = await appPath.relayPath;
+      final separator = Platform.pathSeparator;
+      final input = File('$relayPath${separator}validate-in-$stamp.json');
+      final output = File('$relayPath${separator}validate-out-$stamp.json');
+      try {
+        await input.parent.create(recursive: true);
+        await input.writeAsString(
+          '{"proxies":[],"proxy-groups":[],"rules":[]}',
+          flush: true,
+        );
+        await JavaScriptRuntimeManager.evaluateScriptFile(
+          scriptContent: await script.readContent(),
+          inputPath: input.path,
+          outputPath: output.path,
+          customOptions: script.customOptions,
+        );
+      } finally {
+        for (final file in [input, output]) {
+          if (await file.exists()) {
+            try {
+              await file.delete();
+            } catch (_) {}
+          }
+        }
+      }
+      return;
+    }
+    final scriptedPath = await writeScriptedConfig(
+      profile,
+      script,
+      managed: managed,
+      cache: false,
+    );
+    try {
+      final patchConfig = config.patchClashConfig;
+      final realPatchConfig = patchConfig.copyWith.tun(
+        enable: patchConfig.tun.enable && appState.realTunEnable,
+      );
+      final setupParams = SetupParams(
+        selectedMap: profile.selectedMap,
+        testUrl: config.appSetting.testUrl,
+        profilePath: await appPath.getProfilePath(profile.id),
+        ageSecretKey: profile.ageSecretKey ?? '',
+        scriptedConfig: scriptedPath,
+        patch: await buildPatchParams(
+          patchConfig: realPatchConfig,
+          profile: profile,
+        ),
+      );
+      final message = await clashCore.validateConfig('', setup: setupParams);
+      if (message.isNotEmpty) {
+        throw message;
+      }
+    } finally {
+      final file = File(scriptedPath);
+      if (await file.exists()) {
+        try {
+          await file.delete();
+        } catch (_) {}
+      }
     }
   }
 
@@ -844,6 +943,7 @@ class GlobalState {
     Script script, {
     bool managed = false,
     bool refresh = false,
+    bool cache = true,
   }) async {
     final stamp = DateTime.now().microsecondsSinceEpoch;
     final relayPath = await appPath.relayPath;
@@ -853,7 +953,7 @@ class GlobalState {
         '$relayPath${separator}cache-${profile.id}${managed ? '-managed' : ''}';
     return _scriptEvaluateLock.synchronized(() async {
       unawaited(_sweepRelay(relayPath));
-      final cache = File('$stem.json');
+      final cacheFile = File('$stem.json');
       final cacheKey = File('$stem.key');
       String? content;
       var digest = script.digest;
@@ -863,17 +963,17 @@ class GlobalState {
         digest = content.toMd5();
         volatile = volatileScriptPattern.hasMatch(content);
       }
-      final key = volatile
+      final key = !cache || volatile
           ? null
           : await _scriptedCacheKey(profile, script, digest, managed: managed);
       final exported = File('$relayPath${separator}profile-$stamp.json');
       try {
         if (!refresh &&
             key != null &&
-            await cache.exists() &&
+            await cacheFile.exists() &&
             await cacheKey.exists() &&
             await cacheKey.readAsString() == key) {
-          await cache.copy(file.path);
+          await cacheFile.copy(file.path);
           return file.path;
         }
         await _exportProfileConfig(
@@ -892,7 +992,7 @@ class GlobalState {
           if (await cacheKey.exists()) {
             await cacheKey.delete();
           }
-          await file.copy(cache.path);
+          await file.copy(cacheFile.path);
           await cacheKey.writeAsString(key, flush: true);
         }
         return file.path;
@@ -1014,6 +1114,8 @@ class GlobalState {
           'https://github.com/Zephyruso/zashboard/releases/latest/download/dist.zip',
       'external-ui-name': '',
       'tcp-concurrent': patchConfig.tcpConcurrent,
+      if (!system.isAndroid && patchConfig.interfaceName.isNotEmpty)
+        'interface-name': patchConfig.interfaceName,
       'unified-delay': patchConfig.unifiedDelay,
       'ipv6': patchConfig.ipv6,
       'log-level': patchConfig.logLevel.name,
@@ -1054,8 +1156,6 @@ class GlobalState {
 
     final scriptActive = profile.isManaged || _scriptActive(profile);
     final overrideData = profile.overrideData;
-    final isRussian =
-        config.appSetting.locale?.toLowerCase().startsWith('ru') ?? false;
     final listenPorts = patchConfig.listenPorts;
 
     return {
@@ -1065,10 +1165,11 @@ class GlobalState {
         for (final host in patchConfig.hosts.entries)
           if (system.isAndroid || host.key != 'services.googleapis.cn')
             {'key': host.key, 'value': host.value.splitByMultipleSeparators},
-        {
-          'key': 'dns.msftncsi.com',
-          'value': ['131.107.255.255', 'fd3e:4f5a:5b81::1'],
-        },
+        if (system.isWindows)
+          {
+            'key': 'dns.msftncsi.com',
+            'value': ['131.107.255.255', 'fd3e:4f5a:5b81::1'],
+          },
       ],
       'dns': {
         ...dns.toJson(),
@@ -1090,7 +1191,6 @@ class GlobalState {
       'health-check-timeout': config.healthCheckTimeout,
       'override-rules': overrideData.enable
           ? {
-              'override': overrideData.rule.type == OverrideRuleType.override,
               'rules': overrideData.runningRule,
             }
           : null,
@@ -1105,10 +1205,8 @@ class GlobalState {
           if (system.isAndroid)
             'AND,((DST-PORT,853),(IP-CIDR,198.51.100.0/30,no-resolve)),REJECT',
         ],
-        if (config.vpnProps.disableQuic && !scriptActive)
-          config.vpnProps.excludeChina && !isRussian
-              ? 'AND,((NETWORK,UDP),(DST-PORT,443),(NOT,((OR,((RULE-SET,cn_bettbox),(RULE-SET,cn_ip_bettbox,no-resolve)))))),REJECT'
-              : 'AND,((NETWORK,UDP),(DST-PORT,443)),REJECT',
+        if (config.vpnProps.disableQuic && !profile.isManaged)
+          'AND,((NETWORK,UDP),(DST-PORT,443)),REJECT',
       ],
       'disabled-groups': scriptActive
           ? const []

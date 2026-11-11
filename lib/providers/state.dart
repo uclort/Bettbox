@@ -43,7 +43,6 @@ Config configState(Ref ref) {
   final overrideSniffer = ref.watch(overrideSnifferProvider);
   final overrideTunnel = ref.watch(overrideTunnelProvider);
   final overrideExperimental = ref.watch(overrideExperimentalProvider);
-  final overrideTestUrl = ref.watch(overrideTestUrlProvider);
   final networkProps = ref.watch(networkSettingProvider);
   final vpnProps = ref.watch(vpnSettingProvider);
   final proxiesStyle = ref.watch(proxiesStyleSettingProvider);
@@ -67,7 +66,6 @@ Config configState(Ref ref) {
     overrideSniffer: overrideSniffer,
     overrideTunnel: overrideTunnel,
     overrideExperimental: overrideExperimental,
-    overrideTestUrl: overrideTestUrl,
     currentProfileId: currentProfileId,
     profiles: profiles,
     appSetting: appSetting,
@@ -425,7 +423,6 @@ List<Group> hideTimeoutProxies({
   required List<Group> allGroups,
   required SelectedMap selectedMap,
   required DelayMap delayMap,
-  required bool overrideTestUrl,
   required String defaultTestUrl,
 }) {
   final proxyTypes = {
@@ -436,10 +433,10 @@ List<Group> hideTimeoutProxies({
   return groups.map((group) {
     final selectedName = (allGroups.getGroup(group.name) ?? group)
         .getCurrentSelectedName(selectedMap[group.name] ?? '');
-    final visible = group.all.where((proxy) {
-      if (proxy.name == selectedName ||
-          allGroups.getGroup(proxy.name) != null) {
-        return true;
+
+    bool isTimeout(Proxy proxy) {
+      if (allGroups.getGroup(proxy.name) != null) {
+        return false;
       }
       final state = states.putIfAbsent(
         proxy.name,
@@ -450,14 +447,26 @@ List<Group> hideTimeoutProxies({
         ),
       );
       if (_unprobeableProxyTypes.contains(proxyTypes[state.proxyName])) {
-        return true;
+        return false;
       }
       final testUrl = state.testUrl.getSafeValue(group.testUrl ?? '');
-      final url = overrideTestUrl || testUrl.isEmpty ? defaultTestUrl : testUrl;
+      final url = testUrl.isEmpty ? defaultTestUrl : testUrl;
       final delay = delayMap[url]?[state.proxyName];
-      return delay == null || delay >= 0;
+      return delay != null && delay < 0;
+    }
+
+    final hasUsable = group.all.any((proxy) => !isTimeout(proxy));
+    if (!hasUsable) {
+      return group;
+    }
+
+    final visible = group.all.where((proxy) {
+      if (proxy.name == selectedName) {
+        return true;
+      }
+      return !isTimeout(proxy);
     }).toList();
-    return group.copyWith(all: visible.isEmpty ? group.all : visible);
+    return group.copyWith(all: visible);
   }).toList();
 }
 
@@ -474,7 +483,6 @@ GroupsState _hideTimeoutGroups(Ref ref, List<Group> groups) {
       allGroups: ref.watch(groupsProvider),
       selectedMap: ref.watch(selectedMapProvider),
       delayMap: ref.watch(delaySortSnapshotProvider),
-      overrideTestUrl: ref.watch(overrideTestUrlProvider),
       defaultTestUrl: ref.watch(
         appSettingProvider.select((state) => state.testUrl),
       ),
@@ -571,7 +579,6 @@ class SortedGroupProxies extends _$SortedGroupProxies {
         groups: ref.read(groupsProvider),
         selectedMap: ref.read(selectedMapProvider),
         delayMap: ref.watch(delaySortSnapshotProvider),
-        overrideTestUrl: ref.watch(overrideTestUrlProvider),
         defaultTestUrl: ref.watch(
           appSettingProvider.select((state) => state.testUrl),
         ),
@@ -772,15 +779,12 @@ bool isCurrentPage(
 
 @riverpod
 String getRealTestUrl(Ref ref, [String? testUrl]) {
-  final overrideTestUrl = ref.watch(overrideTestUrlProvider);
   final currentTestUrl = ref.watch(appSettingProvider).testUrl;
 
-  // If override is enabled or testUrl is null or empty, use client setting
-  if (overrideTestUrl || testUrl == null || testUrl.isEmpty) {
+  if (testUrl == null || testUrl.isEmpty) {
     return currentTestUrl;
   }
 
-  // Otherwise use the provided testUrl from config file
   return testUrl;
 }
 
@@ -881,7 +885,6 @@ int? Function(String proxyName, String? testUrl) createDelayLookup({
   required List<Group> groups,
   required SelectedMap selectedMap,
   required DelayMap delayMap,
-  required bool overrideTestUrl,
   required String defaultTestUrl,
 }) {
   final cache = <(String, String?), int?>{};
@@ -892,9 +895,7 @@ int? Function(String proxyName, String? testUrl) createDelayLookup({
       ProxyCardState(proxyName: proxyName),
     );
     final realTestUrl = state.testUrl.getSafeValue(testUrl ?? '');
-    final url = overrideTestUrl || realTestUrl.isEmpty
-        ? defaultTestUrl
-        : realTestUrl;
+    final url = realTestUrl.isEmpty ? defaultTestUrl : realTestUrl;
     return delayMap[url]?[state.proxyName];
   });
 }
@@ -1065,7 +1066,7 @@ bool currentProfileScriptActive(Ref ref) {
 }
 
 @riverpod
-VM4<String?, String?, String?, bool> needSetup(Ref ref) {
+VM5<String?, String?, String?, bool, String> needSetup(Ref ref) {
   final profileId = ref.watch(currentProfileIdProvider);
   final runsManagedScript = ref.watch(
     currentProfileProvider.select(
@@ -1090,7 +1091,16 @@ VM4<String?, String?, String?, bool> needSetup(Ref ref) {
   final ipv6 = ref.watch(
     patchClashConfigProvider.select((state) => state.ipv6),
   );
-  return VM4(a: profileId, b: scriptDigest, c: loopbackPorts, d: ipv6);
+  final interfaceName = ref.watch(
+    patchClashConfigProvider.select((state) => state.interfaceName),
+  );
+  return VM5(
+    a: profileId,
+    b: scriptDigest,
+    c: loopbackPorts,
+    d: ipv6,
+    e: interfaceName,
+  );
 }
 
 @riverpod

@@ -170,27 +170,18 @@ extension OverrideDataExt on OverrideData {
 
 @freezed
 abstract class OverrideRule with _$OverrideRule {
-  const factory OverrideRule({
-    @Default(OverrideRuleType.added) OverrideRuleType type,
-    @Default([]) List<Rule> overrideRules,
-    @Default([]) List<Rule> addedRules,
-  }) = _OverrideRule;
+  const factory OverrideRule({@Default([]) List<Rule> addedRules}) =
+      _OverrideRule;
 
   factory OverrideRule.fromJson(Map<String, Object?> json) =>
       _$OverrideRuleFromJson(json);
 }
 
 extension OverrideRuleExt on OverrideRule {
-  List<Rule> get rules => switch (type == OverrideRuleType.override) {
-    true => overrideRules,
-    false => addedRules,
-  };
+  List<Rule> get rules => addedRules;
 
   OverrideRule updateRules(List<Rule> Function(List<Rule> rules) builder) {
-    if (type == OverrideRuleType.added) {
-      return copyWith(addedRules: builder(addedRules));
-    }
-    return copyWith(overrideRules: builder(overrideRules));
+    return copyWith(addedRules: builder(addedRules));
   }
 }
 

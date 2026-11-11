@@ -773,7 +773,7 @@ abstract class ClashConfig with _$ClashConfig {
     List<String> skipAuthPrefixes,
     @Default(LogLevel.error) @JsonKey(name: 'log-level') LogLevel logLevel,
     @Default(true) bool ipv6,
-    @Default(FindProcessMode.off)
+    @Default(FindProcessMode.always)
     @JsonKey(
       name: 'find-process-mode',
       unknownEnumValue: FindProcessMode.always,
@@ -784,6 +784,7 @@ abstract class ClashConfig with _$ClashConfig {
     int keepAliveInterval,
     @Default(true) @JsonKey(name: 'unified-delay') bool unifiedDelay,
     @Default(true) @JsonKey(name: 'tcp-concurrent') bool tcpConcurrent,
+    @Default('') @JsonKey(name: 'interface-name') String interfaceName,
     @Default(defaultTun) @JsonKey(fromJson: Tun.safeFormJson) Tun tun,
     @Default(defaultDns) @JsonKey(fromJson: Dns.safeDnsFromJson) Dns dns,
     @Default(defaultNtp) @JsonKey(fromJson: Ntp.safeNtpFromJson) Ntp ntp,
@@ -817,16 +818,12 @@ abstract class ClashConfig with _$ClashConfig {
 
   factory ClashConfig.safeFormJson(Map<String, Object?>? json) {
     if (json == null) {
-      return system.isAndroid
-          ? const ClashConfig(findProcessMode: FindProcessMode.always)
-          : defaultClashConfig;
+      return defaultClashConfig;
     }
     try {
       return ClashConfig.fromJson(json);
     } catch (_) {
-      return system.isAndroid
-          ? const ClashConfig(findProcessMode: FindProcessMode.always)
-          : defaultClashConfig;
+      return defaultClashConfig;
     }
   }
 }

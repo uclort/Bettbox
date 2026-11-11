@@ -86,6 +86,7 @@ app.*.map.json
 /assets/data/geoip.metadb
 /assets/data/ASN.mmdb
 /assets/data/zash.zip
+/assets/data/BundleMRS.7z
 /test/private/
 
 # 私有内核检出目录不进入公开仓库。

@@ -365,72 +365,43 @@ class DisableQuicSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isManaged = ref.watch(
+      currentProfileProvider.select((profile) => profile?.isManaged ?? false),
+    );
     final disableQuic = ref.watch(
       vpnSettingProvider.select((state) => state.disableQuic),
     );
-    final excludeChina = ref.watch(
-      vpnSettingProvider.select((state) => state.excludeChina),
+    final managedOptions = ref.watch(
+      managedSettingProvider.select((state) => state.options),
     );
-    final locale = ref.watch(
-      appSettingProvider.select((state) => state.locale),
-    );
-    final isRussian = locale?.toLowerCase().startsWith('ru') ?? false;
-    final scriptActive = ref.watch(currentProfileScriptActiveProvider);
-    final enabled = disableQuic && !scriptActive;
+    final managedQuic =
+        managedOptions['禁用内核QUIC流量'] ??
+        managedOptions['屏蔽内核QUIC流量'] ??
+        true;
+    final enabled = isManaged ? managedQuic : disableQuic;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        ListItem.switchItem(
-          title: Text(appLocalizations.disableQuic),
-          subtitle: Text(
-            scriptActive
-                ? appLocalizations.disableQuicManagedDesc
-                : appLocalizations.disableQuicDesc,
-          ),
-          delegate: SwitchDelegate(
-            value: enabled,
-            onChanged: scriptActive
-                ? null
-                : (bool value) async {
-                    ref
-                        .read(vpnSettingProvider.notifier)
-                        .updateState(
-                          (state) => state.copyWith(disableQuic: value),
-                        );
-                    globalState.appController.setupClashConfigDebounce();
-                  },
-          ),
-        ),
-        if (enabled && !isRussian) ...[
-          Divider(
-            height: 1,
-            thickness: 1,
-            color: context.colorScheme.outlineVariant.withValues(
-              alpha: context.colorScheme.brightness == Brightness.light
-                  ? 0.6
-                  : 0.45,
-            ),
-            indent: 16,
-            endIndent: 16,
-          ),
-          ListItem.switchItem(
-            title: Text(appLocalizations.excludeChina),
-            subtitle: Text(appLocalizations.excludeChinaDesc),
-            delegate: SwitchDelegate(
-              value: excludeChina,
-              onChanged: (bool value) async {
-                ref
-                    .read(vpnSettingProvider.notifier)
-                    .updateState(
-                      (state) => state.copyWith(excludeChina: value),
-                    );
-                globalState.appController.setupClashConfigDebounce();
-              },
-            ),
-          ),
-        ],
-      ],
+    return ListItem.switchItem(
+      title: Text(appLocalizations.disableQuic),
+      subtitle: Text(appLocalizations.disableQuicDesc),
+      delegate: SwitchDelegate(
+        value: enabled,
+        onChanged: (bool value) async {
+          ref
+              .read(vpnSettingProvider.notifier)
+              .updateState((state) => state.copyWith(disableQuic: value));
+          if (isManaged) {
+            globalState.appController.updateManagedSetting(
+              (state) => state.copyWith(
+                options: {
+                  ...state.options,
+                  '禁用内核QUIC流量': value,
+                }..remove('屏蔽内核QUIC流量'),
+              ),
+            );
+          }
+          globalState.appController.setupClashConfigDebounce();
+        },
+      ),
     );
   }
 }
@@ -604,16 +575,16 @@ class _TrayClickBehaviorDialogState extends State<_TrayClickBehaviorDialog> {
     _rightBehavior = widget.rightBehavior;
   }
 
-  List<ButtonSegment<TrayClickBehavior>> get _segments => [
-    ButtonSegment(
+  List<SegmentOption<TrayClickBehavior>> get _options => [
+    SegmentOption(
       value: TrayClickBehavior.showPanel,
       icon: const Icon(Icons.dashboard_outlined),
-      label: Text(appLocalizations.showPanel),
+      label: appLocalizations.showPanel,
     ),
-    ButtonSegment(
+    SegmentOption(
       value: TrayClickBehavior.showMenu,
       icon: const Icon(Icons.menu),
-      label: Text(appLocalizations.showMenu),
+      label: appLocalizations.showMenu,
     ),
   ];
 
@@ -644,14 +615,10 @@ class _TrayClickBehaviorDialogState extends State<_TrayClickBehaviorDialog> {
             style: context.textTheme.titleSmall,
           ),
           const SizedBox(height: 8),
-          SegmentedButton<TrayClickBehavior>(
-            segments: _segments,
-            selected: {_leftBehavior},
-            showSelectedIcon: false,
-            expandedInsets: EdgeInsets.zero,
-            onSelectionChanged: (selection) {
-              setState(() => _leftBehavior = selection.first);
-            },
+          SegmentButtonGroup<TrayClickBehavior>(
+            options: _options,
+            selected: _leftBehavior,
+            onSelected: (behavior) => setState(() => _leftBehavior = behavior),
           ),
           const SizedBox(height: 20),
           Text(
@@ -659,14 +626,10 @@ class _TrayClickBehaviorDialogState extends State<_TrayClickBehaviorDialog> {
             style: context.textTheme.titleSmall,
           ),
           const SizedBox(height: 8),
-          SegmentedButton<TrayClickBehavior>(
-            segments: _segments,
-            selected: {_rightBehavior},
-            showSelectedIcon: false,
-            expandedInsets: EdgeInsets.zero,
-            onSelectionChanged: (selection) {
-              setState(() => _rightBehavior = selection.first);
-            },
+          SegmentButtonGroup<TrayClickBehavior>(
+            options: _options,
+            selected: _rightBehavior,
+            onSelected: (behavior) => setState(() => _rightBehavior = behavior),
           ),
         ],
       ),

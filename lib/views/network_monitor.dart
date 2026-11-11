@@ -6,7 +6,6 @@ import 'dart:io';
 import 'package:bett_box/clash/clash.dart';
 import 'package:bett_box/common/common.dart' hide ProcessIcon;
 import 'package:bett_box/common/external_control.dart';
-import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/models.dart';
 import 'package:bett_box/providers/providers.dart';
 import 'package:bett_box/state.dart';
@@ -31,28 +30,18 @@ Future<Map<String, Object?>> _addMonitorOverrideRule(
 ) async {
   final value = arguments['rule']?.toString().trim() ?? '';
   if (value.isEmpty) throw StateError('规则不能为空');
-  final type = arguments['type'] == OverrideRuleType.override.name
-      ? OverrideRuleType.override
-      : OverrideRuleType.added;
+  // BETTBOX-CUSTOM: 上游 1.19.8 移除了覆写规则的「覆盖原始规则」模式，面板只追加规则。
   final force = arguments['force'] == true;
   final profileId = ref.read(currentProfileIdProvider);
   final profile = ref.read(profilesProvider).getProfile(profileId);
   if (profileId == null || profile == null) throw StateError('当前没有可用配置');
 
   var rule = profile.overrideData.rule;
-  var rules = type == OverrideRuleType.override
-      ? [...rule.overrideRules]
-      : [...rule.addedRules];
-  if (type == OverrideRuleType.override && rules.isEmpty) {
-    final raw = await globalState.getProfileSnippet(profileId);
-    rules = [...ClashConfigSnippet.fromJson(raw).rule];
-  }
+  final rules = [...rule.addedRules];
   final duplicate = rules.any((item) => item.value.trim() == value);
   if (duplicate && !force) return {'duplicate': true};
   rules.insert(0, Rule.value(value));
-  rule = type == OverrideRuleType.override
-      ? rule.copyWith(type: type, overrideRules: rules)
-      : rule.copyWith(type: type, addedRules: rules);
+  rule = rule.copyWith(addedRules: rules);
   ref
       .read(profilesProvider.notifier)
       .updateProfile(

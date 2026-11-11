@@ -1,10 +1,69 @@
 import 'package:bett_box/common/common.dart';
-import 'package:bett_box/providers/config.dart';
+import 'package:bett_box/enum/enum.dart';
+import 'package:bett_box/providers/providers.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/views/config/network.dart';
 import 'package:bett_box/widgets/widgets.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+void showOutboundModeSheet(BuildContext context) {
+  showSheet(
+    context: context,
+    props: const SheetProps(expandable: false),
+    builder: (_, type) {
+      return AdaptiveSheetScaffold(
+        type: type,
+        body: Consumer(
+          builder: (context, ref, _) {
+            final currentMode = ref.watch(
+              patchClashConfigProvider.select((state) => state.mode),
+            );
+            return generateListView(
+              shrinkWrap: true,
+              generateSection(
+                items: [
+                  for (final item in Mode.values)
+                    ListItem(
+                      leading: Icon(
+                        switch (item) {
+                          Mode.rule => Icons.alt_route_rounded,
+                          Mode.global => Icons.language_rounded,
+                          Mode.direct => Icons.east_rounded,
+                        },
+                      ),
+                      title: Text(Intl.message(item.name)),
+                      trailing: item == currentMode
+                          ? Icon(
+                              Icons.check_rounded,
+                              color: context.colorScheme.primary,
+                            )
+                          : null,
+                      onTap: () {
+                        if (system.isAndroid &&
+                            ref.read(
+                              appSettingProvider.select(
+                                (s) => s.enableNavBarHapticFeedback,
+                              ),
+                            )) {
+                          HapticFeedback.selectionClick();
+                        }
+                        globalState.appController.changeMode(item);
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                ],
+              ),
+            );
+          },
+        ),
+        title: appLocalizations.outboundMode,
+      );
+    },
+  );
+}
 
 void showTunSheet(BuildContext context) {
   showSheet(
@@ -21,6 +80,7 @@ void showTunSheet(BuildContext context) {
               if (system.isDesktop) const DnsHijackItem(),
               if (!system.isAndroid) const StrictRouteItem(),
               const IcmpForwardingItem(),
+              if (system.isDesktop) const NetworkInterfaceItem(),
               if (!AppIdentity.isLite) const TunStackItem(),
             ],
           ),

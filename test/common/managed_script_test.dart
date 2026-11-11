@@ -45,7 +45,7 @@ void main() {
 
   test('route icons resolve to Qure paths and bundled assets', () async {
     const base =
-        'https://cdn.jsdmirror.com/gh/appshubcc/Qure_Style_SVG@main/icon/svg/';
+        'https://cdn.jsdelivr.net/gh/appshubcc/Qure_Style_SVG@main/icon/svg/';
     expect(routeIconUrl('YouTube.svg'), '${base}common/YouTube.svg');
     expect(routeIconUrl('flag/Japan.svg'), '${base}flag/Japan.svg');
     expect(
@@ -288,22 +288,102 @@ void main() {
     );
   });
 
+  test(
+    'regions default to the preset ones and are injected when chosen',
+    () async {
+      final catalog = (await ManagedScript.catalog(
+        const ManagedProps(),
+      )).catalog;
+      expect(managedRegions(catalog, null), ['香港', '日本', '美国', '新加坡', '台湾']);
+      expect(managedRegions(catalog, const ['日本', '韩国', 'Gone']), ['日本', '韩国']);
+      expect(
+        managedRegions(
+          catalog,
+          null,
+          const [CustomRegion(name: '德国', regex: '德国|DE')],
+        ),
+        ['香港', '日本', '美国', '新加坡', '台湾', '德国'],
+      );
+      expect(
+        managedRegions(
+          catalog,
+          const ['韩国', '德国'],
+          const [CustomRegion(name: '德国', regex: '德国|DE')],
+        ),
+        ['韩国', '德国'],
+      );
+      for (final region in catalog.regions) {
+        expect(
+          catalog.reserved,
+          containsAll([region.name, '${region.name}-自动选择']),
+        );
+        expect(catalog.targets, contains(region.name));
+        expect(routeIconAsset(routeIconUrl(region.icon)), isNotNull);
+      }
+
+      const props = ManagedProps();
+      final plain = await ManagedScript.script(props);
+      expect(plain.content.contains('const bettboxRegions'), isFalse);
+      expect(plain.content.contains('const bettboxCustomRegions'), isFalse);
+      final chosen = await ManagedScript.script(
+        props.copyWith(regions: const ['香港', '韩国']),
+      );
+      expect(chosen.content.endsWith(plain.content), isTrue);
+      expect(
+        chosen.content.startsWith('const bettboxRegions = ["香港","韩国"];\n'),
+        isTrue,
+      );
+      final withCustom = await ManagedScript.script(
+        props.copyWith(
+          customRegions: const [CustomRegion(name: '德国', regex: '德国|DE')],
+        ),
+      );
+      expect(withCustom.content.contains('const bettboxCustomRegions'), isTrue);
+    },
+  );
+
+  test('regions join the saved group order', () {
+    const presets = ['AI', 'YouTube', 'AdBlock'];
+    expect(
+      orderManagedGroups(
+        presets: presets,
+        customs: ['A'],
+        saved: [],
+        regions: ['香港', '韩国'],
+      ),
+      ['AI', 'YouTube', 'A', 'AdBlock', '香港', '韩国'],
+    );
+    expect(
+      orderManagedGroups(
+        presets: presets,
+        customs: [],
+        saved: ['韩国', 'AI', 'YouTube', 'AdBlock', '香港'],
+        regions: ['香港', '韩国', '英国'],
+      ),
+      ['韩国', '英国', 'AI', 'YouTube', 'AdBlock', '香港'],
+    );
+  });
+
   test('remote links go through the jsDelivr mirror', () {
     expect(
       mirrorUrl('https://raw.githubusercontent.com/a/b/main/icons/x.svg'),
-      'https://cdn.jsdmirror.com/gh/a/b@main/icons/x.svg',
+      'https://cdn.jsdelivr.net/gh/a/b@main/icons/x.svg',
     );
     expect(
       mirrorUrl('https://raw.githubusercontent.com/a/b/refs/heads/dev/x.mrs'),
-      'https://cdn.jsdmirror.com/gh/a/b@dev/x.mrs',
+      'https://cdn.jsdelivr.net/gh/a/b@dev/x.mrs',
     );
     expect(
       mirrorUrl('https://github.com/a/b/blob/main/rules/x.mrs'),
-      'https://cdn.jsdmirror.com/gh/a/b@main/rules/x.mrs',
+      'https://cdn.jsdelivr.net/gh/a/b@main/rules/x.mrs',
     );
     expect(
       mirrorUrl('https://cdn.jsdelivr.net/gh/a/b@main/x.svg'),
-      'https://cdn.jsdmirror.com/gh/a/b@main/x.svg',
+      'https://cdn.jsdelivr.net/gh/a/b@main/x.svg',
+    );
+    expect(
+      mirrorUrl('https://cdn.jsdmirror.com/gh/a/b@main/x.svg'),
+      'https://cdn.jsdelivr.net/gh/a/b@main/x.svg',
     );
     expect(
       mirrorUrl('https://example.com/icon.svg'),
@@ -312,7 +392,40 @@ void main() {
     expect(mirrorUrl('https://github.com/a/b'), 'https://github.com/a/b');
     expect(
       routeIconUrl('https://raw.githubusercontent.com/a/b/main/x.svg'),
-      'https://cdn.jsdmirror.com/gh/a/b@main/x.svg',
+      'https://cdn.jsdelivr.net/gh/a/b@main/x.svg',
     );
+  });
+
+  test('custom managed script version and raw override are tracked', () async {
+    await ManagedScript.loadBundledVersion();
+    expect(ManagedScript.bundledVersion, isNotEmpty);
+    const customProps = ManagedProps(syncedVersion: 'custom:12345678');
+    expect(ManagedScript.isCustom(customProps), isTrue);
+    expect(ManagedScript.syncedVersion(customProps), 'custom:12345678');
+    expect(ManagedScript.version(customProps), 'custom:12345678');
+
+    const defaultProps = ManagedProps();
+    expect(ManagedScript.isCustom(defaultProps), isFalse);
+    expect(ManagedScript.syncedVersion(defaultProps), isNull);
+
+    final rawScript = await ManagedScript.script(
+      defaultProps.copyWith(order: const ['AdBlock', 'FCM']),
+      raw: 'function main(config) { return config; }',
+    );
+    expect(
+      rawScript.content,
+      'const bettboxOrder = ["AdBlock","FCM"];\nfunction main(config) { return config; }',
+    );
+  });
+
+  test('version comparison compares numerically when numbers', () {
+    expect(ManagedScript.compareVersions('99', '100'), lessThan(0));
+    expect(ManagedScript.compareVersions('100', '99'), greaterThan(0));
+    expect(ManagedScript.compareVersions('20241012', '2026111105'), lessThan(0));
+    expect(ManagedScript.compareVersions('2026111105', '2026111105'), 0);
+    expect(ManagedScript.compareVersions('beta', 'alpha'), greaterThan(0));
+
+    const olderProps = ManagedProps(syncedVersion: '99');
+    expect(ManagedScript.syncedVersion(olderProps), isNull);
   });
 }

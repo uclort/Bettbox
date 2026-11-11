@@ -473,12 +473,13 @@ _ClashConfig _$ClashConfigFromJson(Map<String, dynamic> json) => _ClashConfig(
         json['find-process-mode'],
         unknownValue: FindProcessMode.always,
       ) ??
-      FindProcessMode.off,
+      FindProcessMode.always,
   keepAliveInterval:
       (json['keep-alive-interval'] as num?)?.toInt() ??
       defaultKeepAliveInterval,
   unifiedDelay: json['unified-delay'] as bool? ?? true,
   tcpConcurrent: json['tcp-concurrent'] as bool? ?? true,
+  interfaceName: json['interface-name'] as String? ?? '',
   tun: json['tun'] == null
       ? defaultTun
       : Tun.safeFormJson(json['tun'] as Map<String, Object?>?),
@@ -549,6 +550,7 @@ Map<String, dynamic> _$ClashConfigToJson(_ClashConfig instance) =>
       'keep-alive-interval': instance.keepAliveInterval,
       'unified-delay': instance.unifiedDelay,
       'tcp-concurrent': instance.tcpConcurrent,
+      'interface-name': instance.interfaceName,
       'tun': instance.tun,
       'dns': instance.dns,
       'ntp': instance.ntp,

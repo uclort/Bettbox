@@ -35,6 +35,7 @@ final List<String> _emojiFontFallback = [FontFamily.twEmoji.value];
 class EditorPage extends ConsumerStatefulWidget {
   final String title;
   final String content;
+  final String? defaultContent;
   final List<Language> languages;
   final bool supportRemoteDownload;
   final bool titleEditable;
@@ -42,6 +43,7 @@ class EditorPage extends ConsumerStatefulWidget {
   final bool delayedFocus;
   final bool simple;
   final Function(BuildContext context, String title, String content)? onSave;
+  final Future<bool> Function(BuildContext context)? onReset;
   final Future<bool> Function(
     BuildContext context,
     String title,
@@ -54,11 +56,13 @@ class EditorPage extends ConsumerStatefulWidget {
     super.key,
     required this.title,
     required this.content,
+    this.defaultContent,
     this.titleEditable = false,
     this.readOnly = false,
     this.delayedFocus = false,
     this.simple = false,
     this.onSave,
+    this.onReset,
     this.onPop,
     this.onUrlImport,
     this.supportRemoteDownload = false,
@@ -95,9 +99,12 @@ class _EditorPageState extends ConsumerState<EditorPage> {
 
   bool get _editorHasFocus => _controller.focusNode?.hasFocus ?? false;
 
-  late final String _original = CodeForgeController.normalizeLineBreaks(
+  late String _original = CodeForgeController.normalizeLineBreaks(
     widget.content,
   );
+  late final String? _defaultContent = widget.defaultContent == null
+      ? null
+      : CodeForgeController.normalizeLineBreaks(widget.defaultContent!);
   int _loadedLength = 0;
   int _checkedVersion = -1;
   bool _modified = false;
@@ -240,6 +247,24 @@ class _EditorPageState extends ConsumerState<EditorPage> {
       return;
     }
     widget.onSave!(context, _titleController.text, _controller.text);
+  }
+
+  Future<void> _handleReset(BuildContext context) async {
+    final defaultContent = _defaultContent;
+    if (defaultContent == null || _isLoading) return;
+    if (widget.onReset != null) {
+      final ok = await widget.onReset!(context);
+      if (!ok || !mounted) return;
+    }
+    _undoController.clear();
+    _controller
+      ..text = defaultContent
+      ..selection = const TextSelection.collapsed(offset: 0);
+    _original = defaultContent;
+    _loadedLength = _controller.length;
+    _checkedVersion = _controller.contentVersion;
+    _modified = false;
+    setState(() {});
   }
 
   Future<void> _routeSettled() async {
@@ -687,6 +712,18 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                     tooltip: appLocalizations.download,
                     icon: const Icon(Icons.arrow_downward),
                   ),
+                if (_defaultContent != null && !readOnly)
+                  _wrapTitleController(() {
+                    final canReset =
+                        !_isLoading &&
+                        (_controller.text != _defaultContent ||
+                            _original != _defaultContent);
+                    return IconButton(
+                      onPressed: canReset ? () => _handleReset(context) : null,
+                      tooltip: appLocalizations.restoreBundled,
+                      icon: const Icon(Icons.restore),
+                    );
+                  }),
                 ListenableBuilder(
                   listenable: _undoController,
                   builder: (_, _) => CommonPopupBox(

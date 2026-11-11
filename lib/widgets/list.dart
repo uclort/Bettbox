@@ -126,7 +126,11 @@ class InputDelegate extends Delegate {
   });
 }
 
-class ListItem<T> extends StatelessWidget {
+abstract interface class HasLeadingWidget {
+  bool get hasLeading;
+}
+
+class ListItem<T> extends StatelessWidget implements HasLeadingWidget {
   final Widget? leading;
   final Widget title;
   final Widget? subtitle;
@@ -140,6 +144,9 @@ class ListItem<T> extends StatelessWidget {
   final TextStyle? subtitleTextStyle;
   final ShapeBorder? shape;
   final void Function()? onTap;
+
+  @override
+  bool get hasLeading => leading != null;
 
   const ListItem({
     super.key,
@@ -276,6 +283,7 @@ class ListItem<T> extends StatelessWidget {
     Widget? leading,
     bool enabled = true,
   }) {
+    final effectiveLeading = leading ?? this.leading;
     return ListTile(
       key: key,
       dense: dense,
@@ -293,9 +301,18 @@ class ListItem<T> extends StatelessWidget {
           context.textTheme.bodyMedium?.copyWith(
             fontSize: 12.5,
             color: context.colorScheme.onSurfaceVariant.opacity80,
+            height: 1.35,
           ),
-      leading: leading ?? this.leading,
-      horizontalTitleGap: horizontalTitleGap ?? 12,
+      leading: effectiveLeading != null
+          ? IconTheme(
+              data: IconThemeData(
+                size: 22,
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+              child: effectiveLeading,
+            )
+          : null,
+      horizontalTitleGap: horizontalTitleGap ?? 14,
       title: title,
       minVerticalPadding: 10,
       minTileHeight: 52,
@@ -344,7 +361,16 @@ class ListItem<T> extends StatelessWidget {
             action();
           }
 
-          return _buildListTile(context, onTap: openAction);
+          return _buildListTile(
+            context,
+            trailing: trailing ??
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 20,
+                  color: context.colorScheme.onSurfaceVariant.opacity60,
+                ),
+            onTap: openAction,
+          );
         },
         openBuilder: (context, action) {
           final child = buildChild(context);
@@ -367,6 +393,12 @@ class ListItem<T> extends StatelessWidget {
 
       return _buildListTile(
         context,
+        trailing: trailing ??
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 20,
+              color: context.colorScheme.onSurfaceVariant.opacity60,
+            ),
         onTap: () {
           showExtend(
             context,
@@ -507,6 +539,16 @@ class ListItem<T> extends StatelessWidget {
   }
 }
 
+bool _itemHasLeading(Widget widget) {
+  if (widget is HasLeadingWidget) {
+    return (widget as HasLeadingWidget).hasLeading;
+  }
+  if (widget is ListItem) {
+    return widget.leading != null;
+  }
+  return false;
+}
+
 class ListHeader extends StatelessWidget {
   final String title;
   final String? subTitle;
@@ -529,7 +571,7 @@ class ListHeader extends StatelessWidget {
       alignment: Alignment.centerLeft,
       padding:
           padding ??
-          const EdgeInsets.only(left: 16, right: 8, top: 24, bottom: 8),
+          const EdgeInsets.only(left: 24, right: 8, top: 20, bottom: 8),
       child: Row(
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -589,7 +631,7 @@ class SectionContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final headerPadding = isFirst
-        ? const EdgeInsets.only(left: 16, right: 8, top: 4, bottom: 8)
+        ? const EdgeInsets.only(left: 24, right: 8, top: 4, bottom: 8)
         : null;
 
     if (plain) {
@@ -618,13 +660,13 @@ class SectionContainer extends StatelessWidget {
           if (i != cleanItems.length - 1)
             Divider(
               height: 1,
-              thickness: 1,
+              thickness: 0.6,
               color: context.colorScheme.outlineVariant.withValues(
                 alpha: context.colorScheme.brightness == Brightness.light
-                    ? 0.45
-                    : 0.25,
+                    ? 0.4
+                    : 0.2,
               ),
-              indent: 16,
+              indent: _itemHasLeading(cleanItems[i]) ? 56 : 16,
               endIndent: 16,
             ),
         ],
@@ -950,7 +992,7 @@ Widget generateListView(List<Widget> items, {bool shrinkWrap = false}) {
                 title: item.title,
                 subTitle: item.subTitle,
                 padding: const EdgeInsets.only(
-                  left: 16,
+                  left: 24,
                   right: 8,
                   top: 4,
                   bottom: 8,
