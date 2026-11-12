@@ -6,9 +6,9 @@
     <description>Bettbox 自定义版本更新源</description>
     <language>zh-CN</language>
     <item>
-      <title>Bettbox 1.19.8+2090000270</title>
-      <pubDate>Mon, 09 Nov 2026 01:20:29 +0000</pubDate>
-      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.8+2090000270</link>
+      <title>Bettbox 1.19.8+2090000271</title>
+      <pubDate>Thu, 12 Nov 2026 00:23:12 +0000</pubDate>
+      <link>https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.8+2090000271</link>
       <description><![CDATA[<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https:;">
@@ -19,7 +19,7 @@ h1,h2,h3 { line-height: 1.35; } h1 { font-size: 22px; } h2 { font-size: 18px; } 
 pre { white-space: pre-wrap; } code { font-size: .92em; }
 img,table { max-width: 100%; } table { border-collapse: collapse; } td,th { border: 1px solid #888; padding: 6px; }
 a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; padding-top: 12px; }
-</style></head><body><p dir="auto">基于上游 Bettbox <code class="notranslate">1.19.8+2026102201</code>（<code class="notranslate">main@554d0856dae0</code>）构建。</p>
+</style></head><body><p dir="auto">基于上游 Bettbox <code class="notranslate">1.19.8+2026111101</code>（<code class="notranslate">main@6335635f1571</code>）构建。</p>
 <h2 dir="auto">新增</h2>
 <ul dir="auto">
 <li>内置 Tailscale 节点：内核作为独立设备加入 Tailnet，支持浏览器登录或 Auth Key 两种接入方式、设备列表与出口节点；桌面端另有「Tailscale App 共存」开关；设置入口位于「内核配置 → Tailscale」</li>
@@ -41,12 +41,11 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>macOS 网络切换、睡眠唤醒后自动恢复 TUN、DNS 与系统代理</li>
 <li>内核重启与配置切换串行执行，避免启动竞态</li>
 <li>内置 Tailscale 节点在更新订阅、重载配置时不再重启，Tailnet 连接不中断；配置生效后提前启动</li>
-<li>同步上游 Bettbox 1.19.8 测试版：配置切换方式、智能停止、流量统计等；WebDAV 同步按配置文件保留各自的覆写脚本选择</li>
+<li>同步上游 Bettbox 1.19.8 正式版：配置合并与托管脚本、配置切换方式、智能停止、流量统计、策略组标签栏等；WebDAV 同步按配置文件保留各自的覆写脚本选择</li>
 <li>开启内置 Tailscale 节点后，订阅中让 Tailnet 绕开节点的配置（TUN 排除网段、MagicDNS 服务器、hosts 等）在运行时自动忽略，不修改订阅</li>
 </ul>
 <h2 dir="auto">修复</h2>
 <ul dir="auto">
-<li>Android 关闭 IPv6 时，夸克网盘等直接连 IPv6 地址的应用加载失败（如搜索提示「加载异常」），虚拟网卡的 IPv6 现在跟随开关</li>
 <li>macOS 静默启动时窗口闪现</li>
 <li>Tailscale 共存时控制面域名返回真实 IP，Rex 等内嵌 tsnet 的应用登录不再无响应</li>
 <li>Tailscale 代理通道所选代理不支持 UDP 时节点启动失败（Rebind IPv4 failed），现改为经 DERP 中继连接</li>
@@ -67,6 +66,7 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <ul dir="auto">
 <li>跟随上游移除独立 DNS 设置页、「网络切换时刷新 DNS」与「自动设置系统 DNS」开关（macOS 虚拟网卡的系统 DNS 托管保留）</li>
 <li>移除预览版通道与「接收预览版」开关：所有版本都以正式版发布；之前开过该开关的设备照常升级到新版本</li>
+<li>跟随上游移除覆写规则的「覆盖原始规则」模式，网络面板生成的规则只附加到原始规则</li>
 </ul>
 <h2 dir="auto">兼容性变更</h2>
 <ul dir="auto">
@@ -78,11 +78,11 @@ a { color: #1876d2; } footer { margin-top: 24px; border-top: 1px solid #888; pad
 <li>自定义 Mihomo 内核：Snell v6（OpenSnell <code class="notranslate">970499c</code>，对齐官方 v6.0.0 写分块、零块填充与 ConnectV2，修复与官方服务端复用会话断开）、direct proxy 跟随接口 DNS、Tailscale 出站状态接口</li>
 </ul>
 <hr>
-<p dir="auto">构建版本 <code class="notranslate">1.19.8+2090000270</code>，提交 <code class="notranslate">8588b1cdc857</code>，自定义内核 <code class="notranslate">4a94696a6ea0</code>。Windows 与 macOS 安装包未做商业代码签名；Android 使用 Bettbox 自定义版固定 Release 签名。</p>
-<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.8%2B2090000270">查看完整发布页</a></footer></body></html>]]></description>
-      <sparkle:version>2090000270</sparkle:version>
-      <sparkle:shortVersionString>1.19.8+2090000270</sparkle:shortVersionString>
-      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.8+2090000270/Bettbox-1.19.8-macos-arm64.dmg" length="73941638" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="uSbiNnnPAnhhzcZUK4JA6WX8lqgbZtNVbwDOMpNxek/MRLOQDxWleCxgkRkT39ljfuWkW+Lj3K9DLKgvrSBaCQ==" />
+<p dir="auto">构建版本 <code class="notranslate">1.19.8+2090000271</code>，提交 <code class="notranslate">5eae4df3cf5b</code>，自定义内核 <code class="notranslate">3ccc2c30644d</code>。Windows 与 macOS 安装包未做商业代码签名；Android 使用 Bettbox 自定义版固定 Release 签名。</p>
+<footer><a href="https://github.com/uclort/Bettbox/releases/tag/custom-v1.19.8%2B2090000271">查看完整发布页</a></footer></body></html>]]></description>
+      <sparkle:version>2090000271</sparkle:version>
+      <sparkle:shortVersionString>1.19.8+2090000271</sparkle:shortVersionString>
+      <enclosure url="https://github.com/uclort/Bettbox/releases/download/custom-v1.19.8+2090000271/Bettbox-1.19.8-macos-arm64.dmg" length="73379485" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="gEPBP6H9Zb+GA0eRaPLCLwYhPTxgSNKTlqCjAS24bNS1656Aeyfaq3Q/pZN9lmjpU2KK+VZhjGXOTEr3z0DkAg==" />
     </item>
   </channel>
 </rss>
