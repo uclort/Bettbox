@@ -38,8 +38,11 @@ env:
     codex/support-inline-provider-content
     codex/custom-in-app-updater
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  FLUTTER_VERSION: 3.47.7
+  FLUTTER_VERSION: 3.50.1
   GO_VERSION: 1.25.x
+  # BETTBOX-CUSTOM: 上游 v1.19.9 起默认构建 lite 核心（去掉 Tailscale / gVisor 并锁定 mips 栈），
+  # 自定义版一律用 --standard 完整核心，但保留原安装包文件名，已安装客户端按旧资产名匹配更新。
+  BETTBOX_KEEP_ASSET_NAMES: 'true'
   GRADLE_OPTS: -Dorg.gradle.vfs.watch=false -Dorg.gradle.daemon=false -Dorg.gradle.caching=false
   SENTRY_BACKEND: none
 
@@ -767,7 +770,27 @@ jobs:
       - name: 构建 Android arm64-v8a
         if: matrix.platform == 'android'
         shell: bash
-        run: dart setup.dart android --arch arm64 --env stable
+        run: dart setup.dart android --arch arm64 --env stable --standard
+
+      - name: 修补 Windows sing-tun 转发
+        # 跟随上游正式包：关闭 Wintun 接口的 IPv4 转发，避免 Windows 把 TUN 流量回环转发。
+        if: matrix.platform == 'windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd core
+          SING_TUN_VERSION=$(grep -E 'github\.com/metacubex/sing-tun\s+v[^[:space:]]+' go.mod | awk '{print $2}')
+          echo "Detected sing-tun version: ${SING_TUN_VERSION}"
+          go mod download github.com/metacubex/sing-tun@${SING_TUN_VERSION}
+          MOD_CACHE=$(go env GOMODCACHE | tr '\\' '/')
+          FILE="${MOD_CACHE}/github.com/metacubex/sing-tun@${SING_TUN_VERSION}/tun_windows.go"
+          echo "Patching ${FILE}"
+          chmod +w "${FILE}"
+          perl -pi -e 's/inetIf\.ForwardingEnabled = true/inetIf.ForwardingEnabled = false/g' "${FILE}"
+          if grep -q 'inetIf.ForwardingEnabled = true' "${FILE}"; then
+            echo "sing-tun Windows 转发补丁未生效" >&2
+            exit 1
+          fi
 
       - name: 构建 Windows
         if: matrix.platform == 'windows'
@@ -775,13 +798,14 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           $arch = "${{ matrix.arch }}"
-          dart setup.dart windows --arch $arch --out core-only
+          dart setup.dart windows --arch $arch --out core-only --standard
           $coreHash = (Get-FileHash libclash/windows/BettboxCore.exe -Algorithm SHA256).Hash.ToLower()
           dart setup.dart windows --arch $arch --out helper --core-hash $coreHash
           flutter build windows --release --verbose `
             --build-number=${{ needs.inspect.outputs.build_number }} `
             --dart-define=CORE_SHA256=$coreHash `
             --dart-define=APP_ENV=stable `
+            --dart-define=APP_STANDARD=true `
             --dart-define=APP_ASSET_SUFFIX=windows-$arch-setup.exe `
             --dart-define=APP_UPDATE_REPOSITORY=$env:APP_UPDATE_REPOSITORY `
             --dart-define=APP_RELEASE_TAG=$env:APP_RELEASE_TAG `
@@ -1040,7 +1064,7 @@ jobs:
       - name: 构建 macOS
         if: matrix.platform == 'macos'
         shell: bash
-        run: dart setup.dart macos --arch ${{ matrix.arch }} --env stable
+        run: dart setup.dart macos --arch ${{ matrix.arch }} --env stable --standard
 
       - name: 校验上游 macOS 渲染配置并回归更新版本与中文资源
         if: matrix.platform == 'macos'
@@ -1048,15 +1072,18 @@ jobs:
         run: |
           set -euo pipefail
           app_path="$(find build/macos/Build/Products/Release -maxdepth 1 -name '*.app' -print -quit)"
-          # BETTBOX-CUSTOM: v1.19.7 起上游对全部 macOS 架构关闭 Impeller。
+          # BETTBOX-CUSTOM: v1.19.9 起上游 Apple Silicon 开启 Impeller，Intel 由 setup.dart 打包时关闭
+          # （Intel / macOS 12 设备在 Impeller 下出现条纹与文字拉伸）。
           python3 - "${app_path}/Contents/Info.plist" "${{ matrix.arch }}" <<'PY'
           import plistlib
           import sys
           with open(sys.argv[1], 'rb') as source:
               info = plistlib.load(source)
-          if info.get('FLTEnableImpeller') is not False:
-              raise SystemExit('macOS 正式包必须沿用上游关闭 Impeller。')
-          print('macOS 正式包上游渲染配置校验通过：' + sys.argv[2])
+          arch = sys.argv[2]
+          expected = arch != 'amd64'
+          if info.get('FLTEnableImpeller') is not expected:
+              raise SystemExit(f'macOS {arch} 正式包 FLTEnableImpeller 必须为 {expected}（沿用上游渲染配置）。')
+          print(f'macOS 正式包上游渲染配置校验通过：{arch} FLTEnableImpeller={expected}')
           PY
           bash .custom-build/scripts/test-macos-updater.sh "${app_path}" "${{ matrix.arch }}"
           bash .custom-build/scripts/test-macos-login-item.sh
