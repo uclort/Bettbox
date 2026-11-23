@@ -23,9 +23,7 @@ class ExternalControl {
         await _startUnixSocket();
         return;
       } catch (e) {
-        commonPrint.warn(
-          'ExternalControl UDS bind failed, falling back to TCP: $e',
-        );
+        commonPrint.warn('External control socket bind failed, using TCP: $e');
       }
     }
     await _startTcpSocket();
@@ -56,7 +54,7 @@ class ExternalControl {
   static void _listen() {
     _server!.listen(
       _handleSocket,
-      onError: (e) => commonPrint.log('ExternalControl server error: $e'),
+      onError: (e) => commonPrint.warn('External control server error: $e'),
     );
   }
 
@@ -263,7 +261,7 @@ class ExternalControl {
       case 'show':
         window?.show();
       default:
-        commonPrint.warn('ExternalControl unknown command: $command');
+        commonPrint.warn('External control unknown command $command');
     }
   }
 }

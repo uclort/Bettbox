@@ -119,6 +119,35 @@ void main() {
     expect(index.iconOf(route('https://a.com/b.svg')), 'https://a.com/b.svg');
   });
 
+  test(
+    'sensitive remote icons and services remain matchable without local assets',
+    () async {
+      await loadBundledRouteIcons();
+      final index = await ManagedScript.catalog();
+      expect(
+        index.catalog.icons,
+        containsAll(const ['EHentai.svg', 'MissAV.svg', 'Pornhub.svg']),
+      );
+      expect(
+        index.catalog.services.any((service) => service.name == 'MissAV'),
+        isTrue,
+      );
+      for (final (name, setKey, expected) in const [
+        ('MissAV', 'geosite:missav', 'MissAV.svg'),
+        ('E-Hentai', 'geosite:ehentai', 'EHentai.svg'),
+        ('Pornhub', 'geosite:pornhub', 'Pornhub.svg'),
+      ]) {
+        expect(index.autoIcon(name, const []), expected);
+        expect(index.autoIcon('Custom', [setKey]), expected);
+        expect(index.sets[setKey]?.icon, expected);
+        final url = routeIconUrl(expected);
+        expect(url, isNotNull);
+        expect(routeIconAsset(url), isNull);
+        expect(sensitiveRoutePattern.hasMatch(name), isTrue);
+      }
+    },
+  );
+
   test('custom groups sit before AdBlock and follow the saved order', () {
     const presets = ['FCM', 'YouTube', 'Google', 'AdBlock'];
     expect(
@@ -357,6 +386,79 @@ void main() {
         regions: ['香港', '韩国', '英国'],
       ),
       ['韩国', '英国', 'AI', 'YouTube', 'AdBlock', '香港'],
+    );
+  });
+
+  test('rate groups follow options, icons and saved group order', () async {
+    await loadBundledRouteIcons();
+    expect(managedRateGroups(const {}), isEmpty);
+    expect(managedRateGroups(const {managedRateGroupOption: false}), isEmpty);
+    expect(managedRateGroups(const {managedRateGroupOption: true}), const [
+      managedLowRateGroup,
+      managedHighRateGroup,
+    ]);
+    expect(
+      managedRateGroups(const {
+        managedRateGroupOption: true,
+        managedFilterLowRateOption: true,
+      }),
+      const [managedHighRateGroup],
+    );
+    expect(
+      managedRateGroups(const {
+        managedRateGroupOption: true,
+        managedFilterHighRateOption: true,
+      }),
+      const [managedLowRateGroup],
+    );
+    for (final icon in managedRateGroupIcons.values) {
+      expect(routeIconAsset(routeIconUrl(icon)), isNotNull);
+    }
+    expect(
+      orderManagedGroups(
+        presets: const ['AI', 'AdBlock'],
+        customs: const [],
+        saved: const [managedHighRateGroup, '香港', 'AI', 'AdBlock'],
+        regions: [
+          '香港',
+          '日本',
+          ...managedRateGroups(const {managedRateGroupOption: true}),
+        ],
+      ),
+      const [
+        managedHighRateGroup,
+        '香港',
+        '日本',
+        managedLowRateGroup,
+        'AI',
+        'AdBlock',
+      ],
+    );
+    expect(
+      orderManagedGroups(
+        presets: const ['AI', 'AdBlock'],
+        customs: const [],
+        saved: const [
+          managedHighRateGroup,
+          '香港',
+          'AI',
+          managedLowRateGroup,
+          'AdBlock',
+        ],
+        regions: [
+          '香港',
+          '日本',
+          ...managedRateGroups(const {managedRateGroupOption: true}),
+        ],
+      ),
+      const [
+        managedHighRateGroup,
+        '香港',
+        '日本',
+        'AI',
+        managedLowRateGroup,
+        'AdBlock',
+      ],
     );
   });
 

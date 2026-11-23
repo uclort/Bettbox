@@ -135,72 +135,80 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m50(count) => "${count} گزارش جدید";
 
-  static String m51(prefix) => "پیشوند گره: ${prefix}";
+  static String m51(count) => "${count} گره نامعتبر نادیده گرفته شد";
 
-  static String m52(label) => "هیچ مورد ${label} یافت نشد";
+  static String m52(prefix) => "پیشوند گره: ${prefix}";
 
-  static String m53(min, max) => "یک عدد صحیح بین ${min} تا ${max} وارد کنید";
+  static String m53(label) => "هیچ مورد ${label} یافت نشد";
 
-  static String m54(label) => "${label} باید عدد باشد";
+  static String m54(min, max) => "یک عدد صحیح بین ${min} تا ${max} وارد کنید";
 
-  static String m55(label) => "فقط ${label}";
+  static String m55(label) => "${label} باید عدد باشد";
 
-  static String m56(label) =>
+  static String m56(label) => "فقط ${label}";
+
+  static String m57(label) =>
       "${label} باید بین ۱۰۲۴ تا ۴۹۱۵۱ باشد (۰ برای غیرفعال)";
 
-  static String m57(statusCode) =>
+  static String m58(statusCode) =>
       "خطا در دریافت پروفایل. لطفاً شبکه خود را بررسی کرده یا لینک را ریست کنید ( کد خطا: ${statusCode} )";
 
-  static String m58(count) => "${count} ارائه‌دهنده";
+  static String m59(count) => "${count} ارائه‌دهنده";
 
-  static String m59(terms) =>
+  static String m60(terms) =>
       "یک دستگاه WARP جدید در Cloudflare ثبت می‌شود. با ادامه، ${terms} را می‌پذیرید.";
 
-  static String m60(count) => "افزودن ${count}";
+  static String m61(count) => "افزودن ${count}";
 
-  static String m61(count) => "حذف ${count}";
+  static String m62(count) => "حذف ${count}";
 
-  static String m62(index, time) => "تفکیک با قانون #${index} · ${time} ms";
+  static String m63(index, time) => "تفکیک با قانون #${index} · ${time} ms";
 
-  static String m63(ips) => "تطبیق Hosts: ${ips}";
+  static String m64(ips) => "تطبیق Hosts: ${ips}";
 
-  static String m64(total, index) => "${total} قانون، تطبیق با #${index}";
+  static String m65(total, index) => "${total} قانون، تطبیق با #${index}";
 
-  static String m65(total) => "${total} قانون";
+  static String m66(total) => "${total} قانون";
 
-  static String m66(count) => "${count} قانون";
+  static String m67(count) => "${count} قانون";
 
-  static String m67(count, group) =>
+  static String m68(count, group) =>
       "${count} قانون، در گروه ${group} گنجانده شده";
 
-  static String m68(count) => "${count} مورد انتخاب شده";
+  static String m69(type) =>
+      "${Intl.select(type, {'DOMAIN_SUFFIX': 'با دامنه و همه زیردامنه‌های آن مطابقت دارد، مثلاً google.com با www.google.com هم مطابقت دارد', 'DOMAIN': 'فقط با همین دامنه دقیق مطابقت دارد، مثلاً google.com با www.google.com مطابقت ندارد', 'DOMAIN_KEYWORD': 'با هر دامنه‌ای که شامل این کلیدواژه باشد مطابقت دارد، مثلاً google', 'DOMAIN_WILDCARD': 'تطبیق دامنه با وایلدکارت: * برای هر تعداد نویسه و ? برای یک نویسه، مثلاً *.google.com', 'DOMAIN_REGEX': 'تطبیق دامنه با عبارت باقاعده', 'GEOSITE': 'با دامنه‌های یک دسته GeoSite مطابقت دارد، مثلاً google یا cn', 'IP_CIDR': 'با IP مقصد در یک محدوده مطابقت دارد، مثلاً 192.168.1.0/24؛ برای یک IP از /32 و برای IPv6 از /128 استفاده کنید', 'IP_SUFFIX': 'با IPهایی که بیت‌های پایانی یکسان دارند مطابقت دارد، مثلاً 8.8.8.8/24 بیست‌وچهار بیت آخر را مقایسه می‌کند', 'IP_ASN': 'با شماره سیستم خودمختار IP مقصد مطابقت دارد، مثلاً 13335', 'GEOIP': 'با کد کشور یا منطقه IP مقصد مطابقت دارد، مثلاً CN', 'SRC_IP_CIDR': 'با IP مبدا اتصال در یک محدوده مطابقت دارد، مثلاً 192.168.1.0/24', 'SRC_IP_SUFFIX': 'با IPهای مبدایی که بیت‌های پایانی یکسان دارند مطابقت دارد', 'SRC_IP_ASN': 'با شماره سیستم خودمختار IP مبدا مطابقت دارد', 'SRC_GEOIP': 'با کد کشور یا منطقه IP مبدا مطابقت دارد', 'PROCESS_NAME': 'تطبیق با نام فرایند؛ در Android نام بسته برنامه است', 'PROCESS_NAME_WILDCARD': 'تطبیق نام فرایند با وایلدکارت: * برای هر تعداد نویسه و ? برای یک نویسه', 'PROCESS_NAME_REGEX': 'تطبیق نام فرایند با عبارت باقاعده', 'PROCESS_PATH': 'تطبیق با مسیر کامل فایل اجرایی فرایند', 'PROCESS_PATH_WILDCARD': 'تطبیق مسیر فرایند با وایلدکارت: * برای هر تعداد نویسه و ? برای یک نویسه', 'PROCESS_PATH_REGEX': 'تطبیق مسیر فرایند با عبارت باقاعده', 'UID': 'تطبیق با شناسه کاربر Linux فرایند؛ بازه هم مجاز است، مثلاً 1000-1999', 'DST_PORT': 'با پورت مقصد مطابقت دارد؛ چند مورد را با / و بازه را با - بنویسید، مثلاً 80/443/8000-9000', 'SRC_PORT': 'با پورت مبدا مطابقت دارد؛ چند مورد را با / و بازه را با - بنویسید', 'NETWORK': 'با پروتکل انتقال مطابقت دارد: tcp یا udp', 'IN_PORT': 'با پورت شنود ورودی محلی مطابقت دارد', 'IN_TYPE': 'با نوع ورودی مطابقت دارد، مثلاً HTTP، SOCKS5 یا TUN؛ چند مورد را با / جدا کنید', 'IN_NAME': 'با نام شنونده ورودی مطابقت دارد؛ چند مورد را با / جدا کنید', 'IN_USER': 'با نام کاربری احراز هویت ورودی مطابقت دارد؛ چند مورد را با / جدا کنید', 'DSCP': 'با نشان DSCP در سرآیند IP مطابقت دارد، از 0 تا 63', 'RULE_SET': 'با محتوای یک ارائه‌دهنده قوانین مطابقت دارد', 'AND': 'وقتی همه زیرشرط‌ها برقرار باشند مطابقت دارد، مثلاً ((DOMAIN,baidu.com),(NETWORK,UDP))', 'OR': 'وقتی یکی از زیرشرط‌ها برقرار باشد مطابقت دارد، مثلاً ((NETWORK,UDP),(DST-PORT,443))', 'NOT': 'وقتی زیرشرط برقرار نباشد مطابقت دارد، مثلاً ((DOMAIN,baidu.com))', 'SUB_RULE': 'وقتی شرط برقرار باشد، تطبیق در زیرقانون انتخاب‌شده ادامه می‌یابد، مثلاً (NETWORK,TCP)', 'MATCH': 'با همه ترافیک مطابقت دارد؛ قوانین بعد از آن اعمال نمی‌شوند', 'other': '${type}'})}";
 
-  static String m69(count) =>
+  static String m70(type) =>
+      "${Intl.select(type, {'DOMAIN_SUFFIX': 'پسوند دامنه', 'DOMAIN': 'دامنه کامل', 'DOMAIN_KEYWORD': 'کلیدواژه دامنه', 'DOMAIN_WILDCARD': 'وایلدکارت دامنه', 'DOMAIN_REGEX': 'عبارت باقاعده دامنه', 'GEOSITE': 'GeoSite', 'IP_CIDR': 'محدوده IP', 'IP_SUFFIX': 'پسوند IP', 'IP_ASN': 'IP ASN', 'GEOIP': 'GeoIP', 'SRC_IP_CIDR': 'محدوده IP مبدا', 'SRC_IP_SUFFIX': 'پسوند IP مبدا', 'SRC_IP_ASN': 'ASN مبدا', 'SRC_GEOIP': 'GeoIP مبدا', 'PROCESS_NAME': 'نام فرایند', 'PROCESS_NAME_WILDCARD': 'وایلدکارت نام فرایند', 'PROCESS_NAME_REGEX': 'عبارت باقاعده نام فرایند', 'PROCESS_PATH': 'مسیر فرایند', 'PROCESS_PATH_WILDCARD': 'وایلدکارت مسیر فرایند', 'PROCESS_PATH_REGEX': 'عبارت باقاعده مسیر فرایند', 'UID': 'شناسه کاربر', 'DST_PORT': 'پورت مقصد', 'SRC_PORT': 'پورت مبدا', 'NETWORK': 'نوع شبکه', 'IN_PORT': 'پورت ورودی', 'IN_TYPE': 'نوع ورودی', 'IN_NAME': 'نام ورودی', 'IN_USER': 'کاربر ورودی', 'DSCP': 'DSCP', 'RULE_SET': 'مجموعه قوانین', 'AND': 'و منطقی', 'OR': 'یا منطقی', 'NOT': 'نقیض منطقی', 'SUB_RULE': 'زیرقانون', 'MATCH': 'همه موارد', 'other': '${type}'})}";
+
+  static String m71(count) => "${count} مورد انتخاب شده";
+
+  static String m72(count) =>
       "حالت چندرشته از ${count} اتصال موازی برای اشباع پهنای باند استفاده می‌کند";
 
-  static String m70(provider) =>
+  static String m73(provider) =>
       "ممکن است خروجی تست سرعت ${provider} را مسدود کند. منبع تست یا خروجی را تغییر دهید.";
 
-  static String m71(protocol, fallback) =>
+  static String m74(protocol, fallback) =>
       "${protocol} در دسترس نیست، به ${fallback} بازگشت";
 
-  static String m72(count) => "${count} اتصال";
+  static String m75(count) => "${count} اتصال";
 
-  static String m73(provider) => "تغییر به ${provider}";
+  static String m76(provider) => "تغییر به ${provider}";
 
-  static String m74(interface) =>
+  static String m77(interface) =>
       "یک VPN/TUN دیگر همچنان فعال است (${interface}). آن را خاموش کنید و دوباره تلاش کنید.";
 
-  static String m75(progress) => "در حال دانلود به‌روزرسانی: ${progress}%";
+  static String m78(progress) => "در حال دانلود به‌روزرسانی: ${progress}%";
 
-  static String m76(message) => "به‌روزرسانی ناموفق بود: ${message}";
+  static String m79(message) => "به‌روزرسانی ناموفق بود: ${message}";
 
-  static String m77(appName) =>
+  static String m80(appName) =>
       "بسته نسخه جدید آماده است. برای حفظ عملکرد سرویس، پیش از ارتقا ${appName} در حال اجرا بسته می‌شود. برای شروع نصب تأیید کنید.";
 
-  static String m78(label) => "${label} باید یک URL معتبر باشد";
+  static String m81(label) => "${label} باید یک URL معتبر باشد";
 
-  static String m79(count) => "${Intl.plural(count, other: '# سال')}";
+  static String m82(count) => "${Intl.plural(count, other: '# سال')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -268,7 +276,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "محتوا وارد کنید یا فایلی انتخاب کنید",
     ),
     "ageKeyGenerateTitle": MessageLookupByLibrary.simpleMessage(
-      "تولید کلید Age",
+      "ابزار کلید Age",
     ),
     "ageKeyHybridTip": MessageLookupByLibrary.simpleMessage(
       "کلید ترکیبی پساکوانتومی؛ امن‌تر است، اما کلید عمومی بسیار طولانی‌تر است و به age نسخهٔ ۱٫۳ یا بالاتر نیاز دارد.",
@@ -370,6 +378,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "applyToAllManaged": MessageLookupByLibrary.simpleMessage(
       "اعمال روی همه پروفایل‌های مدیریت‌شده",
+    ),
+    "applyToAllManagedDesc": MessageLookupByLibrary.simpleMessage(
+      "با روشن بودن، قانون روی همه پروفایل‌های مدیریت‌شده اعمال می‌شود. با خاموش بودن یا در حالت غیرمدیریت‌شده، فقط روی پروفایل فعلی اعمال می‌شود",
     ),
     "authorized": MessageLookupByLibrary.simpleMessage("احراز هویت شده"),
     "auto": MessageLookupByLibrary.simpleMessage("خودکار"),
@@ -691,6 +702,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "direct": MessageLookupByLibrary.simpleMessage("مستقیم"),
     "directModeNoProxy": MessageLookupByLibrary.simpleMessage(
       "حالت مستقیم، پروکسی وجود ندارد",
+    ),
+    "directUpdate": MessageLookupByLibrary.simpleMessage(
+      "به‌روزرسانی با اتصال مستقیم",
     ),
     "disableQuic": MessageLookupByLibrary.simpleMessage("غیرفعال‌سازی QUIC"),
     "disableQuicDesc": MessageLookupByLibrary.simpleMessage(
@@ -1057,6 +1071,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "invalidIpFormat": MessageLookupByLibrary.simpleMessage(
       "فرمت IP یا CIDR نامعتبر است",
     ),
+    "ip": MessageLookupByLibrary.simpleMessage("IP"),
     "ipAddress": MessageLookupByLibrary.simpleMessage("آدرس IP"),
     "ipClickBehavior": MessageLookupByLibrary.simpleMessage("تغییر نمایش"),
     "ipLookup": MessageLookupByLibrary.simpleMessage("جستجوی IP"),
@@ -1689,14 +1704,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "nodeImportEmpty": MessageLookupByLibrary.simpleMessage(
       "گره معتبری یافت نشد",
     ),
-    "nodeImportSingle": MessageLookupByLibrary.simpleMessage(
-      "هر بار فقط یک گره قابل افزودن است",
-    ),
+    "nodeImportSkipped": m51,
     "nodeManualDesc": MessageLookupByLibrary.simpleMessage(
       "پیوندهای اشتراک‌گذاری، Base64 و YAML پشتیبانی می‌شوند",
     ),
     "nodePrefix": MessageLookupByLibrary.simpleMessage("پیشوند گره"),
-    "nodePrefixValue": m51,
+    "nodePrefixValue": m52,
     "nodeQrcodeDesc": MessageLookupByLibrary.simpleMessage(
       "اسکن کد QR اشتراک گره",
     ),
@@ -1706,6 +1719,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "nodeTestFailed": MessageLookupByLibrary.simpleMessage("در دسترس نیست"),
     "nodesSort": MessageLookupByLibrary.simpleMessage("مرتب‌سازی گره‌ها"),
+    "nonManagedRuleTip": MessageLookupByLibrary.simpleMessage(
+      "در حالت غیرمدیریت‌شده، این قانون فقط روی پروفایل فعلی اعمال می‌شود",
+    ),
     "none": MessageLookupByLibrary.simpleMessage("هیچکدام"),
     "notRecommended": MessageLookupByLibrary.simpleMessage("توصیه نمی‌شود"),
     "notSelectedTip": MessageLookupByLibrary.simpleMessage(
@@ -1738,19 +1754,19 @@ class MessageLookup extends MessageLookupByLibrary {
     "nullProfileDesc": MessageLookupByLibrary.simpleMessage(
       "هیچ پروفایلی یافت نشد. لطفاً یکی اضافه کنید",
     ),
-    "nullTip": m52,
+    "nullTip": m53,
     "nullUdpConnections": MessageLookupByLibrary.simpleMessage(
       "هیچ اتصال UDP وجود ندارد",
     ),
-    "numberRangeInvalid": m53,
-    "numberTip": m54,
+    "numberRangeInvalid": m54,
+    "numberTip": m55,
     "oneColumn": MessageLookupByLibrary.simpleMessage("۱ ستون"),
     "onlinePanel": MessageLookupByLibrary.simpleMessage("پنل آنلاین"),
     "onlyIcon": MessageLookupByLibrary.simpleMessage("فقط آیکون"),
     "onlyOtherApps": MessageLookupByLibrary.simpleMessage(
       "فقط برنامه‌های جانبی",
     ),
-    "onlyShow": m55,
+    "onlyShow": m56,
     "onlyStatisticsProxy": MessageLookupByLibrary.simpleMessage(
       "آمار ترافیک پروکسی",
     ),
@@ -1849,7 +1865,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "portConflictTip": MessageLookupByLibrary.simpleMessage(
       "لطفاً پورت غیرتکراری وارد کنید",
     ),
-    "portTip": m56,
+    "portTip": m57,
     "pouringHourGlass": MessageLookupByLibrary.simpleMessage("ساعت شنی روان"),
     "pouringHourGlassRefined": MessageLookupByLibrary.simpleMessage(
       "ساعت شنی ظریف",
@@ -1875,7 +1891,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "profileHasUpdate": MessageLookupByLibrary.simpleMessage(
       "پروفایل تغییر یافته است. آیا بروزرسانی خودکار غیرفعال شود؟",
     ),
-    "profileImportFailed": m57,
+    "profileImportFailed": m58,
     "profileNameNullValidationDesc": MessageLookupByLibrary.simpleMessage(
       "لطفاً نام پروفایل را وارد کنید",
     ),
@@ -1898,7 +1914,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "progress": MessageLookupByLibrary.simpleMessage("پردازش"),
     "project": MessageLookupByLibrary.simpleMessage("پروژه"),
     "providers": MessageLookupByLibrary.simpleMessage("ارائه‌دهندگان"),
-    "providersCount": m58,
+    "providersCount": m59,
     "provinceAndCity": MessageLookupByLibrary.simpleMessage("استان / شهر"),
     "proxies": MessageLookupByLibrary.simpleMessage("پروکسی‌ها"),
     "proxiesCount": MessageLookupByLibrary.simpleMessage("گره‌های پروکسی"),
@@ -1995,7 +2011,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "registerWarpFailed": MessageLookupByLibrary.simpleMessage(
       "ثبت WARP ناموفق بود",
     ),
-    "registerWarpTip": m59,
+    "registerWarpTip": m60,
     "regularNode": MessageLookupByLibrary.simpleMessage("گره عادی"),
     "regularNodeDesc": MessageLookupByLibrary.simpleMessage(
       "مستقیماً متصل و به گروه‌های پراکسی انتخاب‌شده افزوده می‌شود",
@@ -2054,7 +2070,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "ripple": MessageLookupByLibrary.simpleMessage("موج آب"),
     "rotatingCircle": MessageLookupByLibrary.simpleMessage("چرخش تک‌دایره"),
     "rotatingPlain": MessageLookupByLibrary.simpleMessage("صفحه چرخان"),
-    "routeAddCount": m60,
+    "routeAddCount": m61,
     "routeCategoryAi": MessageLookupByLibrary.simpleMessage("هوش مصنوعی"),
     "routeCategoryDeveloper": MessageLookupByLibrary.simpleMessage(
       "ابزار توسعه",
@@ -2071,7 +2087,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "routeNameInvalid": MessageLookupByLibrary.simpleMessage(
       "نام نمی‌تواند شامل ویرگول یا شکست خط باشد",
     ),
-    "routeRemoveCount": m61,
+    "routeRemoveCount": m62,
     "routeTarget": MessageLookupByLibrary.simpleMessage("خروجی پیش‌فرض"),
     "routeTrace": MessageLookupByLibrary.simpleMessage("ردیابی مسیر"),
     "routeTraceChain": MessageLookupByLibrary.simpleMessage("زنجیره پروکسی"),
@@ -2082,7 +2098,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "روند DNS و تطبیق قوانین دامنه یا IP در هسته",
     ),
     "routeTraceDns": MessageLookupByLibrary.simpleMessage("تفکیک DNS"),
-    "routeTraceDnsBy": m62,
+    "routeTraceDnsBy": m63,
     "routeTraceDnsIp": MessageLookupByLibrary.simpleMessage(
       "هدف IP است و نیازی به تفکیک نیست",
     ),
@@ -2091,7 +2107,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "routeTraceFinal": MessageLookupByLibrary.simpleMessage("خروجی نهایی"),
     "routeTraceHint": MessageLookupByLibrary.simpleMessage("دامنه، IP یا آدرس"),
-    "routeTraceHostsHit": m63,
+    "routeTraceHostsHit": m64,
     "routeTraceInput": MessageLookupByLibrary.simpleMessage("هدف"),
     "routeTraceModeDirect": MessageLookupByLibrary.simpleMessage(
       "حالت مستقیم: همه ترافیک مستقیم",
@@ -2103,8 +2119,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "هیچ قانونی تطبیق نیافت؛ DIRECT استفاده می‌شود",
     ),
     "routeTraceRules": MessageLookupByLibrary.simpleMessage("تطبیق قوانین"),
-    "routeTraceRulesSummary": m64,
-    "routeTraceRulesTotal": m65,
+    "routeTraceRulesSummary": m65,
+    "routeTraceRulesTotal": m66,
     "routeTraceSkipMissing": MessageLookupByLibrary.simpleMessage(
       "رد شد؛ مقصد پیدا نشد",
     ),
@@ -2128,10 +2144,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "نمایش قوانین بررسی‌شده",
     ),
     "rule": MessageLookupByLibrary.simpleMessage("قوانین"),
-    "ruleCount": m66,
-    "ruleCountIncluded": m67,
+    "ruleCount": m67,
+    "ruleCountIncluded": m68,
     "ruleHits": MessageLookupByLibrary.simpleMessage("تطابق قوانین"),
-    "ruleName": MessageLookupByLibrary.simpleMessage("نام قانون"),
     "ruleProviders": MessageLookupByLibrary.simpleMessage(
       "ارائه‌دهندگان قوانین",
     ),
@@ -2139,6 +2154,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "ruleSets": MessageLookupByLibrary.simpleMessage("مجموعه‌های قوانین"),
     "ruleSort": MessageLookupByLibrary.simpleMessage("ترتیب قوانین"),
     "ruleTarget": MessageLookupByLibrary.simpleMessage("مقصد قانون"),
+    "ruleTypeDesc": m69,
+    "ruleTypeName": m70,
     "rulesCount": MessageLookupByLibrary.simpleMessage("قوانین مسیریابی"),
     "runTime": MessageLookupByLibrary.simpleMessage("مدت زمان اجرا"),
     "runningMode": MessageLookupByLibrary.simpleMessage("حالت اجرا"),
@@ -2171,7 +2188,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "selectIcon": MessageLookupByLibrary.simpleMessage("انتخاب نماد"),
     "selected": MessageLookupByLibrary.simpleMessage("انتخاب شده"),
-    "selectedCountTitle": m68,
+    "selectedCountTitle": m71,
     "serviceReady": MessageLookupByLibrary.simpleMessage("سرویس آماده است"),
     "serviceRunning": MessageLookupByLibrary.simpleMessage(
       "سرویس در حال اجرا است",
@@ -2209,6 +2226,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "اجرا در پس‌زمینه بدون باز کردن پنجره",
     ),
     "size": MessageLookupByLibrary.simpleMessage("اندازه"),
+    "skipCertVerify": MessageLookupByLibrary.simpleMessage(
+      "نادیده گرفتن تأیید گواهی",
+    ),
     "skipDomain": MessageLookupByLibrary.simpleMessage("دامنه‌های مستثنی"),
     "skipDstAddress": MessageLookupByLibrary.simpleMessage("IP مقصد مستثنی"),
     "skipLocalAuth": MessageLookupByLibrary.simpleMessage(
@@ -2265,7 +2285,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "speedTestConnecting": MessageLookupByLibrary.simpleMessage("در حال اتصال"),
     "speedTestConnections": MessageLookupByLibrary.simpleMessage("اتصالات"),
-    "speedTestConnectionsDesc": m69,
+    "speedTestConnectionsDesc": m72,
     "speedTestCoreStopped": MessageLookupByLibrary.simpleMessage(
       "فعال نیست · تست مستقیم",
     ),
@@ -2277,7 +2297,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "speedTestErrorBlocked": MessageLookupByLibrary.simpleMessage(
       "تست سرعت در دسترس نیست",
     ),
-    "speedTestErrorBlockedDesc": m70,
+    "speedTestErrorBlockedDesc": m73,
     "speedTestErrorNetworkDesc": MessageLookupByLibrary.simpleMessage(
       "در دسترس بودن خروجی را بررسی و دوباره تلاش کنید.",
     ),
@@ -2320,7 +2340,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "speedTestProtocolDesc": MessageLookupByLibrary.simpleMessage(
       "HTTP/3 روی QUIC (UDP) اجرا می‌شود؛ اگر در دسترس نباشد به HTTP/2 و اگر HTTP/2 هم نباشد به HTTP/1.1 بازمی‌گردد",
     ),
-    "speedTestProtocolFallback": m71,
+    "speedTestProtocolFallback": m74,
     "speedTestQuality": MessageLookupByLibrary.simpleMessage("کیفیت شبکه"),
     "speedTestReady": MessageLookupByLibrary.simpleMessage("آماده"),
     "speedTestRealtime": MessageLookupByLibrary.simpleMessage("سرعت لحظه‌ای"),
@@ -2333,8 +2353,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "speedTestSettings": MessageLookupByLibrary.simpleMessage("تنظیمات تست"),
     "speedTestSingleThread": MessageLookupByLibrary.simpleMessage("تک‌رشته"),
     "speedTestStart": MessageLookupByLibrary.simpleMessage("شروع تست"),
-    "speedTestStreams": m72,
-    "speedTestSwitchProvider": m73,
+    "speedTestStreams": m75,
+    "speedTestSwitchProvider": m76,
     "speedTestUseSystemDns": MessageLookupByLibrary.simpleMessage(
       "تفکیک با DNS سیستم",
     ),
@@ -2600,7 +2620,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunEnableRequireAdmin": MessageLookupByLibrary.simpleMessage(
       "استفاده از حالت TUN نیازمند دسترسی Admin یا ROOT است",
     ),
-    "tunRouteConflict": m74,
+    "tunRouteConflict": m77,
     "tunVirtualAddress": MessageLookupByLibrary.simpleMessage(
       "آدرس کارت شبکه مجازی TUN",
     ),
@@ -2669,15 +2689,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "updateDownloadFailed": MessageLookupByLibrary.simpleMessage(
       "دانلود به‌روزرسانی ناموفق بود",
     ),
-    "updateDownloading": m75,
-    "updateFailed": m76,
+    "updateDownloading": m78,
+    "updateFailed": m79,
     "updateInstallFailed": MessageLookupByLibrary.simpleMessage(
       "نصب به‌روزرسانی ناموفق بود",
     ),
     "updateInstalling": MessageLookupByLibrary.simpleMessage(
       "در حال باز کردن نصب‌کننده سیستم...",
     ),
-    "updateReadyAppTip": m77,
+    "updateReadyAppTip": m80,
     "updateReadyVpnTip": MessageLookupByLibrary.simpleMessage(
       "بسته نسخه جدید آماده است. برای حفظ عملکرد سرویس، پیش از ارتقا سرویس VPN در حال اجرا متوقف می‌شود. برای شروع نصب تأیید کنید.",
     ),
@@ -2692,13 +2712,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "urlDesc": MessageLookupByLibrary.simpleMessage(
       "دریافت پروفایل از طریق آدرس URL",
     ),
-    "urlTip": m78,
+    "urlTip": m81,
     "usageStyle": MessageLookupByLibrary.simpleMessage("سبک نمایش مصرف"),
     "usageStyleBar": MessageLookupByLibrary.simpleMessage("نواری"),
     "usageStyleConcentric": MessageLookupByLibrary.simpleMessage(
       "حلقه‌های هم‌مرکز",
     ),
     "usageStyleRing": MessageLookupByLibrary.simpleMessage("حلقه‌ای"),
+    "useCustomUa": MessageLookupByLibrary.simpleMessage(
+      "استفاده از UA مشخص‌شده",
+    ),
     "useGlobalScriptOverride": MessageLookupByLibrary.simpleMessage(
       "اسکریپت هر پروفایل",
     ),
@@ -2745,6 +2768,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "xattrUnsupportedFallback": MessageLookupByLibrary.simpleMessage(
       "سیستم فایل از قابلیت‌های فایل (xattr) پشتیبانی نمی‌کند؛ به setuid بازگشت داده شد",
     ),
-    "years": m79,
+    "years": m82,
   };
 }

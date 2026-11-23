@@ -136,6 +136,9 @@ func updateListeners() {
 	listener.ReCreateVmess(general.VmessConfig, tunnel.Tunnel)
 	listener.ReCreateTuic(general.TuicServer, tunnel.Tunnel)
 	if !features.Android {
+		if general.Tun.Enable {
+			syncTunInet6(currentConfig, currentTunInet6)
+		}
 		listener.ReCreateTun(general.Tun, tunnel.Tunnel)
 	}
 }
@@ -224,12 +227,8 @@ func updateConfig(params *UpdateParams) {
 	if params.IPv6 != nil {
 		general.IPv6 = *params.IPv6
 		resolver.DisableIPv6 = !general.IPv6
-		// BETTBOX-CUSTOM: 运行中切换 IPv6 时同步 TUN 的 IPv6 地址（关闭即移除，同 mihomo parseIPV6）。
-		if general.IPv6 {
-			ensureTunInet6(currentConfig)
-		} else {
-			general.Tun.Inet6Address = nil
-		}
+		// BETTBOX-CUSTOM: 运行中切换 IPv6 时同步 TUN 的 IPv6 地址（关闭即移除，开启且出站有 IPv6 时恢复）。
+		syncTunInet6(currentConfig, currentTunInet6)
 	}
 	if params.ExternalController != nil {
 		currentConfig.Controller.ExternalController = *params.ExternalController
@@ -280,7 +279,8 @@ func updateConfig(params *UpdateParams) {
 		general.Tun.DNSHijack = *params.Tun.DNSHijack
 		general.Tun.Stack = *params.Tun.Stack
 		general.Tun.DisableICMPForwarding = *params.Tun.DisableICMPForwarding
-		// BETTBOX-CUSTOM: 运行中更新排除地址后同样处理 macOS 链路本地/组播排除。
+		routeFakeIP(currentConfig)
+		// BETTBOX-CUSTOM: 运行中更新排除地址后同样处理 macOS 链路本地/组播排除（放在 routeFakeIP 之后，避免其重建排除集合后丢失扩大结果）。
 		sanitizeTunScopedExclude(&general.Tun)
 	}
 
@@ -395,12 +395,13 @@ func residentRawConfig(raw *config.RawConfig) *config.RawConfig {
 }
 
 type preparedSetup struct {
-	key    string
-	rawCfg *config.RawConfig
-	cfg    *config.Config
-	global string
-	expire time.Time
-	reused bool
+	key      string
+	rawCfg   *config.RawConfig
+	cfg      *config.Config
+	global   string
+	tunInet6 []netip.Prefix
+	expire   time.Time
+	reused   bool
 	// BETTBOX-CUSTOM: 订阅原始 route-exclude-address，热更新 tun 时与 GUI 取并集。
 	profileRouteExclude []netip.Prefix
 }
@@ -503,14 +504,15 @@ func prepareSetup(params *SetupParams) (*preparedSetup, error) {
 		return nil, err
 	}
 
+	tunInet6 := prepareRawTunIPv6(rawCfg)
 	cfg, err := config.ParseRawConfig(rawCfg)
 	if err != nil {
 		return nil, err
 	}
-	ensureTunInet6(cfg)
-	// BETTBOX-CUSTOM: macOS 扩大落在链路本地/组播网段的 IPv6 排除，避免 TUN 路由添加失败。
+	routeFakeIP(cfg)
+	// BETTBOX-CUSTOM: macOS 扩大落在链路本地/组播网段的 IPv6 排除，避免 TUN 路由添加失败（放在 routeFakeIP 之后）。
 	sanitizeTunScopedExclude(&cfg.General.Tun)
-	prepared := &preparedSetup{key: key, rawCfg: rawCfg, cfg: cfg, global: global}
+	prepared := &preparedSetup{key: key, rawCfg: rawCfg, cfg: cfg, global: global, tunInet6: tunInet6}
 	if params.Patch != nil {
 		prepared.profileRouteExclude = params.Patch.profileRouteExclude
 	}
@@ -541,6 +543,7 @@ func setupConfig(params *SetupParams) (global string, err error) {
 	currentConfig = prepared.cfg
 	currentRawConfig = residentRawConfig(prepared.rawCfg)
 	currentProfileRouteExclude = prepared.profileRouteExclude
+	currentTunInet6 = prepared.tunInet6
 	hub.ApplyConfig(currentConfig)
 	closeIdleOutbounds(oldProxies, oldProviders)
 	closeStaleWireGuards(oldProxies, oldProviders)

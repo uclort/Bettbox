@@ -129,6 +129,7 @@ class GlobalState {
   set appController(AppController appController) {
     _appController = appController;
     isInit = true;
+    commonPrint.flush();
   }
 
   GlobalState._internal();
@@ -209,7 +210,7 @@ class GlobalState {
         return digest.toString();
       });
     } catch (e) {
-      commonPrint.warn('Failed to calculate core SHA256: $e');
+      commonPrint.warn('Core hash failed: $e');
       return null;
     }
   }
@@ -383,7 +384,7 @@ class GlobalState {
         appController.updateTraffic,
       ]);
     } catch (e) {
-      commonPrint.warn('Sync VPN state error: $e');
+      commonPrint.warn('Sync VPN state failed: $e');
     }
   }
 
@@ -806,7 +807,7 @@ class GlobalState {
         refresh: refresh,
       );
     } catch (e) {
-      commonPrint.error('Script execution failed: $e');
+      commonPrint.error('Execution failed: $e', module: 'Script');
       showNotifier('${appLocalizations.profileParseErrorDesc}: $e');
       if (!managed) return '';
       if (ManagedScript.syncedVersion(config.managedProps) != null) {
@@ -844,7 +845,7 @@ class GlobalState {
       );
       return await writeScriptedConfig(profile, fallback, managed: true);
     } catch (e) {
-      commonPrint.error('Bundled managed script execution failed: $e');
+      commonPrint.error('Bundled managed script failed: $e', module: 'Script');
       return '';
     }
   }
@@ -1335,17 +1336,7 @@ class DashboardRefreshManager {
 
   Future<bool> _isActive() async {
     if (system.isDesktop) {
-      final isPinned = globalState.config.windowProps.isPinned;
-      if (isPinned) return true;
-      final visible = await window?.isVisible;
-      if (visible == false) {
-        return false;
-      }
-      final minimized = await window?.isMinimized ?? false;
-      if (minimized) {
-        return false;
-      }
-      return true;
+      return !globalState.backgroundMode.value;
     }
 
     final lifecycleState = WidgetsBinding.instance.lifecycleState;

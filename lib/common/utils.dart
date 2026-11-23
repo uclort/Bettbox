@@ -1155,7 +1155,7 @@ class Utils {
       routes.sort((a, b) => a.metric.compareTo(b.metric));
       return routes.map((e) => e.route).toList();
     } catch (e) {
-      commonPrint.warn('Smart Auto Stop: Linux gateway error: $e');
+      commonPrint.warn('Read gateway failed: $e', module: 'AutoStop');
       return [];
     }
   }
@@ -1179,7 +1179,7 @@ class Utils {
       if (gateway.isEmpty || gateway.contains(':')) return [];
       return [(gateway: gateway, interfaceName: interfaceName)];
     } catch (e) {
-      commonPrint.warn('Smart Auto Stop: macOS gateway error: $e');
+      commonPrint.warn('Read gateway failed: $e', module: 'AutoStop');
       return [];
     }
   }
@@ -1205,7 +1205,7 @@ class Utils {
       }
       return routes;
     } catch (e) {
-      commonPrint.warn('Smart Auto Stop: Windows gateway error: $e');
+      commonPrint.warn('Read gateway failed: $e', module: 'AutoStop');
       return [];
     }
   }
@@ -1220,7 +1220,7 @@ class Utils {
       final stopwatch = Stopwatch()..start();
       final res = await function();
       stopwatch.stop();
-      commonPrint.debug('Time：${stopwatch.elapsedMilliseconds} ms');
+      commonPrint.debug('Took ${stopwatch.elapsedMilliseconds} ms');
       return res;
     }
     return await function();

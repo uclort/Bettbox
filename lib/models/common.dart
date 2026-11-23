@@ -151,12 +151,17 @@ abstract class Log with _$Log {
     return log.copyWith(payload: payload, module: module);
   }
 
-  factory Log.app(String payload, {LogLevel level = LogLevel.info}) {
+  factory Log.app(
+    String payload, {
+    LogLevel level = LogLevel.info,
+    String? module,
+  }) {
     return Log(
       logLevel: level,
       payload: payload.trimRight(),
       time: DateTime.now(),
       source: LogSource.app,
+      module: module,
     );
   }
 
@@ -448,7 +453,11 @@ extension GroupExt on Group {
     if (type.isComputedSelected) {
       return realNow.isNotEmpty ? realNow : proxyName;
     }
-    return proxyName.isNotEmpty ? proxyName : realNow;
+    if (proxyName.isEmpty ||
+        (all.isNotEmpty && !all.any((proxy) => proxy.name == proxyName))) {
+      return realNow;
+    }
+    return proxyName;
   }
 }
 

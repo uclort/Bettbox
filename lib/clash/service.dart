@@ -51,10 +51,10 @@ class ClashService extends ClashHandlerInterface {
 
     if (_transportType == TransportType.unixSocket) {
       _socketPath = _newSocketPath();
-      commonPrint.log('Using Unix Domain Socket: $_socketPath');
+      commonPrint.debug('Using unix socket $_socketPath', module: 'IPC');
     } else {
       _tcpPort = PlatformChecker.getRandomPort();
-      commonPrint.log('Using TCP Socket on port: $_tcpPort');
+      commonPrint.debug('Using TCP port $_tcpPort', module: 'IPC');
     }
 
     unawaited(_initServer());
@@ -81,7 +81,7 @@ class ClashService extends ClashHandlerInterface {
           } else {
             server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
             _tcpPort = server.port;
-            commonPrint.log('TCP Server bound to port: $_tcpPort');
+            commonPrint.debug('TCP bound to port $_tcpPort', module: 'IPC');
           }
 
           serverCompleter.complete(server);
@@ -102,18 +102,21 @@ class ClashService extends ClashHandlerInterface {
                   },
                   onError: (error) {
                     if (_isDestroying || globalState.isExiting) return;
-                    commonPrint.log('Frame decode error: $error');
+                    commonPrint.error(
+                      'Decode frame failed: $error',
+                      module: 'IPC',
+                    );
                   },
                   onDone: () {
                     _handleSocketClosed(socket);
-                    commonPrint.log('Socket connection closed');
+                    commonPrint.debug('Core socket closed', module: 'IPC');
                   },
                 );
           }
         },
         (error, stack) {
           if (_isDestroying || globalState.isExiting) return;
-          commonPrint.log(error.toString());
+          commonPrint.error('Core socket error: $error', module: 'IPC');
           if (error is SocketException &&
               !_isDestroying &&
               !globalState.isExiting) {
@@ -381,18 +384,14 @@ class ClashService extends ClashHandlerInterface {
     } on SocketException catch (e) {
       _handleSocketClosed(socket);
       if (_isDestroying || globalState.isExiting || isStarting) {
-        commonPrint.log(
-          'Ignored message send on closed socket during transition: $e',
-        );
+        commonPrint.debug('Send skipped, socket closed: $e', module: 'IPC');
         return null;
       }
       rethrow;
     } on StateError catch (e) {
       _handleSocketClosed(socket);
       if (_isDestroying || globalState.isExiting || isStarting) {
-        commonPrint.log(
-          'Ignored message send on closed socket during transition: $e',
-        );
+        commonPrint.debug('Send skipped, socket closed: $e', module: 'IPC');
         return null;
       }
       rethrow;

@@ -176,10 +176,14 @@ UpdateParams updateParams(Ref ref) {
       (state) => UpdateParams(
         // BETTBOX-CUSTOM: Tailscale 共存时把 Tailnet 网段并入 TUN 排除路由。
         tun: tailscale.applyToTun(
-          state.tun.getRealTun(
-            bypassPrivateRoute,
-            bypassPrivateRouteAddress: realBypassPrivateRouteAddress,
-          ),
+          state.tun
+              .getRealTun(
+                bypassPrivateRoute,
+                bypassPrivateRouteAddress: realBypassPrivateRouteAddress,
+              )
+              .copyWith(
+                stack: AppIdentity.isStandard ? state.tun.stack : TunStack.mips,
+              ),
         ),
         allowLan: state.allowLan,
         findProcessMode: state.findProcessMode,

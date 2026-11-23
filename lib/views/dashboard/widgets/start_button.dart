@@ -51,7 +51,7 @@ class _AndroidStartButtonState extends ConsumerState<AndroidStartButton> {
     try {
       await globalState.appController.updateStatus(newState);
     } catch (e) {
-      commonPrint.log('updateStatus failed: $e');
+      commonPrint.error('${newState ? 'Start' : 'Stop'} failed: $e');
     } finally {
       if (mounted) {
         setState(() {

@@ -683,21 +683,21 @@ class Tray {
         try {
           await WakelockPlus.disable();
         } catch (e) {
-          commonPrint.log('WakeLock disable OS error: $e');
+          commonPrint.warn('Disable wake lock failed: $e');
         }
         globalState.appController.stopWakelockAutoRecovery();
       } else {
         try {
           await WakelockPlus.enable();
         } catch (e) {
-          commonPrint.log('WakeLock enable OS error: $e');
+          commonPrint.warn('Enable wake lock failed: $e');
         }
         globalState.appController.startWakelockAutoRecovery();
       }
       globalState.updateWakelockState(!currentEnabled);
       await globalState.appController.updateTray();
     } catch (e) {
-      commonPrint.log('WakeLock toggle error: $e');
+      commonPrint.warn('Toggle wake lock failed: $e');
     }
   }
 
@@ -770,7 +770,7 @@ class Tray {
             : null,
       );
     } catch (e) {
-      commonPrint.log('Delay test error: $e');
+      commonPrint.warn('Delay test failed: $e');
     } finally {
       if (_supportsTrayTemplate) {
         _stopLoadingAnimation();
