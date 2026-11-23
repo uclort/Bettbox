@@ -40,7 +40,7 @@ class InfoHeader extends StatelessWidget {
               children: [
                 if (info.iconData != null) ...[
                   Icon(
-                    info.iconData,
+                    context.resolveIcon(info.iconData!),
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: 8),
@@ -249,19 +249,13 @@ class CommonCard extends StatelessWidget {
 
       final hasShadows = elevated || subtle;
       if (hasShadows) {
-        final isPureBlack =
-            !isLight && context.colorScheme.surface == Colors.black;
         final shadows = subtle
-            ? (isPureBlack
-                  ? null
-                  : (isLight ? _lightSubtleShadows : _darkSubtleShadows))
+            ? (isLight ? _lightSubtleShadows : _darkSubtleShadows)
             : (isLight ? _lightShadows : _darkShadows);
-        if (shadows != null) {
-          card = DecoratedBox(
-            decoration: ShapeDecoration(shape: shape, shadows: shadows),
-            child: card,
-          );
-        }
+        card = DecoratedBox(
+          decoration: ShapeDecoration(shape: shape, shadows: shadows),
+          child: card,
+        );
       }
       return card;
     }
@@ -332,7 +326,7 @@ class SelectIcon extends StatelessWidget {
       shape: const CircleBorder(),
       child: Container(
         padding: const EdgeInsets.all(4),
-        child: const Icon(Icons.check, size: 16),
+        child: const AppIcon(Icons.check, size: 16),
       ),
     );
   }

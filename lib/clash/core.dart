@@ -21,7 +21,7 @@ List<Group> buildGroups(String proxiesRaw) {
   final names = (decoded['names'] as List? ?? const []).cast<String>();
   final types = (decoded['types'] as List? ?? const []).cast<String>();
   final rawGroups = (decoded['groups'] as List? ?? const [])
-      .whereType<Map>()
+      .whereType<Map<dynamic, dynamic>>()
       .toList();
   final nows = <String, String>{
     for (final group in rawGroups)
@@ -201,6 +201,42 @@ class ClashCore {
     return res.data?.toString() ?? '';
   }
 
+  Future<({String yaml, String uri})> getProxyConfig(
+    SetupParams setupParams,
+    String name,
+  ) async {
+    final res = await clashInterface.getProxyConfig(setupParams, name);
+    if (res.isError) {
+      throw res.message;
+    }
+    final data = json.decode(res.data as String) as Map<String, Object?>;
+    return (
+      yaml: data['yaml'] as String? ?? '',
+      uri: data['uri'] as String? ?? '',
+    );
+  }
+
+  Future<bool> updateExpandedProvider(
+    Profile profile,
+    String name, {
+    String? content,
+  }) async {
+    final res = await clashInterface.updateExpandedProvider(
+      json.encode({
+        'path': await appPath.getProfilePath(profile.id),
+        'age-secret-key': profile.ageSecretKey ?? '',
+        'providers-path': await appPath.getProvidersDirPath(profile.id),
+        'name': name,
+        'content': ?content,
+      }),
+    );
+    if (res.isError) {
+      throw res.message;
+    }
+    final data = res.data;
+    return data is Map && data['changed'] == true;
+  }
+
   Future<void> exportConfig(
     String id,
     String output, {
@@ -240,7 +276,33 @@ class ClashCore {
     if (res.isError) {
       throw res.message;
     }
-    return BundleReport.fromJson(json.decode(res.data as String));
+    return BundleReport.fromJson(
+      json.decode(res.data as String) as Map<String, Object?>,
+    );
+  }
+
+  Future<Map<String, List<String>>> downloadProfile({
+    required String url,
+    required String output,
+    required Map<String, String> headers,
+    String? proxy,
+  }) async {
+    final res = await clashInterface.downloadProfile(
+      json.encode({
+        'url': url,
+        'output': output,
+        'headers': headers,
+        'proxy': ?proxy,
+      }),
+    );
+    if (res.isError) {
+      throw res.message;
+    }
+    final decoded = json.decode(res.data as String) as Map<String, Object?>;
+    return {
+      for (final MapEntry(:key, :value) in decoded.entries)
+        key: (value as List).cast<String>(),
+    };
   }
 
   FutureOr<String> decryptAgeConfig(String data, String ageSecretKey) {
@@ -281,7 +343,9 @@ class ClashCore {
     try {
       return await Isolate.run<List<TrackerInfo>>(() {
         final connectionsRaw = json.decode(res) as List? ?? [];
-        return connectionsRaw.map((e) => TrackerInfo.fromJson(e)).toList();
+        return connectionsRaw
+            .map((e) => TrackerInfo.fromJson(e as Map<String, Object?>))
+            .toList();
       });
     } catch (e) {
       commonPrint.warn('Failed to parse connections: $e');
@@ -337,6 +401,12 @@ class ClashCore {
     await clashInterface.closeGroupConnections(groupName);
   }
 
+  Future<bool> checkDialerUdp(String name) async =>
+      await clashInterface.checkDialerUdp(name);
+
+  Future<List<String>> getDialerDependents(String groupName) async =>
+      await clashInterface.getDialerDependents(groupName);
+
   // BETTBOX-CUSTOM: macOS 网络恢复需要等待 resetConnections 的真实结果。
   Future<bool> resetConnections() async {
     return await clashInterface.resetConnections();
@@ -352,7 +422,10 @@ class ClashCore {
       return await Isolate.run<List<ExternalProvider>>(() {
         final externalProviders =
             (json.decode(externalProvidersRawString) as List<dynamic>)
-                .map((item) => ExternalProvider.fromJson(item))
+                .map(
+                  (item) =>
+                      ExternalProvider.fromJson(item as Map<String, Object?>),
+                )
                 .toList();
         return externalProviders;
       });
@@ -372,7 +445,9 @@ class ClashCore {
       return null;
     }
     try {
-      return ExternalProvider.fromJson(json.decode(externalProvidersRawString));
+      return ExternalProvider.fromJson(
+        json.decode(externalProvidersRawString) as Map<String, Object?>,
+      );
     } catch (e) {
       commonPrint.warn('Failed to parse external provider: $e');
       return null;
@@ -421,7 +496,7 @@ class ClashCore {
       throw Exception('Empty delay response');
     }
     try {
-      return Delay.fromJson(json.decode(data));
+      return Delay.fromJson(json.decode(data) as Map<String, Object?>);
     } catch (e) {
       commonPrint.warn('Failed to parse delay: $e');
       rethrow;
@@ -489,7 +564,9 @@ class ClashCore {
       return Traffic();
     }
     try {
-      return Traffic.fromMap(json.decode(trafficString));
+      return Traffic.fromMap(
+        json.decode(trafficString) as Map<String, dynamic>,
+      );
     } catch (e) {
       commonPrint.warn('Failed to parse traffic: $e');
       return Traffic();
@@ -729,6 +806,20 @@ class ClashCore {
     return decoded is Map ? Map<String, Object?>.from(decoded) : {};
   }
 
+  Future<Map<String, Object?>> parseNodes(String text) =>
+      _toolboxJson(ActionMethod.parseNodes, data: text);
+
+  Future<Map<String, Object?>> testNode(
+    Map<String, dynamic> proxy, {
+    String? dialer,
+  }) => _toolboxJson(
+    ActionMethod.testNode,
+    data: json.encode({'proxy': proxy, 'dialer': ?dialer}),
+  );
+
+  Future<Map<String, Object?>> registerWarp() =>
+      _toolboxJson(ActionMethod.registerWarp);
+
   Future<RouteTraceResult> routeTrace({
     required String target,
     required String network,
@@ -887,7 +978,7 @@ class ClashCore {
     try {
       return await Isolate.run<List<Log>>(() {
         final logsRaw = json.decode(res) as List? ?? [];
-        return logsRaw.map((e) => Log.core(e)).toList();
+        return logsRaw.map((e) => Log.core(e as Map<String, Object?>)).toList();
       });
     } catch (e) {
       commonPrint.warn('Failed to parse logs: $e');
@@ -907,7 +998,9 @@ class ClashCore {
     try {
       return await Isolate.run<List<TrackerInfo>>(() {
         final requestsRaw = json.decode(res) as List? ?? [];
-        return requestsRaw.map((e) => TrackerInfo.fromJson(e)).toList();
+        return requestsRaw
+            .map((e) => TrackerInfo.fromJson(e as Map<String, Object?>))
+            .toList();
       });
     } catch (e) {
       commonPrint.warn('Failed to parse requests: $e');

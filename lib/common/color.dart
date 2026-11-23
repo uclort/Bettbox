@@ -85,7 +85,7 @@ extension ColorExtension on Color {
         .toUpperCase();
   }
 
-  Color darken([final int amount = 10]) {
+  Color darken([int amount = 10]) {
     if (amount <= 0) return this;
     if (amount > 100) return Colors.black;
     final HSLColor hsl = HSLColor.fromColor(this);
@@ -137,24 +137,6 @@ extension ColorSchemeExtension on ColorScheme {
       outlineVariant: _capChroma(outlineVariant, 4),
     );
   }
-
-  ColorScheme toPureBlack(bool isPrueBlack) => isPrueBlack
-      ? copyWith(
-          surface: Colors.black,
-          surfaceContainerLowest: Colors.black,
-          surfaceContainer: Colors.black,
-          surfaceContainerLow: Color.lerp(
-            Colors.black,
-            surfaceContainerLow,
-            0.6,
-          )!,
-          surfaceContainerHigh: Color.lerp(
-            Colors.black,
-            surfaceContainerHigh,
-            0.8,
-          )!,
-        )
-      : this;
 }
 
 extension DynamicSchemeExtension on DynamicScheme {

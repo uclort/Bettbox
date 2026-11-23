@@ -122,7 +122,7 @@ class _TrayContainerState extends ConsumerState<TrayManager> with TrayListener {
       }
       return;
     }
-    window?.show();
+    unawaited(window?.show());
   }
 
   @override

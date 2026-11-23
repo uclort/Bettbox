@@ -12,6 +12,7 @@ class App {
   Function()? onExit;
   FutureOr<void> Function()? onSystemWake;
   Function()? onAppUpdateNotificationOpened;
+  void Function()? onInstallFailed;
   void Function(String action)? onHomeWidgetAction;
   void Function(bool active)? onHomeWidgetsChanged;
 
@@ -26,6 +27,8 @@ class App {
         await onExit?.call();
       case 'systemDidWake':
         await onSystemWake?.call();
+      case 'installFailed':
+        onInstallFailed?.call();
       case 'appUpdateNotificationOpened':
         await onAppUpdateNotificationOpened?.call();
       case 'homeWidgetAction':
@@ -96,6 +99,14 @@ class App {
     await methodChannel.invokeMethod<void>('openAppSettings');
   }
 
+  Future<bool> openAppDetails(String packageName) async {
+    return await methodChannel.invokeMethod<bool>(
+          'openAppDetails',
+          packageName,
+        ) ??
+        false;
+  }
+
   Future<bool> openFcmDiagnostics() async {
     if (!system.isAndroid) return false;
     return await methodChannel.invokeMethod<bool>('openFcmDiagnostics') ??
@@ -117,6 +128,16 @@ class App {
     return await methodChannel.invokeMethod<Uint8List>('getPackageIcon', {
       'packageName': packageName,
       'processPath': processPath,
+      'forceRefresh': forceRefresh,
+    });
+  }
+
+  Future<String?> getPackageIconPath(
+    String packageName, {
+    bool forceRefresh = false,
+  }) async {
+    return await methodChannel.invokeMethod<String>('getPackageIconPath', {
+      'packageName': packageName,
       'forceRefresh': forceRefresh,
     });
   }
@@ -158,13 +179,6 @@ class App {
     await methodChannel.invokeMethod<void>('requestIgnoreBatteryOptimizations');
   }
 
-  Future<bool> setLauncherIcon(bool useDarkIcon) async {
-    final result = await methodChannel.invokeMethod<bool>('setLauncherIcon', {
-      'useDarkIcon': useDarkIcon,
-    });
-    return result ?? false;
-  }
-
   Future<void> updateHomeWidget(String data) async {
     await methodChannel.invokeMethod('updateHomeWidget', data);
   }
@@ -175,6 +189,10 @@ class App {
 
   Future<String?> consumeHomeWidgetAction() async {
     return await methodChannel.invokeMethod<String>('consumeHomeWidgetAction');
+  }
+
+  Future<bool> installApk(String path) async {
+    return await methodChannel.invokeMethod<bool>('installApk', path) ?? false;
   }
 
   Future<bool> isAndroidTV() async {

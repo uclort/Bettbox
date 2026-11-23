@@ -298,19 +298,19 @@ class _ToolboxViewState extends ConsumerState<ToolboxView> {
               IconButton(
                 tooltip: appLocalizations.reset,
                 onPressed: _reset,
-                icon: const Icon(Icons.restart_alt_rounded),
+                icon: const AppIcon(Icons.restart_alt_rounded),
               ),
               IconButton(
                 tooltip: appLocalizations.save,
                 onPressed: () => _setEditing(false),
-                icon: const Icon(Icons.check_rounded),
+                icon: const AppIcon(Icons.check_rounded),
               ),
             ]
           : [
               IconButton(
                 tooltip: appLocalizations.edit,
                 onPressed: () => _setEditing(true),
-                icon: const Icon(Icons.dashboard_customize_outlined),
+                icon: const AppIcon(Icons.dashboard_customize_outlined),
               ),
             ],
       body: _editing
@@ -364,7 +364,8 @@ class _ToolCardState extends State<_ToolCard> {
       child: TweenAnimationBuilder<Color?>(
         duration: const Duration(milliseconds: 180),
         tween: ColorTween(end: iconColor),
-        builder: (_, color, _) => Icon(item.icon, size: iconSize, color: color),
+        builder: (_, color, _) =>
+            Icon(context.resolveIcon(item.icon), size: iconSize, color: color),
       ),
     );
     Widget watermark(double iconSize) => TweenAnimationBuilder<Color?>(
@@ -374,7 +375,8 @@ class _ToolCardState extends State<_ToolCard> {
             ? item.color.withValues(alpha: 0.16)
             : colorScheme.onSurface.withValues(alpha: 0.05),
       ),
-      builder: (_, color, _) => Icon(item.icon, size: iconSize, color: color),
+      builder: (_, color, _) =>
+          Icon(context.resolveIcon(item.icon), size: iconSize, color: color),
     );
     final title = context.textTheme.bodyMedium?.copyWith(
       fontWeight: FontWeight.w600,
@@ -509,7 +511,7 @@ class _ToolCardState extends State<_ToolCard> {
                           : colorScheme.surfaceContainerHigh,
                     ),
                     child: Icon(
-                      Icons.arrow_forward_rounded,
+                      context.resolveIcon(Icons.arrow_forward_rounded),
                       size: 15,
                       color: iconColor,
                     ),

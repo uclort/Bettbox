@@ -615,7 +615,7 @@ class _MonitorSubStorePanelState extends State<_MonitorSubStorePanel> {
   }
 
   void _disposeRules() {
-    for (final item in _ruleControllers ?? const []) {
+    for (final item in _ruleControllers ?? const <Never>[]) {
       item.rule.dispose();
       item.note.dispose();
     }

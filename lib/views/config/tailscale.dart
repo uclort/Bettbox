@@ -632,7 +632,7 @@ class _TailscaleNodeSettingsState extends ConsumerState<_TailscaleNodeSettings>
     setState(() => _scans = result.scans);
     _pruneProfileGroups(result);
     if (result.scans.any((scan) => scan.current && scan.nodes.isNotEmpty)) {
-      refreshStatus(silent: true);
+      unawaited(refreshStatus(silent: true));
     }
   }
 
@@ -1502,14 +1502,12 @@ class _TailscaleProfileWarning extends StatelessWidget {
 // Tailnet 的应用都经过这个节点，节点重连时它们会暂时解析不到主机；面板把状态、
 // 节点名、IP、在线设备数放在一起，方便判断问题出在节点还是对端。
 class _TailscaleNodeStatusPanel extends StatelessWidget {
-  final String? title;
   final TailscaleNodeStatus? status;
   final bool loading;
   final VoidCallback onRefresh;
   final String statusText;
 
   const _TailscaleNodeStatusPanel({
-    this.title,
     required this.status,
     required this.loading,
     required this.onRefresh,
@@ -1528,7 +1526,6 @@ class _TailscaleNodeStatusPanel extends StatelessWidget {
         ? Colors.orange
         : colorScheme.error;
     final info = <(String, String)>[
-      if (title != null) (appLocalizations.tailscaleGroups, title!),
       if (status != null && status!.dnsName.isNotEmpty)
         (appLocalizations.tailscaleNodeHostname, status!.dnsName),
       if (status != null && status!.ips.isNotEmpty)

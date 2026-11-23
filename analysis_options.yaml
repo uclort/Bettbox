@@ -1,7 +1,10 @@
 include: package:flutter_lints/flutter.yaml
 analyzer:
+  language:
+    strict-casts: true
+    strict-raw-types: true
   exclude:
-    - lib/l10n/intl/**
+    - lib/l10n/**
     - lib/clash/generated/**
     - lib/**/generated/**
     - "**/*.g.dart"
@@ -19,3 +22,7 @@ analyzer:
 linter:
   rules:
     prefer_single_quotes: true
+    unawaited_futures: true
+    cancel_subscriptions: true
+    close_sinks: true
+    avoid_dynamic_calls: true

@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:ffi/ffi.dart';
@@ -65,6 +67,61 @@ class System {
   bool get isAndroid => Platform.isAndroid;
 
   bool get isLinux => Platform.isLinux;
+
+  Future<bool> revealFile(String path) async {
+    if (path.isEmpty) return false;
+    final target = isMacOS ? _macBundleOf(path) : path;
+    final directory = dirname(target);
+    try {
+      if (await FileSystemEntity.type(target) ==
+          FileSystemEntityType.notFound) {
+        if (!await Directory(directory).exists()) return false;
+        return await _openDirectory(directory);
+      }
+      if (isMacOS) {
+        return (await Process.run('open', ['-R', target])).exitCode == 0;
+      }
+      if (isWindows) {
+        await Process.run('explorer.exe', ['/select,$target']);
+        return true;
+      }
+      final uri = Uri.file(target).toString().replaceAll("'", '%27');
+      final result = await Process.run('gdbus', [
+        'call',
+        '--session',
+        '--dest',
+        'org.freedesktop.FileManager1',
+        '--object-path',
+        '/org/freedesktop/FileManager1',
+        '--method',
+        'org.freedesktop.FileManager1.ShowItems',
+        "['$uri']",
+        '',
+      ]);
+      if (result.exitCode == 0) return true;
+    } catch (_) {}
+    return _openDirectory(directory);
+  }
+
+  String _macBundleOf(String path) {
+    final index = path.indexOf('.app/');
+    return index == -1 ? path : path.substring(0, index + 4);
+  }
+
+  Future<bool> _openDirectory(String directory) async {
+    try {
+      if (isWindows) {
+        await Process.run('explorer.exe', [directory]);
+        return true;
+      }
+      final result = await Process.run(isMacOS ? 'open' : 'xdg-open', [
+        directory,
+      ]);
+      return result.exitCode == 0;
+    } catch (_) {
+      return false;
+    }
+  }
 
   Future<int> get version async {
     final deviceInfo = await DeviceInfoPlugin().deviceInfo;
@@ -389,9 +446,9 @@ class System {
             .where((line) => line.startsWith('$name:'))
             .map((line) => line.substring(name.length + 1).trim())
             .firstOrNull;
-        final effectiveUid = field(
-          'Uid',
-        )?.split(RegExp(r'\s+')).elementAtOrNull(1);
+        final effectiveUid = field('Uid')
+            ?.split(RegExp(r'\s+'))
+            .elementAtOrNull(1);
         final capEff = int.tryParse(field('CapEff') ?? '', radix: 16) ?? 0;
         const capNetAdmin = 1 << 12;
         if (effectiveUid == '0' || capEff & capNetAdmin != 0) return;
@@ -461,7 +518,7 @@ class System {
       commonPrint.warn('pkexec failed: $e');
     }
 
-    window?.show();
+    unawaited(window?.show());
     final password = await globalState.showCommonDialog<String>(
       child: InputDialog(
         obscureText: true,
@@ -531,8 +588,7 @@ class System {
       return;
     }
     if (isAndroid) {
-      await globalState.appController.savePreferences();
-      await Restart.restartApp(forceKill: true);
+      await globalState.appController.restartAndroidApp();
       return;
     }
     await Restart.restartApp();
@@ -580,6 +636,43 @@ class System {
         >('malloc_zone_pressure_relief')(nullptr, 0);
       }
     } catch (_) {}
+  }
+
+  Future<void> releaseCodePages() async {
+    if (!isAndroid && !isLinux) return;
+    try {
+      await Isolate.run(_releaseCodePages);
+    } catch (_) {}
+  }
+
+  static void _releaseCodePages() {
+    final libc = Platform.isAndroid
+        ? DynamicLibrary.open('libc.so')
+        : DynamicLibrary.process();
+    final madvise = libc
+        .lookupFunction<
+          Int32 Function(Pointer<Void> addr, UintPtr length, Int32 advice),
+          int Function(Pointer<Void> addr, int length, int advice)
+        >('madvise');
+    for (final line in File('/proc/self/maps').readAsLinesSync()) {
+      final fields = line.split(' ');
+      if (fields.length < 2 || fields[1] != 'r-xp') continue;
+      final pathStart = line.indexOf('/');
+      if (pathStart < 0) continue;
+      final path = line.substring(pathStart);
+      if (path.startsWith('/dev/') ||
+          path.startsWith('/memfd:') ||
+          path.endsWith(' (deleted)')) {
+        continue;
+      }
+      final range = fields[0].split('-');
+      final start = int.parse(range.first, radix: 16);
+      madvise(
+        Pointer.fromAddress(start),
+        int.parse(range.last, radix: 16) - start,
+        4,
+      );
+    }
   }
 }
 
@@ -957,9 +1050,8 @@ class Windows {
 </Task>''';
     final taskPath = join(await appPath.tempPath, 'task.xml');
     await File(taskPath).create(recursive: true);
-    await File(
-      taskPath,
-    ).writeAsBytes(taskXml.encodeUtf16LeWithBom, flush: true);
+    await File(taskPath)
+        .writeAsBytes(taskXml.encodeUtf16LeWithBom, flush: true);
     final commandLine = [
       '/Create',
       '/TN',
@@ -1073,9 +1165,8 @@ class MacOS {
           (line) => RegExp(r'^\(\d+\).*').hasMatch(line),
           orElse: () => '',
         );
-    final match = RegExp(
-      r'^\(\d+\)\s+(.+)$',
-    ).firstMatch(serviceNameLine.trim());
+    final match = RegExp(r'^\(\d+\)\s+(.+)$')
+        .firstMatch(serviceNameLine.trim());
     return match?.group(1)?.trim();
   }
 
@@ -1329,9 +1420,9 @@ class Linux {
   Future<String?> get _defaultDevice async {
     final result = await _run('ip', ['route', 'show', 'default']);
     if (result == null || result.exitCode != 0) return null;
-    return RegExp(
-      r'\bdev\s+(\S+)',
-    ).firstMatch(result.stdout.toString())?.group(1);
+    return RegExp(r'\bdev\s+(\S+)')
+        .firstMatch(result.stdout.toString())
+        ?.group(1);
   }
 
   Future<bool> get _usesResolvedStub async {

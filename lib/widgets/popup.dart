@@ -226,14 +226,21 @@ class _CascadeMenu extends StatefulWidget {
 
 class _CascadeMenuState extends State<_CascadeMenu> {
   final _placement = _MenuPlacement();
+  final _menuKey = GlobalKey();
   PopupMenuItemData? _submenu;
   Rect? _submenuAnchor;
+
+  Rect? _settledRect(Rect? rect) {
+    final box = _menuKey.currentContext?.findRenderObject();
+    if (rect == null || box is! RenderBox || !box.hasSize) return rect;
+    return box.globalToLocal(rect.topLeft) + _placement.offset & rect.size;
+  }
 
   void _handleSubmenu(PopupMenuItemData? item, Rect? anchor) {
     if (identical(item, _submenu)) return;
     setState(() {
       _submenu = item;
-      _submenuAnchor = item == null ? null : anchor;
+      _submenuAnchor = item == null ? null : _settledRect(anchor);
     });
   }
 
@@ -248,7 +255,7 @@ class _CascadeMenuState extends State<_CascadeMenu> {
         padding: const EdgeInsets.fromLTRB(8, 10, 22, 10),
         child: Row(
           children: [
-            Icon(
+            AppIcon(
               Icons.chevron_left_rounded,
               size: 24,
               color: colorScheme.onSurfaceVariant,
@@ -312,6 +319,7 @@ class _CascadeMenuState extends State<_CascadeMenu> {
               duration: widget.duration,
               resolveAlignment: () => _placement.alignment,
               child: CommonPopupMenu.surface(
+                key: _menuKey,
                 context,
                 AnimatedSize(
                   duration: const Duration(milliseconds: 180),
@@ -369,6 +377,7 @@ class _CascadeMenuState extends State<_CascadeMenu> {
 
 class _MenuPlacement {
   Alignment alignment = Alignment.topLeft;
+  Offset offset = Offset.zero;
 }
 
 const _menuMargin = 8.0;
@@ -430,7 +439,7 @@ class _ContextMenuLayoutDelegate extends SingleChildLayoutDelegate {
       (true, false) => Alignment.bottomLeft,
       (true, true) => Alignment.bottomRight,
     };
-    return Offset(
+    return placement.offset = Offset(
       x.clamp(area.left, math.max(area.left, area.right - childSize.width)),
       y.clamp(area.top, math.max(area.top, area.bottom - childSize.height)),
     );
@@ -526,7 +535,7 @@ class _CommonPopupBoxState extends State<CommonPopupBox> {
   bool _isOpen = false;
   final _targetOffsetValueNotifier = ValueNotifier<Offset>(Offset.zero);
   Offset _offset = Offset.zero;
-  CommonPopupRoute? _route;
+  CommonPopupRoute<dynamic>? _route;
 
   Future<void> _open({Offset offset = Offset.zero}) {
     _offset = offset;
@@ -732,7 +741,11 @@ class CommonPopupMenu extends StatelessWidget {
               mainAxisSize: MainAxisSize.max,
               children: [
                 if (item.icon != null) ...[
-                  Icon(item.icon, size: fontSize + 5, color: iconColor),
+                  Icon(
+                    context.resolveIcon(item.icon!),
+                    size: fontSize + 5,
+                    color: iconColor,
+                  ),
                   const SizedBox(width: 14),
                 ],
                 if (submenu)
@@ -760,7 +773,7 @@ class CommonPopupMenu extends StatelessWidget {
                   Flexible(child: label),
                 if (submenu) ...[
                   const SizedBox(width: 4),
-                  Icon(
+                  AppIcon(
                     Icons.chevron_right_rounded,
                     size: fontSize + 5,
                     color: colorScheme.onSurfaceVariant,
@@ -808,10 +821,11 @@ class CommonPopupMenu extends StatelessWidget {
     return IntrinsicHeight(child: menu);
   }
 
-  static Widget surface(BuildContext context, Widget child) {
+  static Widget surface(BuildContext context, Widget child, {Key? key}) {
     final colorScheme = context.colorScheme;
     final isLight = colorScheme.brightness == Brightness.light;
     return Material(
+      key: key,
       elevation: 8,
       shadowColor: Colors.black.withValues(alpha: isLight ? 0.5 : 0.8),
       color: isLight

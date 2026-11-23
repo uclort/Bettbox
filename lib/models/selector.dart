@@ -7,33 +7,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'generated/selector.freezed.dart';
 
 @freezed
-abstract class VM2<A, B> with _$VM2<A, B> {
-  const factory VM2({required A a, required B b}) = _VM2;
-}
-
-@freezed
-abstract class VM3<A, B, C> with _$VM3<A, B, C> {
-  const factory VM3({required A a, required B b, required C c}) = _VM3;
-}
-
-@freezed
-abstract class VM4<A, B, C, D> with _$VM4<A, B, C, D> {
-  const factory VM4({required A a, required B b, required C c, required D d}) =
-      _VM4;
-}
-
-@freezed
-abstract class VM5<A, B, C, D, E> with _$VM5<A, B, C, D, E> {
-  const factory VM5({
-    required A a,
-    required B b,
-    required C c,
-    required D d,
-    required E e,
-  }) = _VM5;
-}
-
-@freezed
 abstract class StartButtonSelectorState with _$StartButtonSelectorState {
   const factory StartButtonSelectorState({
     required bool isInit,
@@ -235,16 +208,6 @@ abstract class ProxyState with _$ProxyState {
 }
 
 @freezed
-abstract class ClashConfigState with _$ClashConfigState {
-  const factory ClashConfigState({
-    required bool overrideDns,
-    required ClashConfig clashConfig,
-    required OverrideData overrideData,
-    required bool bypassPrivateRoute,
-  }) = _ClashConfigState;
-}
-
-@freezed
 abstract class DashboardState with _$DashboardState {
   const factory DashboardState({
     required List<DashboardWidget> dashboardWidgets,
@@ -272,5 +235,7 @@ abstract class ProfileOverrideStateModel with _$ProfileOverrideStateModel {
     ClashConfigSnippet? snippet,
     required Set<String> selectedRules,
     OverrideData? overrideData,
+    @Default(false) bool managed,
+    @Default({}) Set<String> sharedRules,
   }) = _ProfileOverrideStateModel;
 }

@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:leak_tracker_flutter_testing/leak_tracker_flutter_testing.dart';
 
 void main() {
   setUp(() {
@@ -20,31 +21,38 @@ void main() {
       systemUiOverlayStyle: const SystemUiOverlayStyle(),
     );
   });
-  testWidgets('更新框显示完整版本、Markdown 正文和发布页入口', (tester) async {
-    final links = <String>[];
-    await tester.pumpWidget(
-      ProviderScope(
-        child: MaterialApp(
-          home: AppUpdateDialog(
-            currentVersion: '1.19.3+2090000183',
-            latestVersion: '1.19.3+2090000184',
-            notes: '## 更新标题\n\n- **完整正文**\n\n[链接](https://example.com)',
-            confirmText: '下载并安装',
-            openUrl: links.add,
-            releaseUrl: 'https://github.com/uclort/Bettbox/releases/tag/test',
+  // markdown_widget 内部为链接创建的 TapGestureRecognizer 不会释放，属于三方库行为。
+  testWidgets(
+    '更新框显示完整版本、Markdown 正文和发布页入口',
+    experimentalLeakTesting: LeakTesting.settings.withIgnored(
+      classes: ['TapGestureRecognizer'],
+    ),
+    (tester) async {
+      final links = <String>[];
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: AppUpdateDialog(
+              currentVersion: '1.19.3+2090000183',
+              latestVersion: '1.19.3+2090000184',
+              notes: '## 更新标题\n\n- **完整正文**\n\n[链接](https://example.com)',
+              confirmText: '下载并安装',
+              openUrl: links.add,
+              releaseUrl: 'https://github.com/uclort/Bettbox/releases/tag/test',
+            ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('当前版本：1.19.3+2090000183'), findsOneWidget);
-    expect(find.text('最新版本：1.19.3+2090000184'), findsOneWidget);
-    expect(find.textContaining('更新标题', findRichText: true), findsOneWidget);
-    expect(find.textContaining('完整正文', findRichText: true), findsOneWidget);
-    await tester.ensureVisible(find.text('查看完整发布页'));
-    await tester.tap(find.text('查看完整发布页'));
-    expect(links, ['https://github.com/uclort/Bettbox/releases/tag/test']);
-  });
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('当前版本：1.19.3+2090000183'), findsOneWidget);
+      expect(find.text('最新版本：1.19.3+2090000184'), findsOneWidget);
+      expect(find.textContaining('更新标题', findRichText: true), findsOneWidget);
+      expect(find.textContaining('完整正文', findRichText: true), findsOneWidget);
+      await tester.ensureVisible(find.text('查看完整发布页'));
+      await tester.tap(find.text('查看完整发布页'));
+      expect(links, ['https://github.com/uclort/Bettbox/releases/tag/test']);
+    },
+  );
 
   testWidgets('空描述有兜底且拒绝打开非 HTTP 发布链接', (tester) async {
     final links = <String>[];

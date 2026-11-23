@@ -27,16 +27,14 @@ void showOutboundModeSheet(BuildContext context) {
                 items: [
                   for (final item in Mode.values)
                     ListItem(
-                      leading: Icon(
-                        switch (item) {
-                          Mode.rule => Icons.alt_route_rounded,
-                          Mode.global => Icons.language_rounded,
-                          Mode.direct => Icons.east_rounded,
-                        },
-                      ),
+                      leading: AppIcon(switch (item) {
+                        Mode.rule => Icons.alt_route_rounded,
+                        Mode.global => Icons.language_rounded,
+                        Mode.direct => Icons.east_rounded,
+                      }),
                       title: Text(Intl.message(item.name)),
                       trailing: item == currentMode
-                          ? Icon(
+                          ? AppIcon(
                               Icons.check_rounded,
                               color: context.colorScheme.primary,
                             )
@@ -81,7 +79,7 @@ void showTunSheet(BuildContext context) {
               if (!system.isAndroid) const StrictRouteItem(),
               const IcmpForwardingItem(),
               if (system.isDesktop) const NetworkInterfaceItem(),
-              if (!AppIdentity.isLite) const TunStackItem(),
+              if (AppIdentity.isStandard) const TunStackItem(),
             ],
           ),
         ),
@@ -105,7 +103,7 @@ void showVpnSheet(BuildContext context) {
               const VPNItem(),
               if (!system.isAndroid) const StrictRouteItem(),
               const IcmpForwardingItem(),
-              if (!AppIdentity.isLite) const TunStackItem(),
+              if (AppIdentity.isStandard) const TunStackItem(),
             ],
           ),
         ),
@@ -165,9 +163,9 @@ class TUNButton extends StatelessWidget {
                     appLocalizations.options,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.titleSmall?.adjustSize(-2).toLight,
+                    style: Theme.of(context).textTheme.titleSmall
+                        ?.adjustSize(-2)
+                        .toLight,
                   ),
                 ),
               ),
@@ -221,9 +219,9 @@ class SystemProxyButton extends StatelessWidget {
                     appLocalizations.options,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.titleSmall?.adjustSize(-2).toLight,
+                    style: Theme.of(context).textTheme.titleSmall
+                        ?.adjustSize(-2)
+                        .toLight,
                   ),
                 ),
               ),
@@ -273,9 +271,9 @@ class VpnButton extends StatelessWidget {
                     appLocalizations.options,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.titleSmall?.adjustSize(-2).toLight,
+                    style: Theme.of(context).textTheme.titleSmall
+                        ?.adjustSize(-2)
+                        .toLight,
                   ),
                 ),
               ),

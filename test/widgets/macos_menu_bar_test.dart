@@ -62,7 +62,9 @@ void main() {
         .toList();
     expect(setMenus.length, registered, reason: '尺寸切换不应反复销毁或重建原生菜单');
     expect(
-      setMenus.skip(1).every((call) => (call.arguments as Map)['0'].isNotEmpty),
+      setMenus
+          .skip(1)
+          .every((call) => ((call.arguments as Map)['0'] as List).isNotEmpty),
       isTrue,
       reason: '初始清理之后不能再向原生层发送空菜单',
     );

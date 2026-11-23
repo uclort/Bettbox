@@ -53,7 +53,7 @@ class _TvQrImportDialogState extends State<TvQrImportDialog> {
       }
 
       if (!mounted) {
-        server.close(force: true);
+        unawaited(server.close(force: true));
         return;
       }
 
@@ -208,16 +208,17 @@ class _TvQrImportDialogState extends State<TvQrImportDialog> {
       if (!mounted) return;
       Navigator.of(context).pop();
       try {
-        final profile = await Profile.normal(
-          label: name,
-        ).saveFileWithString(content);
+        final profile = await Profile.normal(label: name)
+            .saveFileWithString(content);
         await globalState.appController.addProfile(profile);
         globalState.appController.toProfiles();
       } catch (e) {
-        globalState.showMessage(
-          title: appLocalizations.file,
-          message: TextSpan(text: e.toString()),
-          cancelable: false,
+        unawaited(
+          globalState.showMessage(
+            title: appLocalizations.file,
+            message: TextSpan(text: e.toString()),
+            cancelable: false,
+          ),
         );
       }
     });
@@ -258,7 +259,7 @@ class _TvQrImportDialogState extends State<TvQrImportDialog> {
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(
+        AppIcon(
           Icons.wifi_off_rounded,
           size: 64,
           color: context.colorScheme.error,
@@ -281,7 +282,7 @@ class _TvQrImportDialogState extends State<TvQrImportDialog> {
                 });
                 _startServer();
               },
-              icon: const Icon(Icons.refresh),
+              icon: const AppIcon(Icons.refresh),
               label: Text(appLocalizations.retry),
             ),
             const SizedBox(width: 16),
@@ -303,7 +304,7 @@ class _TvQrImportDialogState extends State<TvQrImportDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
+              AppIcon(
                 Icons.check_circle_rounded,
                 size: 64,
                 color: context.colorScheme.primary,
@@ -472,7 +473,7 @@ class _TvQrImportDialogState extends State<TvQrImportDialog> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: context.colorScheme.primary),
+        AppIcon(icon, size: 18, color: context.colorScheme.primary),
         const SizedBox(width: 8),
         Expanded(
           child: Text(

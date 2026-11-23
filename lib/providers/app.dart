@@ -8,10 +8,7 @@ import 'package:bett_box/state.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-
-import 'config.dart';
 
 part 'generated/app.g.dart';
 
@@ -572,12 +569,82 @@ class ConnectionsUdpOnly extends _$ConnectionsUdpOnly {
 }
 
 // Connections providers
-final connectionsProvider = StateProvider<List<TrackerInfo>>((ref) => []);
-final connectionsSearchProvider = StateProvider<String>((ref) => '');
-final connectionsKeywordsProvider = StateProvider<List<String>>((ref) => []);
-final connectionsSortProvider = StateProvider<ConnectionsSortType>(
-  (ref) => ConnectionsSortType.defaultSort,
-);
+@Riverpod(keepAlive: true)
+class Connections extends _$Connections with NotifierValueMixin {
+  @override
+  List<TrackerInfo> build() => [];
+}
+
+@Riverpod(keepAlive: true)
+class ConnectionsSearch extends _$ConnectionsSearch with NotifierValueMixin {
+  @override
+  String build() => '';
+}
+
+@Riverpod(keepAlive: true)
+class ConnectionsKeywords extends _$ConnectionsKeywords
+    with NotifierValueMixin {
+  @override
+  List<String> build() => [];
+}
+
+@Riverpod(keepAlive: true)
+class ConnectionsSort extends _$ConnectionsSort with NotifierValueMixin {
+  @override
+  ConnectionsSortType build() => ConnectionsSortType.defaultSort;
+}
+
+@Riverpod(keepAlive: true)
+class AppUpdateState extends _$AppUpdateState with NotifierValueMixin {
+  @override
+  AppUpdate? build() => null;
+}
+
+@Riverpod(keepAlive: true)
+class ProfilesSlide extends _$ProfilesSlide {
+  static const _idleReset = Duration(minutes: 5);
+  DateTime? _leftAt;
+
+  @override
+  ({bool showNodes, bool animate}) build() =>
+      (showNodes: false, animate: false);
+
+  void show(bool showNodes) {
+    if (state.showNodes == showNodes) return;
+    state = (showNodes: showNodes, animate: true);
+  }
+
+  void toggle() => show(!state.showNodes);
+
+  void leave() => _leftAt ??= DateTime.now();
+
+  void enter() {
+    final leftAt = _leftAt;
+    _leftAt = null;
+    if (leftAt == null ||
+        !state.showNodes ||
+        DateTime.now().difference(leftAt) < _idleReset) {
+      return;
+    }
+    state = (showNodes: false, animate: false);
+  }
+}
+
+@Riverpod(keepAlive: true)
+class ForceRefreshIcon extends _$ForceRefreshIcon with NotifierValueMixin {
+  @override
+  bool build() => false;
+}
+
+@riverpod
+class GeoUpdatingKeys extends _$GeoUpdatingKeys with NotifierValueMixin {
+  @override
+  Set<String> build() => {};
+
+  void add(String key) => state = {...state, key};
+
+  void remove(String key) => state = Set.of(state)..remove(key);
+}
 
 int _compareTrackerInfo(
   ConnectionsSortType sortType,
@@ -632,8 +699,7 @@ final filteredAllConnectionsProvider =
 
 @riverpod
 Future<IconSet> builtInIconSet(Ref ref) async {
-  ref.watch(managedSettingProvider.select((state) => state.syncedVersion));
-  final index = await ManagedScript.catalog(ref.read(managedSettingProvider));
+  final index = await ManagedScript.catalog();
   return routeIconSet(index.catalog);
 }
 

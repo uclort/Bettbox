@@ -152,6 +152,7 @@ class ApplicationState extends ConsumerState<Application>
     final isLight = colorScheme.brightness == Brightness.light;
     return ThemeData(
       useMaterial3: true,
+      splashFactory: InkRipple.splashFactory,
       pageTransitionsTheme: _pageTransitionsTheme,
       scaffoldBackgroundColor: colorScheme.pageColor,
       appBarTheme: isLight ? _lightAppBarTheme : _darkAppBarTheme,
@@ -306,6 +307,9 @@ class ApplicationState extends ConsumerState<Application>
   }
 
   Future<void> _initApp() async {
+    unawaited(uiManager.initializeUI());
+    unawaited(ensureRustLib());
+    unawaited(preferences.flushStartupBackup());
     final currentContext = globalState.navigatorKey.currentContext;
     if (currentContext != null && currentContext != context) {
       globalState.appController = AppController(currentContext, ref);
@@ -326,11 +330,8 @@ class ApplicationState extends ConsumerState<Application>
     }
     globalState.appController.initLink();
     if (system.isAndroid) {
-      app.initShortcuts();
+      unawaited(app.initShortcuts());
     }
-    Future.delayed(const Duration(seconds: 3), () {
-      globalState.warmupCommonDialog();
-    });
   }
 
   @override
@@ -552,49 +553,54 @@ class ApplicationState extends ConsumerState<Application>
             final lightColorScheme = ref.read(
               genColorSchemeProvider(Brightness.light),
             );
-            final darkColorScheme = ref
-                .read(genColorSchemeProvider(Brightness.dark))
-                .toPureBlack(themeProps.pureBlack);
+            final darkColorScheme = ref.read(
+              genColorSchemeProvider(Brightness.dark),
+            );
 
-            return MaterialApp(
-              debugShowCheckedModeBanner: false,
-              navigatorKey: globalState.navigatorKey,
-              navigatorObservers: [routeIdleObserver],
-              localizationsDelegates: const [
-                AppLocalizations.delegate,
-                ...GlobalMaterialLocalizations.delegates,
-              ],
-              builder: (_, child) {
-                final content = Directionality(
-                  textDirection: TextDirection.ltr,
-                  child: ValueListenableBuilder<bool>(
-                    valueListenable: globalState.animationEnabled,
-                    builder: (_, enabled, _) {
-                      return TickerMode(
-                        enabled: enabled,
-                        child: _buildApp(
-                          AppSidebarContainer(child: _buildPlatformApp(child!)),
-                        ),
-                      );
-                    },
-                  ),
-                );
-                // BETTBOX-CUSTOM: 菜单必须在响应式布局外保持同一生命周期。
-                // 否则旧 PlatformMenuBar 的 dispose 会清空新实例刚注册的菜单。
-                return system.isMacOS ? MacOSMenuBar(child: content) : content;
-              },
-              scrollBehavior: BaseScrollBehavior(),
-              title: appName,
-              locale:
-                  utils.getLocaleForString(locale) ?? utils.getSystemLocale(),
-              supportedLocales: AppLocalizations.delegate.supportedLocales,
-              themeMode: themeProps.themeMode,
-              theme: _themeOf(lightColorScheme, fontFamily),
-              darkTheme: _themeOf(darkColorScheme, fontFamily),
-              home: child!,
+            return AppIconScope(
+              usePhosphorIcons: themeProps.usePhosphorIcons,
+              child: MaterialApp(
+                debugShowCheckedModeBanner: false,
+                navigatorKey: globalState.navigatorKey,
+                navigatorObservers: [routeIdleObserver],
+                localizationsDelegates: const [
+                  AppLocalizations.delegate,
+                  ...GlobalMaterialLocalizations.delegates,
+                ],
+                builder: (_, child) {
+                  final content = Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: ValueListenableBuilder<bool>(
+                      valueListenable: globalState.animationEnabled,
+                      builder: (_, enabled, _) {
+                        return TickerMode(
+                          enabled: enabled,
+                          child: _buildApp(
+                            AppSidebarContainer(
+                              child: _buildPlatformApp(child!),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                  // BETTBOX-CUSTOM: 菜单必须在响应式布局外保持同一生命周期。
+                  // 否则旧 PlatformMenuBar 的 dispose 会清空新实例刚注册的菜单。
+                  return system.isMacOS ? MacOSMenuBar(child: content) : content;
+                },
+                scrollBehavior: BaseScrollBehavior(),
+                title: appName,
+                locale:
+                    utils.getLocaleForString(locale) ?? utils.getSystemLocale(),
+                supportedLocales: AppLocalizations.delegate.supportedLocales,
+                themeMode: themeProps.themeMode,
+                theme: _themeOf(lightColorScheme, fontFamily),
+                darkTheme: _themeOf(darkColorScheme, fontFamily),
+                home: child!,
+              ),
             );
           },
-          child: const HomePage(),
+          child: const RouteSnapshot(child: HomePage()),
         ),
       ),
     );

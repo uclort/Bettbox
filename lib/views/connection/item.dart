@@ -16,6 +16,8 @@ import 'package:bett_box/providers/providers.dart';
 
 final _iconCache = <String, Uint8List?>{};
 final _iconLoads = <String, Future<Uint8List?>>{};
+// BETTBOX-CUSTOM: 图标尺寸可配置，按实际渲染过的（逻辑尺寸, dpr）组合回收 ResizeImage 缓存。
+final _iconRenderKeys = <String, Set<(int, double)>>{};
 const _maxIconCacheSize = 100;
 Uint8List? _defaultIconCache;
 Future<Uint8List?>? _defaultIconFuture;
@@ -23,9 +25,21 @@ Future<Uint8List?>? _defaultIconFuture;
 void _addToIconCache(String key, Uint8List? value) {
   _iconCache.remove(key);
   while (_iconCache.length >= _maxIconCacheSize) {
-    final evicted = _iconCache.remove(_iconCache.keys.first);
-    if (evicted != null) {
-      imageCache.evict(MemoryImage(evicted), includeLive: false);
+    final evictedKey = _iconCache.keys.first;
+    final evicted = _iconCache.remove(evictedKey);
+    final renderKeys = _iconRenderKeys.remove(evictedKey);
+    if (evicted != null && renderKeys != null) {
+      for (final (size, dpr) in renderKeys) {
+        ResizeImage(
+              MemoryImage(evicted),
+              width: size,
+              height: size,
+              useLogicalSize: true,
+              allowUpscaling: false,
+            )
+            .obtainKey(ImageConfiguration(devicePixelRatio: dpr))
+            .then((cacheKey) => imageCache.evict(cacheKey, includeLive: false));
+      }
     }
   }
 
@@ -41,6 +55,7 @@ class TrackerInfoItem extends ConsumerWidget {
   final int count;
   final bool reversed;
   final bool showSpeed;
+  final bool dimmed;
 
   const TrackerInfoItem({
     super.key,
@@ -52,6 +67,7 @@ class TrackerInfoItem extends ConsumerWidget {
     required this.count,
     this.reversed = false,
     this.showSpeed = false,
+    this.dimmed = false,
   });
 
   static double get subTitleHeight {
@@ -70,13 +86,29 @@ class TrackerInfoItem extends ConsumerWidget {
 
   static ThemeData? _cachedBaseTheme;
   static ThemeData? _cachedItemTheme;
+  static ThemeData? _cachedDimmedItemTheme;
 
-  static ThemeData _getItemTheme(ThemeData baseTheme) {
-    if (identical(_cachedBaseTheme, baseTheme) && _cachedItemTheme != null) {
-      return _cachedItemTheme!;
+  static ThemeData _getItemTheme(ThemeData baseTheme, {bool dimmed = false}) {
+    if (!identical(_cachedBaseTheme, baseTheme)) {
+      _cachedBaseTheme = baseTheme;
+      _cachedItemTheme = null;
+      _cachedDimmedItemTheme = null;
     }
-    _cachedBaseTheme = baseTheme;
-    _cachedItemTheme = baseTheme.copyWith(
+    if (dimmed) {
+      return _cachedDimmedItemTheme ??= baseTheme.copyWith(
+        visualDensity: VisualDensity.compact,
+        canvasColor: baseTheme.colorScheme.onSurfaceVariant.withValues(
+          alpha: 0.08 * 0.6,
+        ),
+        chipTheme: baseTheme.chipTheme.copyWith(
+          side: BorderSide.none,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(8)),
+          ),
+        ),
+      );
+    }
+    return _cachedItemTheme ??= baseTheme.copyWith(
       visualDensity: VisualDensity.compact,
       canvasColor: baseTheme.colorScheme.onSurfaceVariant.withValues(
         alpha: 0.08,
@@ -88,7 +120,6 @@ class TrackerInfoItem extends ConsumerWidget {
         ),
       ),
     );
-    return _cachedItemTheme!;
   }
 
   String _getSourceText(TrackerInfo trackerInfo) {
@@ -97,9 +128,8 @@ class TrackerInfoItem extends ConsumerWidget {
         : '';
     if (showSpeed) {
       final upSpeed = TrafficValue(value: trackerInfo.uploadSpeed).toString();
-      final downSpeed = TrafficValue(
-        value: trackerInfo.downloadSpeed,
-      ).toString();
+      final downSpeed = TrafficValue(value: trackerInfo.downloadSpeed)
+          .toString();
       return '$progress$upSpeed/s↑ $downSpeed/s↓';
     }
     final up = TrafficValue(value: trackerInfo.upload).toString();
@@ -111,9 +141,12 @@ class TrackerInfoItem extends ConsumerWidget {
   Widget build(BuildContext context, ref) {
     final value = ref.watch(
       patchClashConfigProvider.select(
-        (state) => state.findProcessMode == FindProcessMode.always,
+        (state) => state.findProcessMode != FindProcessMode.off,
       ),
     );
+    final alphaFactor = dimmed ? 0.6 : 1.0;
+    final onSurface = context.colorScheme.onSurface;
+    final onSurfaceVariant = context.colorScheme.onSurfaceVariant;
     final title = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -130,13 +163,16 @@ class TrackerInfoItem extends ConsumerWidget {
                 style: context.textTheme.bodyLarge?.copyWith(
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
+                  color: dimmed
+                      ? onSurface.withValues(alpha: onSurface.a * 0.6)
+                      : null,
                 ),
               ),
             ),
             Text(
               trackerInfo.start.lastUpdateTimeDesc,
               style: context.textTheme.bodySmall?.copyWith(
-                color: context.colorScheme.onSurface.opacity60,
+                color: onSurface.withValues(alpha: 0.6 * alphaFactor),
               ),
             ),
           ],
@@ -148,14 +184,16 @@ class TrackerInfoItem extends ConsumerWidget {
           overflow: TextOverflow.ellipsis,
           style: context.textTheme.bodyMedium?.copyWith(
             fontSize: 12.5,
-            color: context.colorScheme.onSurfaceVariant.opacity80,
+            color: onSurfaceVariant.withValues(alpha: 0.8 * alphaFactor),
           ),
         ),
       ],
     );
     final chains = trackerInfo.chains;
     final labelStyle = context.textTheme.bodySmall?.copyWith(
-      color: context.colorScheme.onSurfaceVariant,
+      color: dimmed
+          ? onSurfaceVariant.withValues(alpha: onSurfaceVariant.a * 0.6)
+          : onSurfaceVariant,
     );
     final subTitle = SizedBox(
       height: subTitleHeight,
@@ -169,7 +207,7 @@ class TrackerInfoItem extends ConsumerWidget {
               scrollDirection: Axis.horizontal,
               physics: const ClampingScrollPhysics(),
               child: Theme(
-                data: _getItemTheme(Theme.of(context)),
+                data: _getItemTheme(Theme.of(context), dimmed: dimmed),
                 child: Row(
                   spacing: 6,
                   children: [
@@ -197,6 +235,7 @@ class TrackerInfoItem extends ConsumerWidget {
             processPath: trackerInfo.metadata.processPath,
             port: trackerInfo.metadata.destinationPort,
             onClick: onClickKeyword,
+            dimmed: dimmed,
           )
         : null;
     final listItem = InkWell(
@@ -297,6 +336,7 @@ class ConnectionProcessIcon extends StatefulWidget {
   final String port;
   final double size;
   final Function(String)? onClick;
+  final bool dimmed;
 
   const ConnectionProcessIcon({
     super.key,
@@ -305,6 +345,7 @@ class ConnectionProcessIcon extends StatefulWidget {
     this.port = '',
     this.size = 42,
     this.onClick,
+    this.dimmed = false,
   });
 
   @override
@@ -337,9 +378,10 @@ class _ConnectionProcessIconState extends State<ConnectionProcessIcon> {
 
   @override
   Widget build(BuildContext context) {
-    final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
-    final cacheSize = (widget.size * devicePixelRatio).ceil();
-
+    final cacheKey = '${widget.process}\n${widget.processPath}';
+    final iconSize = widget.size.round();
+    final dpr = MediaQuery.maybeDevicePixelRatioOf(context);
+    final alphaFactor = widget.dimmed ? 0.6 : 1.0;
     return RepaintBoundary(
       child: GestureDetector(
         onTap: () {
@@ -352,51 +394,56 @@ class _ConnectionProcessIconState extends State<ConnectionProcessIcon> {
           height: widget.size,
           alignment: Alignment.center,
           child: FutureBuilder<Uint8List?>(
-            key: ValueKey('${widget.process}\n${widget.processPath}'),
-            initialData: _iconCache['${widget.process}\n${widget.processPath}'],
+            key: ValueKey(cacheKey),
+            initialData: _iconCache[cacheKey],
             future: _iconFuture,
             builder: (context, snapshot) {
               final iconBytes = snapshot.data;
               if (iconBytes == null) {
                 if (system.isDesktop) {
+                  final onSurfaceVariant = context.colorScheme.onSurfaceVariant;
                   return DecoratedBox(
                     decoration: BoxDecoration(
-                      color: context.colorScheme.onSurfaceVariant.opacity10,
+                      color: onSurfaceVariant.withAlpha(
+                        (15 * alphaFactor).round(),
+                      ),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: SizedBox(
                       width: widget.size,
                       height: widget.size,
-                      child: Icon(
+                      child: AppIcon(
                         snapshot.connectionState == ConnectionState.done
                             ? _fallbackIcon
                             : Icons.terminal,
                         size: widget.size * 22 / 38,
-                        color: context.colorScheme.onSurfaceVariant.opacity80,
+                        color: onSurfaceVariant.withValues(
+                          alpha: 0.8 * alphaFactor,
+                        ),
                       ),
                     ),
                   );
                 }
-                return Icon(Icons.apps_outlined, size: widget.size);
+                return AppIcon(Icons.apps_outlined, size: widget.size);
               }
-              if (system.isDesktop) {
-                return Image.memory(
-                  iconBytes,
-                  width: widget.size,
-                  height: widget.size,
-                  filterQuality: FilterQuality.medium,
-                  gaplessPlayback: true,
-                );
+              if (dpr != null && _iconCache.containsKey(cacheKey)) {
+                (_iconRenderKeys[cacheKey] ??= {}).add((iconSize, dpr));
               }
               return Image(
                 image: ResizeImage(
                   MemoryImage(iconBytes),
-                  width: cacheSize,
-                  height: cacheSize,
+                  width: iconSize,
+                  height: iconSize,
+                  useLogicalSize: true,
                   allowUpscaling: false,
                 ),
                 width: widget.size,
                 height: widget.size,
+                opacity: widget.dimmed
+                    ? const AlwaysStoppedAnimation<double>(0.6)
+                    : null,
+                filterQuality: FilterQuality.medium,
+                gaplessPlayback: true,
               );
             },
           ),
@@ -517,7 +564,7 @@ class TrackerInfoDetailView extends ConsumerWidget {
     void open(Widget page) => BaseNavigator.push(context, page);
     Widget chip(IconData icon, String label, Widget Function() page) =>
         CommonChip(
-          avatar: Icon(icon, size: 16, color: context.colorScheme.primary),
+          avatar: AppIcon(icon, size: 16, color: context.colorScheme.primary),
           label: label,
           onPressed: () => open(page()),
         );
@@ -600,7 +647,7 @@ class TrackerInfoDetailView extends ConsumerWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
+                          AppIcon(
                             icon,
                             size: 14,
                             color: context.colorScheme.primary,
@@ -654,7 +701,7 @@ class TrackerInfoDetailView extends ConsumerWidget {
                   child: IconButton(
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,
-                    icon: Icon(Icons.content_copy, size: 18),
+                    icon: AppIcon(Icons.content_copy, size: 18),
                     onPressed: () {},
                   ),
                 ),
@@ -871,9 +918,7 @@ class _RenderLeadingWrap extends RenderBox
     with
         ContainerRenderObjectMixin<RenderBox, _LeadingWrapParentData>,
         RenderBoxContainerDefaultsMixin<RenderBox, _LeadingWrapParentData> {
-  _RenderLeadingWrap({required double spacing, required double runSpacing})
-    : _spacing = spacing,
-      _runSpacing = runSpacing;
+  _RenderLeadingWrap({required this._spacing, required this._runSpacing});
 
   double _spacing;
   double _runSpacing;

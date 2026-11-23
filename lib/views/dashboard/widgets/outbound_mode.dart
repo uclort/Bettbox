@@ -5,6 +5,7 @@ import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
 
 import 'quick_options.dart';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -68,7 +69,7 @@ class OutboundMode extends StatelessWidget {
                                   ),
                                   child: Row(
                                     children: [
-                                      Icon(
+                                      AppIcon(
                                         item == mode
                                             ? Icons.check_circle_rounded
                                             : Icons.circle_outlined,
@@ -84,9 +85,10 @@ class OutboundMode extends StatelessWidget {
                                       Expanded(
                                         child: Text(
                                           Intl.message(item.name),
-                                          style: Theme.of(
-                                            context,
-                                          ).textTheme.bodyMedium?.toSoftBold,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.toSoftBold,
                                         ),
                                       ),
                                     ],
@@ -230,7 +232,7 @@ class _OutboundModeButton extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(_icon, size: 17, color: foreground),
+                        AppIcon(_icon, size: 17, color: foreground),
                         const SizedBox(width: 6),
                         Flexible(
                           child: Text(

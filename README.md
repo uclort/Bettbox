@@ -56,7 +56,7 @@ Bettbox 取自 Better Network Toolbox。项目已通过 SignPath 开源基金会
   * **Linux Kernel 5.4+:** (x64 / arm64)
   * **macOS 12.0+:** (Intel / Apple Silicon)
 * **移动端及其他**: 
-  * **Android 8.0+:** (ARMv8 / ARMv7 / x86_64 / Universal) 
+  * **Android 7.0+:** (ARMv8 / ARMv7 / x86_64 / Universal) 
   * **Android TV:** 完整大屏适配，可选 ARMv7 32位版本
   * **鸿蒙 NEXT:** 可配合 [[卓易通]](https://harmonyos.cool/android-app) 稳定使用
 
@@ -68,7 +68,7 @@ Bettbox 取自 Better Network Toolbox。项目已通过 SignPath 开源基金会
 ## 💡 常见问题
 
 1. **安装环境与兼容版本**：
-   - 安卓端设备请检查是否授予了充足的后台运行权限，系统需满足 Android 8.0+。
+   - 安卓端设备请检查是否授予了充足的后台运行权限，系统需满足 Android 7.0+。
    - 桌面端老旧硬件请根据 CPU 指令集架构选择对应的 Compatible 兼容版本。
    - 安全相关：Bettbox 全流程开源透明，代码已通过 SignPath 权威安全审计，零隐私收集。
 
@@ -166,6 +166,19 @@ const Compatible_With_Bettbox = {
 感谢所有为本项目添砖加瓦的 [Contributors](https://github.com/appshubcc/Bettbox/graphs/contributors)，以及以下开源项目的启发与使用参考：
 
 [Zashboard](https://github.com/Zephyruso/zashboard), [CMFA](https://github.com/MetaCubeX/ClashMetaForAndroid), [Sparkle](https://github.com/xishang0128/sparkle), [SFA](https://github.com/SagerNet/sing-box-for-android), [HUSI](https://github.com/xchacha20-poly1305/husi), [V2rayN](https://github.com/2dust/v2rayN), [Bett-rules](https://github.com/appshubcc/bett-rules)
+
+---
+## 📈 项目热度
+
+<p align="center">
+  <a href="https://www.star-history.com/?repos=appshubcc%2FBettbox&type=timeline&legend=top-left">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=appshubcc/Bettbox&type=date&theme=dark&legend=top-left" />
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=appshubcc/Bettbox&type=date&legend=top-left" />
+      <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=appshubcc/Bettbox&type=date&legend=top-left" />
+    </picture>
+  </a>
+</p>
 
 ---
 ## 📄 开源协议

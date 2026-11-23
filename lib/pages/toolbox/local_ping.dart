@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:bett_box/clash/clash.dart';
@@ -212,7 +213,7 @@ class _LocalPingPageState extends ConsumerState<LocalPingPage>
     if (_running) return;
     final target = _target.text.trim();
     if (target.isEmpty || target.contains(' ')) {
-      context.showNotifier(appLocalizations.ipLookupInvalid);
+      unawaited(context.showNotifier(appLocalizations.ipLookupInvalid));
       return;
     }
     FocusScope.of(context).unfocus();
@@ -233,14 +234,14 @@ class _LocalPingPageState extends ConsumerState<LocalPingPage>
         interval: options.interval,
       );
     });
-    globalState.appController.holdWakelock(true);
+    unawaited(globalState.appController.holdWakelock(true));
     LocalPingState? result;
     try {
       result = await clashCore.startLocalPing(target: target, options: options);
     } catch (_) {
       result = null;
     }
-    globalState.appController.holdWakelock(false);
+    unawaited(globalState.appController.holdWakelock(false));
     if (!mounted) return;
     final finished =
         result ??
@@ -269,7 +270,7 @@ class _LocalPingPageState extends ConsumerState<LocalPingPage>
   Future<void> _copy(String text) async {
     await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) return;
-    context.showNotifier(appLocalizations.copySuccess);
+    unawaited(context.showNotifier(appLocalizations.copySuccess));
   }
 
   @override
@@ -287,7 +288,7 @@ class _LocalPingPageState extends ConsumerState<LocalPingPage>
           IconButton(
             tooltip: appLocalizations.natCopyResult,
             onPressed: () => _copy(localPingReport(state, _replies)),
-            icon: const Icon(Icons.copy_rounded),
+            icon: const AppIcon(Icons.copy_rounded),
           ),
       ],
       body: ToolPageBody(
@@ -308,12 +309,14 @@ class _LocalPingPageState extends ConsumerState<LocalPingPage>
                 ),
         ),
         children: [
-          ToolSegmented<LocalPingProtocol>(
-            values: LocalPingProtocol.values,
-            value: options.protocol,
+          SegmentButtonGroup<LocalPingProtocol>(
+            options: [
+              for (final value in LocalPingProtocol.values)
+                SegmentOption(value: value, label: value.name.toUpperCase()),
+            ],
+            selected: options.protocol,
             enabled: !_running,
-            labelOf: (value) => value.name.toUpperCase(),
-            onChanged: (value) =>
+            onSelected: (value) =>
                 _updateOptions((options) => options.copyWith(protocol: value)),
           ),
           const SizedBox(height: 12),
@@ -392,7 +395,7 @@ class _TargetField extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(14, 4, 6, 4),
       child: Row(
         children: [
-          Icon(
+          AppIcon(
             Icons.my_location_rounded,
             size: 20,
             color: colorScheme.onSurfaceVariant,
@@ -427,7 +430,7 @@ class _TargetField extends StatelessWidget {
                 ? const SizedBox.shrink()
                 : IconButton(
                     onPressed: controller.clear,
-                    icon: const Icon(Icons.close_rounded, size: 18),
+                    icon: const AppIcon(Icons.close_rounded, size: 18),
                   ),
           ),
           if (port != null)
@@ -504,7 +507,7 @@ class _QuickTargets extends StatelessWidget {
                       return ActionChip(
                         visualDensity: VisualDensity.compact,
                         side: toolChipSide(context),
-                        avatar: Icon(
+                        avatar: AppIcon(
                           icon,
                           size: 15,
                           color: colorScheme.primary,
@@ -684,7 +687,7 @@ class _LiveCard extends StatelessWidget {
                           color: color,
                         ),
                       )
-                    : Icon(
+                    : AppIcon(
                         hasError
                             ? Icons.error_outline_rounded
                             : state == null
@@ -1012,6 +1015,7 @@ class _ReplyList extends StatelessWidget {
 Widget buildLocalPingPreviewForTesting({
   required LocalPingState state,
   required List<LocalPingReply> replies,
+  required TextEditingController controller,
   LocalPingOptions options = const LocalPingOptions(),
   NetworkInfo? network,
 }) {
@@ -1019,15 +1023,17 @@ Widget buildLocalPingPreviewForTesting({
   return Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      ToolSegmented<LocalPingProtocol>(
-        values: LocalPingProtocol.values,
-        value: options.protocol,
-        labelOf: (value) => value.name.toUpperCase(),
-        onChanged: (_) {},
+      SegmentButtonGroup<LocalPingProtocol>(
+        options: [
+          for (final value in LocalPingProtocol.values)
+            SegmentOption(value: value, label: value.name.toUpperCase()),
+        ],
+        selected: options.protocol,
+        onSelected: (_) {},
       ),
       const SizedBox(height: 12),
       _TargetField(
-        controller: TextEditingController(text: state.target),
+        controller: controller,
         enabled: true,
         port: options.protocol == LocalPingProtocol.icmp ? null : options.port,
         onEditPort: () {},

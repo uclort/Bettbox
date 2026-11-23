@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui';
 
@@ -18,6 +19,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 import 'add_profile.dart';
+import 'nodes.dart';
 
 class ProfilesView extends ConsumerStatefulWidget {
   const ProfilesView({super.key});
@@ -27,7 +29,7 @@ class ProfilesView extends ConsumerStatefulWidget {
 }
 
 class _ProfilesViewState extends ConsumerState<ProfilesView>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   static final _expandSlide = Tween<Offset>(
     begin: const Offset(0, -0.16),
     end: Offset.zero,
@@ -48,7 +50,40 @@ class _ProfilesViewState extends ConsumerState<ProfilesView>
     duration: const Duration(milliseconds: 320),
     value: 1,
   );
+  late final AnimationController _flashController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 700),
+  );
+  static final _flashCurve = TweenSequence<double>([
+    TweenSequenceItem(
+      tween: Tween(
+        begin: 0.0,
+        end: 1.0,
+      ).chain(CurveTween(curve: Curves.easeOut)),
+      weight: 25,
+    ),
+    TweenSequenceItem(
+      tween: Tween(
+        begin: 1.0,
+        end: 0.0,
+      ).chain(CurveTween(curve: Curves.easeIn)),
+      weight: 75,
+    ),
+  ]);
   String? _expandingId;
+  bool get _showNodes => ref.read(profilesSlideProvider).showNodes;
+
+  void _handleSlideChanged(int index) {
+    final showNodes = index == 1;
+    if (_showNodes == showNodes) return;
+    ref.read(profilesSlideProvider.notifier).show(showNodes);
+  }
+
+  void _handleShowAddNode() {
+    final context = globalState.navigatorKey.currentState?.context;
+    if (context == null) return;
+    showEditNode(context);
+  }
 
   void _toggleExpanded(String id) {
     if (system.isAndroid &&
@@ -83,6 +118,7 @@ class _ProfilesViewState extends ConsumerState<ProfilesView>
   @override
   void dispose() {
     _expandController.dispose();
+    _flashController.dispose();
     super.dispose();
   }
 
@@ -135,6 +171,7 @@ class _ProfilesViewState extends ConsumerState<ProfilesView>
       items.add(
         GridItem(
           key: ValueKey(profile.id),
+          crossAxisCellCount: columns,
           child: _buildProfileItem(
             profile,
             profiles,
@@ -196,7 +233,7 @@ class _ProfilesViewState extends ConsumerState<ProfilesView>
   Future<void> _updateProfiles() async {
     final profiles = globalState.config.profiles;
     final messages = <String>[];
-    final updateProfiles = profiles.map<Future>((profile) async {
+    final updateProfiles = profiles.map<Future<void>>((profile) async {
       if (profile.type != ProfileType.url) return;
       globalState.appController.setProfile(profile.copyWith(isUpdating: true));
       try {
@@ -210,25 +247,74 @@ class _ProfilesViewState extends ConsumerState<ProfilesView>
     });
     await Future.wait(updateProfiles);
     if (messages.isNotEmpty) {
-      globalState.showMessage(
-        title: appLocalizations.tip,
-        message: TextSpan(
-          children: [for (final message in messages) TextSpan(text: message)],
+      unawaited(
+        globalState.showMessage(
+          title: appLocalizations.tip,
+          message: TextSpan(
+            children: [for (final message in messages) TextSpan(text: message)],
+          ),
+          cancelable: false,
         ),
-        cancelable: false,
       );
     }
   }
 
+  Widget _buildSwitchAction() {
+    final color = context.colorScheme.secondaryContainer;
+    return AnimatedBuilder(
+      animation: _flashController,
+      builder: (_, child) => IconButton(
+        onPressed: () => ref.read(profilesSlideProvider.notifier).toggle(),
+        tooltip: _showNodes ? appLocalizations.profiles : appLocalizations.node,
+        style: IconButton.styleFrom(
+          backgroundColor: color.withValues(
+            alpha: _flashCurve.evaluate(_flashController),
+          ),
+        ),
+        icon: child!,
+      ),
+      child: AppIcon(
+        _showNodes ? Icons.description_outlined : Icons.hive_outlined,
+      ),
+    );
+  }
+
+  void _handleSort() {
+    final profiles = globalState.config.profiles;
+    showSheet(
+      context: context,
+      builder: (_, type) {
+        return _ReorderableSheet<Profile>(
+          type: type,
+          title: appLocalizations.profilesSort,
+          items: profiles,
+          keyOf: (profile) => profile.id,
+          labelOf: (profile) => profile.label ?? profile.id,
+          onSave: globalState.appController.setProfiles,
+        );
+      },
+    );
+  }
+
+  void _handleSortNodes() {
+    final nodes = ref.read(nodesProvider);
+    showSheet(
+      context: context,
+      builder: (_, type) {
+        return _ReorderableSheet<ProxyNode>(
+          type: type,
+          title: appLocalizations.nodesSort,
+          items: nodes,
+          keyOf: (node) => node.id,
+          labelOf: (node) => node.name,
+          onSave: (list) => ref.read(nodesProvider.notifier).value = list,
+        );
+      },
+    );
+  }
+
   List<Widget> _buildActions() {
     return [
-      IconButton(
-        onPressed: () {
-          _updateProfiles();
-        },
-        icon: const Icon(Icons.sync),
-        tooltip: appLocalizations.syncAll,
-      ),
       IconButton(
         onPressed: () {
           showExtend(
@@ -248,27 +334,42 @@ class _ProfilesViewState extends ConsumerState<ProfilesView>
                     (profile) => profile?.isManaged ?? false,
                   ),
                 );
-            return Icon(
+            return AppIcon(
               Icons.terminal_outlined,
               color: isScriptMode ? context.colorScheme.primary : null,
             );
           },
         ),
       ),
-      IconButton(
-        onPressed: () {
-          final profiles = globalState.config.profiles;
-          showSheet(
-            context: context,
-            builder: (_, type) {
-              return ReorderableProfilesSheet(type: type, profiles: profiles);
-            },
-          );
-        },
-        tooltip: appLocalizations.sort,
-        icon: const Icon(Icons.sort),
-        iconSize: 26,
-      ),
+      _buildSwitchAction(),
+      if (_showNodes)
+        IconButton(
+          onPressed: _handleSortNodes,
+          tooltip: appLocalizations.sort,
+          icon: const AppIcon(Icons.sort),
+        )
+      else
+        CommonPopupBox(
+          popup: CommonPopupMenu(
+            items: [
+              PopupMenuItemData(
+                icon: Icons.sync,
+                label: appLocalizations.syncAll,
+                onPressed: _updateProfiles,
+              ),
+              PopupMenuItemData(
+                icon: Icons.sort,
+                label: appLocalizations.sort,
+                onPressed: _handleSort,
+              ),
+            ],
+          ),
+          targetBuilder: (open) => IconButton(
+            onPressed: open,
+            tooltip: appLocalizations.more,
+            icon: const AppIcon(Icons.more_vert),
+          ),
+        ),
     ];
   }
 
@@ -282,9 +383,11 @@ class _ProfilesViewState extends ConsumerState<ProfilesView>
       ),
       child: FloatingActionButton.extended(
         heroTag: null,
-        onPressed: _handleShowAddExtendPage,
-        icon: const Icon(Icons.add),
-        label: Text(appLocalizations.addProfile),
+        onPressed: _showNodes ? _handleShowAddNode : _handleShowAddExtendPage,
+        icon: const AppIcon(Icons.add),
+        label: Text(
+          _showNodes ? appLocalizations.addNode : appLocalizations.addProfile,
+        ),
       ),
     );
   }
@@ -292,78 +395,94 @@ class _ProfilesViewState extends ConsumerState<ProfilesView>
   @override
   Widget build(BuildContext context) {
     ref.watch(appSettingProvider.select((state) => state.locale));
+    final (:showNodes, :animate) = ref.watch(profilesSlideProvider);
+    final nodesEmpty = ref.watch(
+      nodesProvider.select((nodes) => nodes.isEmpty),
+    );
+    ref.listen(profilesSlideProvider, (prev, next) {
+      if (prev?.showNodes == next.showNodes || !next.animate) return;
+      _flashController.forward(from: 0);
+    });
     return CommonScaffold(
-      title: appLocalizations.profiles,
+      title: showNodes ? appLocalizations.node : appLocalizations.profiles,
       floatingActionButton: _buildFAB(),
       actions: _buildActions(),
-      body: ActiveConsumer(
-        builder: (_, ref) {
-          final profilesSelectorState = ref.watch(
-            profilesSelectorStateProvider,
-          );
-          final isMobileView = ref.watch(isMobileViewProvider);
-          final profiles = profilesSelectorState.profiles;
-          if (profiles.isEmpty) {
-            return NullStatus(
-              label: appLocalizations.nullProfileDesc,
-              icon: Icons.description_outlined,
-            );
-          }
-          final folded = profiles.collapsedMemberIds;
-          final topLevel = profiles
-              .where((profile) => !folded.contains(profile.id))
-              .length;
-          final columns = system.isAndroid
-              ? 1
-              : topLevel < profilesSelectorState.columns
-              ? topLevel
-              : profilesSelectorState.columns;
-          final items = _buildGridItems(
-            profiles,
-            profilesSelectorState.currentProfileId,
-            columns,
-            folded,
-          );
-          return ScrollEdgeRise(
-            builder: (context, rise) {
-              final padding = EdgeInsets.only(
-                left: 16,
-                right: 16,
-                top: 16 + rise,
-                bottom:
-                    (topLevel % columns == 0 ? 88 : 16) +
-                    (isMobileView
-                        ? getFloatingBottomBarReserveHeight(context)
-                        : 0),
-              );
-              return Align(
-                alignment: Alignment.topCenter,
-                child: columns == 1
-                    ? ListView.separated(
-                        key: profilesStoreKey,
-                        padding: padding,
-                        itemCount: items.length,
-                        itemBuilder: (_, index) => KeyedSubtree(
-                          key: items[index].key,
-                          child: items[index].child,
-                        ),
-                        separatorBuilder: (_, _) => const SizedBox(height: 14),
-                      )
-                    : SingleChildScrollView(
-                        key: profilesStoreKey,
-                        padding: padding,
-                        child: Grid(
-                          mainAxisSpacing: 14,
-                          crossAxisSpacing: 14,
-                          crossAxisCount: columns,
-                          children: items,
-                        ),
-                      ),
-              );
-            },
-          );
-        },
+      body: SlidePages(
+        index: showNodes ? 1 : 0,
+        animate: animate,
+        scrollable: !(system.isAndroid && nodesEmpty && !showNodes),
+        onChanged: _handleSlideChanged,
+        children: [_buildProfiles(), const NodesBody()],
       ),
+    );
+  }
+
+  Widget _buildProfiles() {
+    return ActiveConsumer(
+      builder: (_, ref) {
+        final profilesSelectorState = ref.watch(profilesSelectorStateProvider);
+        final isMobileView = ref.watch(isMobileViewProvider);
+        final profiles = profilesSelectorState.profiles;
+        if (profiles.isEmpty) {
+          return NullStatus(
+            label: appLocalizations.nullProfileDesc,
+            icon: Icons.description_outlined,
+          );
+        }
+        final folded = profiles.collapsedMemberIds;
+        final topLevel = profiles
+            .where((profile) => !folded.contains(profile.id))
+            .length;
+        final columns = system.isAndroid
+            ? 1
+            : topLevel < profilesSelectorState.columns
+            ? topLevel
+            : profilesSelectorState.columns;
+        final items = _buildGridItems(
+          profiles,
+          profilesSelectorState.currentProfileId,
+          columns,
+          folded,
+        );
+        return ScrollEdgeRise(
+          builder: (context, rise) {
+            final padding = EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 16 + rise,
+              bottom:
+                  (topLevel % columns == 0 ? 88 : 16) +
+                  (isMobileView
+                      ? getFloatingBottomBarReserveHeight(context)
+                      : 0),
+            );
+            return Align(
+              alignment: Alignment.topCenter,
+              child: columns == 1
+                  ? ListView.separated(
+                      key: profilesStoreKey,
+                      padding: padding,
+                      itemCount: items.length,
+                      itemBuilder: (_, index) => KeyedSubtree(
+                        key: items[index].key,
+                        child: items[index].child,
+                      ),
+                      separatorBuilder: (_, _) => const SizedBox(height: 14),
+                    )
+                  : SingleChildScrollView(
+                      key: profilesStoreKey,
+                      padding: padding,
+                      child: Grid(
+                        mainAxisSpacing: 14,
+                        crossAxisSpacing: 14,
+                        crossAxisCount: columns,
+                        children: items,
+                      ),
+                    ),
+            );
+          },
+        );
+      },
     );
   }
 }
@@ -376,6 +495,13 @@ class _ProfileFold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final grid = Grid(
+      mainAxisSpacing: 14,
+      crossAxisSpacing: 14,
+      crossAxisCount: columns,
+      children: [for (final child in children) GridItem(child: child)],
+    );
+    if (columns > 1) return grid;
     return Container(
       margin: const EdgeInsets.only(left: 6),
       padding: const EdgeInsets.only(left: 12),
@@ -384,12 +510,7 @@ class _ProfileFold extends StatelessWidget {
           left: BorderSide(color: context.colorScheme.outlineVariant, width: 2),
         ),
       ),
-      child: Grid(
-        mainAxisSpacing: 14,
-        crossAxisSpacing: 14,
-        crossAxisCount: columns,
-        children: [for (final child in children) GridItem(child: child)],
-      ),
+      child: grid,
     );
   }
 }
@@ -448,14 +569,20 @@ class ProfileItem extends StatelessWidget {
           content: content,
           readOnly: true,
         );
-        BaseNavigator.push<String>(context, previewPage, maintainState: false);
+        unawaited(
+          BaseNavigator.push<String>(
+            context,
+            previewPage,
+            maintainState: false,
+          ),
+        );
       },
       needLoading: true,
       title: appLocalizations.tip,
     );
   }
 
-  Future updateProfile() async {
+  Future<void> updateProfile() async {
     final appController = globalState.appController;
     if (profile.type == ProfileType.file) return;
     if (profile.type == ProfileType.bundle) {
@@ -470,12 +597,14 @@ class ProfileItem extends StatelessWidget {
       await appController.updateProfile(profile);
     } on Object catch (e) {
       appController.setProfile(profile.copyWith(isUpdating: false));
-      globalState.showMessage(
-        title: appLocalizations.tip,
-        message: TextSpan(
-          text: '${profile.label ?? profile.id}: ${e.formatError}',
+      unawaited(
+        globalState.showMessage(
+          title: appLocalizations.tip,
+          message: TextSpan(
+            text: '${profile.label ?? profile.id}: ${e.formatError}',
+          ),
+          cancelable: false,
         ),
-        cancelable: false,
       );
     }
   }
@@ -502,7 +631,7 @@ class ProfileItem extends StatelessWidget {
           type: type,
           actions: [
             IconButton(
-              icon: const Icon(Icons.security),
+              icon: const AppIcon(Icons.security),
               tooltip: appLocalizations.ageKeyGenerateTitle,
               onPressed: () {
                 editKey.currentState?.showAgeKeyGenerator();
@@ -595,7 +724,7 @@ class ProfileItem extends StatelessWidget {
     return Padding(padding: const EdgeInsets.only(right: 28), child: summary);
   }
 
-  Widget _buildExpandButton({double size = 22}) {
+  Widget _buildExpandButton(BuildContext context, {double size = 22}) {
     final isExpanded = expanded ?? false;
     return IconButton(
       padding: EdgeInsets.zero,
@@ -604,7 +733,7 @@ class ProfileItem extends StatelessWidget {
           ? appLocalizations.collapse
           : appLocalizations.bundleExpand,
       icon: Icon(
-        isExpanded ? Icons.expand_less : Icons.expand_more,
+        context.resolveIcon(isExpanded ? Icons.expand_less : Icons.expand_more),
         size: size,
       ),
     );
@@ -623,10 +752,7 @@ class ProfileItem extends StatelessWidget {
     final used = TrafficValue(value: info.upload + info.download);
     if (info.total <= 0) return '${used.shortShow} / ∞';
     final total = TrafficValue(value: info.total);
-    if (used.showUnit != total.showUnit) {
-      return '${used.shortShow} / ${total.shortShow}';
-    }
-    return '${used.trafficValueShow.value.fixed(decimals: 1)} / ${total.shortShow}';
+    return '${used.shortShow} / ${total.shortShow}';
   }
 
   TextStyle? _providerTrafficStyle(
@@ -705,6 +831,40 @@ class ProfileItem extends StatelessWidget {
     );
   }
 
+  Widget _buildWideBarUsages(
+    BuildContext context,
+    List<MapEntry<String, SubscriptionInfo>> usages,
+  ) {
+    return Row(
+      children: [
+        for (final (index, usage) in usages.indexed) ...[
+          if (index > 0) const SizedBox(width: 24),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: _buildProviderName(context, usage.key)),
+                    const SizedBox(width: 8),
+                    Text(
+                      _compactTrafficText(usage.value),
+                      maxLines: 1,
+                      style: _providerTrafficStyle(context, usage.value),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                _buildUsageBar(context, _usageRatio(usage.value) ?? 0),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
   Widget _buildBarUsages(
     BuildContext context,
     List<MapEntry<String, SubscriptionInfo>> usages,
@@ -763,9 +923,8 @@ class ProfileItem extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   compact
-                      ? TrafficValue(
-                          value: info.upload + info.download,
-                        ).shortShow
+                      ? TrafficValue(value: info.upload + info.download)
+                            .shortShow
                       : _compactTrafficText(info),
                   maxLines: 1,
                   style: _providerTrafficStyle(context, info),
@@ -781,12 +940,15 @@ class ProfileItem extends StatelessWidget {
   Widget _buildRingUsages(
     BuildContext context,
     List<MapEntry<String, SubscriptionInfo>> usages,
+    bool wide,
   ) {
     return Row(
       children: [
         for (final (index, usage) in usages.indexed) ...[
           if (index > 0) const SizedBox(width: 10),
-          Expanded(child: _buildRingUsage(context, usage, usages.length > 2)),
+          Expanded(
+            child: _buildRingUsage(context, usage, usages.length > 2 && !wide),
+          ),
         ],
       ],
     );
@@ -795,6 +957,7 @@ class ProfileItem extends StatelessWidget {
   Widget _buildConcentricUsages(
     BuildContext context,
     List<MapEntry<String, SubscriptionInfo>> usages,
+    bool wide,
   ) {
     final primary = context.colorScheme.primary;
     final colors = [
@@ -826,43 +989,83 @@ class ProfileItem extends StatelessWidget {
         ),
         const SizedBox(width: 14),
         Expanded(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (final (index, usage) in usages.indexed) ...[
-                if (index > 0) const SizedBox(height: 2),
-                Row(
+          child: wide
+              ? Row(
                   children: [
-                    SizedBox.square(
-                      dimension: 6,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: colors[index],
-                          shape: BoxShape.circle,
+                    for (final (index, usage) in usages.indexed) ...[
+                      if (index > 0) const SizedBox(width: 24),
+                      Expanded(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                _buildLegendDot(colors[index]),
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: _buildProviderName(context, usage.key),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 12),
+                              child: Text(
+                                _concentricTrafficText(usage.value),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: _providerTrafficStyle(
+                                  context,
+                                  usage.value,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(child: _buildProviderName(context, usage.key)),
-                    const SizedBox(width: 8),
-                    Text(
-                      [
-                        if (_usageRatio(usage.value) != null)
-                          _usagePercent(usage.value),
-                        _compactTrafficText(usage.value),
-                      ].join(' · '),
-                      maxLines: 1,
-                      style: _providerTrafficStyle(context, usage.value),
-                    ),
+                    ],
+                  ],
+                )
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final (index, usage) in usages.indexed) ...[
+                      if (index > 0) const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          _buildLegendDot(colors[index]),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: _buildProviderName(context, usage.key),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _concentricTrafficText(usage.value),
+                            maxLines: 1,
+                            style: _providerTrafficStyle(context, usage.value),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
-              ],
-            ],
-          ),
         ),
       ],
     );
   }
+
+  Widget _buildLegendDot(Color color) => SizedBox.square(
+    dimension: 6,
+    child: DecoratedBox(
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    ),
+  );
+
+  String _concentricTrafficText(SubscriptionInfo info) => [
+    if (_usageRatio(info) != null) _usagePercent(info),
+    _compactTrafficText(info),
+  ].join(' · ');
 
   Widget _buildProviderUsages(
     BuildContext context,
@@ -882,14 +1085,28 @@ class ProfileItem extends StatelessWidget {
         const SizedBox(height: 8),
         SizedBox(
           height: 52,
-          child: Center(
-            child: switch (profile.usageStyle) {
-              ProfileUsageStyle.bar => _buildBarUsages(context, shown),
-              ProfileUsageStyle.ring => _buildRingUsages(context, shown),
-              ProfileUsageStyle.concentric => _buildConcentricUsages(
-                context,
-                shown,
-              ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final wide = constraints.maxWidth >= 560;
+              return Center(
+                child: switch (profile.usageStyle) {
+                  ProfileUsageStyle.bar when wide => _buildWideBarUsages(
+                    context,
+                    shown,
+                  ),
+                  ProfileUsageStyle.bar => _buildBarUsages(context, shown),
+                  ProfileUsageStyle.ring => _buildRingUsages(
+                    context,
+                    shown,
+                    wide,
+                  ),
+                  ProfileUsageStyle.concentric => _buildConcentricUsages(
+                    context,
+                    shown,
+                    wide,
+                  ),
+                },
+              );
             },
           ),
         ),
@@ -1083,7 +1300,10 @@ class ProfileItem extends StatelessWidget {
           children: [
             for (final item in items)
               ListTile(
-                leading: item.icon != null ? Icon(item.icon) : null,
+                leading: switch (item.icon) {
+                  final icon? => Icon(context.resolveIcon(icon)),
+                  null => null,
+                },
                 title: Text(item.label),
                 onTap: () {
                   Navigator.of(context).pop();
@@ -1121,7 +1341,7 @@ class ProfileItem extends StatelessWidget {
                       open();
                     },
                     tooltip: appLocalizations.more,
-                    icon: const Icon(Icons.more_vert, size: 20),
+                    icon: Icon(context.resolveIcon(Icons.more_vert), size: 20),
                   );
                 },
               ),
@@ -1148,7 +1368,10 @@ class ProfileItem extends StatelessWidget {
           Positioned(
             right: 6,
             bottom: 4,
-            child: SizedBox.square(dimension: 36, child: _buildExpandButton()),
+            child: SizedBox.square(
+              dimension: 36,
+              child: _buildExpandButton(context),
+            ),
           ),
       ],
     );
@@ -1170,10 +1393,10 @@ class ProfileItem extends StatelessWidget {
             ),
           ),
         ),
-        if (onToggleExpanded != null) _buildExpandButton(size: 24),
+        if (onToggleExpanded != null) _buildExpandButton(context, size: 24),
         IconButton(
           onPressed: () => _showTVMenu(context),
-          icon: const Icon(Icons.more_vert),
+          icon: const AppIcon(Icons.more_vert),
         ),
       ],
     );
@@ -1202,47 +1425,54 @@ class ProfileItem extends StatelessWidget {
   }
 }
 
-class ReorderableProfilesSheet extends StatefulWidget {
-  final List<Profile> profiles;
+class _ReorderableSheet<T> extends StatefulWidget {
+  final List<T> items;
   final SheetType type;
+  final String title;
+  final String Function(T) keyOf;
+  final String Function(T) labelOf;
+  final ValueChanged<List<T>> onSave;
 
-  const ReorderableProfilesSheet({
+  const _ReorderableSheet({
     super.key,
-    required this.profiles,
+    required this.items,
     required this.type,
+    required this.title,
+    required this.keyOf,
+    required this.labelOf,
+    required this.onSave,
   });
 
   @override
-  State<ReorderableProfilesSheet> createState() =>
-      _ReorderableProfilesSheetState();
+  State<_ReorderableSheet<T>> createState() => _ReorderableSheetState<T>();
 }
 
-class _ReorderableProfilesSheetState extends State<ReorderableProfilesSheet> {
-  late List<Profile> profiles;
+class _ReorderableSheetState<T> extends State<_ReorderableSheet<T>> {
+  late List<T> _items;
 
   @override
   void initState() {
     super.initState();
-    profiles = List.from(widget.profiles);
+    _items = List.from(widget.items);
   }
 
-  Widget proxyDecorator(Widget child, int index, Animation<double> animation) {
-    final profile = profiles[index];
+  Widget _proxyDecorator(Widget child, int index, Animation<double> animation) {
+    final item = _items[index];
     return AnimatedBuilder(
       animation: animation,
       builder: (_, Widget? child) {
-        final double animValue = Curves.easeInOut.transform(animation.value);
-        final double scale = lerpDouble(1, 1.02, animValue)!;
+        final animValue = Curves.easeInOut.transform(animation.value);
+        final scale = lerpDouble(1, 1.02, animValue) ?? 1;
         return Transform.scale(scale: scale, child: child);
       },
       child: Container(
-        key: Key(profile.id),
+        key: Key(widget.keyOf(item)),
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: CommonCard(
           type: CommonCardType.filled,
           child: ListTile(
             contentPadding: const EdgeInsets.only(right: 44, left: 16),
-            title: EmojiText(profile.label ?? profile.id),
+            title: EmojiText(widget.labelOf(item)),
           ),
         ),
       ),
@@ -1257,9 +1487,9 @@ class _ReorderableProfilesSheetState extends State<ReorderableProfilesSheet> {
         IconButton(
           onPressed: () {
             Navigator.of(context).pop();
-            globalState.appController.setProfiles(profiles);
+            widget.onSave(_items);
           },
-          icon: Icon(Icons.save),
+          icon: const AppIcon(Icons.save),
         ),
       ],
       body: ReorderableListView.builder(
@@ -1270,38 +1500,34 @@ class _ReorderableProfilesSheetState extends State<ReorderableProfilesSheet> {
           12,
           32 + MediaQuery.paddingOf(context).bottom,
         ),
-        proxyDecorator: proxyDecorator,
-        // ignore: deprecated_member_use
-        onReorder: (oldIndex, newIndex) {
+        proxyDecorator: _proxyDecorator,
+        onReorderItem: (oldIndex, newIndex) {
           setState(() {
-            if (oldIndex < newIndex) {
-              newIndex -= 1;
-            }
-            final profile = profiles.removeAt(oldIndex);
-            profiles.insert(newIndex, profile);
+            final item = _items.removeAt(oldIndex);
+            _items.insert(newIndex, item);
           });
         },
         itemBuilder: (_, index) {
-          final profile = profiles[index];
+          final item = _items[index];
           return Container(
-            key: Key(profile.id),
+            key: Key(widget.keyOf(item)),
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: CommonCard(
               type: CommonCardType.filled,
               child: ListTile(
                 contentPadding: const EdgeInsets.only(right: 16, left: 16),
-                title: EmojiText(profile.label ?? profile.id),
+                title: EmojiText(widget.labelOf(item)),
                 trailing: ReorderableDragStartListener(
                   index: index,
-                  child: const Icon(Icons.drag_handle),
+                  child: Icon(context.resolveIcon(Icons.drag_handle)),
                 ),
               ),
             ),
           );
         },
-        itemCount: profiles.length,
+        itemCount: _items.length,
       ),
-      title: appLocalizations.profilesSort,
+      title: widget.title,
     );
   }
 }

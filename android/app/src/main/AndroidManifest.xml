@@ -21,11 +21,13 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <uses-permission
         android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
     <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK" />
+    <uses-permission android:name="android.permission.USE_LOOPBACK_INTERFACE" />
     <uses-permission
         android:name="android.permission.INTERACT_ACROSS_USERS"
         tools:ignore="ProtectedPermissions" />
@@ -108,13 +110,13 @@
             </intent-filter>
         </activity-alias>
 
-        <!-- Dark icon alias — disabled by default -->
+        <!-- Dark icon alias (kept for legacy user compatibility) -->
         <activity-alias
             android:name="com.appshub.bettbox.MainActivityDark"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher"
-            android:roundIcon="@mipmap/ic_launcher_round"
+            android:icon="@mipmap/ic_launcher_light"
+            android:roundIcon="@mipmap/ic_launcher_round_light"
             android:targetActivity="com.appshub.bettbox.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -262,6 +264,10 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+
+        <receiver
+            android:name=".receivers.InstallResultReceiver"
+            android:exported="false" />
 
         <meta-data
             android:name="flutterEmbedding"

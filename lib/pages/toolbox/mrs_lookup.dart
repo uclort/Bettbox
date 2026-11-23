@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bett_box/clash/clash.dart';
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/enum/enum.dart';
@@ -87,7 +89,7 @@ class _MrsLookupPageState extends ConsumerState<MrsLookupPage>
           tooltip: appLocalizations.settings,
           onPressed: () =>
               globalState.showAdaptiveSheet(child: const _MrsSettingsDialog()),
-          icon: const Icon(Icons.settings_outlined),
+          icon: const AppIcon(Icons.settings_outlined),
         ),
       ],
       body: ToolPageBody(
@@ -287,15 +289,17 @@ class _MatchList extends ConsumerWidget {
       final content = await clashCore.mrsDump(match.file);
       if (content.isEmpty) throw appLocalizations.mrsPrepareFailed;
       if (!context.mounted) return;
-      BaseNavigator.push(
-        context,
-        EditorPage(
-          title: '${match.kind.toUpperCase()},${match.name}',
-          content: content,
-          readOnly: true,
-          simple: true,
+      unawaited(
+        BaseNavigator.push(
+          context,
+          EditorPage(
+            title: '${match.kind.toUpperCase()},${match.name}',
+            content: content,
+            readOnly: true,
+            simple: true,
+          ),
+          maintainState: false,
         ),
-        maintainState: false,
       );
     }, needLoading: true);
   }
@@ -392,7 +396,7 @@ class _MatchList extends ConsumerWidget {
                       ),
                     Padding(
                       padding: const EdgeInsetsDirectional.only(start: 8),
-                      child: Icon(
+                      child: AppIcon(
                         switch (tapAction) {
                           MrsTapAction.viewRules => Icons.chevron_right_rounded,
                           MrsTapAction.copyUrl => Icons.link_rounded,

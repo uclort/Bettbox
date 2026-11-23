@@ -1,6 +1,8 @@
+import 'package:bett_box/common/frame_probe.dart';
 import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/app.dart';
 import 'package:bett_box/state.dart';
+
 import 'dart:async';
 import 'dart:ui' show FlutterView;
 
@@ -8,6 +10,8 @@ import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:material_ui/material_ui.dart' show MaterialPageRoute;
 import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform;
+import 'package:flutter/scheduler.dart'
+    show SchedulerBinding, Ticker, TickerCallback;
 
 class BaseNavigator {
   static const _keyboardTimeout = Duration(milliseconds: 350);
@@ -39,13 +43,21 @@ class BaseNavigator {
         ),
       );
     }
+    final reduceMotion = MediaQuery.maybeReduceMotionOf(context) ?? false;
+    final keyboardVisible = (View.maybeOf(context)?.viewInsets.bottom ?? 0) > 0;
     await _dismissKeyboard(context);
+    if (keyboardVisible) await WidgetsBinding.instance.endOfFrame;
     if (!navigator.mounted) return null;
     return await navigator.push<T>(
-      _CleanCupertinoPageRoute(
-        builder: (context) => child,
-        maintainState: maintainState,
-      ),
+      reduceMotion
+          ? CommonDesktopRoute(
+              builder: (context) => child,
+              maintainState: maintainState,
+            )
+          : _CleanCupertinoPageRoute(
+              builder: (context) => child,
+              maintainState: maintainState,
+            ),
     );
   }
 }
@@ -72,10 +84,19 @@ class _CleanCupertinoPageRoute<T> extends CupertinoPageRoute<T> {
     super.settings,
     super.fullscreenDialog,
     super.maintainState,
-  });
+  }) : super(allowSnapshotting: false);
+
+  @override
+  Duration get transitionDuration => const Duration(milliseconds: 450);
+
+  @override
+  Duration get reverseTransitionDuration => const Duration(milliseconds: 360);
 
   @override
   Color? get barrierColor => null;
+
+  @override
+  set offstage(bool value) {}
 
   static final DelegatedTransitionBuilder? _hostDelegatedTransition = () {
     final route = MaterialPageRoute<void>(
@@ -85,6 +106,48 @@ class _CleanCupertinoPageRoute<T> extends CupertinoPageRoute<T> {
     route.dispose();
     return transition;
   }();
+
+  LeadTickerProvider? _vsync;
+  int _hold = 0;
+  CurvedAnimation? _enter;
+  CurvedAnimation? _cover;
+
+  @override
+  AnimationController createAnimationController() {
+    if (defaultTargetPlatform != TargetPlatform.android) {
+      return super.createAnimationController();
+    }
+    return AnimationController(
+      duration: transitionDuration,
+      reverseDuration: reverseTransitionDuration,
+      debugLabel: debugLabel,
+      vsync: _vsync = LeadTickerProvider(navigator!),
+    );
+  }
+
+  @override
+  TickerFuture didPush() {
+    _holdFirstFrame();
+    return super.didPush();
+  }
+
+  @override
+  bool didPop(T? result) {
+    _holdFirstFrame();
+    return super.didPop(result);
+  }
+
+  void _holdFirstFrame() {
+    final ticker = _vsync?.ticker;
+    if (ticker == null) return;
+    final hold = ++_hold;
+    ticker.muted = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = navigator?.context;
+      if (hold != _hold || context == null || !context.mounted) return;
+      ticker.muted = !TickerMode.getValuesNotifier(context).value.enabled;
+    });
+  }
 
   @override
   DelegatedTransitionBuilder? get delegatedTransition =>
@@ -105,12 +168,31 @@ class _CleanCupertinoPageRoute<T> extends CupertinoPageRoute<T> {
         child,
       );
     }
-    return CupertinoPageTransition(
-      primaryRouteAnimation: animation,
-      secondaryRouteAnimation: secondaryAnimation,
-      linearTransition: false,
-      child: child,
+    final enter = _enter ??= CurvedAnimation(
+      parent: animation,
+      curve: Curves.fastEaseInToSlowEaseOut,
+      reverseCurve: Curves.fastEaseInToSlowEaseOut.flipped,
     );
+    final cover = secondaryAnimation == this.secondaryAnimation
+        ? _cover ??= CurvedAnimation(
+            parent: secondaryAnimation,
+            curve: Curves.linearToEaseOut,
+            reverseCurve: Curves.easeInToLinear,
+          )
+        : secondaryAnimation;
+    return CupertinoPageTransition(
+      primaryRouteAnimation: enter,
+      secondaryRouteAnimation: cover,
+      linearTransition: true,
+      child: RouteSnapshot(child: child),
+    );
+  }
+
+  @override
+  void dispose() {
+    _enter?.dispose();
+    _cover?.dispose();
+    super.dispose();
   }
 }
 
@@ -233,11 +315,13 @@ class RouteIdleObserver extends NavigatorObserver {
 
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    FrameProbe.mark('push');
     _track(route);
   }
 
   @override
   void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    FrameProbe.mark('pop');
     _track(route);
   }
 
@@ -302,4 +386,208 @@ extension FocusNodeIdleExt on FocusNode {
     if (context == null || !canRequestFocus) return;
     requestFocus();
   }
+}
+
+class LeadTickerProvider implements TickerProvider {
+  LeadTickerProvider(this._parent);
+
+  final TickerProvider _parent;
+  Ticker? ticker;
+  Duration _lead = Duration.zero;
+  Duration? _last;
+
+  Duration get _frameInterval {
+    final rate =
+        WidgetsBinding
+            .instance
+            .platformDispatcher
+            .implicitView
+            ?.display
+            .refreshRate ??
+        0;
+    return rate > 0
+        ? Duration(microseconds: Duration.microsecondsPerSecond ~/ rate)
+        : Duration.zero;
+  }
+
+  @override
+  Ticker createTicker(TickerCallback onTick) {
+    return ticker = _parent.createTicker((elapsed) {
+      final last = _last;
+      if (elapsed == Duration.zero) {
+        _lead = _frameInterval;
+      } else if (last != null && elapsed <= last) {
+        _lead = Duration.zero;
+      }
+      _last = elapsed;
+      onTick(elapsed + _lead);
+    });
+  }
+}
+
+class RouteSnapshot extends StatefulWidget {
+  final Widget child;
+
+  const RouteSnapshot({super.key, required this.child});
+
+  @override
+  State<RouteSnapshot> createState() => _RouteSnapshotState();
+}
+
+class _RouteSnapshotState extends State<RouteSnapshot> {
+  final _controller = SnapshotController();
+  Animation<double>? _animation;
+  Animation<double>? _secondaryAnimation;
+
+  void _update([AnimationStatus? _]) {
+    _controller.allowSnapshotting =
+        (_animation?.isAnimating ?? false) ||
+        _secondaryAnimation?.status == AnimationStatus.forward;
+  }
+
+  void _unlisten() {
+    _animation?.removeStatusListener(_update);
+    _secondaryAnimation?.removeStatusListener(_update);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route?.animation == _animation &&
+        route?.secondaryAnimation == _secondaryAnimation) {
+      return;
+    }
+    _unlisten();
+    _animation = route?.animation?..addStatusListener(_update);
+    _secondaryAnimation = route?.secondaryAnimation
+      ?..addStatusListener(_update);
+    _update();
+  }
+
+  @override
+  void dispose() {
+    _unlisten();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _RouteEntranceScope(
+      animation: _animation,
+      child: SnapshotWidget(
+        controller: _controller,
+        mode: SnapshotMode.permissive,
+        autoresize: true,
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+class _RouteEntranceScope extends InheritedWidget {
+  final Animation<double>? animation;
+
+  const _RouteEntranceScope({required this.animation, required super.child});
+
+  @override
+  bool updateShouldNotify(_RouteEntranceScope oldWidget) => false;
+}
+
+VoidCallback whenRouteEntered(BuildContext context, VoidCallback callback) {
+  final animation = context
+      .getInheritedWidgetOfExactType<_RouteEntranceScope>()
+      ?.animation;
+  if (animation == null || animation.isCompleted) {
+    callback();
+    return () {};
+  }
+  void listener(AnimationStatus status) {
+    if (!status.isCompleted) return;
+    animation.removeStatusListener(listener);
+    callback();
+  }
+
+  animation.addStatusListener(listener);
+  return () => animation.removeStatusListener(listener);
+}
+
+const _arrivalHoldLimit = Duration(milliseconds: 200);
+
+mixin ArrivalHoldRouteMixin<T> on TransitionRoute<T> {
+  List<Completer<void>>? _arrivalHolds;
+
+  Ticker? get arrivalTicker;
+
+  @override
+  TickerFuture didPush() {
+    final ticker = arrivalTicker;
+    if (ticker == null) return super.didPush();
+    ticker.muted = true;
+    final holds = _arrivalHolds = [];
+    final pushed = super.didPush();
+    final context = navigator!.context;
+    SchedulerBinding.instance.addPostFrameCallback((_) async {
+      _arrivalHolds = null;
+      if (holds.isNotEmpty) {
+        await Future.wait([for (final hold in holds) hold.future])
+            .timeout(_arrivalHoldLimit, onTimeout: () => const []);
+      }
+      if (!context.mounted) return;
+      ticker.muted = !TickerMode.getValuesNotifier(context).value.enabled;
+    });
+    return pushed;
+  }
+}
+
+class ArrivalHold extends StatefulWidget {
+  final bool ready;
+  final Widget child;
+
+  const ArrivalHold({super.key, required this.ready, required this.child});
+
+  @override
+  State<ArrivalHold> createState() => _ArrivalHoldState();
+}
+
+class _ArrivalHoldState extends State<ArrivalHold> {
+  bool _checked = false;
+  Completer<void>? _hold;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_checked) return;
+    _checked = true;
+    if (widget.ready) return;
+    if (ModalRoute.of(context)
+        case final ArrivalHoldRouteMixin<Object?> route) {
+      final holds = route._arrivalHolds;
+      if (holds == null) return;
+      holds.add(_hold = Completer());
+    }
+  }
+
+  @override
+  void didUpdateWidget(ArrivalHold oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!widget.ready || _hold == null) return;
+    SchedulerBinding.instance.addPostFrameCallback((_) => _release());
+  }
+
+  @override
+  void dispose() {
+    _release();
+    super.dispose();
+  }
+
+  void _release() {
+    final hold = _hold;
+    _hold = null;
+    if (hold != null && !hold.isCompleted) hold.complete();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

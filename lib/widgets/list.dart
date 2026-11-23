@@ -39,8 +39,13 @@ class SwitchDelegate<T> extends Delegate {
 class CheckboxDelegate<T> extends Delegate {
   final bool value;
   final ValueChanged<bool?>? onChanged;
+  final VoidCallback? onLongPress;
 
-  const CheckboxDelegate({this.value = false, this.onChanged});
+  const CheckboxDelegate({
+    this.value = false,
+    this.onChanged,
+    this.onLongPress,
+  });
 }
 
 class OpenDelegate extends Delegate {
@@ -92,7 +97,7 @@ class OptionsDelegate<T> extends Delegate {
   final String title;
   final T value;
   final String Function(T value) textBuilder;
-  final String Function(T value)? subtitleBuilder;
+  final String? Function(T value)? subtitleBuilder;
   final Function(T? value) onChanged;
 
   const OptionsDelegate({
@@ -144,6 +149,7 @@ class ListItem<T> extends StatelessWidget implements HasLeadingWidget {
   final TextStyle? subtitleTextStyle;
   final ShapeBorder? shape;
   final void Function()? onTap;
+  final bool disableSplash;
 
   @override
   bool get hasLeading => leading != null;
@@ -162,6 +168,7 @@ class ListItem<T> extends StatelessWidget implements HasLeadingWidget {
     this.subtitleTextStyle,
     this.shape,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
+    this.disableSplash = false,
   }) : delegate = const Delegate();
 
   const ListItem.open({
@@ -178,6 +185,7 @@ class ListItem<T> extends StatelessWidget implements HasLeadingWidget {
     this.subtitleTextStyle,
     this.shape,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
+    this.disableSplash = false,
   }) : onTap = null;
 
   const ListItem.next({
@@ -194,6 +202,7 @@ class ListItem<T> extends StatelessWidget implements HasLeadingWidget {
     this.subtitleTextStyle,
     this.shape,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
+    this.disableSplash = true,
   }) : onTap = null;
 
   const ListItem.options({
@@ -210,6 +219,7 @@ class ListItem<T> extends StatelessWidget implements HasLeadingWidget {
     this.subtitleTextStyle,
     this.shape,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
+    this.disableSplash = false,
   }) : onTap = null;
 
   const ListItem.input({
@@ -226,6 +236,7 @@ class ListItem<T> extends StatelessWidget implements HasLeadingWidget {
     this.subtitleTextStyle,
     this.shape,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
+    this.disableSplash = false,
   }) : onTap = null;
 
   const ListItem.checkbox({
@@ -241,6 +252,7 @@ class ListItem<T> extends StatelessWidget implements HasLeadingWidget {
     this.subtitleTextStyle,
     this.shape,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
+    this.disableSplash = false,
   }) : trailing = null,
        onTap = null;
 
@@ -258,6 +270,7 @@ class ListItem<T> extends StatelessWidget implements HasLeadingWidget {
     this.subtitleTextStyle,
     this.shape,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
+    this.disableSplash = false,
   }) : onTap = null;
 
   const ListItem.radio({
@@ -273,18 +286,20 @@ class ListItem<T> extends StatelessWidget implements HasLeadingWidget {
     this.subtitleTextStyle,
     this.shape,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
+    this.disableSplash = false,
   }) : leading = null,
        onTap = null;
 
   Widget _buildListTile(
     BuildContext context, {
     void Function()? onTap,
+    VoidCallback? onLongPress,
     Widget? trailing,
     Widget? leading,
     bool enabled = true,
   }) {
     final effectiveLeading = leading ?? this.leading;
-    return ListTile(
+    final tile = ListTile(
       key: key,
       dense: dense,
       enabled: enabled,
@@ -309,7 +324,9 @@ class ListItem<T> extends StatelessWidget implements HasLeadingWidget {
                 size: 22,
                 color: context.colorScheme.onSurfaceVariant,
               ),
-              child: effectiveLeading,
+              child:
+                  context.resolveIconWidget(effectiveLeading) ??
+                  effectiveLeading,
             )
           : null,
       horizontalTitleGap: horizontalTitleGap ?? 14,
@@ -319,9 +336,23 @@ class ListItem<T> extends StatelessWidget implements HasLeadingWidget {
       subtitle: subtitle,
       titleAlignment: tileTitleAlignment,
       onTap: onTap,
-      trailing: trailing ?? this.trailing,
+      onLongPress: onLongPress,
+      trailing: context.resolveIconWidget(trailing ?? this.trailing),
       contentPadding: padding,
     );
+    if (disableSplash &&
+        utils.getViewMode(MediaQuery.sizeOf(context).width) ==
+            ViewMode.mobile) {
+      return Theme(
+        data: Theme.of(context).copyWith(
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+          splashFactory: NoSplash.splashFactory,
+        ),
+        child: tile,
+      );
+    }
+    return tile;
   }
 
   @override
@@ -363,8 +394,9 @@ class ListItem<T> extends StatelessWidget implements HasLeadingWidget {
 
           return _buildListTile(
             context,
-            trailing: trailing ??
-                Icon(
+            trailing:
+                trailing ??
+                AppIcon(
                   Icons.chevron_right_rounded,
                   size: 20,
                   color: context.colorScheme.onSurfaceVariant.opacity60,
@@ -393,8 +425,9 @@ class ListItem<T> extends StatelessWidget implements HasLeadingWidget {
 
       return _buildListTile(
         context,
-        trailing: trailing ??
-            Icon(
+        trailing:
+            trailing ??
+            AppIcon(
               Icons.chevron_right_rounded,
               size: 20,
               color: context.colorScheme.onSurfaceVariant.opacity60,
@@ -473,9 +506,10 @@ class ListItem<T> extends StatelessWidget implements HasLeadingWidget {
             checkboxDelegate.onChanged!(!checkboxDelegate.value);
           }
         },
+        onLongPress: checkboxDelegate.onLongPress,
         trailing: Padding(
           padding: const EdgeInsets.only(right: 8),
-          child: Icon(
+          child: AppIcon(
             checkboxDelegate.value
                 ? Icons.check_circle_rounded
                 : Icons.circle_outlined,
@@ -524,7 +558,7 @@ class ListItem<T> extends StatelessWidget implements HasLeadingWidget {
             radioDelegate.onChanged!(radioDelegate.value);
           }
         },
-        leading: Icon(
+        leading: AppIcon(
           isSelected ? Icons.check_circle_rounded : Icons.circle_outlined,
           size: 21,
           color: isSelected
@@ -583,9 +617,10 @@ class ListHeader extends StatelessWidget {
                 Text(
                   title,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurfaceVariant.opacity80,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurfaceVariant
+                        .opacity80,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -602,7 +637,7 @@ class ListHeader extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.end,
-            children: [...genActions(actions, space: space)],
+            children: [...genActions(context, actions, space: space)],
           ),
         ],
       ),

@@ -47,6 +47,6 @@
 	<key>SUPublicEDKey</key>
 	<string>AXa2s8OFnM38IzFlezgUoIf/i8tPg83qNs7OpkforUI=</string>
 	<key>FLTEnableImpeller</key>
-	<false/>
+	<true/>
 </dict>
 </plist>

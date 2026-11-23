@@ -154,7 +154,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
 
   void _applyPendingConnections() {
     if (_pendingConnections != null) {
-      ref.read(connectionsProvider.notifier).state = _pendingConnections!;
+      ref.read(connectionsProvider.notifier).value = _pendingConnections!;
       _pendingConnections = null;
     }
   }
@@ -208,7 +208,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
       if (_isScrolling) {
         _pendingConnections = newConnections;
       } else {
-        ref.read(connectionsProvider.notifier).state = newConnections;
+        ref.read(connectionsProvider.notifier).value = newConnections;
       }
     }
   }
@@ -284,18 +284,17 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
         );
     if (selectedSortType == null || !mounted) return;
     if (selectedSortType != currentSortType) {
-      ref.read(connectionsSortProvider.notifier).state = selectedSortType;
+      ref.read(connectionsSortProvider.notifier).value = selectedSortType;
     }
   }
 
   void _onSearch(String value) {
-    ref.read(connectionsSearchProvider.notifier).state = value;
+    ref.read(connectionsSearchProvider.notifier).value = value;
   }
 
   void _onKeywordsUpdate(List<String> keywords) {
-    final notifier = ref.read(connectionsKeywordsProvider.notifier);
-    if (listEquals(notifier.state, keywords)) return;
-    notifier.state = keywords;
+    if (listEquals(ref.read(connectionsKeywordsProvider), keywords)) return;
+    ref.read(connectionsKeywordsProvider.notifier).value = keywords;
   }
 
   void _handleTabChanged(_ConnectionsTab tab) {
@@ -329,7 +328,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
         IconButton(
           onPressed: _handleClearClosed,
           tooltip: appLocalizations.clear,
-          icon: const Icon(Icons.delete_sweep_outlined),
+          icon: const AppIcon(Icons.delete_sweep_outlined),
         ),
         IconButton(
           style: _autoScrollToEnd
@@ -341,7 +340,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
               : null,
           onPressed: _toggleAutoScroll,
           tooltip: appLocalizations.autoScroll,
-          icon: const Icon(Icons.vertical_align_top_outlined),
+          icon: const AppIcon(Icons.vertical_align_top_outlined),
         ),
       ];
     }
@@ -349,12 +348,12 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
       IconButton(
         onPressed: _handleCloseAll,
         tooltip: appLocalizations.closeAll,
-        icon: const Icon(Icons.delete_sweep_outlined),
+        icon: const AppIcon(Icons.delete_sweep_outlined),
       ),
       IconButton(
         tooltip: appLocalizations.connectionsSort,
         onPressed: _handleSort,
-        icon: const Icon(Icons.sort),
+        icon: const AppIcon(Icons.sort),
       ),
     ];
   }
@@ -397,7 +396,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
               const SizedBox(width: 8),
               SegmentButton(
                 selected: udpOnly,
-                leading: const Icon(Icons.stream_rounded),
+                leading: Icon(context.resolveIcon(Icons.stream_rounded)),
                 label: 'UDP',
                 onTap: () =>
                     ref.read(connectionsUdpOnlyProvider.notifier).toggle(),
@@ -415,18 +414,24 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
       onTap: () => _handleBlockConnection(id),
       child: SizedBox.square(
         dimension: 40,
-        child: Icon(Icons.block, color: context.colorScheme.onSurfaceVariant),
+        child: Icon(
+          context.resolveIcon(Icons.block),
+          color: context.colorScheme.onSurfaceVariant,
+        ),
       ),
     );
   }
 
-  Widget _buildClosedMark() {
+  Widget _buildClosedMark({bool dimmed = false}) {
+    final baseColor = context.colorScheme.onSurfaceVariant;
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: Text(
         appLocalizations.connectionsClosed,
         style: context.textTheme.bodySmall?.copyWith(
-          color: context.colorScheme.onSurfaceVariant,
+          color: dimmed
+              ? baseColor.withValues(alpha: baseColor.a * 0.6)
+              : baseColor,
         ),
       ),
     );
@@ -441,22 +446,22 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
     required bool showSpeed,
     required bool markClosed,
   }) {
-    final item = TrackerInfoItem(
+    final dimmed = markClosed && closed;
+    return TrackerInfoItem(
       key: ValueKey(trackerInfo.id),
       index: index,
       count: count,
       showSpeed: !closed && showSpeed,
+      dimmed: dimmed,
       trackerInfo: trackerInfo,
       onClickKeyword: (value) {
         itemContext.commonScaffoldState?.addKeyword(value);
       },
       trailing: closed
-          ? (markClosed ? _buildClosedMark() : null)
+          ? (markClosed ? _buildClosedMark(dimmed: dimmed) : null)
           : _buildBlockButton(trackerInfo.id),
       detailTitle: appLocalizations.details,
     );
-    if (!markClosed || !closed) return item;
-    return Opacity(key: ValueKey(trackerInfo.id), opacity: 0.6, child: item);
   }
 
   Widget _buildList({
@@ -489,6 +494,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
               delegate: SliverChildBuilderDelegate(
                 (context, index) => itemOf(context, index),
                 childCount: count,
+                addAutomaticKeepAlives: false,
                 findChildIndexCallback: (key) {
                   indexById ??= {for (var i = 0; i < count; i++) idOf(i): i};
                   return indexById![(key as ValueKey<String>).value];

@@ -821,24 +821,6 @@ class Utils {
     return WidgetsBinding.instance.platformDispatcher.views.first;
   }
 
-  List<String> parseReleaseBody(String? body) {
-    if (body == null) return [];
-    const pattern = r'^\s*-\s+(.+)';
-    final regex = RegExp(pattern, multiLine: true);
-    return regex
-        .allMatches(body)
-        .map((match) => match.group(1)?.trim() ?? '')
-        .where(
-          (item) =>
-              item.isNotEmpty &&
-              !item.startsWith('---') &&
-              !item.startsWith(':') &&
-              !item.startsWith('|') &&
-              !item.startsWith('['),
-        )
-        .toList();
-  }
-
   ViewMode getViewMode(double viewWidth) {
     if (viewWidth <= maxMobileWidth) return ViewMode.mobile;
     if (viewWidth <= maxLaptopWidth) return ViewMode.laptop;
@@ -946,17 +928,15 @@ class Utils {
   Future<List<String>> getLocalGateways() async {
     if (system.isAndroid) {
       try {
-        final gateways = await const MethodChannel(
-          'service',
-        ).invokeListMethod<String>('getLocalGateways');
+        final gateways = await const MethodChannel('service')
+            .invokeListMethod<String>('getLocalGateways');
         if (gateways != null && gateways.isNotEmpty) {
           return gateways;
         }
       } catch (_) {
         try {
-          final gateways = await const MethodChannel(
-            'vpn',
-          ).invokeListMethod<String>('getLocalGateways');
+          final gateways = await const MethodChannel('vpn')
+              .invokeListMethod<String>('getLocalGateways');
           if (gateways != null && gateways.isNotEmpty) {
             return gateways;
           }
@@ -979,9 +959,8 @@ class Utils {
       final primary = (await getNetworkInfo()).ip;
       if (primary.isNotEmpty && !primary.contains(':')) add(primary);
       if (system.isAndroid) {
-        final list = await const MethodChannel(
-          'service',
-        ).invokeListMethod<String>('getLocalIpAddresses');
+        final list = await const MethodChannel('service')
+            .invokeListMethod<String>('getLocalIpAddresses');
         for (final address in list ?? const <String>[]) {
           add(address);
         }
@@ -1025,9 +1004,8 @@ class Utils {
   Future<NetworkInfo> getNetworkInfo() async {
     try {
       if (system.isAndroid) {
-        final info = await const MethodChannel(
-          'service',
-        ).invokeMapMethod<String, Object?>('getNetworkInfo');
+        final info = await const MethodChannel('service')
+            .invokeMapMethod<String, Object?>('getNetworkInfo');
         return info == null ? const NetworkInfo() : NetworkInfo.fromJson(info);
       }
       final routes = await _getDefaultRoutes();
@@ -1237,7 +1215,7 @@ class Utils {
     return SingleActivator(trigger, control: control, meta: !control);
   }
 
-  FutureOr<T> handleWatch<T>(Function function) async {
+  FutureOr<T> handleWatch<T>(FutureOr<T> Function() function) async {
     if (kDebugMode) {
       final stopwatch = Stopwatch()..start();
       final res = await function();

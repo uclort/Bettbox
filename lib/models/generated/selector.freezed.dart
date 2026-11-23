@@ -13,1092 +13,6 @@ part of '../selector.dart';
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
-mixin _$VM2<A,B> {
-
- A get a; B get b;
-/// Create a copy of VM2
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$VM2CopyWith<A, B, VM2<A, B>> get copyWith => _$VM2CopyWithImpl<A, B, VM2<A, B>>(this as VM2<A, B>, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-  final _this = this as VM2<A, B>;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VM2<A, B>&&const DeepCollectionEquality().equals(other.a, _this.a)&&const DeepCollectionEquality().equals(other.b, _this.b));
-}
-
-
-@override
-int get hashCode {
-  final _this = this as VM2<A, B>;
-  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.a),const DeepCollectionEquality().hash(_this.b));
-}
-
-@override
-String toString() {
-  final _this = this as VM2<A, B>;
-  return 'VM2<$A, $B>(a: ${_this.a}, b: ${_this.b})';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $VM2CopyWith<A,B,$Res>  {
-  factory $VM2CopyWith(VM2<A, B> value, $Res Function(VM2<A, B>) _then) = _$VM2CopyWithImpl;
-@useResult
-$Res call({
- A a, B b
-});
-
-
-
-
-}
-/// @nodoc
-class _$VM2CopyWithImpl<A,B,$Res>
-    implements $VM2CopyWith<A, B, $Res> {
-  _$VM2CopyWithImpl(this._self, this._then);
-
-  final VM2<A, B> _self;
-  final $Res Function(VM2<A, B>) _then;
-
-/// Create a copy of VM2
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? a = freezed,Object? b = freezed,}) {
-  return _then(VM2(
-a: freezed == a ? _self.a : a // ignore: cast_nullable_to_non_nullable
-as A,b: freezed == b ? _self.b : b // ignore: cast_nullable_to_non_nullable
-as B,
-  ));
-}
-
-}
-
-
-/// Adds pattern-matching-related methods to [VM2].
-extension VM2Patterns<A,B> on VM2<A, B> {
-/// A variant of `map` that fallback to returning `orElse`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _VM2<A, B> value)?  $default,{required TResult orElse(),}){
-final _that = this;
-switch (_that) {
-case _VM2() when $default != null:
-return $default(_that);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// Callbacks receives the raw object, upcasted.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case final Subclass2 value:
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _VM2<A, B> value)  $default,){
-final _that = this;
-switch (_that) {
-case _VM2():
-return $default(_that);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `map` that fallback to returning `null`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _VM2<A, B> value)?  $default,){
-final _that = this;
-switch (_that) {
-case _VM2() when $default != null:
-return $default(_that);case _:
-  return null;
-
-}
-}
-/// A variant of `when` that fallback to an `orElse` callback.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( A a,  B b)?  $default,{required TResult orElse(),}) {final _that = this;
-switch (_that) {
-case _VM2() when $default != null:
-return $default(_that.a,_that.b);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// As opposed to `map`, this offers destructuring.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case Subclass2(:final field2):
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( A a,  B b)  $default,) {final _that = this;
-switch (_that) {
-case _VM2():
-return $default(_that.a,_that.b);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `when` that fallback to returning `null`
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( A a,  B b)?  $default,) {final _that = this;
-switch (_that) {
-case _VM2() when $default != null:
-return $default(_that.a,_that.b);case _:
-  return null;
-
-}
-}
-
-}
-
-/// @nodoc
-
-
-class _VM2<A,B> implements VM2<A, B> {
-  const _VM2({required this.a, required this.b});
-  
-
-@override final  A a;
-@override final  B b;
-
-/// Create a copy of VM2
-/// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-_$VM2CopyWith<A, B, _VM2<A, B>> get copyWith => __$VM2CopyWithImpl<A, B, _VM2<A, B>>(this, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VM2<A, B>&&const DeepCollectionEquality().equals(other.a, a)&&const DeepCollectionEquality().equals(other.b, b));
-}
-
-
-@override
-int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(a),const DeepCollectionEquality().hash(b));
-}
-
-@override
-String toString() {
-    return 'VM2<$A, $B>(a: $a, b: $b)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class _$VM2CopyWith<A,B,$Res> implements $VM2CopyWith<A, B, $Res> {
-  factory _$VM2CopyWith(_VM2<A, B> value, $Res Function(_VM2<A, B>) _then) = __$VM2CopyWithImpl;
-@override @useResult
-$Res call({
- A a, B b
-});
-
-
-
-
-}
-/// @nodoc
-class __$VM2CopyWithImpl<A,B,$Res>
-    implements _$VM2CopyWith<A, B, $Res> {
-  __$VM2CopyWithImpl(this._self, this._then);
-
-  final _VM2<A, B> _self;
-  final $Res Function(_VM2<A, B>) _then;
-
-/// Create a copy of VM2
-/// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? a = freezed,Object? b = freezed,}) {
-  return _then(_VM2<A, B>(
-a: freezed == a ? _self.a : a // ignore: cast_nullable_to_non_nullable
-as A,b: freezed == b ? _self.b : b // ignore: cast_nullable_to_non_nullable
-as B,
-  ));
-}
-
-
-}
-
-/// @nodoc
-mixin _$VM3<A,B,C> {
-
- A get a; B get b; C get c;
-/// Create a copy of VM3
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$VM3CopyWith<A, B, C, VM3<A, B, C>> get copyWith => _$VM3CopyWithImpl<A, B, C, VM3<A, B, C>>(this as VM3<A, B, C>, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-  final _this = this as VM3<A, B, C>;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VM3<A, B, C>&&const DeepCollectionEquality().equals(other.a, _this.a)&&const DeepCollectionEquality().equals(other.b, _this.b)&&const DeepCollectionEquality().equals(other.c, _this.c));
-}
-
-
-@override
-int get hashCode {
-  final _this = this as VM3<A, B, C>;
-  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.a),const DeepCollectionEquality().hash(_this.b),const DeepCollectionEquality().hash(_this.c));
-}
-
-@override
-String toString() {
-  final _this = this as VM3<A, B, C>;
-  return 'VM3<$A, $B, $C>(a: ${_this.a}, b: ${_this.b}, c: ${_this.c})';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $VM3CopyWith<A,B,C,$Res>  {
-  factory $VM3CopyWith(VM3<A, B, C> value, $Res Function(VM3<A, B, C>) _then) = _$VM3CopyWithImpl;
-@useResult
-$Res call({
- A a, B b, C c
-});
-
-
-
-
-}
-/// @nodoc
-class _$VM3CopyWithImpl<A,B,C,$Res>
-    implements $VM3CopyWith<A, B, C, $Res> {
-  _$VM3CopyWithImpl(this._self, this._then);
-
-  final VM3<A, B, C> _self;
-  final $Res Function(VM3<A, B, C>) _then;
-
-/// Create a copy of VM3
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? a = freezed,Object? b = freezed,Object? c = freezed,}) {
-  return _then(VM3(
-a: freezed == a ? _self.a : a // ignore: cast_nullable_to_non_nullable
-as A,b: freezed == b ? _self.b : b // ignore: cast_nullable_to_non_nullable
-as B,c: freezed == c ? _self.c : c // ignore: cast_nullable_to_non_nullable
-as C,
-  ));
-}
-
-}
-
-
-/// Adds pattern-matching-related methods to [VM3].
-extension VM3Patterns<A,B,C> on VM3<A, B, C> {
-/// A variant of `map` that fallback to returning `orElse`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _VM3<A, B, C> value)?  $default,{required TResult orElse(),}){
-final _that = this;
-switch (_that) {
-case _VM3() when $default != null:
-return $default(_that);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// Callbacks receives the raw object, upcasted.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case final Subclass2 value:
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _VM3<A, B, C> value)  $default,){
-final _that = this;
-switch (_that) {
-case _VM3():
-return $default(_that);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `map` that fallback to returning `null`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _VM3<A, B, C> value)?  $default,){
-final _that = this;
-switch (_that) {
-case _VM3() when $default != null:
-return $default(_that);case _:
-  return null;
-
-}
-}
-/// A variant of `when` that fallback to an `orElse` callback.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( A a,  B b,  C c)?  $default,{required TResult orElse(),}) {final _that = this;
-switch (_that) {
-case _VM3() when $default != null:
-return $default(_that.a,_that.b,_that.c);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// As opposed to `map`, this offers destructuring.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case Subclass2(:final field2):
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( A a,  B b,  C c)  $default,) {final _that = this;
-switch (_that) {
-case _VM3():
-return $default(_that.a,_that.b,_that.c);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `when` that fallback to returning `null`
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( A a,  B b,  C c)?  $default,) {final _that = this;
-switch (_that) {
-case _VM3() when $default != null:
-return $default(_that.a,_that.b,_that.c);case _:
-  return null;
-
-}
-}
-
-}
-
-/// @nodoc
-
-
-class _VM3<A,B,C> implements VM3<A, B, C> {
-  const _VM3({required this.a, required this.b, required this.c});
-  
-
-@override final  A a;
-@override final  B b;
-@override final  C c;
-
-/// Create a copy of VM3
-/// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-_$VM3CopyWith<A, B, C, _VM3<A, B, C>> get copyWith => __$VM3CopyWithImpl<A, B, C, _VM3<A, B, C>>(this, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VM3<A, B, C>&&const DeepCollectionEquality().equals(other.a, a)&&const DeepCollectionEquality().equals(other.b, b)&&const DeepCollectionEquality().equals(other.c, c));
-}
-
-
-@override
-int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(a),const DeepCollectionEquality().hash(b),const DeepCollectionEquality().hash(c));
-}
-
-@override
-String toString() {
-    return 'VM3<$A, $B, $C>(a: $a, b: $b, c: $c)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class _$VM3CopyWith<A,B,C,$Res> implements $VM3CopyWith<A, B, C, $Res> {
-  factory _$VM3CopyWith(_VM3<A, B, C> value, $Res Function(_VM3<A, B, C>) _then) = __$VM3CopyWithImpl;
-@override @useResult
-$Res call({
- A a, B b, C c
-});
-
-
-
-
-}
-/// @nodoc
-class __$VM3CopyWithImpl<A,B,C,$Res>
-    implements _$VM3CopyWith<A, B, C, $Res> {
-  __$VM3CopyWithImpl(this._self, this._then);
-
-  final _VM3<A, B, C> _self;
-  final $Res Function(_VM3<A, B, C>) _then;
-
-/// Create a copy of VM3
-/// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? a = freezed,Object? b = freezed,Object? c = freezed,}) {
-  return _then(_VM3<A, B, C>(
-a: freezed == a ? _self.a : a // ignore: cast_nullable_to_non_nullable
-as A,b: freezed == b ? _self.b : b // ignore: cast_nullable_to_non_nullable
-as B,c: freezed == c ? _self.c : c // ignore: cast_nullable_to_non_nullable
-as C,
-  ));
-}
-
-
-}
-
-/// @nodoc
-mixin _$VM4<A,B,C,D> {
-
- A get a; B get b; C get c; D get d;
-/// Create a copy of VM4
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$VM4CopyWith<A, B, C, D, VM4<A, B, C, D>> get copyWith => _$VM4CopyWithImpl<A, B, C, D, VM4<A, B, C, D>>(this as VM4<A, B, C, D>, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-  final _this = this as VM4<A, B, C, D>;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VM4<A, B, C, D>&&const DeepCollectionEquality().equals(other.a, _this.a)&&const DeepCollectionEquality().equals(other.b, _this.b)&&const DeepCollectionEquality().equals(other.c, _this.c)&&const DeepCollectionEquality().equals(other.d, _this.d));
-}
-
-
-@override
-int get hashCode {
-  final _this = this as VM4<A, B, C, D>;
-  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.a),const DeepCollectionEquality().hash(_this.b),const DeepCollectionEquality().hash(_this.c),const DeepCollectionEquality().hash(_this.d));
-}
-
-@override
-String toString() {
-  final _this = this as VM4<A, B, C, D>;
-  return 'VM4<$A, $B, $C, $D>(a: ${_this.a}, b: ${_this.b}, c: ${_this.c}, d: ${_this.d})';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $VM4CopyWith<A,B,C,D,$Res>  {
-  factory $VM4CopyWith(VM4<A, B, C, D> value, $Res Function(VM4<A, B, C, D>) _then) = _$VM4CopyWithImpl;
-@useResult
-$Res call({
- A a, B b, C c, D d
-});
-
-
-
-
-}
-/// @nodoc
-class _$VM4CopyWithImpl<A,B,C,D,$Res>
-    implements $VM4CopyWith<A, B, C, D, $Res> {
-  _$VM4CopyWithImpl(this._self, this._then);
-
-  final VM4<A, B, C, D> _self;
-  final $Res Function(VM4<A, B, C, D>) _then;
-
-/// Create a copy of VM4
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? a = freezed,Object? b = freezed,Object? c = freezed,Object? d = freezed,}) {
-  return _then(VM4(
-a: freezed == a ? _self.a : a // ignore: cast_nullable_to_non_nullable
-as A,b: freezed == b ? _self.b : b // ignore: cast_nullable_to_non_nullable
-as B,c: freezed == c ? _self.c : c // ignore: cast_nullable_to_non_nullable
-as C,d: freezed == d ? _self.d : d // ignore: cast_nullable_to_non_nullable
-as D,
-  ));
-}
-
-}
-
-
-/// Adds pattern-matching-related methods to [VM4].
-extension VM4Patterns<A,B,C,D> on VM4<A, B, C, D> {
-/// A variant of `map` that fallback to returning `orElse`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _VM4<A, B, C, D> value)?  $default,{required TResult orElse(),}){
-final _that = this;
-switch (_that) {
-case _VM4() when $default != null:
-return $default(_that);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// Callbacks receives the raw object, upcasted.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case final Subclass2 value:
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _VM4<A, B, C, D> value)  $default,){
-final _that = this;
-switch (_that) {
-case _VM4():
-return $default(_that);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `map` that fallback to returning `null`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _VM4<A, B, C, D> value)?  $default,){
-final _that = this;
-switch (_that) {
-case _VM4() when $default != null:
-return $default(_that);case _:
-  return null;
-
-}
-}
-/// A variant of `when` that fallback to an `orElse` callback.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( A a,  B b,  C c,  D d)?  $default,{required TResult orElse(),}) {final _that = this;
-switch (_that) {
-case _VM4() when $default != null:
-return $default(_that.a,_that.b,_that.c,_that.d);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// As opposed to `map`, this offers destructuring.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case Subclass2(:final field2):
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( A a,  B b,  C c,  D d)  $default,) {final _that = this;
-switch (_that) {
-case _VM4():
-return $default(_that.a,_that.b,_that.c,_that.d);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `when` that fallback to returning `null`
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( A a,  B b,  C c,  D d)?  $default,) {final _that = this;
-switch (_that) {
-case _VM4() when $default != null:
-return $default(_that.a,_that.b,_that.c,_that.d);case _:
-  return null;
-
-}
-}
-
-}
-
-/// @nodoc
-
-
-class _VM4<A,B,C,D> implements VM4<A, B, C, D> {
-  const _VM4({required this.a, required this.b, required this.c, required this.d});
-  
-
-@override final  A a;
-@override final  B b;
-@override final  C c;
-@override final  D d;
-
-/// Create a copy of VM4
-/// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-_$VM4CopyWith<A, B, C, D, _VM4<A, B, C, D>> get copyWith => __$VM4CopyWithImpl<A, B, C, D, _VM4<A, B, C, D>>(this, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VM4<A, B, C, D>&&const DeepCollectionEquality().equals(other.a, a)&&const DeepCollectionEquality().equals(other.b, b)&&const DeepCollectionEquality().equals(other.c, c)&&const DeepCollectionEquality().equals(other.d, d));
-}
-
-
-@override
-int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(a),const DeepCollectionEquality().hash(b),const DeepCollectionEquality().hash(c),const DeepCollectionEquality().hash(d));
-}
-
-@override
-String toString() {
-    return 'VM4<$A, $B, $C, $D>(a: $a, b: $b, c: $c, d: $d)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class _$VM4CopyWith<A,B,C,D,$Res> implements $VM4CopyWith<A, B, C, D, $Res> {
-  factory _$VM4CopyWith(_VM4<A, B, C, D> value, $Res Function(_VM4<A, B, C, D>) _then) = __$VM4CopyWithImpl;
-@override @useResult
-$Res call({
- A a, B b, C c, D d
-});
-
-
-
-
-}
-/// @nodoc
-class __$VM4CopyWithImpl<A,B,C,D,$Res>
-    implements _$VM4CopyWith<A, B, C, D, $Res> {
-  __$VM4CopyWithImpl(this._self, this._then);
-
-  final _VM4<A, B, C, D> _self;
-  final $Res Function(_VM4<A, B, C, D>) _then;
-
-/// Create a copy of VM4
-/// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? a = freezed,Object? b = freezed,Object? c = freezed,Object? d = freezed,}) {
-  return _then(_VM4<A, B, C, D>(
-a: freezed == a ? _self.a : a // ignore: cast_nullable_to_non_nullable
-as A,b: freezed == b ? _self.b : b // ignore: cast_nullable_to_non_nullable
-as B,c: freezed == c ? _self.c : c // ignore: cast_nullable_to_non_nullable
-as C,d: freezed == d ? _self.d : d // ignore: cast_nullable_to_non_nullable
-as D,
-  ));
-}
-
-
-}
-
-/// @nodoc
-mixin _$VM5<A,B,C,D,E> {
-
- A get a; B get b; C get c; D get d; E get e;
-/// Create a copy of VM5
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$VM5CopyWith<A, B, C, D, E, VM5<A, B, C, D, E>> get copyWith => _$VM5CopyWithImpl<A, B, C, D, E, VM5<A, B, C, D, E>>(this as VM5<A, B, C, D, E>, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-  final _this = this as VM5<A, B, C, D, E>;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VM5<A, B, C, D, E>&&const DeepCollectionEquality().equals(other.a, _this.a)&&const DeepCollectionEquality().equals(other.b, _this.b)&&const DeepCollectionEquality().equals(other.c, _this.c)&&const DeepCollectionEquality().equals(other.d, _this.d)&&const DeepCollectionEquality().equals(other.e, _this.e));
-}
-
-
-@override
-int get hashCode {
-  final _this = this as VM5<A, B, C, D, E>;
-  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.a),const DeepCollectionEquality().hash(_this.b),const DeepCollectionEquality().hash(_this.c),const DeepCollectionEquality().hash(_this.d),const DeepCollectionEquality().hash(_this.e));
-}
-
-@override
-String toString() {
-  final _this = this as VM5<A, B, C, D, E>;
-  return 'VM5<$A, $B, $C, $D, $E>(a: ${_this.a}, b: ${_this.b}, c: ${_this.c}, d: ${_this.d}, e: ${_this.e})';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $VM5CopyWith<A,B,C,D,E,$Res>  {
-  factory $VM5CopyWith(VM5<A, B, C, D, E> value, $Res Function(VM5<A, B, C, D, E>) _then) = _$VM5CopyWithImpl;
-@useResult
-$Res call({
- A a, B b, C c, D d, E e
-});
-
-
-
-
-}
-/// @nodoc
-class _$VM5CopyWithImpl<A,B,C,D,E,$Res>
-    implements $VM5CopyWith<A, B, C, D, E, $Res> {
-  _$VM5CopyWithImpl(this._self, this._then);
-
-  final VM5<A, B, C, D, E> _self;
-  final $Res Function(VM5<A, B, C, D, E>) _then;
-
-/// Create a copy of VM5
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? a = freezed,Object? b = freezed,Object? c = freezed,Object? d = freezed,Object? e = freezed,}) {
-  return _then(VM5(
-a: freezed == a ? _self.a : a // ignore: cast_nullable_to_non_nullable
-as A,b: freezed == b ? _self.b : b // ignore: cast_nullable_to_non_nullable
-as B,c: freezed == c ? _self.c : c // ignore: cast_nullable_to_non_nullable
-as C,d: freezed == d ? _self.d : d // ignore: cast_nullable_to_non_nullable
-as D,e: freezed == e ? _self.e : e // ignore: cast_nullable_to_non_nullable
-as E,
-  ));
-}
-
-}
-
-
-/// Adds pattern-matching-related methods to [VM5].
-extension VM5Patterns<A,B,C,D,E> on VM5<A, B, C, D, E> {
-/// A variant of `map` that fallback to returning `orElse`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _VM5<A, B, C, D, E> value)?  $default,{required TResult orElse(),}){
-final _that = this;
-switch (_that) {
-case _VM5() when $default != null:
-return $default(_that);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// Callbacks receives the raw object, upcasted.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case final Subclass2 value:
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _VM5<A, B, C, D, E> value)  $default,){
-final _that = this;
-switch (_that) {
-case _VM5():
-return $default(_that);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `map` that fallback to returning `null`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _VM5<A, B, C, D, E> value)?  $default,){
-final _that = this;
-switch (_that) {
-case _VM5() when $default != null:
-return $default(_that);case _:
-  return null;
-
-}
-}
-/// A variant of `when` that fallback to an `orElse` callback.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( A a,  B b,  C c,  D d,  E e)?  $default,{required TResult orElse(),}) {final _that = this;
-switch (_that) {
-case _VM5() when $default != null:
-return $default(_that.a,_that.b,_that.c,_that.d,_that.e);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// As opposed to `map`, this offers destructuring.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case Subclass2(:final field2):
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( A a,  B b,  C c,  D d,  E e)  $default,) {final _that = this;
-switch (_that) {
-case _VM5():
-return $default(_that.a,_that.b,_that.c,_that.d,_that.e);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `when` that fallback to returning `null`
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( A a,  B b,  C c,  D d,  E e)?  $default,) {final _that = this;
-switch (_that) {
-case _VM5() when $default != null:
-return $default(_that.a,_that.b,_that.c,_that.d,_that.e);case _:
-  return null;
-
-}
-}
-
-}
-
-/// @nodoc
-
-
-class _VM5<A,B,C,D,E> implements VM5<A, B, C, D, E> {
-  const _VM5({required this.a, required this.b, required this.c, required this.d, required this.e});
-  
-
-@override final  A a;
-@override final  B b;
-@override final  C c;
-@override final  D d;
-@override final  E e;
-
-/// Create a copy of VM5
-/// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-_$VM5CopyWith<A, B, C, D, E, _VM5<A, B, C, D, E>> get copyWith => __$VM5CopyWithImpl<A, B, C, D, E, _VM5<A, B, C, D, E>>(this, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VM5<A, B, C, D, E>&&const DeepCollectionEquality().equals(other.a, a)&&const DeepCollectionEquality().equals(other.b, b)&&const DeepCollectionEquality().equals(other.c, c)&&const DeepCollectionEquality().equals(other.d, d)&&const DeepCollectionEquality().equals(other.e, e));
-}
-
-
-@override
-int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(a),const DeepCollectionEquality().hash(b),const DeepCollectionEquality().hash(c),const DeepCollectionEquality().hash(d),const DeepCollectionEquality().hash(e));
-}
-
-@override
-String toString() {
-    return 'VM5<$A, $B, $C, $D, $E>(a: $a, b: $b, c: $c, d: $d, e: $e)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class _$VM5CopyWith<A,B,C,D,E,$Res> implements $VM5CopyWith<A, B, C, D, E, $Res> {
-  factory _$VM5CopyWith(_VM5<A, B, C, D, E> value, $Res Function(_VM5<A, B, C, D, E>) _then) = __$VM5CopyWithImpl;
-@override @useResult
-$Res call({
- A a, B b, C c, D d, E e
-});
-
-
-
-
-}
-/// @nodoc
-class __$VM5CopyWithImpl<A,B,C,D,E,$Res>
-    implements _$VM5CopyWith<A, B, C, D, E, $Res> {
-  __$VM5CopyWithImpl(this._self, this._then);
-
-  final _VM5<A, B, C, D, E> _self;
-  final $Res Function(_VM5<A, B, C, D, E>) _then;
-
-/// Create a copy of VM5
-/// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? a = freezed,Object? b = freezed,Object? c = freezed,Object? d = freezed,Object? e = freezed,}) {
-  return _then(_VM5<A, B, C, D, E>(
-a: freezed == a ? _self.a : a // ignore: cast_nullable_to_non_nullable
-as A,b: freezed == b ? _self.b : b // ignore: cast_nullable_to_non_nullable
-as B,c: freezed == c ? _self.c : c // ignore: cast_nullable_to_non_nullable
-as C,d: freezed == d ? _self.d : d // ignore: cast_nullable_to_non_nullable
-as D,e: freezed == e ? _self.e : e // ignore: cast_nullable_to_non_nullable
-as E,
-  ));
-}
-
-
-}
-
-/// @nodoc
 mixin _$StartButtonSelectorState {
 
  bool get isInit; bool get hasProfile;
@@ -5020,315 +3934,6 @@ as int,
 }
 
 /// @nodoc
-mixin _$ClashConfigState {
-
- bool get overrideDns; ClashConfig get clashConfig; OverrideData get overrideData; bool get bypassPrivateRoute;
-/// Create a copy of ClashConfigState
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$ClashConfigStateCopyWith<ClashConfigState> get copyWith => _$ClashConfigStateCopyWithImpl<ClashConfigState>(this as ClashConfigState, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-  final _this = this as ClashConfigState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClashConfigState&&(identical(other.overrideDns, _this.overrideDns) || other.overrideDns == _this.overrideDns)&&(identical(other.clashConfig, _this.clashConfig) || other.clashConfig == _this.clashConfig)&&(identical(other.overrideData, _this.overrideData) || other.overrideData == _this.overrideData)&&(identical(other.bypassPrivateRoute, _this.bypassPrivateRoute) || other.bypassPrivateRoute == _this.bypassPrivateRoute));
-}
-
-
-@override
-int get hashCode {
-  final _this = this as ClashConfigState;
-  return Object.hash(runtimeType,_this.overrideDns,_this.clashConfig,_this.overrideData,_this.bypassPrivateRoute);
-}
-
-@override
-String toString() {
-  final _this = this as ClashConfigState;
-  return 'ClashConfigState(overrideDns: ${_this.overrideDns}, clashConfig: ${_this.clashConfig}, overrideData: ${_this.overrideData}, bypassPrivateRoute: ${_this.bypassPrivateRoute})';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $ClashConfigStateCopyWith<$Res>  {
-  factory $ClashConfigStateCopyWith(ClashConfigState value, $Res Function(ClashConfigState) _then) = _$ClashConfigStateCopyWithImpl;
-@useResult
-$Res call({
- bool overrideDns, ClashConfig clashConfig, OverrideData overrideData, bool bypassPrivateRoute
-});
-
-
-$ClashConfigCopyWith<$Res> get clashConfig;$OverrideDataCopyWith<$Res> get overrideData;
-
-}
-/// @nodoc
-class _$ClashConfigStateCopyWithImpl<$Res>
-    implements $ClashConfigStateCopyWith<$Res> {
-  _$ClashConfigStateCopyWithImpl(this._self, this._then);
-
-  final ClashConfigState _self;
-  final $Res Function(ClashConfigState) _then;
-
-/// Create a copy of ClashConfigState
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? overrideDns = null,Object? clashConfig = null,Object? overrideData = null,Object? bypassPrivateRoute = null,}) {
-  return _then(ClashConfigState(
-overrideDns: null == overrideDns ? _self.overrideDns : overrideDns // ignore: cast_nullable_to_non_nullable
-as bool,clashConfig: null == clashConfig ? _self.clashConfig : clashConfig // ignore: cast_nullable_to_non_nullable
-as ClashConfig,overrideData: null == overrideData ? _self.overrideData : overrideData // ignore: cast_nullable_to_non_nullable
-as OverrideData,bypassPrivateRoute: null == bypassPrivateRoute ? _self.bypassPrivateRoute : bypassPrivateRoute // ignore: cast_nullable_to_non_nullable
-as bool,
-  ));
-}
-/// Create a copy of ClashConfigState
-/// with the given fields replaced by the non-null parameter values.
-@override
-@pragma('vm:prefer-inline')
-$ClashConfigCopyWith<$Res> get clashConfig {
-  
-  return $ClashConfigCopyWith<$Res>(_self.clashConfig, (value) {
-    return _then(_self.copyWith(clashConfig: value));
-  });
-}/// Create a copy of ClashConfigState
-/// with the given fields replaced by the non-null parameter values.
-@override
-@pragma('vm:prefer-inline')
-$OverrideDataCopyWith<$Res> get overrideData {
-  
-  return $OverrideDataCopyWith<$Res>(_self.overrideData, (value) {
-    return _then(_self.copyWith(overrideData: value));
-  });
-}
-}
-
-
-/// Adds pattern-matching-related methods to [ClashConfigState].
-extension ClashConfigStatePatterns on ClashConfigState {
-/// A variant of `map` that fallback to returning `orElse`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ClashConfigState value)?  $default,{required TResult orElse(),}){
-final _that = this;
-switch (_that) {
-case _ClashConfigState() when $default != null:
-return $default(_that);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// Callbacks receives the raw object, upcasted.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case final Subclass2 value:
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ClashConfigState value)  $default,){
-final _that = this;
-switch (_that) {
-case _ClashConfigState():
-return $default(_that);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `map` that fallback to returning `null`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ClashConfigState value)?  $default,){
-final _that = this;
-switch (_that) {
-case _ClashConfigState() when $default != null:
-return $default(_that);case _:
-  return null;
-
-}
-}
-/// A variant of `when` that fallback to an `orElse` callback.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool overrideDns,  ClashConfig clashConfig,  OverrideData overrideData,  bool bypassPrivateRoute)?  $default,{required TResult orElse(),}) {final _that = this;
-switch (_that) {
-case _ClashConfigState() when $default != null:
-return $default(_that.overrideDns,_that.clashConfig,_that.overrideData,_that.bypassPrivateRoute);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// As opposed to `map`, this offers destructuring.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case Subclass2(:final field2):
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool overrideDns,  ClashConfig clashConfig,  OverrideData overrideData,  bool bypassPrivateRoute)  $default,) {final _that = this;
-switch (_that) {
-case _ClashConfigState():
-return $default(_that.overrideDns,_that.clashConfig,_that.overrideData,_that.bypassPrivateRoute);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `when` that fallback to returning `null`
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool overrideDns,  ClashConfig clashConfig,  OverrideData overrideData,  bool bypassPrivateRoute)?  $default,) {final _that = this;
-switch (_that) {
-case _ClashConfigState() when $default != null:
-return $default(_that.overrideDns,_that.clashConfig,_that.overrideData,_that.bypassPrivateRoute);case _:
-  return null;
-
-}
-}
-
-}
-
-/// @nodoc
-
-
-class _ClashConfigState implements ClashConfigState {
-  const _ClashConfigState({required this.overrideDns, required this.clashConfig, required this.overrideData, required this.bypassPrivateRoute});
-  
-
-@override final  bool overrideDns;
-@override final  ClashConfig clashConfig;
-@override final  OverrideData overrideData;
-@override final  bool bypassPrivateRoute;
-
-/// Create a copy of ClashConfigState
-/// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-_$ClashConfigStateCopyWith<_ClashConfigState> get copyWith => __$ClashConfigStateCopyWithImpl<_ClashConfigState>(this, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ClashConfigState&&(identical(other.overrideDns, overrideDns) || other.overrideDns == overrideDns)&&(identical(other.clashConfig, clashConfig) || other.clashConfig == clashConfig)&&(identical(other.overrideData, overrideData) || other.overrideData == overrideData)&&(identical(other.bypassPrivateRoute, bypassPrivateRoute) || other.bypassPrivateRoute == bypassPrivateRoute));
-}
-
-
-@override
-int get hashCode {
-    return Object.hash(runtimeType,overrideDns,clashConfig,overrideData,bypassPrivateRoute);
-}
-
-@override
-String toString() {
-    return 'ClashConfigState(overrideDns: $overrideDns, clashConfig: $clashConfig, overrideData: $overrideData, bypassPrivateRoute: $bypassPrivateRoute)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class _$ClashConfigStateCopyWith<$Res> implements $ClashConfigStateCopyWith<$Res> {
-  factory _$ClashConfigStateCopyWith(_ClashConfigState value, $Res Function(_ClashConfigState) _then) = __$ClashConfigStateCopyWithImpl;
-@override @useResult
-$Res call({
- bool overrideDns, ClashConfig clashConfig, OverrideData overrideData, bool bypassPrivateRoute
-});
-
-
-@override $ClashConfigCopyWith<$Res> get clashConfig;@override $OverrideDataCopyWith<$Res> get overrideData;
-
-}
-/// @nodoc
-class __$ClashConfigStateCopyWithImpl<$Res>
-    implements _$ClashConfigStateCopyWith<$Res> {
-  __$ClashConfigStateCopyWithImpl(this._self, this._then);
-
-  final _ClashConfigState _self;
-  final $Res Function(_ClashConfigState) _then;
-
-/// Create a copy of ClashConfigState
-/// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? overrideDns = null,Object? clashConfig = null,Object? overrideData = null,Object? bypassPrivateRoute = null,}) {
-  return _then(_ClashConfigState(
-overrideDns: null == overrideDns ? _self.overrideDns : overrideDns // ignore: cast_nullable_to_non_nullable
-as bool,clashConfig: null == clashConfig ? _self.clashConfig : clashConfig // ignore: cast_nullable_to_non_nullable
-as ClashConfig,overrideData: null == overrideData ? _self.overrideData : overrideData // ignore: cast_nullable_to_non_nullable
-as OverrideData,bypassPrivateRoute: null == bypassPrivateRoute ? _self.bypassPrivateRoute : bypassPrivateRoute // ignore: cast_nullable_to_non_nullable
-as bool,
-  ));
-}
-
-/// Create a copy of ClashConfigState
-/// with the given fields replaced by the non-null parameter values.
-@override
-@pragma('vm:prefer-inline')
-$ClashConfigCopyWith<$Res> get clashConfig {
-  
-  return $ClashConfigCopyWith<$Res>(_self.clashConfig, (value) {
-    return _then(_self.copyWith(clashConfig: value));
-  });
-}/// Create a copy of ClashConfigState
-/// with the given fields replaced by the non-null parameter values.
-@override
-@pragma('vm:prefer-inline')
-$OverrideDataCopyWith<$Res> get overrideData {
-  
-  return $OverrideDataCopyWith<$Res>(_self.overrideData, (value) {
-    return _then(_self.copyWith(overrideData: value));
-  });
-}
-}
-
-/// @nodoc
 mixin _$DashboardState {
 
  List<DashboardWidget> get dashboardWidgets; double get viewWidth;
@@ -6156,7 +4761,7 @@ $VpnPropsCopyWith<$Res> get vpnProps {
 /// @nodoc
 mixin _$ProfileOverrideStateModel {
 
- ClashConfigSnippet? get snippet; Set<String> get selectedRules; OverrideData? get overrideData;
+ ClashConfigSnippet? get snippet; Set<String> get selectedRules; OverrideData? get overrideData; bool get managed; Set<String> get sharedRules;
 /// Create a copy of ProfileOverrideStateModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -6168,20 +4773,20 @@ $ProfileOverrideStateModelCopyWith<ProfileOverrideStateModel> get copyWith => _$
 @override
 bool operator ==(Object other) {
   final _this = this as ProfileOverrideStateModel;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProfileOverrideStateModel&&(identical(other.snippet, _this.snippet) || other.snippet == _this.snippet)&&const DeepCollectionEquality().equals(other.selectedRules, _this.selectedRules)&&(identical(other.overrideData, _this.overrideData) || other.overrideData == _this.overrideData));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProfileOverrideStateModel&&(identical(other.snippet, _this.snippet) || other.snippet == _this.snippet)&&const DeepCollectionEquality().equals(other.selectedRules, _this.selectedRules)&&(identical(other.overrideData, _this.overrideData) || other.overrideData == _this.overrideData)&&(identical(other.managed, _this.managed) || other.managed == _this.managed)&&const DeepCollectionEquality().equals(other.sharedRules, _this.sharedRules));
 }
 
 
 @override
 int get hashCode {
   final _this = this as ProfileOverrideStateModel;
-  return Object.hash(runtimeType,_this.snippet,const DeepCollectionEquality().hash(_this.selectedRules),_this.overrideData);
+  return Object.hash(runtimeType,_this.snippet,const DeepCollectionEquality().hash(_this.selectedRules),_this.overrideData,_this.managed,const DeepCollectionEquality().hash(_this.sharedRules));
 }
 
 @override
 String toString() {
   final _this = this as ProfileOverrideStateModel;
-  return 'ProfileOverrideStateModel(snippet: ${_this.snippet}, selectedRules: ${_this.selectedRules}, overrideData: ${_this.overrideData})';
+  return 'ProfileOverrideStateModel(snippet: ${_this.snippet}, selectedRules: ${_this.selectedRules}, overrideData: ${_this.overrideData}, managed: ${_this.managed}, sharedRules: ${_this.sharedRules})';
 }
 
 
@@ -6192,7 +4797,7 @@ abstract mixin class $ProfileOverrideStateModelCopyWith<$Res>  {
   factory $ProfileOverrideStateModelCopyWith(ProfileOverrideStateModel value, $Res Function(ProfileOverrideStateModel) _then) = _$ProfileOverrideStateModelCopyWithImpl;
 @useResult
 $Res call({
- ClashConfigSnippet? snippet, Set<String> selectedRules, OverrideData? overrideData
+ ClashConfigSnippet? snippet, Set<String> selectedRules, OverrideData? overrideData, bool managed, Set<String> sharedRules
 });
 
 
@@ -6209,12 +4814,14 @@ class _$ProfileOverrideStateModelCopyWithImpl<$Res>
 
 /// Create a copy of ProfileOverrideStateModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? snippet = freezed,Object? selectedRules = null,Object? overrideData = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? snippet = freezed,Object? selectedRules = null,Object? overrideData = freezed,Object? managed = null,Object? sharedRules = null,}) {
   return _then(ProfileOverrideStateModel(
 snippet: freezed == snippet ? _self.snippet : snippet // ignore: cast_nullable_to_non_nullable
 as ClashConfigSnippet?,selectedRules: null == selectedRules ? _self.selectedRules : selectedRules // ignore: cast_nullable_to_non_nullable
 as Set<String>,overrideData: freezed == overrideData ? _self.overrideData : overrideData // ignore: cast_nullable_to_non_nullable
-as OverrideData?,
+as OverrideData?,managed: null == managed ? _self.managed : managed // ignore: cast_nullable_to_non_nullable
+as bool,sharedRules: null == sharedRules ? _self.sharedRules : sharedRules // ignore: cast_nullable_to_non_nullable
+as Set<String>,
   ));
 }
 /// Create a copy of ProfileOverrideStateModel
@@ -6323,10 +4930,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ClashConfigSnippet? snippet,  Set<String> selectedRules,  OverrideData? overrideData)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ClashConfigSnippet? snippet,  Set<String> selectedRules,  OverrideData? overrideData,  bool managed,  Set<String> sharedRules)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ProfileOverrideStateModel() when $default != null:
-return $default(_that.snippet,_that.selectedRules,_that.overrideData);case _:
+return $default(_that.snippet,_that.selectedRules,_that.overrideData,_that.managed,_that.sharedRules);case _:
   return orElse();
 
 }
@@ -6344,10 +4951,10 @@ return $default(_that.snippet,_that.selectedRules,_that.overrideData);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ClashConfigSnippet? snippet,  Set<String> selectedRules,  OverrideData? overrideData)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ClashConfigSnippet? snippet,  Set<String> selectedRules,  OverrideData? overrideData,  bool managed,  Set<String> sharedRules)  $default,) {final _that = this;
 switch (_that) {
 case _ProfileOverrideStateModel():
-return $default(_that.snippet,_that.selectedRules,_that.overrideData);case _:
+return $default(_that.snippet,_that.selectedRules,_that.overrideData,_that.managed,_that.sharedRules);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -6364,10 +4971,10 @@ return $default(_that.snippet,_that.selectedRules,_that.overrideData);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ClashConfigSnippet? snippet,  Set<String> selectedRules,  OverrideData? overrideData)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ClashConfigSnippet? snippet,  Set<String> selectedRules,  OverrideData? overrideData,  bool managed,  Set<String> sharedRules)?  $default,) {final _that = this;
 switch (_that) {
 case _ProfileOverrideStateModel() when $default != null:
-return $default(_that.snippet,_that.selectedRules,_that.overrideData);case _:
+return $default(_that.snippet,_that.selectedRules,_that.overrideData,_that.managed,_that.sharedRules);case _:
   return null;
 
 }
@@ -6379,7 +4986,7 @@ return $default(_that.snippet,_that.selectedRules,_that.overrideData);case _:
 
 
 class _ProfileOverrideStateModel implements ProfileOverrideStateModel {
-  const _ProfileOverrideStateModel({this.snippet, required  Set<String> selectedRules, this.overrideData}): _selectedRules = selectedRules;
+  const _ProfileOverrideStateModel({this.snippet, required  Set<String> selectedRules, this.overrideData, this.managed = false,  Set<String> sharedRules = const {}}): _selectedRules = selectedRules,_sharedRules = sharedRules;
   
 
 @override final  ClashConfigSnippet? snippet;
@@ -6391,6 +4998,14 @@ class _ProfileOverrideStateModel implements ProfileOverrideStateModel {
 }
 
 @override final  OverrideData? overrideData;
+@override@JsonKey() final  bool managed;
+ final  Set<String> _sharedRules;
+@override@JsonKey() Set<String> get sharedRules {
+  if (_sharedRules is EqualUnmodifiableSetView) return _sharedRules;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableSetView(_sharedRules);
+}
+
 
 /// Create a copy of ProfileOverrideStateModel
 /// with the given fields replaced by the non-null parameter values.
@@ -6402,18 +5017,18 @@ _$ProfileOverrideStateModelCopyWith<_ProfileOverrideStateModel> get copyWith => 
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProfileOverrideStateModel&&(identical(other.snippet, snippet) || other.snippet == snippet)&&const DeepCollectionEquality().equals(other.selectedRules, _selectedRules)&&(identical(other.overrideData, overrideData) || other.overrideData == overrideData));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProfileOverrideStateModel&&(identical(other.snippet, snippet) || other.snippet == snippet)&&const DeepCollectionEquality().equals(other.selectedRules, _selectedRules)&&(identical(other.overrideData, overrideData) || other.overrideData == overrideData)&&(identical(other.managed, managed) || other.managed == managed)&&const DeepCollectionEquality().equals(other.sharedRules, _sharedRules));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,snippet,const DeepCollectionEquality().hash(_selectedRules),overrideData);
+    return Object.hash(runtimeType,snippet,const DeepCollectionEquality().hash(_selectedRules),overrideData,managed,const DeepCollectionEquality().hash(_sharedRules));
 }
 
 @override
 String toString() {
-    return 'ProfileOverrideStateModel(snippet: $snippet, selectedRules: $selectedRules, overrideData: $overrideData)';
+    return 'ProfileOverrideStateModel(snippet: $snippet, selectedRules: $selectedRules, overrideData: $overrideData, managed: $managed, sharedRules: $sharedRules)';
 }
 
 
@@ -6424,7 +5039,7 @@ abstract mixin class _$ProfileOverrideStateModelCopyWith<$Res> implements $Profi
   factory _$ProfileOverrideStateModelCopyWith(_ProfileOverrideStateModel value, $Res Function(_ProfileOverrideStateModel) _then) = __$ProfileOverrideStateModelCopyWithImpl;
 @override @useResult
 $Res call({
- ClashConfigSnippet? snippet, Set<String> selectedRules, OverrideData? overrideData
+ ClashConfigSnippet? snippet, Set<String> selectedRules, OverrideData? overrideData, bool managed, Set<String> sharedRules
 });
 
 
@@ -6441,12 +5056,14 @@ class __$ProfileOverrideStateModelCopyWithImpl<$Res>
 
 /// Create a copy of ProfileOverrideStateModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? snippet = freezed,Object? selectedRules = null,Object? overrideData = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? snippet = freezed,Object? selectedRules = null,Object? overrideData = freezed,Object? managed = null,Object? sharedRules = null,}) {
   return _then(_ProfileOverrideStateModel(
 snippet: freezed == snippet ? _self.snippet : snippet // ignore: cast_nullable_to_non_nullable
 as ClashConfigSnippet?,selectedRules: null == selectedRules ? _self._selectedRules : selectedRules // ignore: cast_nullable_to_non_nullable
 as Set<String>,overrideData: freezed == overrideData ? _self.overrideData : overrideData // ignore: cast_nullable_to_non_nullable
-as OverrideData?,
+as OverrideData?,managed: null == managed ? _self.managed : managed // ignore: cast_nullable_to_non_nullable
+as bool,sharedRules: null == sharedRules ? _self._sharedRules : sharedRules // ignore: cast_nullable_to_non_nullable
+as Set<String>,
   ));
 }
 

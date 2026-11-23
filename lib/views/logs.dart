@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:bett_box/clash/clash.dart';
@@ -40,7 +41,7 @@ class _LogColors {
     required this.tintAlpha,
   });
 
-  factory _LogColors.of(ColorScheme scheme, {required bool pureBlack}) {
+  factory _LogColors.of(ColorScheme scheme) {
     final isDark = scheme.brightness == Brightness.dark;
     final warning = isDark ? const Color(0xFFFFD54F) : const Color(0xFFB26A00);
     return _LogColors(
@@ -53,7 +54,7 @@ class _LogColors {
       warning: warning.harmonizeWith(scheme.primary),
       expanded: scheme.onSurface.withValues(alpha: 0.06),
       hover: scheme.onSurface.withValues(alpha: 0.04),
-      tintAlpha: isDark && pureBlack ? 0.1 : 0.06,
+      tintAlpha: 0.06,
     );
   }
 
@@ -333,10 +334,12 @@ class _LogsViewState extends ConsumerState<LogsView>
       title: appLocalizations.exportLogs,
     );
     if (res != true) return;
-    globalState.showMessage(
-      title: appLocalizations.tip,
-      message: TextSpan(text: appLocalizations.exportSuccess),
-      cancelable: false,
+    unawaited(
+      globalState.showMessage(
+        title: appLocalizations.tip,
+        message: TextSpan(text: appLocalizations.exportSuccess),
+        cancelable: false,
+      ),
     );
   }
 
@@ -365,7 +368,7 @@ class _LogsViewState extends ConsumerState<LogsView>
               : null,
           onPressed: _toggleAutoScroll,
           tooltip: appLocalizations.autoScroll,
-          icon: const Icon(Icons.vertical_align_top_outlined),
+          icon: const AppIcon(Icons.vertical_align_top_outlined),
         ),
         CommonPopupBox(
           targetBuilder: (open) {
@@ -374,7 +377,7 @@ class _LogsViewState extends ConsumerState<LogsView>
                 open(offset: const Offset(0, 20));
               },
               tooltip: appLocalizations.more,
-              icon: const Icon(Icons.more_vert),
+              icon: const AppIcon(Icons.more_vert),
             );
           },
           popup: CommonPopupMenu(
@@ -444,7 +447,6 @@ class _LogsConsoleState extends ConsumerState<LogsConsole> {
   var _heights = Expando<double>();
   var _rows = Expando<Widget>();
   ColorScheme? _colorScheme;
-  bool? _pureBlack;
   var _filter = const LogsFilterState();
   Log? _expanded;
   var _aiSearch = true;
@@ -603,15 +605,14 @@ class _LogsConsoleState extends ConsumerState<LogsConsole> {
         metrics.verticalPadding * 2;
   }
 
-  _LogColors _resolveColors(ColorScheme scheme, bool pureBlack) {
+  _LogColors _resolveColors(ColorScheme scheme) {
     final prev = _colors;
-    if (prev != null && scheme == _colorScheme && pureBlack == _pureBlack) {
+    if (prev != null && scheme == _colorScheme) {
       return prev;
     }
     _colorScheme = scheme;
-    _pureBlack = pureBlack;
     _rows = Expando<Widget>();
-    return _colors = _LogColors.of(scheme, pureBlack: pureBlack);
+    return _colors = _LogColors.of(scheme);
   }
 
   Widget _rowOf(Log log, _LogMetrics metrics, _LogColors colors) {
@@ -647,7 +648,7 @@ class _LogsConsoleState extends ConsumerState<LogsConsole> {
   Future<void> _copy(Log log) async {
     await Clipboard.setData(ClipboardData(text: log.raw));
     if (!mounted) return;
-    context.showNotifier(appLocalizations.copySuccess);
+    unawaited(context.showNotifier(appLocalizations.copySuccess));
   }
 
   void _search(Log log) {
@@ -718,7 +719,9 @@ class _LogsConsoleState extends ConsumerState<LogsConsole> {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                hasLogs ? Icons.search_off_rounded : Icons.notes_rounded,
+                context.resolveIcon(
+                  hasLogs ? Icons.search_off_rounded : Icons.notes_rounded,
+                ),
                 size: 34,
                 color: context.colorScheme.primary.withValues(alpha: 0.85),
               ),
@@ -747,7 +750,6 @@ class _LogsConsoleState extends ConsumerState<LogsConsole> {
   Widget _buildList({
     required List<Log> logs,
     required bool compact,
-    required bool pureBlack,
     required LogLevel level,
   }) {
     final textDirection = Directionality.of(context);
@@ -763,7 +765,7 @@ class _LogsConsoleState extends ConsumerState<LogsConsole> {
           compact,
           level != LogLevel.debug,
         );
-        final colors = _resolveColors(context.colorScheme, pureBlack);
+        final colors = _resolveColors(context.colorScheme);
         final extents = List<double?>.filled(logs.length, null);
         final slivers = [
           SliverPadding(
@@ -864,9 +866,6 @@ class _LogsConsoleState extends ConsumerState<LogsConsole> {
       appSettingProvider.select((state) => state.logAiSearch),
     );
     final compact = ref.watch(isMobileViewProvider);
-    final pureBlack = ref.watch(
-      themeSettingProvider.select((state) => state.pureBlack),
-    );
 
     ref.listen<FilteredLogs>(filteredLogsProvider, _handleLogsChanged);
 
@@ -876,17 +875,11 @@ class _LogsConsoleState extends ConsumerState<LogsConsole> {
           errors: filtered.errors,
           warnings: filtered.warnings,
           compact: compact,
-          pureBlack: pureBlack,
         ),
         Expanded(
           child: filtered.logs.isEmpty
               ? _buildEmpty(hasLogs: hasLogs, hasFacet: hasFacet, level: level)
-              : _buildList(
-                  logs: filtered.logs,
-                  compact: compact,
-                  pureBlack: pureBlack,
-                  level: level,
-                ),
+              : _buildList(logs: filtered.logs, compact: compact, level: level),
         ),
       ],
     );
@@ -988,14 +981,20 @@ class _LogRow extends StatelessWidget {
                   TextButton.icon(
                     onPressed: onCopy,
                     style: buttonStyle,
-                    icon: const Icon(Icons.copy_rounded, size: 16),
+                    icon: Icon(
+                      context.resolveIcon(Icons.copy_rounded),
+                      size: 16,
+                    ),
                     label: Text(appLocalizations.copy),
                   ),
                   if (onSearch != null)
                     TextButton.icon(
                       onPressed: onSearch,
                       style: buttonStyle,
-                      icon: const Icon(Icons.search_rounded, size: 16),
+                      icon: Icon(
+                        context.resolveIcon(Icons.search_rounded),
+                        size: 16,
+                      ),
                       label: Text(appLocalizations.search),
                     ),
                   Expanded(
@@ -1006,7 +1005,10 @@ class _LogRow extends StatelessWidget {
                         child: TextButton.icon(
                           onPressed: onFilter,
                           style: buttonStyle,
-                          icon: const Icon(Icons.filter_list_rounded, size: 16),
+                          icon: Icon(
+                            context.resolveIcon(Icons.filter_list_rounded),
+                            size: 16,
+                          ),
                           label: Text(
                             '[ ${log.tag} ]',
                             maxLines: 1,
@@ -1021,7 +1023,7 @@ class _LogRow extends StatelessWidget {
                     visualDensity: VisualDensity.compact,
                     iconSize: 20,
                     tooltip: appLocalizations.collapse,
-                    icon: const Icon(Icons.expand_less_rounded),
+                    icon: Icon(context.resolveIcon(Icons.expand_less_rounded)),
                   ),
                 ],
               ),
@@ -1067,13 +1069,11 @@ class _LogsFilterBar extends ConsumerWidget {
   final int errors;
   final int warnings;
   final bool compact;
-  final bool pureBlack;
 
   const _LogsFilterBar({
     required this.errors,
     required this.warnings,
     required this.compact,
-    required this.pureBlack,
   });
 
   @override
@@ -1084,7 +1084,7 @@ class _LogsFilterBar extends ConsumerWidget {
       ),
     );
     final notifier = ref.read(logsFilterProvider.notifier);
-    final colors = _LogColors.of(context.colorScheme, pureBlack: pureBlack);
+    final colors = _LogColors.of(context.colorScheme);
     final debug = ref.watch(
       patchClashConfigProvider.select(
         (state) => state.logLevel == LogLevel.debug,
@@ -1165,7 +1165,10 @@ class _LogsFilterBar extends ConsumerWidget {
                   label: module,
                   tooltip: appLocalizations.clearFilter,
                   selected: true,
-                  trailing: const Icon(Icons.close_rounded, size: 14),
+                  trailing: Icon(
+                    context.resolveIcon(Icons.close_rounded),
+                    size: 14,
+                  ),
                   onTap: () => notifier.setModule(null),
                 ),
               ),
@@ -1199,7 +1202,7 @@ class _NewLogsPill extends StatelessWidget {
             spacing: 4,
             children: [
               Icon(
-                Icons.arrow_upward_rounded,
+                context.resolveIcon(Icons.arrow_upward_rounded),
                 size: 14,
                 color: scheme.onSecondaryContainer,
               ),

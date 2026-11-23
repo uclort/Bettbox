@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:bett_box/common/archive.dart';
@@ -135,7 +136,7 @@ class _BackupAndRecoveryState extends ConsumerState<BackupAndRecovery> {
     if (recoveryOption == null || !context.mounted) return;
 
     final fileName = selectedFile.name ?? client.fileName;
-    _recoveryOnWebDAV(context, client, fileName, recoveryOption);
+    unawaited(_recoveryOnWebDAV(context, client, fileName, recoveryOption));
   }
 
   Future<void> _backupOnLocal(BuildContext context) async {
@@ -196,7 +197,7 @@ class _BackupAndRecoveryState extends ConsumerState<BackupAndRecovery> {
       child: const RecoveryOptionsDialog(),
     );
     if (recoveryOption == null || !context.mounted) return;
-    _recoveryOnLocal(recoveryOption);
+    unawaited(_recoveryOnLocal(recoveryOption));
   }
 
   String? _validateBackupPassword(String? value) {
@@ -245,7 +246,7 @@ class _BackupAndRecoveryState extends ConsumerState<BackupAndRecovery> {
     final recoveryStrategy = ref.read(
       appSettingProvider.select((state) => state.recoveryStrategy),
     );
-    final res = await globalState.showAdaptiveSheet(
+    final res = await globalState.showAdaptiveSheet<RecoveryStrategy>(
       child: OptionsDialog<RecoveryStrategy>(
         title: appLocalizations.recoveryStrategy,
         options: RecoveryStrategy.values,
@@ -271,7 +272,7 @@ class _BackupAndRecoveryState extends ConsumerState<BackupAndRecovery> {
         items: [
           if (dav == null)
             ListItem(
-              leading: const Icon(Icons.account_box),
+              leading: const AppIcon(Icons.account_box),
               title: Text(appLocalizations.noInfo),
               subtitle: Text(appLocalizations.pleaseBindWebDAV),
               trailing: FilledButton.tonal(
@@ -283,7 +284,7 @@ class _BackupAndRecoveryState extends ConsumerState<BackupAndRecovery> {
             )
           else ...[
             ListItem(
-              leading: const Icon(Icons.account_box),
+              leading: const AppIcon(Icons.account_box),
               title: TooltipText(
                 text: Text(
                   dav.user,
@@ -408,7 +409,7 @@ class _BackupAndRecoveryState extends ConsumerState<BackupAndRecovery> {
                 onTap: _handleUpdateBackupPassword,
                 title: Text(appLocalizations.backupPassword),
                 subtitle: Text(appLocalizations.backupPasswordDesc),
-                trailing: Icon(hasPassword ? Icons.lock : Icons.lock_open),
+                trailing: AppIcon(hasPassword ? Icons.lock : Icons.lock_open),
               );
             },
           ),
@@ -609,7 +610,7 @@ class _WebDAVFormDialogState extends ConsumerState<WebDAVFormDialog> {
               maxLines: 5,
               minLines: 1,
               decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.link),
+                prefixIcon: const AppIcon(Icons.link),
                 border: const OutlineInputBorder(),
                 labelText: appLocalizations.address,
                 helperText: appLocalizations.addressHelp,
@@ -624,7 +625,7 @@ class _WebDAVFormDialogState extends ConsumerState<WebDAVFormDialog> {
             TextFormField(
               controller: userController,
               decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.account_circle),
+                prefixIcon: const AppIcon(Icons.account_circle),
                 border: const OutlineInputBorder(),
                 labelText: appLocalizations.account,
               ),
@@ -642,10 +643,10 @@ class _WebDAVFormDialogState extends ConsumerState<WebDAVFormDialog> {
                   controller: passwordController,
                   obscureText: obscure,
                   decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.password),
+                    prefixIcon: const AppIcon(Icons.password),
                     border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
-                      icon: Icon(
+                      icon: AppIcon(
                         obscure ? Icons.visibility : Icons.visibility_off,
                       ),
                       onPressed: () {

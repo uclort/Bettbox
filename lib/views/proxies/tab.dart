@@ -7,7 +7,6 @@ import 'package:bett_box/providers/providers.dart';
 import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
@@ -21,7 +20,7 @@ typedef ProxyGroupViewKeyMap =
 class ProxiesTabView extends ConsumerStatefulWidget {
   const ProxiesTabView({super.key});
 
-  static Map<String, PageStorageKey> pageListStoreMap = {};
+  static Map<String, PageStorageKey<String>> pageListStoreMap = {};
 
   @override
   ConsumerState<ProxiesTabView> createState() => ProxiesTabViewState();
@@ -75,6 +74,28 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
     _keyMap[currentGroupName]?.currentState?.scrollToSelected();
   }
 
+  VoidCallback? groupLocator(String groupName) {
+    final index = ref
+        .read(proxiesTabStateProvider)
+        .groups
+        .indexWhere((group) => group.name == groupName);
+    if (index == -1) return null;
+    return () => _locateGroup(groupName, index);
+  }
+
+  Future<void> _locateGroup(String groupName, int index) async {
+    final controller = _tabController;
+    if (controller == null || index >= controller.length) return;
+    controller.animateTo(index);
+    globalState.appController.updateCurrentGroupName(groupName);
+    await Future<void>.delayed(kTabScrollDuration);
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _keyMap[groupName]?.currentState?.scrollToSelected();
+    });
+  }
+
   Future<void> delayTestCurrentGroup() async {
     final currentGroupName = globalState.appController.getCurrentGroupName();
     final currentState = _keyMap[currentGroupName]?.currentState;
@@ -93,9 +114,11 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
         final isMobileView = ref.watch(isMobileViewProvider);
         return IconButton(
           onPressed: _showMoreMenu,
-          icon: isMobileView
-              ? const Icon(Icons.expand_more)
-              : const Icon(Icons.chevron_right),
+          icon: Icon(
+            context.resolveIcon(
+              isMobileView ? Icons.expand_more : Icons.chevron_right,
+            ),
+          ),
         );
       },
     );
@@ -173,7 +196,7 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
         final isTesting = delayTestCoordinator.isTesting;
         return IconButton(
           onPressed: isTesting ? null : delayTestCurrentGroup,
-          icon: Icon(Icons.network_ping),
+          icon: Icon(context.resolveIcon(Icons.network_ping)),
           tooltip: appLocalizations.startTest,
         );
       },
@@ -389,6 +412,33 @@ class _ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
 
   List<Proxy> proxies = [];
   String? testUrl;
+  List<Proxy>? _cachedProxies;
+  List<String>? _cachedKeys;
+  Map<String, int>? _cachedIndexByKey;
+
+  List<String>? _buildUniqueKeysIfNeeded(List<Proxy> items) {
+    final seen = <String>{};
+    var hasDuplicates = false;
+    for (final item in items) {
+      if (!seen.add(item.name)) {
+        hasDuplicates = true;
+        break;
+      }
+    }
+    if (!hasDuplicates) return null;
+    final counts = <String, int>{};
+    return [
+      for (final item in items)
+        () {
+          final count = counts[item.name] ?? 0;
+          counts[item.name] = count + 1;
+          return count == 0 ? item.name : '${item.name}#$count';
+        }(),
+    ];
+  }
+
+  String _keyOf(List<Proxy> items, int index) =>
+      _cachedKeys?[index] ?? items[index].name;
 
   @override
   void initState() {
@@ -396,7 +446,7 @@ class _ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
     _controller = ScrollController();
   }
 
-  PageStorageKey _getPageStorageKey() {
+  PageStorageKey<String> _getPageStorageKey() {
     final profile = globalState.config.currentProfile;
     final key =
         '${profile?.id}_${ScrollPositionCacheKeys.proxiesTabList.name}_${widget.group.name}';
@@ -413,7 +463,7 @@ class _ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
   }
 
   void scrollToSelected() {
-    if (_controller.position.maxScrollExtent == 0) {
+    if (!_controller.hasClients || _controller.position.maxScrollExtent == 0) {
       return;
     }
     _controller.animateTo(
@@ -442,6 +492,11 @@ class _ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
     }
     proxies = sortedProxies;
     testUrl = widget.group.testUrl;
+    if (!identical(_cachedProxies, sortedProxies)) {
+      _cachedProxies = sortedProxies;
+      _cachedIndexByKey = null;
+      _cachedKeys = _buildUniqueKeysIfNeeded(sortedProxies);
+    }
     final baseBottom =
         sortedProxies.isNotEmpty && sortedProxies.length % widget.columns == 0
         ? 88.0
@@ -471,9 +526,18 @@ class _ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
             mainAxisExtent: getItemHeight(widget.cardType),
           ),
           itemCount: sortedProxies.length,
+          addAutomaticKeepAlives: false,
+          findChildIndexCallback: (key) {
+            final map = _cachedIndexByKey ??= {
+              for (var i = 0; i < sortedProxies.length; i++)
+                _keyOf(sortedProxies, i): i,
+            };
+            return map[(key as ValueKey<String>).value];
+          },
           itemBuilder: (_, index) {
             final proxy = sortedProxies[index];
             return ProxyCard(
+              key: ValueKey<String>(_keyOf(sortedProxies, index)),
               testUrl: widget.group.testUrl,
               groupType: widget.group.type,
               type: widget.cardType,
@@ -489,7 +553,7 @@ class _ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
 
 class DelayTestButton extends ConsumerStatefulWidget {
   final String groupName;
-  final Future Function() onClick;
+  final Future<void> Function() onClick;
 
   const DelayTestButton({
     super.key,
@@ -573,7 +637,7 @@ class _DelayTestButtonState extends ConsumerState<DelayTestButton>
                   : _healthcheck,
               icon: Transform.scale(
                 scale: contentScale,
-                child: const Icon(Icons.network_ping),
+                child: Icon(context.resolveIcon(Icons.network_ping)),
               ),
               label: Transform.scale(
                 scale: contentScale,

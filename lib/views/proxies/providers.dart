@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -29,35 +30,49 @@ Future<void> updateExternalProviders(
   if (providers.isEmpty) return;
 
   final appController = globalState.appController;
-  final messages = [];
-  final updateProviders = providers.map<Future>((provider) async {
-    appController.setProvider(provider.copyWith(isUpdating: true));
-    final message = await clashCore.updateExternalProvider(
-      providerName: provider.name,
-    );
-    if (message.isNotEmpty) {
-      messages.add('${provider.name}: $message \n');
-    }
-    final updated = await clashCore.getExternalProvider(provider.name);
-    appController.setProvider(updated);
-  });
+  final messages = <String>[];
+  final expanded = [
+    for (final provider in providers)
+      if (provider.expanded && provider.vehicleType == 'HTTP') provider.name,
+  ];
+  final updateProviders = providers
+      .where((provider) => !provider.expanded)
+      .map<Future<void>>((provider) async {
+        appController.setProvider(provider.copyWith(isUpdating: true));
+        final message = await clashCore.updateExternalProvider(
+          providerName: provider.name,
+        );
+        if (message.isNotEmpty) {
+          messages.add('${provider.name}: $message \n');
+        }
+        final updated = await clashCore.getExternalProvider(provider.name);
+        appController.setProvider(updated);
+      });
   final titleMedium = context.textTheme.titleMedium;
-  await Future.wait(updateProviders);
+  await Future.wait([
+    ...updateProviders,
+    if (expanded.isNotEmpty)
+      appController.updateExpandedProviders(expanded).then((message) {
+        if (message.isNotEmpty) messages.add('$message \n');
+      }),
+  ]);
   globalState.appController.updateGroupsDebounce();
   final hasRuleProvider = providers.any((p) => p.type == 'Rule');
   if (hasRuleProvider) {
     globalState.appController.applyProfileDebounce(silence: true);
   }
   if (messages.isNotEmpty) {
-    globalState.showMessage(
-      title: appLocalizations.tip,
-      message: TextSpan(
-        children: [
-          for (final message in messages)
-            TextSpan(text: message, style: titleMedium),
-        ],
+    unawaited(
+      globalState.showMessage(
+        title: appLocalizations.tip,
+        message: TextSpan(
+          children: [
+            for (final message in messages)
+              TextSpan(text: message, style: titleMedium),
+          ],
+        ),
+        cancelable: false,
       ),
-      cancelable: false,
     );
   }
 }
@@ -75,7 +90,7 @@ class ProvidersView extends ConsumerWidget {
           IconButton(
             onPressed: () => updateExternalProviders(ref, context),
             tooltip: appLocalizations.update,
-            icon: const Icon(Icons.sync),
+            icon: const AppIcon(Icons.sync),
           ),
         ],
         type: type,
@@ -170,7 +185,7 @@ class _ProvidersBodyState extends ConsumerState<ProvidersBody> {
                             IconButton(
                               onPressed: section.onSync,
                               tooltip: appLocalizations.update,
-                              icon: const Icon(Icons.sync),
+                              icon: const AppIcon(Icons.sync),
                               iconSize: 20,
                               splashRadius: 20,
                               padding: EdgeInsets.zero,
@@ -222,6 +237,15 @@ class ProviderItem extends StatelessWidget {
   Future<void> _handleUpdateProvider() async {
     final appController = globalState.appController;
     if (provider.vehicleType != 'HTTP') return;
+    if (provider.expanded) {
+      await appController.safeRun(() async {
+        final message = await appController.updateExpandedProviders([
+          provider.name,
+        ]);
+        if (message.isNotEmpty) throw message;
+      }, silence: false);
+      return;
+    }
     await globalState.appController.safeRun(() async {
       appController.setProvider(provider.copyWith(isUpdating: true));
       final message = await clashCore.updateExternalProvider(
@@ -244,6 +268,14 @@ class ProviderItem extends StatelessWidget {
       if (platformFile == null || provider.path == null) return;
       final bytes = await platformFile.readAsBytes();
       if (bytes.isEmpty) return;
+      if (provider.expanded) {
+        final message = await globalState.appController.updateExpandedProviders(
+          [provider.name],
+          content: utf8.decode(bytes),
+        );
+        if (message.isNotEmpty) throw message;
+        return;
+      }
       final file = await File(provider.path!).create(recursive: true);
       await file.writeAsBytes(bytes);
       final providerName = provider.name;
@@ -290,15 +322,17 @@ class ProviderItem extends StatelessWidget {
           if (decrypted.isNotEmpty) content = decrypted;
         }
         if (!context.mounted) return;
-        BaseNavigator.push(
-          context,
-          EditorPage(
-            title: '${appLocalizations.view} - ${provider.name}',
-            content: content,
-            readOnly: true,
-            simple: provider.type == 'Rule',
+        unawaited(
+          BaseNavigator.push(
+            context,
+            EditorPage(
+              title: '${appLocalizations.view} - ${provider.name}',
+              content: content,
+              readOnly: true,
+              simple: provider.type == 'Rule',
+            ),
+            maintainState: false,
           ),
-          maintainState: false,
         );
       },
       needLoading: true,
@@ -388,12 +422,12 @@ class ProviderItem extends StatelessWidget {
             runAlignment: WrapAlignment.center,
             children: [
               CommonChip(
-                avatar: const Icon(Icons.upload),
+                avatar: const AppIcon(Icons.upload),
                 label: appLocalizations.upload,
                 onPressed: _handleSideLoadProvider,
               ),
               CommonChip(
-                avatar: const Icon(Icons.visibility),
+                avatar: const AppIcon(Icons.visibility),
                 label: appLocalizations.view,
                 onPressed: () => _handleViewProviderContent(context),
               ),
@@ -411,7 +445,7 @@ class ProviderItem extends StatelessWidget {
                         ),
                       )
                     : CommonChip(
-                        avatar: const Icon(Icons.sync),
+                        avatar: const AppIcon(Icons.sync),
                         label: appLocalizations.sync,
                         onPressed: _handleUpdateProvider,
                       ),

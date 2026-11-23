@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:bett_box/clash/clash.dart';
@@ -10,12 +11,7 @@ import 'package:bett_box/state.dart';
 import 'package:bett_box/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:path/path.dart' hide context;
-
-final geoUpdatingKeysProvider = StateProvider.autoDispose<Set<String>>(
-  (ref) => {},
-);
 
 @immutable
 class GeoItem {
@@ -48,13 +44,14 @@ class _ResourcesViewState extends ConsumerState<ResourcesView> {
   ];
 
   Future<void> _handleSyncAll() async {
-    final updatingKeysNotifier = ref.read(geoUpdatingKeysProvider.notifier);
-    if (updatingKeysNotifier.state.isNotEmpty) return;
+    if (ref.read(geoUpdatingKeysProvider).isNotEmpty) return;
 
     final syncItems = geoItems
         .where((geoItem) => geoItem.key != 'mrs')
         .toList();
-    updatingKeysNotifier.state = syncItems.map((e) => e.key).toSet();
+    ref.read(geoUpdatingKeysProvider.notifier).value = syncItems
+        .map((e) => e.key)
+        .toSet();
 
     final errors = <String>[];
     try {
@@ -74,23 +71,23 @@ class _ResourcesViewState extends ConsumerState<ResourcesView> {
             errors.add('${geoItem.label}: $e');
           } finally {
             if (mounted) {
-              updatingKeysNotifier.update(
-                (s) => Set.of(s)..remove(geoItem.key),
-              );
+              ref.read(geoUpdatingKeysProvider.notifier).remove(geoItem.key);
             }
           }
         }),
       );
       if (errors.isNotEmpty) {
-        globalState.showMessage(
-          title: appLocalizations.syncFailed,
-          message: TextSpan(text: errors.join('\n')),
-          cancelable: false,
+        unawaited(
+          globalState.showMessage(
+            title: appLocalizations.syncFailed,
+            message: TextSpan(text: errors.join('\n')),
+            cancelable: false,
+          ),
         );
       }
     } finally {
       if (mounted) {
-        updatingKeysNotifier.state = {};
+        ref.read(geoUpdatingKeysProvider.notifier).value = {};
       }
     }
   }
@@ -115,11 +112,7 @@ class _ResourcesViewState extends ConsumerState<ResourcesView> {
       behavior: HitTestBehavior.opaque,
       onTap: isCurrent
           ? null
-          : () {
-              setState(() {
-                _showProviders = showProviders;
-              });
-            },
+          : () => setState(() => _showProviders = showProviders),
       child: Text(
         label,
         maxLines: 1,
@@ -165,25 +158,56 @@ class _ResourcesViewState extends ConsumerState<ResourcesView> {
       providersProvider.select((state) => state.isNotEmpty),
     );
     final showProviders = hasProviders && (_showProviders ??= true);
-
-    if (showProviders) {
-      return CommonScaffold(
-        titleWidget: _buildTitle(),
-        actions: [
-          IconButton(
-            onPressed: () => updateExternalProviders(ref, context),
-            tooltip: appLocalizations.update,
-            icon: const Icon(Icons.sync),
+    final resources = ScrollEdgeRise(
+      builder: (context, rise) => ListView(
+        padding: EdgeInsets.only(
+          bottom: 16.0 + MediaQuery.paddingOf(context).bottom,
+          top: 8 + rise,
+        ),
+        children: [
+          ListHeader(
+            title: appLocalizations.geoBuiltInResources,
+            padding: const EdgeInsets.only(
+              left: 16,
+              right: 8,
+              top: 4,
+              bottom: 8,
+            ),
+            actions: [
+              if (Theme.of(context).materialTapTargetSize ==
+                  MaterialTapTargetSize.padded)
+                const SizedBox(height: kMinInteractiveDimension),
+            ],
+          ),
+          ...generateSection(
+            items: geoItems.map((geoItem) => GeoDataListItem(geoItem: geoItem)),
           ),
         ],
-        body: const ProvidersBody(),
-      );
-    }
+      ),
+    );
+    final syncIcon = isUpdating
+        ? const SizedBox(
+            width: 24,
+            height: 24,
+            child: SyncedLoading(
+              size: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          )
+        : null;
 
     return CommonScaffold(
       title: hasProviders ? null : appLocalizations.resources,
       titleWidget: hasProviders ? _buildTitle() : null,
-      actions: hasProviders
+      actions: showProviders
+          ? [
+              IconButton(
+                onPressed: () => updateExternalProviders(ref, context),
+                tooltip: appLocalizations.update,
+                icon: const AppIcon(Icons.sync),
+              ),
+            ]
+          : hasProviders
           ? [
               CommonPopupBox(
                 targetBuilder: (open) {
@@ -192,16 +216,7 @@ class _ResourcesViewState extends ConsumerState<ResourcesView> {
                       open(offset: const Offset(0, 20));
                     },
                     tooltip: appLocalizations.more,
-                    icon: isUpdating
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: SyncedLoading(
-                              size: 24,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          )
-                        : const Icon(Icons.more_vert),
+                    icon: syncIcon ?? const AppIcon(Icons.more_vert),
                   );
                 },
                 popup: CommonPopupMenu(
@@ -222,54 +237,23 @@ class _ResourcesViewState extends ConsumerState<ResourcesView> {
             ]
           : [
               IconButton(
-                icon: const Icon(Icons.replay),
+                icon: const AppIcon(Icons.replay),
                 onPressed: _handleResetAll,
                 tooltip: appLocalizations.reset,
               ),
               IconButton(
-                icon: isUpdating
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: SyncedLoading(
-                          size: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      )
-                    : const Icon(Icons.sync),
+                icon: syncIcon ?? const AppIcon(Icons.sync),
                 onPressed: isUpdating ? null : _handleSyncAll,
                 tooltip: appLocalizations.syncAll,
               ),
             ],
-      body: ScrollEdgeRise(
-        builder: (context, rise) => ListView(
-          padding: EdgeInsets.only(
-            bottom: 16.0 + MediaQuery.paddingOf(context).bottom,
-            top: 8 + rise,
-          ),
-          children: [
-            ListHeader(
-              title: appLocalizations.geoBuiltInResources,
-              padding: const EdgeInsets.only(
-                left: 16,
-                right: 8,
-                top: 4,
-                bottom: 8,
-              ),
-              actions: [
-                if (Theme.of(context).materialTapTargetSize ==
-                    MaterialTapTargetSize.padded)
-                  const SizedBox(height: kMinInteractiveDimension),
-              ],
-            ),
-            ...generateSection(
-              items: geoItems.map(
-                (geoItem) => GeoDataListItem(geoItem: geoItem),
-              ),
-            ),
-          ],
-        ),
-      ),
+      body: hasProviders
+          ? SlidePages(
+              index: showProviders ? 0 : 1,
+              onChanged: (index) => setState(() => _showProviders = index == 0),
+              children: [const ProvidersBody(), resources],
+            )
+          : resources,
     );
   }
 }
@@ -285,6 +269,21 @@ class GeoDataListItem extends ConsumerStatefulWidget {
 
 class _GeoDataListItemState extends ConsumerState<GeoDataListItem> {
   GeoItem get geoItem => widget.geoItem;
+  late Future<FileInfo> _fileInfoFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _fileInfoFuture = _getGeoFileLastModified(geoItem.fileName);
+  }
+
+  @override
+  void didUpdateWidget(covariant GeoDataListItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.geoItem.fileName != widget.geoItem.fileName) {
+      _fileInfoFuture = _getGeoFileLastModified(geoItem.fileName);
+    }
+  }
 
   Future<void> _updateUrl(String url) async {
     final defaultValue = switch (geoItem.key) {
@@ -316,10 +315,12 @@ class _GeoDataListItemState extends ConsumerState<GeoDataListItem> {
         });
         await globalState.appController.setupClashConfig();
       } catch (e) {
-        globalState.showMessage(
-          title: geoItem.label,
-          message: TextSpan(text: e.toString()),
-          cancelable: false,
+        unawaited(
+          globalState.showMessage(
+            title: geoItem.label,
+            message: TextSpan(text: e.toString()),
+            cancelable: false,
+          ),
         );
       }
     }
@@ -334,12 +335,11 @@ class _GeoDataListItemState extends ConsumerState<GeoDataListItem> {
   }
 
   Future<void> _handleUpdateGeoDataItem() async {
-    final updatingKeysNotifier = ref.read(geoUpdatingKeysProvider.notifier);
     if (ref.read(geoUpdatingKeysProvider).contains(geoItem.key)) return;
 
     await globalState.appController.safeRun<void>(
       () async {
-        updatingKeysNotifier.update((s) => Set.of(s)..add(geoItem.key));
+        ref.read(geoUpdatingKeysProvider.notifier).add(geoItem.key);
         try {
           final message = await clashCore.updateGeoData(
             UpdateGeoDataParams(
@@ -350,7 +350,7 @@ class _GeoDataListItemState extends ConsumerState<GeoDataListItem> {
           if (message.isNotEmpty) throw message;
         } finally {
           if (mounted) {
-            updatingKeysNotifier.update((s) => Set.of(s)..remove(geoItem.key));
+            ref.read(geoUpdatingKeysProvider.notifier).remove(geoItem.key);
           }
         }
       },
@@ -366,7 +366,9 @@ class _GeoDataListItemState extends ConsumerState<GeoDataListItem> {
       next,
     ) {
       if (prev == true && next == false && mounted) {
-        setState(() {});
+        setState(() {
+          _fileInfoFuture = _getGeoFileLastModified(geoItem.fileName);
+        });
       }
     });
 
@@ -395,7 +397,7 @@ class _GeoDataListItemState extends ConsumerState<GeoDataListItem> {
               children: [
                 const SizedBox(height: 6),
                 FutureBuilder<FileInfo>(
-                  future: _getGeoFileLastModified(geoItem.fileName),
+                  future: _fileInfoFuture,
                   builder: (_, snapshot) {
                     final height = globalState.measure.bodyMediumHeight;
                     return SizedBox(
@@ -426,7 +428,7 @@ class _GeoDataListItemState extends ConsumerState<GeoDataListItem> {
                     runAlignment: WrapAlignment.center,
                     children: [
                       CommonChip(
-                        avatar: const Icon(Icons.edit),
+                        avatar: const AppIcon(Icons.edit),
                         label: appLocalizations.edit,
                         onPressed: isSyncing || url == null
                             ? null
@@ -448,7 +450,7 @@ class _GeoDataListItemState extends ConsumerState<GeoDataListItem> {
                                   ),
                                 )
                               : CommonChip(
-                                  avatar: const Icon(Icons.sync),
+                                  avatar: const AppIcon(Icons.sync),
                                   label: appLocalizations.sync,
                                   onPressed: _handleUpdateGeoDataItem,
                                 ),

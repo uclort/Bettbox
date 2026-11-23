@@ -208,19 +208,20 @@ class _GroupTabBarState extends ConsumerState<GroupTabBar> {
       return child;
     }
     final leftFactor = (position.pixels / 20).clamp(0.0, 1.0);
-    final rightFactor =
-        ((position.maxScrollExtent - position.pixels) / 20).clamp(0.0, 1.0);
+    final rightFactor = ((position.maxScrollExtent - position.pixels) / 20)
+        .clamp(0.0, 1.0);
     if (leftFactor <= 0 && rightFactor <= 0) return child;
     return ShaderMask(
       shaderCallback: (bounds) {
         if (bounds.width <= 0) {
-          return const LinearGradient(
-            colors: [Colors.white, Colors.white],
-          ).createShader(bounds);
+          return const LinearGradient(colors: [Colors.white, Colors.white])
+              .createShader(bounds);
         }
         final leftStop = (18 * leftFactor / bounds.width).clamp(0.0, 0.15);
-        final rightStop =
-            (1.0 - (24 * rightFactor / bounds.width)).clamp(0.82, 1.0);
+        final rightStop = (1.0 - (24 * rightFactor / bounds.width)).clamp(
+          0.82,
+          1.0,
+        );
         return LinearGradient(
           colors: [
             Colors.white.withValues(alpha: 1 - leftFactor),
@@ -246,9 +247,7 @@ class _GroupTabBarState extends ConsumerState<GroupTabBar> {
     return PressScale(
       child: Material(
         color: backgroundColor,
-        shape: CircleBorder(
-          side: BorderSide(color: borderColor),
-        ),
+        shape: CircleBorder(side: BorderSide(color: borderColor)),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           customBorder: const CircleBorder(),
@@ -268,7 +267,7 @@ class _GroupTabBarState extends ConsumerState<GroupTabBar> {
                         duration: const Duration(milliseconds: 320),
                       ),
                     )
-                  : Icon(
+                  : AppIcon(
                       isMobileView ? Icons.expand_more : Icons.chevron_right,
                     ),
             ),
@@ -283,18 +282,13 @@ class _GroupTabBarState extends ConsumerState<GroupTabBar> {
     _feedback = ref.watch(
       appSettingProvider.select((state) => state.enableNavBarHapticFeedback),
     );
-    final pureBlack = ref.watch(
-      themeSettingProvider.select((state) => state.pureBlack),
-    );
     final isMobileView = ref.watch(isMobileViewProvider);
     final colorScheme = context.colorScheme;
     final isLight = colorScheme.brightness == Brightness.light;
 
-    final unselectedBg = pureBlack
-        ? Colors.black
-        : (isLight
-              ? colorScheme.surfaceContainerLowest
-              : colorScheme.surfaceContainerLow);
+    final unselectedBg = isLight
+        ? colorScheme.surfaceContainerLowest
+        : colorScheme.surfaceContainerLow;
     final selectedBg = isLight
         ? Color.alphaBlend(
             colorScheme.secondaryContainer.withValues(alpha: 0.78),
@@ -305,7 +299,7 @@ class _GroupTabBarState extends ConsumerState<GroupTabBar> {
             unselectedBg,
           );
     final unselectedBorder = colorScheme.outlineVariant.withValues(
-      alpha: isLight ? 0.35 : (pureBlack ? 0.28 : 0.16),
+      alpha: isLight ? 0.35 : 0.16,
     );
     final selectedBorder = colorScheme.primary.withValues(
       alpha: isLight ? 0.45 : 0.55,
@@ -521,10 +515,7 @@ class _GroupTabChipState extends State<_GroupTabChip>
                 color: bgColor,
                 shape: RoundedSuperellipseBorder(
                   borderRadius: BorderRadius.circular(GroupTabBar.height / 2),
-                  side: BorderSide(
-                    color: borderColor,
-                    width: 1.0 + 0.15 * t,
-                  ),
+                  side: BorderSide(color: borderColor, width: 1.0 + 0.15 * t),
                 ),
               ),
               alignment: Alignment.center,

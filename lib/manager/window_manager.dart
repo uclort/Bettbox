@@ -82,7 +82,7 @@ class _WindowContainerState extends ConsumerState<WindowManager>
     return widget.child;
   }
 
-  ProviderSubscription? _autoLaunchSub;
+  ProviderSubscription<bool>? _autoLaunchSub;
 
   @override
   void initState() {
@@ -351,8 +351,8 @@ class _WindowHeaderState extends ConsumerState<WindowHeader> {
                       return IconButton(
                         onPressed: _updatePin,
                         icon: value
-                            ? const Icon(Icons.push_pin)
-                            : const Icon(Icons.push_pin_outlined),
+                            ? const AppIcon(Icons.push_pin)
+                            : const AppIcon(Icons.push_pin_outlined),
                       );
                     },
                   ),
@@ -361,18 +361,18 @@ class _WindowHeaderState extends ConsumerState<WindowHeader> {
                       onPressed: () {
                         windowManager.minimize();
                       },
-                      icon: const Icon(Icons.remove),
+                      icon: const AppIcon(Icons.remove),
                     ),
                     ValueListenableBuilder(
                       valueListenable: isMaximizedNotifier,
                       builder: (_, value, _) {
                         return IconButton(
                           onPressed: () async {
-                            _updateMaximized();
+                            unawaited(_updateMaximized());
                           },
                           icon: value
-                              ? const Icon(Icons.filter_none, size: 20)
-                              : const Icon(Icons.crop_square),
+                              ? const AppIcon(Icons.filter_none, size: 20)
+                              : const AppIcon(Icons.crop_square),
                         );
                       },
                     ),
@@ -382,7 +382,7 @@ class _WindowHeaderState extends ConsumerState<WindowHeader> {
                         globalState.appController.unBackBlock();
                         globalState.appController.handleBackOrExit();
                       },
-                      icon: const Icon(Icons.close),
+                      icon: const AppIcon(Icons.close),
                     ),
                   ],
                 ],

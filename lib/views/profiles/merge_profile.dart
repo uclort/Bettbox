@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/enum/enum.dart';
 import 'package:bett_box/models/models.dart';
@@ -9,7 +11,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-const _maxBundleMembers = 6;
+const _maxBundleMembers = 10;
 
 class MergeProfileView extends ConsumerStatefulWidget {
   final Profile? profile;
@@ -218,10 +220,7 @@ class _MergeProfileViewState extends ConsumerState<MergeProfileView> {
                 SegmentButtonGroup<ProfileUsageStyle>(
                   options: [
                     for (final style in ProfileUsageStyle.values)
-                      SegmentOption(
-                        value: style,
-                        label: style.localizedName,
-                      ),
+                      SegmentOption(value: style, label: style.localizedName),
                   ],
                   selected: _usageStyle,
                   onSelected: (style) => update(() => _usageStyle = style),
@@ -270,7 +269,7 @@ class _MergeProfileViewState extends ConsumerState<MergeProfileView> {
 
   Future<void> _handleConfirm() async {
     if (_members.isEmpty) {
-      context.showNotifier(appLocalizations.bundleNoMembers);
+      unawaited(context.showNotifier(appLocalizations.bundleNoMembers));
       return;
     }
     final appController = globalState.appController;
@@ -326,9 +325,11 @@ class _MergeProfileViewState extends ConsumerState<MergeProfileView> {
     );
     Navigator.of(context).pop();
     if (!changed) return;
-    appController.safeRun(
-      () => appController.generateBundle(id),
-      silence: false,
+    unawaited(
+      appController.safeRun(
+        () => appController.generateBundle(id),
+        silence: false,
+      ),
     );
   }
 
@@ -389,7 +390,7 @@ class _MergeProfileViewState extends ConsumerState<MergeProfileView> {
               : IconButton(
                   onPressed: () => _handleRegenerate(profile.id),
                   tooltip: appLocalizations.regenerate,
-                  icon: const Icon(Icons.refresh),
+                  icon: const AppIcon(Icons.refresh),
                 ),
         ),
       ),
@@ -420,7 +421,7 @@ class _MergeProfileViewState extends ConsumerState<MergeProfileView> {
             index: index,
             child: SizedBox.square(
               dimension: 32,
-              child: Icon(
+              child: AppIcon(
                 Icons.drag_indicator,
                 size: 20,
                 color: context.colorScheme.onSurfaceVariant,
@@ -443,7 +444,7 @@ class _MergeProfileViewState extends ConsumerState<MergeProfileView> {
           trailing: IconButton(
             onPressed: () => _setMembers(List.of(_members)..removeAt(index)),
             tooltip: appLocalizations.delete,
-            icon: const Icon(Icons.remove_circle_outline, size: 20),
+            icon: const AppIcon(Icons.remove_circle_outline, size: 20),
           ),
           onTap: () => url != null
               ? _handleAddUrl(member)
@@ -466,7 +467,7 @@ class _MergeProfileViewState extends ConsumerState<MergeProfileView> {
             IconButton(
               onPressed: _handleSettings,
               tooltip: appLocalizations.settings,
-              icon: const Icon(Icons.settings_outlined),
+              icon: const AppIcon(Icons.settings_outlined),
             ),
           ],
         ),
@@ -506,7 +507,7 @@ class _MergeProfileViewState extends ConsumerState<MergeProfileView> {
 
   Widget _buildCandidate(BuildContext context, Profile profile) {
     return ListItem(
-      leading: const Icon(Icons.add_circle_outline),
+      leading: const AppIcon(Icons.add_circle_outline),
       title: EmojiText(
         profile.label ?? profile.id,
         maxLines: 1,
@@ -526,7 +527,7 @@ class _MergeProfileViewState extends ConsumerState<MergeProfileView> {
         _header(appLocalizations.addBundleMember),
         _card(context, [
           ListItem(
-            leading: const Icon(Icons.add_link),
+            leading: const AppIcon(Icons.add_link),
             title: Text(appLocalizations.bundleAddUrl),
             subtitle: Text(appLocalizations.bundleAddUrlDesc),
             onTap: _handleAddUrl,
@@ -558,7 +559,7 @@ class _MergeProfileViewState extends ConsumerState<MergeProfileView> {
                       defaults.length,
                     ),
                   ),
-            trailing: const Icon(Icons.chevron_right),
+            trailing: const AppIcon(Icons.chevron_right),
             onTap: () => showManagedOptions(context),
           ),
         ]),
@@ -602,7 +603,7 @@ class _MergeProfileViewState extends ConsumerState<MergeProfileView> {
           label: Text(
             _id == null ? appLocalizations.generate : appLocalizations.save,
           ),
-          icon: Icon(_id == null ? Icons.merge_type : Icons.save),
+          icon: AppIcon(_id == null ? Icons.merge_type : Icons.save),
         ),
       ),
       child: Padding(

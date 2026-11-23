@@ -57,7 +57,7 @@ class ClashService extends ClashHandlerInterface {
       commonPrint.log('Using TCP Socket on port: $_tcpPort');
     }
 
-    _initServer();
+    unawaited(_initServer());
     try {
       await reStart();
     } catch (e) {
@@ -66,59 +66,61 @@ class ClashService extends ClashHandlerInterface {
   }
 
   Future<void> _initServer() async {
-    runZonedGuarded(
-      () async {
-        late final ServerSocket server;
+    unawaited(
+      runZonedGuarded(
+        () async {
+          late final ServerSocket server;
 
-        if (_transportType == TransportType.unixSocket) {
-          final address = InternetAddress(
-            _socketPath!,
-            type: InternetAddressType.unix,
-          );
-          await _deleteSocketFile();
-          server = await ServerSocket.bind(address, 0, shared: true);
-        } else {
-          server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
-          _tcpPort = server.port;
-          commonPrint.log('TCP Server bound to port: $_tcpPort');
-        }
-
-        serverCompleter.complete(server);
-        await for (final socket in server) {
-          if (_activeSocket != null && !isStarting) {
-            socket.destroy();
-            continue;
+          if (_transportType == TransportType.unixSocket) {
+            final address = InternetAddress(
+              _socketPath!,
+              type: InternetAddressType.unix,
+            );
+            await _deleteSocketFile();
+            server = await ServerSocket.bind(address, 0, shared: true);
+          } else {
+            server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+            _tcpPort = server.port;
+            commonPrint.log('TCP Server bound to port: $_tcpPort');
           }
-          await _destroySocket();
-          _activeSocket = socket;
-          socketCompleter.complete(socket);
 
-          socket
-              .transform(FrameDecoderTransformer())
-              .listen(
-                (data) {
-                  handleResultMessage(data);
-                },
-                onError: (error) {
-                  if (_isDestroying || globalState.isExiting) return;
-                  commonPrint.log('Frame decode error: $error');
-                },
-                onDone: () {
-                  _handleSocketClosed(socket);
-                  commonPrint.log('Socket connection closed');
-                },
-              );
-        }
-      },
-      (error, stack) {
-        if (_isDestroying || globalState.isExiting) return;
-        commonPrint.log(error.toString());
-        if (error is SocketException &&
-            !_isDestroying &&
-            !globalState.isExiting) {
-          globalState.showNotifier(error.toString());
-        }
-      },
+          serverCompleter.complete(server);
+          await for (final socket in server) {
+            if (_activeSocket != null && !isStarting) {
+              socket.destroy();
+              continue;
+            }
+            await _destroySocket();
+            _activeSocket = socket;
+            socketCompleter.complete(socket);
+
+            socket
+                .transform(FrameDecoderTransformer())
+                .listen(
+                  (data) {
+                    handleResultMessage(data);
+                  },
+                  onError: (error) {
+                    if (_isDestroying || globalState.isExiting) return;
+                    commonPrint.log('Frame decode error: $error');
+                  },
+                  onDone: () {
+                    _handleSocketClosed(socket);
+                    commonPrint.log('Socket connection closed');
+                  },
+                );
+          }
+        },
+        (error, stack) {
+          if (_isDestroying || globalState.isExiting) return;
+          commonPrint.log(error.toString());
+          if (error is SocketException &&
+              !_isDestroying &&
+              !globalState.isExiting) {
+            globalState.showNotifier(error.toString());
+          }
+        },
+      ),
     );
   }
 
@@ -135,7 +137,7 @@ class ClashService extends ClashHandlerInterface {
     if (_transportType == TransportType.unixSocket) {
       _socketPath = _newSocketPath();
     }
-    _initServer();
+    unawaited(_initServer());
     await serverCompleter.future;
   }
 

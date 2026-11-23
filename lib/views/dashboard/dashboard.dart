@@ -153,7 +153,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
           },
           child: IconButton(
             onPressed: _showAddWidgetsModal,
-            icon: const Icon(Icons.add_circle),
+            icon: const AppIcon(Icons.add_circle),
           ),
         );
       }),
@@ -162,7 +162,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
           return IconButton(
             onPressed: _handleUpdateIsEdit,
             tooltip: appLocalizations.save,
-            icon: const Icon(Icons.save),
+            icon: const AppIcon(Icons.save),
           );
         }
         return CommonPopupBox(
@@ -180,7 +180,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                       valueListenable: _menuOpenNotifier,
                       builder: (_, isOpen, _) => _MenuDots(isOpen: isOpen),
                     )
-                  : const Icon(Icons.more_vert),
+                  : const AppIcon(Icons.more_vert),
             );
             if (!showStartSwitch) return button;
             return Transform.translate(
@@ -207,17 +207,24 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                   ThemeMode.dark => appLocalizations.dark,
                 },
                 onPressed: () {
+                  final nextThemeMode = switch (themeMode) {
+                    ThemeMode.system => ThemeMode.light,
+                    ThemeMode.light => ThemeMode.dark,
+                    ThemeMode.dark => ThemeMode.system,
+                  };
                   ref
                       .read(themeSettingProvider.notifier)
                       .updateState(
-                        (state) => state.copyWith(
-                          themeMode: switch (themeMode) {
-                            ThemeMode.system => ThemeMode.light,
-                            ThemeMode.light => ThemeMode.dark,
-                            ThemeMode.dark => ThemeMode.system,
-                          },
-                        ),
+                        (state) => state.copyWith(themeMode: nextThemeMode),
                       );
+                  final label = switch (nextThemeMode) {
+                    ThemeMode.system => appLocalizations.auto,
+                    ThemeMode.light => appLocalizations.light,
+                    ThemeMode.dark => appLocalizations.dark,
+                  };
+                  globalState.showNotifier(
+                    '${appLocalizations.themeMode}: $label',
+                  );
                 },
               ),
               PopupMenuItemData(
@@ -335,6 +342,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     final watermark = ref.watch(
       appSettingProvider.select((state) => state.dashboardWatermark),
     );
+    ref.watch(themeSettingProvider.select((state) => state.textScale));
 
     final spacing = 12.mAp;
     final sizes = ref.watch(
@@ -379,23 +387,21 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
       title: title,
       titleWidget: Padding(
         padding: EdgeInsets.only(left: inset),
-        child: globalState.isPre
-            ? Row(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Flexible(
-                    child: EmojiText(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  const _PreviewMark(),
-                ],
-              )
-            : EmojiText(title),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Flexible(
+              child: EmojiText(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (globalState.isPre) const _PreviewMark(),
+            const _UpdateMark(),
+          ],
+        ),
       ),
       actions: [
         ..._buildActions(showStartSwitch, themeMode, watermark),
@@ -481,7 +487,11 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                           itemBuilder: (_, tile) => buildDashboardTile(tile),
                           canResize: (tile) => tile.widget.resizable,
                           onResize: _resizeWidget,
-                          canDelete: (tile) => tile.widget.widget.isDeletable,
+                          canDelete: (tile) =>
+                              tile.widget.widget.isDeletable ||
+                              (showStartSwitch &&
+                                  tile.widget.family ==
+                                      DashboardWidget.startButton),
                           onDelete: _deleteWidget,
                           onMove: _moveWidget,
                           overlayWrapper: (child) => DashboardWidgetMetrics(
@@ -605,7 +615,7 @@ class _AddedContainer extends StatelessWidget {
                 iconSize: 20,
                 padding: const EdgeInsets.all(2),
                 onPressed: onAdd,
-                icon: const Icon(Icons.add),
+                icon: const AppIcon(Icons.add),
               ),
             ),
           ),
@@ -880,7 +890,7 @@ class _DashboardStartSwitchState extends ConsumerState<_DashboardStartSwitch> {
                                 ),
                               ),
                             )
-                          : Icon(
+                          : AppIcon(
                               Icons.power_settings_new,
                               size: 18,
                               color: iconColor,
@@ -904,7 +914,7 @@ class _PreviewMark extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
     return Container(
-      margin: const EdgeInsets.only(top: 4),
+      margin: const EdgeInsets.only(left: 8, top: 4),
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(5),
@@ -918,6 +928,49 @@ class _PreviewMark extends StatelessWidget {
           fontWeight: FontWeight.w700,
           letterSpacing: 0.8,
           color: colorScheme.primary,
+        ),
+      ),
+    );
+  }
+}
+
+class _UpdateMark extends ConsumerWidget {
+  const _UpdateMark();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final (status, progress) = ref.watch(
+      appUpdateStateProvider.select(
+        (state) => (state?.status, state?.progress ?? 0),
+      ),
+    );
+    if (status == null) return const SizedBox.shrink();
+    final colorScheme = context.colorScheme;
+    final isReady = status == AppUpdateStatus.ready;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: globalState.appController.handleAppUpdate,
+      child: Container(
+        margin: const EdgeInsets.only(left: 8, top: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(5),
+          color: isReady ? colorScheme.primary : colorScheme.tertiary,
+          border: Border.all(
+            color: isReady ? colorScheme.primary : colorScheme.tertiary,
+          ),
+        ),
+        child: Text(
+          status == AppUpdateStatus.downloading
+              ? '${(progress * 100).floor()}%'
+              : 'NEW',
+          style: context.textTheme.labelSmall?.copyWith(
+            fontSize: 9.5,
+            height: 1.3,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.8,
+            color: isReady ? colorScheme.onPrimary : colorScheme.onTertiary,
+          ),
         ),
       ),
     );

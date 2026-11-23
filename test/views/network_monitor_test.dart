@@ -50,6 +50,12 @@ void main() {
     await AppLocalizations.load(const Locale('zh', 'CN'));
   });
 
+  // 上游启用了 leak_tracker：进程图标解码后会留在全局 imageCache，测试结束时清掉。
+  tearDown(() {
+    imageCache.clear();
+    imageCache.clearLiveImages();
+  });
+
   test('面板日志显示本地日期时间（上游 Log 只序列化 time）', () {
     final time = DateTime(2026, 11, 7, 13, 4, 27, 123);
     final log = Log(payload: '[TCP] test', time: time);
@@ -65,7 +71,12 @@ void main() {
   testWidgets('HarmonyOS Sans 使用正常宽度的空格字形', (tester) async {
     final loader = FontLoader('HarmonyOS_Sans_Test')
       ..addFont(rootBundle.load('assets/fonts/HarmonyOS_Sans_SC_Regular.ttf'));
-    await loader.load();
+    // 字体加载会异步触发系统字体变更回调：在真实异步环境里加载并等消息到达，再跑一帧让它完成。
+    await tester.runAsync(() async {
+      await loader.load();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    });
+    await tester.pump();
 
     double width(String value) {
       final painter = TextPainter(
@@ -78,7 +89,9 @@ void main() {
         ),
         textDirection: TextDirection.ltr,
       )..layout();
-      return painter.width;
+      final result = painter.width;
+      painter.dispose();
+      return result;
     }
 
     final spaceWidth = width('A B') - width('AB');
@@ -453,10 +466,7 @@ void main() {
       ['older', 'newer', 'active'],
     );
     expect(
-      sorted(
-        MonitorSort.createdAt,
-        direction: MonitorSortDirection.ascending,
-      ),
+      sorted(MonitorSort.createdAt, direction: MonitorSortDirection.ascending),
       ['active', 'older', 'newer'],
     );
   });
@@ -475,10 +485,7 @@ void main() {
       monitorTrafficSummary(item, active: true),
       '累计 ↓ 2.0 KB  ↑ 1.0 KB  ·  ↓ 1.5 KB/s  ↑ 512 B/s',
     );
-    expect(
-      monitorTrafficSummary(item, active: false),
-      '累计 ↓ 2.0 KB  ↑ 1.0 KB',
-    );
+    expect(monitorTrafficSummary(item, active: false), '累计 ↓ 2.0 KB  ↑ 1.0 KB');
   });
 
   test('最后活跃时间优先使用面板记录和链路事件', () {
@@ -504,10 +511,7 @@ void main() {
       monitorKnownLastActivity(item),
       DateTime.fromMillisecondsSinceEpoch(1786400000000),
     );
-    expect(
-      monitorActivityLabel(item, lastActivity: known),
-      '最后活跃 21:58:00',
-    );
+    expect(monitorActivityLabel(item, lastActivity: known), '最后活跃 21:58:00');
     expect(
       monitorActivityLabel(_tracker(id: 'unknown', process: 'A', upload: 0)),
       '最后活跃 未知',
@@ -520,13 +524,7 @@ void main() {
       ),
       '结束于 22:00:00',
     );
-    expect(
-      monitorDurationLabel(
-        item.start,
-        active: false,
-      ),
-      '未知',
-    );
+    expect(monitorDurationLabel(item.start, active: false), '未知');
   });
 
   test('历史请求不会把创建时间回填为最后活跃', () {
@@ -538,14 +536,8 @@ void main() {
       start: DateTime.utc(2026, 8, 10, 8, 50),
     );
 
-    expect(
-      monitorUpdatedActivity(item, now: now),
-      isNull,
-    );
-    expect(
-      monitorUpdatedActivity(item, now: now, active: true),
-      now,
-    );
+    expect(monitorUpdatedActivity(item, now: now), isNull);
+    expect(monitorUpdatedActivity(item, now: now, active: true), now);
     expect(
       monitorUpdatedActivity(
         _tracker(

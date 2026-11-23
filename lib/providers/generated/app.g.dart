@@ -1466,6 +1466,434 @@ abstract class _$ConnectionsUdpOnly extends $Notifier<bool> {
   }
 }
 
+@ProviderFor(Connections)
+final connectionsProvider = ConnectionsProvider._();
+
+final class ConnectionsProvider
+    extends $NotifierProvider<Connections, List<TrackerInfo>> {
+  ConnectionsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'connectionsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$connectionsHash();
+
+  @$internal
+  @override
+  Connections create() => Connections();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<TrackerInfo> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<TrackerInfo>>(value),
+    );
+  }
+}
+
+String _$connectionsHash() => r'96c9ef499d5f49ed3b60011ed23df122cad1d379';
+
+abstract class _$Connections extends $Notifier<List<TrackerInfo>> {
+  List<TrackerInfo> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<List<TrackerInfo>, List<TrackerInfo>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<List<TrackerInfo>, List<TrackerInfo>>,
+              List<TrackerInfo>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(ConnectionsSearch)
+final connectionsSearchProvider = ConnectionsSearchProvider._();
+
+final class ConnectionsSearchProvider
+    extends $NotifierProvider<ConnectionsSearch, String> {
+  ConnectionsSearchProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'connectionsSearchProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$connectionsSearchHash();
+
+  @$internal
+  @override
+  ConnectionsSearch create() => ConnectionsSearch();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String>(value),
+    );
+  }
+}
+
+String _$connectionsSearchHash() => r'b42af217ec7de4a90ef79b9915195b1add186ede';
+
+abstract class _$ConnectionsSearch extends $Notifier<String> {
+  String build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<String, String>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<String, String>,
+              String,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(ConnectionsKeywords)
+final connectionsKeywordsProvider = ConnectionsKeywordsProvider._();
+
+final class ConnectionsKeywordsProvider
+    extends $NotifierProvider<ConnectionsKeywords, List<String>> {
+  ConnectionsKeywordsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'connectionsKeywordsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$connectionsKeywordsHash();
+
+  @$internal
+  @override
+  ConnectionsKeywords create() => ConnectionsKeywords();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<String> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<String>>(value),
+    );
+  }
+}
+
+String _$connectionsKeywordsHash() =>
+    r'2f9443a2c613b50feef71f1ee04fade68ae9bc1b';
+
+abstract class _$ConnectionsKeywords extends $Notifier<List<String>> {
+  List<String> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<List<String>, List<String>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<List<String>, List<String>>,
+              List<String>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(ConnectionsSort)
+final connectionsSortProvider = ConnectionsSortProvider._();
+
+final class ConnectionsSortProvider
+    extends $NotifierProvider<ConnectionsSort, ConnectionsSortType> {
+  ConnectionsSortProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'connectionsSortProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$connectionsSortHash();
+
+  @$internal
+  @override
+  ConnectionsSort create() => ConnectionsSort();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ConnectionsSortType value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ConnectionsSortType>(value),
+    );
+  }
+}
+
+String _$connectionsSortHash() => r'06995dbb91e9fa5c02a194247b371068639c8e7c';
+
+abstract class _$ConnectionsSort extends $Notifier<ConnectionsSortType> {
+  ConnectionsSortType build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<ConnectionsSortType, ConnectionsSortType>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<ConnectionsSortType, ConnectionsSortType>,
+              ConnectionsSortType,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(AppUpdateState)
+final appUpdateStateProvider = AppUpdateStateProvider._();
+
+final class AppUpdateStateProvider
+    extends $NotifierProvider<AppUpdateState, AppUpdate?> {
+  AppUpdateStateProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'appUpdateStateProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$appUpdateStateHash();
+
+  @$internal
+  @override
+  AppUpdateState create() => AppUpdateState();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AppUpdate? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AppUpdate?>(value),
+    );
+  }
+}
+
+String _$appUpdateStateHash() => r'768c669846b47b45524fce7da590405c2a551d6d';
+
+abstract class _$AppUpdateState extends $Notifier<AppUpdate?> {
+  AppUpdate? build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<AppUpdate?, AppUpdate?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AppUpdate?, AppUpdate?>,
+              AppUpdate?,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(ProfilesSlide)
+final profilesSlideProvider = ProfilesSlideProvider._();
+
+final class ProfilesSlideProvider
+    extends $NotifierProvider<ProfilesSlide, ({bool animate, bool showNodes})> {
+  ProfilesSlideProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'profilesSlideProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$profilesSlideHash();
+
+  @$internal
+  @override
+  ProfilesSlide create() => ProfilesSlide();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(({bool animate, bool showNodes}) value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<({bool animate, bool showNodes})>(
+        value,
+      ),
+    );
+  }
+}
+
+String _$profilesSlideHash() => r'ac6ad968a185ee28f5cd3b67467d73cc8670a406';
+
+abstract class _$ProfilesSlide
+    extends $Notifier<({bool animate, bool showNodes})> {
+  ({bool animate, bool showNodes}) build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref =
+        this.ref
+            as $Ref<
+              ({bool animate, bool showNodes}),
+              ({bool animate, bool showNodes})
+            >;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<
+                ({bool animate, bool showNodes}),
+                ({bool animate, bool showNodes})
+              >,
+              ({bool animate, bool showNodes}),
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(ForceRefreshIcon)
+final forceRefreshIconProvider = ForceRefreshIconProvider._();
+
+final class ForceRefreshIconProvider
+    extends $NotifierProvider<ForceRefreshIcon, bool> {
+  ForceRefreshIconProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'forceRefreshIconProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$forceRefreshIconHash();
+
+  @$internal
+  @override
+  ForceRefreshIcon create() => ForceRefreshIcon();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$forceRefreshIconHash() => r'2c80535d6868c12895400b6061608130d2531b54';
+
+abstract class _$ForceRefreshIcon extends $Notifier<bool> {
+  bool build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<bool, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<bool, bool>,
+              bool,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(GeoUpdatingKeys)
+final geoUpdatingKeysProvider = GeoUpdatingKeysProvider._();
+
+final class GeoUpdatingKeysProvider
+    extends $NotifierProvider<GeoUpdatingKeys, Set<String>> {
+  GeoUpdatingKeysProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'geoUpdatingKeysProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$geoUpdatingKeysHash();
+
+  @$internal
+  @override
+  GeoUpdatingKeys create() => GeoUpdatingKeys();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Set<String> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Set<String>>(value),
+    );
+  }
+}
+
+String _$geoUpdatingKeysHash() => r'132a93092464e5831a9eceb56cc484faf0171e84';
+
+abstract class _$GeoUpdatingKeys extends $Notifier<Set<String>> {
+  Set<String> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<Set<String>, Set<String>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<Set<String>, Set<String>>,
+              Set<String>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(builtInIconSet)
 final builtInIconSetProvider = BuiltInIconSetProvider._();
 
@@ -1497,7 +1925,7 @@ final class BuiltInIconSetProvider
   }
 }
 
-String _$builtInIconSetHash() => r'dc9258dbfc06e3b9dc2721432285a3491c95ef5e';
+String _$builtInIconSetHash() => r'e0086ea3f8ff96e9e817c82a1fb7a0e95717df9f';
 
 @ProviderFor(IconSets)
 final iconSetsProvider = IconSetsProvider._();

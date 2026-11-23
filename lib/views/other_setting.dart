@@ -375,9 +375,7 @@ class DisableQuicSection extends ConsumerWidget {
       managedSettingProvider.select((state) => state.options),
     );
     final managedQuic =
-        managedOptions['禁用内核QUIC流量'] ??
-        managedOptions['屏蔽内核QUIC流量'] ??
-        true;
+        managedOptions['禁用内核QUIC流量'] ?? managedOptions['屏蔽内核QUIC流量'] ?? true;
     final enabled = isManaged ? managedQuic : disableQuic;
 
     return ListItem.switchItem(
@@ -392,10 +390,8 @@ class DisableQuicSection extends ConsumerWidget {
           if (isManaged) {
             globalState.appController.updateManagedSetting(
               (state) => state.copyWith(
-                options: {
-                  ...state.options,
-                  '禁用内核QUIC流量': value,
-                }..remove('屏蔽内核QUIC流量'),
+                options: {...state.options, '禁用内核QUIC流量': value}
+                  ..remove('屏蔽内核QUIC流量'),
               ),
             );
           }
@@ -578,12 +574,12 @@ class _TrayClickBehaviorDialogState extends State<_TrayClickBehaviorDialog> {
   List<SegmentOption<TrayClickBehavior>> get _options => [
     SegmentOption(
       value: TrayClickBehavior.showPanel,
-      icon: const Icon(Icons.dashboard_outlined),
+      icon: const AppIcon(Icons.dashboard_outlined),
       label: appLocalizations.showPanel,
     ),
     SegmentOption(
       value: TrayClickBehavior.showMenu,
-      icon: const Icon(Icons.menu),
+      icon: const AppIcon(Icons.menu),
       label: appLocalizations.showMenu,
     ),
   ];
