@@ -549,7 +549,9 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: '17'
+          # BETTBOX-CUSTOM: 跟随上游 v1.19.9（AGP 9.3.1）改用 Java 21；Java 17 下 lintVitalAnalyzeRelease
+          # 调用 List.removeLast() 崩溃（image_picker_android 的 ExifDataCopier.java）。
+          java-version: '21'
 
       - name: 配置 Android Release 签名
         if: matrix.platform == 'android'
