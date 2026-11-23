@@ -681,7 +681,13 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
             ))
             add(entry("batteryOptimization", "special", true, isIgnoringBatteryOptimizations()))
             add(entry("packageList", "special", sdk >= Build.VERSION_CODES.R, hasPackageListPermission()))
-            add(entry("installPackages", "special", true, canRequestPackageInstalls()))
+            // BETTBOX-CUSTOM: 上游 v1.19.9 起 minSdk 降到 24；按应用授予的「安装未知应用」从 Android 8 开始，
+            // 之前只有系统全局开关（canRequestPackageInstalls 为 API 26，低版本调用会崩溃）。
+            val installApplicable = sdk >= Build.VERSION_CODES.O
+            add(entry(
+                "installPackages", "special", installApplicable,
+                installApplicable && canRequestPackageInstalls(),
+            ))
             if (isPermissionDeclared(Manifest.permission.CAMERA)) {
                 add(entry("camera", "runtime", true, hasCameraPermission()))
             }
